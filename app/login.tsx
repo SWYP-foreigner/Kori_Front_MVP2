@@ -47,7 +47,7 @@ const Login = () => {
     const router=useRouter();
 
     const goToTabs = () => {
-    router.push('./tabs'); // tabs 폴더 index.tsx 로 이동
+    router.push('./(tabs)'); // tabs 폴더 index.tsx 로 이동
   };
   return (
     <Container>
