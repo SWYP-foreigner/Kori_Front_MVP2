@@ -1,47 +1,34 @@
-import { Pressable, PressableProps, StyleSheet, Text } from 'react-native';
+import { PressableProps } from 'react-native';
+import styled from 'styled-components/native';
+
+type Variant = 'filled' | 'outline';
+type VariantProps = { variant: Variant };
 
 type ButtonProps = PressableProps & {
     label: string;
     variant?: 'filled' | 'outline';
 };
 
-export default function CustomButton({ label, variant = 'filled', style, ...props }: ButtonProps) {
+export default function CustomButton({ label, variant = 'filled', ...props }: ButtonProps) {
     return (
-        <Pressable
-            style={[
-                styles.base,
-                variant === 'filled' ? styles.filled : styles.outline,
-            ]}
-            {...props}
-        >
-            <Text style={[styles.text, variant === 'outline' && styles.textOutline]}>
-                {label}
-            </Text>
-        </Pressable>
+        <StyledPressable variant={variant} {...props}>
+            <StyledText variant={variant}>{label}</StyledText>
+        </StyledPressable>
     );
 }
 
-const styles = StyleSheet.create({
-    base: {
-        flex: 1,
-        paddingVertical: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    filled: {
-        backgroundColor: '#000',
-        borderColor: '#000',
-    },
-    outline: {
-        backgroundColor: '#fff',
-        borderColor: '#000',
-    },
-    text: {
-        fontWeight: '600',
-        color: '#fff',
-    },
-    textOutline: {
-        color: '#000',
-    },
-});
+const StyledPressable = styled.Pressable <VariantProps>`
+  flex: 1;
+  padding-vertical: 10px;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  border-width: 1px;
+  background-color: ${({ variant }: VariantProps) => variant === 'filled' ? '#000' : '#fff'};
+  border-color: #000;
+`;
+
+const StyledText = styled.Text<VariantProps>`
+  font-weight: 600;
+  color: ${({ variant }: VariantProps) => variant === 'filled' ? '#fff' : '#000'};
+  `;
