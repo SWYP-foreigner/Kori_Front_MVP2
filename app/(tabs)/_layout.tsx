@@ -22,6 +22,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'chat',
+        }}
+      />
+      <Tabs.Screen
         name="mypage"
         options={{
           title: 'mypage',
