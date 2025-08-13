@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import styled from 'styled-components/native';
-import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
-import { WebView } from 'react-native-webview'; 
 import { useRouter } from 'expo-router';
-import GoogleSignInButton from '../components/GoogleSignInButton';
+import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, ActivityIndicatorProps } from 'react-native';
+import { WebView } from 'react-native-webview';
+import styled from 'styled-components/native';
 import AppleSignInButton from '../components/AppleSignInButton';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -82,10 +83,10 @@ const WebViewContainer = styled.View`
   flex: 1;
 `;
 
-const Loading = styled.ActivityIndicator.attrs(() => ({
+const Loading = styled(ActivityIndicator).attrs<ActivityIndicatorProps>({
   size: 'large',
   color: '#000',
-}))`
+})`
   flex: 1;
 `;
 
