@@ -1,24 +1,14 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import { useRouter } from 'expo-router';
-
+import GoogleSignInButton from '../components/GoogleSignInButton';
 const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
 `;
 
-const GoogleLoginButton = styled.TouchableOpacity`
-  margin-bottom: 16px;
-  padding: 12px 24px;
-  background-color: #4285F4;
-  border-radius: 8px;
-`;
 
-const GoogleLoginText = styled.Text`
-  color: white;
-  font-weight: bold;
-`;
 
 const AppleLoginButton = styled.TouchableOpacity`
   margin-bottom: 16px;
@@ -51,9 +41,7 @@ const Login = () => {
   };
   return (
     <Container>
-      <GoogleLoginButton>
-        <GoogleLoginText>Google 로그인</GoogleLoginText>
-      </GoogleLoginButton>
+      <GoogleSignInButton/>
 
       <AppleLoginButton>
         <AppleLoginText>Apple 로그인</AppleLoginText>
