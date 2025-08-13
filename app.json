@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme":"myapp",
     "name": "Kori_Front",
     "slug": "Kori_Front",
     "version": "1.0.0",
@@ -35,7 +36,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
