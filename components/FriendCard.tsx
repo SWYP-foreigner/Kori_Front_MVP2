@@ -5,77 +5,70 @@ import React from 'react';
 import styled from 'styled-components/native';
 
 type Props = {
-    name: string;
-    country: string;
-    age: number;
-    purpose: string;
-    languages: string[];
-    personalities: string[];
-    bio: string;
-    isFollowed?: boolean;
-    onFollow?: () => void;
-    onChat?: () => void;
+  name: string;
+  country: string;
+  age: number;
+  purpose: string;
+  languages: string[];
+  personalities: string[];
+  isFollowed?: boolean;
+  onFollow?: () => void;
+  onChat?: () => void;
 };
 
 export default function FriendCard({
-    name,
-    country,
-    age,
-    purpose,
-    languages,
-    personalities,
-    bio,
-    isFollowed = false,
-    onFollow,
-    onChat,
+  name,
+  country,
+  age,
+  purpose,
+  languages,
+  personalities,
+  isFollowed = false,
+  onFollow,
+  onChat,
 }: Props) {
-    return (
-        <Card>
-            {/* 말풍선 */}
-            <SpeechBubble>
-                <SpeechText numberOfLines={2}>{bio}</SpeechText>
-            </SpeechBubble>
+  return (
+    <Card>
+      <Avatar size={80} />
 
-            <Avatar size={80} />
+      <Name>{name}</Name>
+      <SubText>
+        {country} | Age {age}
+      </SubText>
 
-            <Name>{name}</Name>
-            <SubText>
-                {country} | Age {age}
-            </SubText>
+      {/* 방문 목적, 사용 가능 언어 */}
+      <InfoRow>
+        <InfoItem>
+          <InfoLabel>📄 Purpose</InfoLabel>
+          <InfoValue>{purpose}</InfoValue>
+        </InfoItem>
+        <InfoItem>
+          <InfoLabel>🌐 Language</InfoLabel>
+          <InfoValue>{languages.join(' • ')}</InfoValue>
+        </InfoItem>
+      </InfoRow>
 
-            {/* 방문 목적, 사용 가능 언어 */}
-            <InfoRow>
-                <InfoItem>
-                    <InfoLabel>📄 Purpose</InfoLabel>
-                    <InfoValue>{purpose}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                    <InfoLabel>🌐 Language</InfoLabel>
-                    <InfoValue>{languages.join(' • ')}</InfoValue>
-                </InfoItem>
-            </InfoRow>
+      {/*  */}
+      <InfoRowSingle>
+        <InfoLabel>⭐ Personality</InfoLabel>
+      </InfoRowSingle>
+      <TagsWrap>
+        {personalities.map((p) => (
+          <Tag key={p} label={p} />
+        ))}
+      </TagsWrap>
 
-            {/*  */}
-            <InfoRowSingle>
-                <InfoLabel>⭐ Personality</InfoLabel>
-            </InfoRowSingle>
-            <TagsWrap>
-                {personalities.map((p) => (
-                    <Tag key={p} label={p} />
-                ))}
-            </TagsWrap>
-
-            {/* 필로우, 채팅 버튼 */}
-            <Actions>
-                <CustomButton
-                    label={isFollowed ? 'Following' : 'Follow'}
-                    variant={isFollowed ? 'filled' : 'outline'}
-                    onPress={onFollow}
-                />
-                <CustomButton label="Chat" variant="outline" onPress={onChat} />
-            </Actions>
-        </Card>
-    );
+      {/* 필로우, 채팅 버튼 */}
+      <Actions>
+        <CustomButton
+          label={isFollowed ? 'Following' : 'Follow'}
+          variant={isFollowed ? 'filled' : 'outline'}
+          onPress={onFollow}
+        />
+        <CustomButton label="Chat" variant="outline" onPress={onChat} />
+      </Actions>
+    </Card>
+  );
 }
 
 const Card = styled.View`
@@ -90,19 +83,6 @@ const Card = styled.View`
   shadow-opacity: 0.05;
   shadow-radius: 4px;
   elevation: 2;
-`;
-
-const SpeechBubble = styled.View`
-  background-color: #f5f5f5;
-  border-radius: 12px;
-  padding: 8px;
-  margin-bottom: 12px;
-  max-width: 90%;
-`;
-
-const SpeechText = styled.Text`
-  font-size: 12px;
-  text-align: center;
 `;
 
 const Name = styled.Text`
