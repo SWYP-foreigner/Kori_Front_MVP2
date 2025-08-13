@@ -1,46 +1,26 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import { useRouter } from 'expo-router';
-
+import GoogleSignInButton from '../components/GoogleSignInButton';
+import AppleSignInButton from '../components/AppleSignInButton';
 const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
 `;
 
-const GoogleLoginButton = styled.TouchableOpacity`
-  margin-bottom: 16px;
-  padding: 12px 24px;
-  background-color: #4285F4;
-  border-radius: 8px;
-`;
-
-const GoogleLoginText = styled.Text`
-  color: white;
-  font-weight: bold;
-`;
-
-const AppleLoginButton = styled.TouchableOpacity`
-  margin-bottom: 16px;
-  padding: 12px 24px;
-  background-color: black;
-  border-radius: 8px;
-`;
-
-const AppleLoginText = styled.Text`
-  color: white;
-  font-weight: bold;
-`;
-
 const TabsMoveButton = styled.TouchableOpacity`
   padding: 12px 24px;
   background-color: gray;
   border-radius: 8px;
+  width : 250px;
+  align-items:center;
 `;
 
 const TabsMoveText = styled.Text`
   color: white;
   font-weight: bold;
+  font-size:17;
 `;
 
 const Login = () => {
@@ -51,13 +31,9 @@ const Login = () => {
   };
   return (
     <Container>
-      <GoogleLoginButton>
-        <GoogleLoginText>Google 로그인</GoogleLoginText>
-      </GoogleLoginButton>
+      <GoogleSignInButton/>
 
-      <AppleLoginButton>
-        <AppleLoginText>Apple 로그인</AppleLoginText>
-      </AppleLoginButton>
+      <AppleSignInButton/>
 
       <TabsMoveButton onPress={goToTabs}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
