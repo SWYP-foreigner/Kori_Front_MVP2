@@ -70,7 +70,7 @@ export default function GoogleSignInButton({ onPress, loading, disabled }: Props
 const GoogleLoginButton = styled.Pressable`
   flex-direction: row;
   align-items: center;
-  width : 250px;
+  width : 251px;
   height: 50px;
   background-color: #ffffff;
   border-radius: 8px;
@@ -89,7 +89,7 @@ const IconWrapper = styled.View`
 `;
 
 const ButtonText = styled.Text`
-  font-size: 16px;
+  font-size: 17px;
   color: #3c4043;
   font-weight: 500;
 `;
