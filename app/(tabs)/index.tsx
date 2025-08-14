@@ -1,12 +1,19 @@
 import FriendCard from '@/components/FriendCard';
 import ProfileBubble from '@/components/ProfileBubble';
+import useFollowUser from '@/hooks/mutations/useFollowUser';
 import { SafeAreaView, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
+
+  //테스트
+  const targetUserId = 42;
+  const followMutation = useFollowUser();
+
   return (
     <SafeAreaView style={styles.container}>
       <ProfileBubble bio="Hello~ I came to Korea from the U.S. as an exchange student" />
       <FriendCard
+        userId={targetUserId}
         name="Jane Doe"
         country="United States"
         age={20}
@@ -14,7 +21,7 @@ export default function HomeScreen() {
         languages={['EN', 'KO', 'JP']}
         personalities={['Swimming', 'Reading']}
         isFollowed={false}
-        onFollow={() => console.log('Follow clicked')}
+        onFollow={(userId) => followMutation.mutate(userId)}
         onChat={() => console.log('Chat clicked')}
       />
     </SafeAreaView>

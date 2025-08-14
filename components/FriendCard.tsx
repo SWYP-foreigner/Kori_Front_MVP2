@@ -5,6 +5,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 
 type Props = {
+  userId: number;
   name: string;
   country: string;
   age: number;
@@ -12,11 +13,12 @@ type Props = {
   languages: string[];
   personalities: string[];
   isFollowed?: boolean;
-  onFollow?: () => void;
+  onFollow?: (userId: number) => void;
   onChat?: () => void;
 };
 
 export default function FriendCard({
+  userId,
   name,
   country,
   age,
@@ -63,7 +65,7 @@ export default function FriendCard({
         <CustomButton
           label={isFollowed ? 'Following' : 'Follow'}
           variant={isFollowed ? 'filled' : 'outline'}
-          onPress={onFollow}
+          onPress={() => onFollow?.(userId)}
         />
         <CustomButton label="Chat" variant="outline" onPress={onChat} />
       </Actions>
