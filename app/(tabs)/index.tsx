@@ -1,9 +1,11 @@
 import FriendCard from '@/components/FriendCard';
+import ProfileBubble from '@/components/ProfileBubble';
 import { SafeAreaView, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
+      <ProfileBubble bio="Hello~ I came to Korea from the U.S. as an exchange student" />
       <FriendCard
         name="Jane Doe"
         country="United States"
@@ -11,7 +13,6 @@ export default function HomeScreen() {
         purpose="Education"
         languages={['EN', 'KO', 'JP']}
         personalities={['Swimming', 'Reading']}
-        bio="Hello~ I came to Korea from the U.S. as an exchange student"
         isFollowed={false}
         onFollow={() => console.log('Follow clicked')}
         onChat={() => console.log('Chat clicked')}
