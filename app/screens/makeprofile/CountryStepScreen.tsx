@@ -26,9 +26,6 @@ export default function GenderStepScreen({ navigation}) {
   //     pathname: './GenderStepScreen',
   //     params: { firstName, lastName }, // userData 대신 개별 필드
   //   });
-  router.push({
-    pathname:'./CountryStepScreen'
-  })
     console.log("버튼 눌림")
   }
 
@@ -36,14 +33,14 @@ export default function GenderStepScreen({ navigation}) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
         <Container>
-          <StepText>Step 2 / 9</StepText>
+          <StepText>Step 3 / 9</StepText>
 
           <TitleWrapper>
-            <Title>What is</Title>
-            <Title>your gender?</Title>
+            <Title>Select your</Title>
+            <Title>country</Title>
           </TitleWrapper>
 
-          <Subtitle>This is how it’ll appear on your profile.</Subtitle>
+          <Subtitle>Better matches, smoother conversation</Subtitle>
           <Form>
           <GenderWrapper
             onPress={()=>handleGenderClick('Female')}

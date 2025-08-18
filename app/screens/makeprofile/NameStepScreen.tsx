@@ -21,6 +21,9 @@ export default function NameStepScreen({ navigation}) {
   //     params: { firstName, lastName }, // userData 대신 개별 필드
   //   });
     console.log("버튼 눌림")
+    router.push({
+      pathname:'./GenderStepScreen'
+    })
   }
 
   return (
