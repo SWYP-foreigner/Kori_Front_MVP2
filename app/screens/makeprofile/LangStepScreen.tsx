@@ -76,11 +76,11 @@ export default function CountryStepScreen({ navigation}) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
         <Container>
-          <StepText>Step 3 / 9</StepText>
+          <StepText>Step 4 / 9</StepText>
 
           <TitleWrapper>
-            <Title>Select your</Title>
-            <Title>country</Title>
+            <Title>Which language</Title>
+            <Title>do you speak</Title>
           </TitleWrapper>
 
           <Subtitle>Better matches, smoother conversation</Subtitle>
