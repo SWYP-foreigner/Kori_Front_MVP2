@@ -53,13 +53,13 @@ export default function LanguageStepScreen({ navigation }) {
   const handleNext = () => {
     console.log("Selected languages:", selectedLanguages);
     router.push({
-      pathname: './AboutMeStepScreen'
+      pathname: './NextStepScreen'
     });
   };
 
   const handleSkip = () => {
     router.push({
-      pathname: './AboutMeStepScreen'
+      pathname: './NextStepScreen'
     });
   };
 
@@ -118,14 +118,17 @@ export default function LanguageStepScreen({ navigation }) {
           
           {selectedLanguages.length > 0 && (
             <SelectionInfo>
-              <SelectionCount >{selectedLanguages.length}/5 selected</SelectionCount>
+              <SelectionTag>
+                <SelectionText>{selectedLanguages.length} × 언어</SelectionText>
+              </SelectionTag>
+              <SelectionCount>{selectedLanguages.length}/5 selected</SelectionCount>
             </SelectionInfo>
           )}
         </Form>
 
         <Spacer />
         
-        <ButtonContainer hasSelection={canProceed}>
+        <ButtonContainer>
           <NextButton
             onPress={handleNext}
             disabled={!canProceed}
@@ -133,11 +136,10 @@ export default function LanguageStepScreen({ navigation }) {
           >
             <ButtonText>Next</ButtonText>
           </NextButton>
-          {!canProceed &&(
+          
           <SkipButton onPress={handleSkip}>
             <SkipText>Skip</SkipText>
           </SkipButton>
-          )}
         </ButtonContainer>
 
         <BottomSpacer />
@@ -243,19 +245,23 @@ const SelectionInfo = styled.View`
   margin-top: 16px;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+`;
+
+const SelectionTag = styled.View`
+  background-color: #8B5CF6;
+  border-radius: 12px;
+  padding: 4px 8px;
 `;
 
 const SelectionText = styled.Text`
-  
   color: #FFFFFF;
   font-size: 12px;
   font-family: 'PlusJakartaSans-Medium';
-  
 `;
 
 const SelectionCount = styled.Text`
-  color:  #02F59B;
+  color: #949899;
   font-size: 13px;
   font-family: 'PlusJakartaSans-Regular';
 `;
@@ -330,7 +336,6 @@ const Spacer = styled.View`
 `;
 
 const ButtonContainer = styled.View`
-  margin-bottom:${(props)=>(props.hasSelection ? '20px':'0px')};
   gap: 12px;
 `;
 
