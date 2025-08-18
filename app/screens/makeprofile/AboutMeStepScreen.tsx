@@ -1,179 +1,76 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useRoute } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 
-export default function LanguageStepScreen({ navigation }) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState([]);
-
-  const languages = [
-    'Afrikaans (AF)', 'Albanian (SQ)', 'Amharic (AM)', 'Arabic (AR)', 'Armenian (HY)', 'Azerbaijani (AZ)',
-    'Basque (EU)', 'Belarusian (BE)', 'Bengali (BN)', 'Bosnian (BS)', 'Bulgarian (BG)', 'Burmese (MY)',
-    'Catalan (CA)', 'Chinese (ZH)', 'Croatian (HR)', 'Czech (CS)',
-    'Danish (DA)', 'Dutch (NL)',
-    'English (EN)', 'Estonian (ET)',
-    'Finnish (FI)', 'French (FR)',
-    'Galician (GL)', 'Georgian (KA)', 'German (DE)', 'Greek (EL)', 'Gujarati (GU)',
-    'Hebrew (HE)', 'Hindi (HI)', 'Hungarian (HU)',
-    'Icelandic (IS)', 'Indonesian (ID)', 'Irish (GA)', 'Italian (IT)',
-    'Japanese (JA)',
-    'Kannada (KN)', 'Kazakh (KK)', 'Khmer (KM)', 'Korean (KO)', 'Kurdish (KU)', 'Kyrgyz (KY)',
-    'Lao (LO)', 'Latin (LA)', 'Latvian (LV)', 'Lithuanian (LT)', 'Luxembourgish (LB)',
-    'Macedonian (MK)', 'Malay (MS)', 'Malayalam (ML)', 'Maltese (MT)', 'Marathi (MR)', 'Mongolian (MN)',
-    'Nepali (NE)', 'Norwegian (NO)',
-    'Pashto (PS)', 'Persian (FA)', 'Polish (PL)', 'Portuguese (PT)', 'Punjabi (PA)',
-    'Romanian (RO)', 'Russian (RU)',
-    'Serbian (SR)', 'Sinhala (SI)', 'Slovak (SK)', 'Slovenian (SL)', 'Somali (SO)', 'Spanish (ES)', 'Swahili (SW)', 'Swedish (SV)',
-    'Tajik (TG)', 'Tamil (TA)', 'Telugu (TE)', 'Thai (TH)', 'Turkish (TR)', 'Turkmen (TK)',
-    'Ukrainian (UK)', 'Urdu (UR)', 'Uzbek (UZ)',
-    'Vietnamese (VI)',
-    'Welsh (CY)',
-    'Yiddish (YI)',
-    'Zulu (ZU)'
-  ].sort();
-
-  const canProceed = selectedLanguages.length > 0;
+// ------------------------
+// NameStepScreen
+// ------------------------
+export default function NameStepScreen({ navigation}) {
+  const [AboutMe, setAboutMe] = useState('');
   const router = useRouter();
-
-  const handleLanguageSelect = (language) => {
-    if (selectedLanguages.includes(language)) {
-      // 이미 선택된 언어면 제거
-      setSelectedLanguages(selectedLanguages.filter(lang => lang !== language));
-    } else if (selectedLanguages.length < 5) {
-      // 최대 5개까지만 선택 가능
-      setSelectedLanguages([...selectedLanguages, language]);
-    } else {
-      // 5개 초과 선택시 경고
-      Alert.alert("Maximum Selection", "You can select up to five languages!");
-    }
-  };
-
+  const maxLength = 70;
+  
+  const isOverLimit = AboutMe.length > maxLength;
+  const canProceed = AboutMe.trim().length > 0 && !isOverLimit;
+  
   const handleNext = () => {
-    console.log("Selected languages:", selectedLanguages);
-    router.push({
-      pathname: './NextStepScreen'
-    });
-  };
-
-  const handleSkip = () => {
-    router.push({
-      pathname: './NextStepScreen'
-    });
-  };
-
-  const getDisplayText = () => {
-    if (selectedLanguages.length === 0) {
-      return 'Select your language';
-    } else {
-      // 언어 코드만 추출해서 표시
-      const codes = selectedLanguages.map(lang => {
-        const match = lang.match(/\(([^)]+)\)/);
-        return match ? match[1] : lang;
+    if (canProceed) {
+      console.log("버튼 눌림");
+      router.push({
+        pathname: './GenderStepScreen'
       });
-      return codes.join(' / ');
     }
-  };
-
-  const renderLanguageItem = ({ item }) => {
-    const isSelected = selectedLanguages.includes(item);
-    
-    return (
-      <LanguageItem 
-        selected={isSelected}
-        onPress={() => handleLanguageSelect(item)}
-      >
-        <LanguageText>{item}</LanguageText>
-        {isSelected && (  
-          <AntDesign name="check" size={20} color="#02F59B" />
-        )}
-      </LanguageItem>
-    );
   };
 
   return (
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
-        <StepText>Step 4 / 9</StepText>
+        <StepText>Step 5 / 9</StepText>
 
         <TitleWrapper>
-          <Title>Which language</Title>
-          <Title>do you speak?</Title>
+          <Title>About me</Title>
         </TitleWrapper>
 
-        <Subtitle>You can select up to 5 language.</Subtitle>
+        <Subtitle>Tell us about your short story.</Subtitle>
         
         <Form>
-          <DropdownButton 
-            selected={selectedLanguages.length > 0} 
-            onPress={() => setIsModalVisible(true)}
-          >
-            <DropdownText selected={selectedLanguages.length > 0}>
-              {getDisplayText()}
-            </DropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
-          </DropdownButton>
-          
-          {selectedLanguages.length > 0 && (
-            <SelectionInfo>
-              <SelectionTag>
-                <SelectionText>{selectedLanguages.length} × 언어</SelectionText>
-              </SelectionTag>
-              <SelectionCount>{selectedLanguages.length}/5 selected</SelectionCount>
-            </SelectionInfo>
-          )}
+          <InputWrapper isEmpty={AboutMe.length === 0} isError={isOverLimit}>
+            <Input
+              value={AboutMe}
+              onChangeText={setAboutMe}
+              placeholder="Describe myself here"
+              placeholderTextColor="#616262"
+              autoCapitalize="sentences"
+              returnKeyType="done"
+              multiline
+              textAlignVertical="top"
+              maxLength={100} // 소프트 리미트보다 약간 높게 설정
+            />
+            
+            <CharacterCountWrapper>
+              <CharacterCount isError={isOverLimit}>
+                {AboutMe.length}/{maxLength} limit
+              </CharacterCount>
+            </CharacterCountWrapper>
+          </InputWrapper>
         </Form>
 
         <Spacer />
         
-        <ButtonContainer>
-          <NextButton
-            onPress={handleNext}
-            disabled={!canProceed}
-            canProceed={canProceed}
-          >
-            <ButtonText>Next</ButtonText>
-          </NextButton>
-          
-          <SkipButton onPress={handleSkip}>
-            <SkipText>Skip</SkipText>
-          </SkipButton>
-        </ButtonContainer>
+        <NextButton
+          onPress={handleNext}
+          disabled={!canProceed}
+          canProceed={canProceed}
+        >
+          <ButtonText>Next</ButtonText>
+        </NextButton>
 
         <BottomSpacer />
       </Container>
-
-      {/* Language Selection Bottom Sheet */}
-      <Modal
-        visible={isModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <ModalOverlay onPress={() => setIsModalVisible(false)} activeOpacity={1}>
-          <BottomSheetContent>
-            <BottomSheetHeader>
-              <BottomSheetHandle />
-            </BottomSheetHeader>
-            
-            <LanguageList
-              data={languages}
-              renderItem={renderLanguageItem}
-              keyExtractor={(item, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-            />
-            
-            {selectedLanguages.length >= 5 && (
-              <MaxSelectionWarning>
-                <AntDesign name="closecircle" size={16} color="#FF6B6B" />
-                <WarningText>You can select up to five languages!</WarningText>
-              </MaxSelectionWarning>
-            )}
-          </BottomSheetContent>
-        </ModalOverlay>
-      </Modal>
     </SafeArea>
   );
 }
@@ -206,7 +103,7 @@ const TitleWrapper = styled.View`
 const Title = styled.Text`
   color: #FFFFFF;
   font-size: 40px;
-  line-height: 45px;
+  line-height: 40px;
   letter-spacing: 0.2px;
   font-family: 'InstrumentSerif-Regular';
 `;
@@ -222,121 +119,39 @@ const Form = styled.View`
   margin-top: 50px;
 `;
 
-const DropdownButton = styled.TouchableOpacity`
-  width: 100%;
-  height: 50px;
-  border-radius: 8px;
+const InputWrapper = styled.View`
+  width: 335px;
+  height: 199px;
+  border-radius: 10px;
   background-color: #353637;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0px 16px;
-  border: 1px solid ${(props) => (props.selected ? '#02F59B99' : '#949899')};
-`;
-
-const DropdownText = styled.Text`
-  color: ${(props) => (props.selected ? '#EDEDED' : '#949899')};
-  font-size: 15px;
-  font-family: 'PlusJakartaSans-Regular';
-  flex: 1;
-`;
-
-const SelectionInfo = styled.View`
   margin-top: 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  padding: 16px;
+  position: relative;
 `;
 
-const SelectionTag = styled.View`
-  background-color: #8B5CF6;
-  border-radius: 12px;
-  padding: 4px 8px;
-`;
-
-const SelectionText = styled.Text`
-  color: #FFFFFF;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans-Medium';
-`;
-
-const SelectionCount = styled.Text`
-  color: #949899;
-  font-size: 13px;
-  font-family: 'PlusJakartaSans-Regular';
-`;
-
-const ModalOverlay = styled.TouchableOpacity`
+const Input = styled.TextInput`
   flex: 1;
-  background-color: rgba(0, 0, 0, 0.5);
-  justify-content: flex-end;
-`;
-
-const BottomSheetContent = styled.View`
-  background-color: #353637;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  max-height: 70%;
-  padding-bottom: 20px;
-`;
-
-const BottomSheetHeader = styled.View`
-  align-items: center;
-  padding: 20px 20px 10px 20px;
-`;
-
-const BottomSheetHandle = styled.View`
-  width: 40px;
-  height: 4px;
-  background-color: #949899;
-  border-radius: 2px;
-`;
-
-const LanguageList = styled(FlatList)`
-  max-height: 400px;
-  padding: 0 20px;
-`;
-
-const LanguageItem = styled.TouchableOpacity`
-  padding: 16px 0;
-  border-bottom-width: 0.5px;
-  border-bottom-color: #4A4B4C;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const LanguageText = styled.Text`
   color: #EDEDED;
   font-size: 16px;
+  line-height: 24px;
   font-family: 'PlusJakartaSans-Regular';
-  flex: 1;
+  text-align-vertical: top;
 `;
 
-const MaxSelectionWarning = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  background-color: rgba(255, 107, 107, 0.1);
-  margin: 0 20px;
-  border-radius: 8px;
-  margin-top: 16px;
+const CharacterCountWrapper = styled.View`
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
 `;
 
-const WarningText = styled.Text`
-  color: #FF6B6B;
-  font-size: 14px;
+const CharacterCount = styled.Text`
+  color: ${props => props.isError ? '#FF6B6B' : '#666'};
+  font-size: 12px;
   font-family: 'PlusJakartaSans-Regular';
-  margin-left: 8px;
 `;
 
 const Spacer = styled.View`
   flex: 1;
-`;
-
-const ButtonContainer = styled.View`
-  gap: 12px;
 `;
 
 const NextButton = styled.TouchableOpacity`
@@ -345,7 +160,8 @@ const NextButton = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
   background-color: #02F59B;
-  opacity: ${(props) => (props.canProceed ? 1 : 0.4)};
+  margin-bottom: 8px;
+  opacity: ${(props) => (props.canProceed ? 1 : 0.5)};
 `;
 
 const ButtonText = styled.Text`
@@ -353,18 +169,6 @@ const ButtonText = styled.Text`
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';
-`;
-
-const SkipButton = styled.TouchableOpacity`
-  height: 44px;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SkipText = styled.Text`
-  color: #949899;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans-Regular';
 `;
 
 const BottomSpacer = styled.View`
