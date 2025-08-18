@@ -2,27 +2,26 @@ import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useRoute } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation, onNext }) {
+export default function NameStepScreen({ navigation}) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-
-  const canProceed = useMemo(
-    () => firstName.trim().length > 0 && lastName.trim().length > 0,
-    [firstName, lastName]
-  );
-
-  const handleNext = () => {
-    if (!canProceed) return;
-    if (typeof onNext === 'function') {
-      onNext({ firstName: firstName.trim(), lastName: lastName.trim() });
-    } else if (navigation && typeof navigation.navigate === 'function') {
-      navigation.navigate('NextStep', { firstName: firstName.trim(), lastName: lastName.trim() });
-    }
-  };
+  const [FirstNameSubmitted,setFirstNameSubmitted]=useState(false);
+  const [LastNameSubmitted,setLastNameSubmitted]=useState(false);
+  const canProceed = FirstNameSubmitted && LastNameSubmitted;
+  const router=useRouter();
+  const handleNext=()=>{
+  //  router.push({
+  //     pathname: './GenderStepScreen',
+  //     params: { firstName, lastName }, // userData 대신 개별 필드
+  //   });
+    console.log("버튼 눌림")
+  }
 
   return (
     <SafeArea bgColor="#0F0F10">
@@ -46,8 +45,13 @@ export default function NameStepScreen({ navigation, onNext }) {
               placeholderTextColor="#616262"
               autoCapitalize="words"
               returnKeyType="Next"
+              onFocus={() => setFirstNameSubmitted(false)}
+              onSubmitEditing={()=>{
+               setFirstNameSubmitted(true);
+    
+              }}
             />
-            <AntDesign name="check" style={{ marginLeft: 8 }} size={24} color="#02F59B" />
+            {FirstNameSubmitted&&firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
           <InputWrapper>
              <Input
@@ -57,17 +61,19 @@ export default function NameStepScreen({ navigation, onNext }) {
               placeholderTextColor="#616262"
               autoCapitalize="words"
               returnKeyType="Done"
+              onFocus={() => setLastNameSubmitted(false)}
+              onSubmitEditing={()=>{
+               setLastNameSubmitted(true);
+              }}
             />
-            <AntDesign name="check" size={24} color="#02F59B" />
+            {LastNameSubmitted&&lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
         
           </Form>
 
           <Spacer />
-
           <NextButton
-            activeOpacity={0.8}
-            onPress={handleNext}
+          onPress={handleNext}
             disabled={!canProceed}
             canProceed={canProceed}
           >
@@ -148,8 +154,9 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: ${(props) => (props.canProceed ? '#02F59B' : '#02F59B')};
+  background-color: #02F59B;
   margin-bottom: 8px;
+  opacity: ${(props) => (props.canProceed ? 1 : 0.5)};
 `;
 
 const ButtonText = styled.Text`
