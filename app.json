@@ -1,12 +1,11 @@
 {
   "expo": {
-    "scheme":"myapp",
     "name": "Kori_Front",
     "slug": "Kori_Front",
+    "owner":"koriapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "korifront",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,6 +14,7 @@
     },
     "android": {
       "package": "com.SWYP.kori",
+      "windowSoftInputMode": "adjustPan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -37,7 +37,8 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -47,6 +48,7 @@
       "eas": {
         "projectId": "ebde49c4-4dbe-4c95-9f09-52f33096566c"
       }
-    }
+    },
+    "scheme": "koriapp"
   }
 }

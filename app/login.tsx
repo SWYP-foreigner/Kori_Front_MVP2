@@ -1,69 +1,81 @@
-import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ActivityIndicatorProps } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React, { useEffect } from 'react';
 import styled from 'styled-components/native';
-import AppleSignInButton from '../components/AppleSignInButton';
+// import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
+import { useRouter } from 'expo-router';
+import { Alert } from "react-native";
+
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import AppleSignInButton from '../components/AppleSignInButton';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
+
   const router = useRouter();
-  const [authUrl, setAuthUrl] = useState<string | null>(null); // authUrl이 웹뷰로 열림
-  const [loadingWebView, setLoadingWebView] = useState(false);
+  const redirectUri="https://dev.ko-ri.cloud/api/v1/member/google/callback"
+// //   // 디버깅용 - 실제 사용되는 URI 확인
+//   const redirectUri = makeRedirectUri({
+//   scheme: "koriapp",
+//   useProxy: false // 네이티브 EAS 빌드에서는 반드시 false
+// });
+  // const redirectUri="https://dev.ko-ri.cloud/google/AppLogin";
+  // console.log("실제 redirectUri:", redirectUri);
+  // const [request, response, promptAsync] = Google.useAuthRequest({
+  //   clientId: "299218725304-p6lv46kv7t6bhvglu72glfmaisvn7p5p.apps.googleusercontent.com",
+  //   responseType: "code",
+  //   redirectUri:redirectUri,
+  //   scopes: ["openid", "profile", "email"],
+  // });
 
+  const [request,response,promptAsync]=Google.useAuthRequest({
+    androidClientId:"299218725304-hukh2lg5tu68oestcc4t3lfhbeipgchr.apps.googleusercontent.com",
+    webClientId:"299218725304-p6lv46kv7t6bhvglu72glfmaisvn7p5p.apps.googleusercontent.com"
+  })
+  useEffect(() => {
+    console.log("들어옴");
+    console.log("response",response);
+    if (response?.type === "success") {
+      const { code } = response.params;
+      console.log("인가 코드:", code);
+      Alert.alert("인가 코드 받기 성공", code);
 
-  // 서버에서 인증 URL 가져오기
-  const handleLogin = useCallback(async (provider: 'google' | 'apple') => {
-    try {
-      setLoadingWebView(true);
-      const res = await fetch(`https://your-server.com/auth/${provider}`);
-      const { url } = await res.json();
-      setAuthUrl(url);
-    } catch (err) {
-      console.error(err);
-      alert('서버 연결 실패');
-    } finally {
-      setLoadingWebView(false);
+      // // ⚡ Spring Boot 서버로 인가 코드 전달
+      // fetch("https://your-backend.com/oauth/google", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ code }),
+      // })
+      //   .then(async (res) => {
+      //     if (!res.ok) throw new Error("서버 요청 실패");
+      //     const data = await res.json();
+
+      //     // 서버에서 JWT(access token 등) 발급받았다고 가정
+      //     if (data?.jwt) {
+      //       await SecureStore.setItemAsync("jwt", data.jwt);
+      //       Alert.alert("로그인 성공", "JWT 저장 완료!");
+      //       router.push("./(tabs)");
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //     Alert.alert("서버 전송 실패", err.message);
+      //   });
     }
-  }, []);
+  }, [response]);
 
-  // WebView URL 감지
-  const handleWebViewNavChange = async (event: any) => {
-    const redirectUrl = event.url;
-    if (redirectUrl.startsWith('myapp://login')) {  // 서버에서 리다이렉트 한 주소가 맞다면 ( 서버에서 보낸게 맞다면 )
-      const token = redirectUrl.split('token=')[1]; // JWT 토큰 추출
-      if (token) {
-        await SecureStore.setItemAsync('jwt', token); // JWT 토큰 추출 후 SecureStore에 저장
-        alert('로그인 성공');
-        setAuthUrl(null);
-        router.replace('./(tabs)'); // 로그인 성공 후 탭 화면 이동
-      }
-    }
-  };
-
-  // WebView 활성화 여부에 따라 화면 전환
-  if (authUrl) {
-    return (
-      <WebViewContainer>
-        <WebView
-          source={{ uri: authUrl }}
-          onNavigationStateChange={handleWebViewNavChange}
-          startInLoadingState
-          renderLoading={() => <Loading />}
-        />
-      </WebViewContainer>
-    );
-  }
-
-  // 로그인 전 화면
   return (
     <Container>
-      <GoogleSignInButton onPress={() => handleLogin('google')} loading={loadingWebView} />
-      <AppleSignInButton onPress={() => handleLogin('apple')} loading={loadingWebView} />
+      <GoogleSignInButton
+        disabled={!request}
+        onPress={() => promptAsync()}
+      />
+      <AppleSignInButton />
 
       {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
-      <TabsMoveButton onPress={() => router.push('./(tabs)')}>
+      <TabsMoveButton onPress={() => router.push('./screens/makeprofile/NameStepScreen')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
       </TabsMoveButton>
     </Container>
@@ -72,22 +84,12 @@ const LoginScreen = () => {
 
 export default LoginScreen;
 
+// Styled Components
 const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
   padding: 20px;
-`;
-
-const WebViewContainer = styled.View`
-  flex: 1;
-`;
-
-const Loading = styled(ActivityIndicator).attrs<ActivityIndicatorProps>({
-  size: 'large',
-  color: '#000',
-})`
-  flex: 1;
 `;
 
 const TabsMoveButton = styled.TouchableOpacity`
