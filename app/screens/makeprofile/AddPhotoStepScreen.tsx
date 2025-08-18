@@ -6,12 +6,12 @@ import { useRouter } from 'expo-router';
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation}) {
+export default function AddPhotoStepScreen({ navigation}) {
   const [AboutMe, setAboutMe] = useState('');
   const router = useRouter();
   const maxLength = 70;
   
-  const isOverLimit = AboutMe.length ==70;
+  const isOverLimit = AboutMe.length > maxLength;
   const canProceed = AboutMe.trim().length > 0 && !isOverLimit;
   
   const handleNext = () => {
@@ -27,16 +27,17 @@ export default function NameStepScreen({ navigation}) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
-        <StepText>Step 5 / 9</StepText>
+        <StepText>Step 6 / 9</StepText>
 
         <TitleWrapper>
-          <Title>About me</Title>
+          <Title>Let's add</Title>
+          <Title>your photo</Title>
         </TitleWrapper>
 
-        <Subtitle>Tell us about your short story.</Subtitle>
+        <Subtitle>This is how it’ll appear on your profile.</Subtitle>
         
-        <Form>
-          <InputWrapper >
+        {/* <Form>
+          <InputWrapper isEmpty={AboutMe.length === 0} isError={isOverLimit}>
             <Input
               value={AboutMe}
               onChangeText={setAboutMe}
@@ -46,7 +47,7 @@ export default function NameStepScreen({ navigation}) {
               returnKeyType="done"
               multiline
               textAlignVertical="top"
-              maxLength={70} // 소프트 리미트보다 약간 높게 설정
+              maxLength={100} // 소프트 리미트보다 약간 높게 설정
             />
             
             <CharacterCountWrapper>
@@ -55,7 +56,7 @@ export default function NameStepScreen({ navigation}) {
               </CharacterCount>
             </CharacterCountWrapper>
           </InputWrapper>
-        </Form>
+        </Form> */}
 
         <Spacer />
         
