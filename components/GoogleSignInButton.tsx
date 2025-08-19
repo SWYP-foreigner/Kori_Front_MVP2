@@ -72,7 +72,7 @@ const GoogleLoginButton = styled.Pressable`
   align-items: center;
   width : 251px;
   height: 50px;
-  background-color: #ffffff;
+  background-color: #000000;
   border-radius: 8px;
   border-width: 1px;
   border-color: #dadce0;
@@ -90,7 +90,7 @@ const IconWrapper = styled.View`
 
 const ButtonText = styled.Text`
   font-size: 17px;
-  color: #3c4043;
+  color: #ffffff;
   font-weight: 500;
 `;
 

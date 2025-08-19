@@ -90,6 +90,7 @@ const Container = styled.View`
   justify-content: center;
   align-items: center;
   padding: 20px;
+  background-color: #0F0F10;
 `;
 
 const TabsMoveButton = styled.TouchableOpacity`

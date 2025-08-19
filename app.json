@@ -2,6 +2,11 @@
   "expo": {
     "name": "Kori_Front",
     "slug": "Kori_Front",
+    "splash":{
+      "image":"./assets/images/character_02.png",
+      "resizeMode":"contain",
+      "backgroundColor":"#0F0F10"
+    },
     "owner":"koriapp",
     "version": "1.0.0",
     "orientation": "portrait",
