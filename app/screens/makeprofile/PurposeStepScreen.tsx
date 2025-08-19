@@ -70,7 +70,7 @@ export default function PurposeStepScreen({ navigation }) {
     if (canProceed) {
       console.log("Selected purpose:", selectedPurpose);
       router.push({
-        pathname: './NextStepScreen'
+        pathname: './TagStepScreen'
       });
     }
   };

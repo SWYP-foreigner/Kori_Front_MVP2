@@ -75,9 +75,12 @@ const LoginScreen = () => {
       <AppleSignInButton />
 
       {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
-      <TabsMoveButton onPress={() => router.push('./screens/makeprofile/TagStepScreen')}>
+      <TabsMoveButton onPress={() => router.push('./(tabs)')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
       </TabsMoveButton>
+      <ProfileMoveButton onPress={() => router.push('./screens/makeprofile/NameStepScreen')}>
+        <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
+      </ProfileMoveButton>
     </Container>
   );
 };
@@ -104,6 +107,22 @@ const TabsMoveButton = styled.TouchableOpacity`
 
 const TabsMoveText = styled.Text`
   color: white;
+  font-weight: bold;
+  font-size: 17px;
+`;
+
+const ProfileMoveButton=styled.TouchableOpacity`
+  padding: 12px 24px;
+  background-color: yellow;
+  border-radius: 8px;
+  width: 250px;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+
+const ProfileMoveText = styled.Text`
+  color: black;
   font-weight: bold;
   font-size: 17px;
 `;
