@@ -5,10 +5,9 @@ import React, { useMemo, useState } from 'react';
 import { ImageSourcePropType, Platform } from 'react-native';
 import styled from 'styled-components/native';
 
-/** --------- ICONS --------- **/
 const ICON_PURPOSE: ImageSourcePropType = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL: ImageSourcePropType = require('@/assets/icons/global.png');
-const ICON_HEART: ImageSourcePropType = require('@/assets/icons/heart.png'); // Layer_1.png -> heart.png 로 저장 가정
+const ICON_HEART: ImageSourcePropType = require('@/assets/icons/heart.png');
 
 type Props = {
   userId: number;
@@ -24,34 +23,32 @@ type Props = {
   onChat?: () => void;
 };
 
-/** --------- METRICS (시안 정렬값) --------- **/
-const CARD_RADIUS = 22;         // 더 둥글게
-const CARD_MAX_W = 388;         // 카드 최대폭
-const P_H = 20;                 // 좌/우 패딩
-const P_TOP = 22;               // 상단 패딩
-const P_BOTTOM = 18;            // 하단 패딩
+const CARD_RADIUS = 22;
+const CARD_MAX_W = 388;
+const P_H = 20;
+const P_TOP = 22;
+const P_BOTTOM = 18;
 
-const AVATAR = { size: 112 };   // 아바타 크게
-const NAME_MT = 14;             // 이름 위 여백
-const META_MT = 6;              // 메타 위 여백
-const BIO_MT = 14;              // 바이오 위 여백
-const BIO_MB = 18;              // 바이오 아래 여백
+const AVATAR = { size: 112 };
+const NAME_MT = 14;
+const META_MT = 6;
+const BIO_MT = 14;
+const BIO_MB = 18;
 
 const DIVIDER_MT = 12;
 const DIVIDER_COLOR = '#EAEAEA';
 
-const CHEVRON = { size: 28, ring: 1, lift: 13 };  // 분리선과 정확히 겹치도록
+const CHEVRON = { size: 28, ring: 1, lift: 13 };
 
-const SECTION_GAP_TOP = 16;     // 섹션(푸퍼스/랭귀지) 시작 위여백
-const COL_GAP = 18;             // 좌/우 컬럼 사이 거리
+const SECTION_GAP_TOP = 16;
+const COL_GAP = 18;
 const LABEL_ICON_GAP = 6;
 
 const BTN_HEIGHT = 52;
 const BTN_RADIUS = 14;
 const BTN_GAP = 14;
-const CARD_OUTER_GAP = 16;      // 카드 위/아래 간격(상위 스크롤 컨테이너에서 gap으로 조절)
+const CARD_OUTER_GAP = 16;
 
-/** --------- COMPONENT --------- **/
 export default function FriendCard({
   userId,
   name,
@@ -65,7 +62,7 @@ export default function FriendCard({
   onFollow,
   onChat,
 }: Props) {
-  const [expanded, setExpanded] = useState(true); // 시안은 펼친 화면이 기본이므로 true
+  const [expanded, setExpanded] = useState(true);
   const langText = useMemo(() => languages.join(' • '), [languages]);
 
   return (
@@ -154,8 +151,6 @@ export default function FriendCard({
   );
 }
 
-/** --------- STYLES --------- **/
-
 const CardWrap = styled.View`
   width: 100%;
   align-self: stretch;
@@ -218,7 +213,6 @@ const Bio = styled.Text`
   letter-spacing: 0.1px;
 `;
 
-/* Divider + Chevron */
 const DividerWrap = styled.View`
   position: relative;
   align-self: stretch;
@@ -251,7 +245,6 @@ const ChevronText = styled.Text`
   margin-top: -1px;
 `;
 
-/* 섹션(라벨/값) */
 const Row = styled.View`
   flex-direction: row;
   align-self: stretch;
@@ -295,20 +288,15 @@ const Value = styled.Text`
   color: #1a1a1a;
 `;
 
-/* 태그 */
 const TagsWrap = styled.View`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 10px;             /* 칩 간격을 약간 더 넓게 */
+  gap: 10px;             
   margin-top: 2px;
 `;
 
-/* 버튼 줄 */
 const Actions = styled.View`
   margin-top: 16px;
   flex-direction: row;
   gap: ${BTN_GAP}px;
 `;
-
-/* 버튼 컴포넌트에서 높이/라운드 맞추기 위해 propless로 통일:
-   CustomButton 내부 스타일이 다를 경우, 아래 값을 기준으로 맞춰주세요. */
