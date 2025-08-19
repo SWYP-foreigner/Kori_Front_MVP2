@@ -33,7 +33,7 @@ export default function MyPageScreen() {
                             label="Edit Profile"
                             tone="mint"
                             filled
-                            onPress={() => router.push('/(tabs)/mypage/edit')}
+                            onPress={() => router.push('/mypage/edit')}
                         />
                     </EditButtonWrap>
                 </ProfileView>
@@ -42,18 +42,19 @@ export default function MyPageScreen() {
                 <SectionTitle>My Friends</SectionTitle>
                 <RowLink>
                     <RowLeft>Friends List</RowLeft>
-                    <Chevron>›</Chevron>
+                    <Chevron onPress={() => router.push('/mypage/friends')}
+                    >›</Chevron>
                 </RowLink>
 
                 {/* 섹션: Follow List */}
                 <SectionTitle>Follow List</SectionTitle>
                 <CountCard>
-                    <CountItem onPress={() => router.push('/(tabs)/mypage/follows?tab=received')}>
+                    <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
                         <CountLabel>Received</CountLabel>
                         <CountNumber>{MOCK_ME.receivedCount}</CountNumber>
                     </CountItem>
                     <Divider />
-                    <CountItem onPress={() => router.push('/(tabs)/mypage/follows?tab=sent')}>
+                    <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
                         <CountLabel>Sent</CountLabel>
                         <CountNumber>{MOCK_ME.sentCount}</CountNumber>
                     </CountItem>
@@ -61,7 +62,7 @@ export default function MyPageScreen() {
 
                 {/* 섹션: Translate Setting */}
                 <SectionTitle>Translate Setting</SectionTitle>
-                <RowLink onPress={() => router.push('/(tabs)/mypage/translate')}>
+                <RowLink onPress={() => router.push('/mypage/translate')}>
                     <RowLeft>Chat Translation Language</RowLeft>
                     <Chevron>›</Chevron>
                 </RowLink>

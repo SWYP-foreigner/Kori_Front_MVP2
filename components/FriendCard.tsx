@@ -22,6 +22,8 @@ type Props = {
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
   onChat?: () => void;
+  /** 하단 버튼 영역을 커스텀하고 싶을 때 주입 (없으면 기본 버튼 노출) */
+  footerSlot?: React.ReactNode;
 };
 
 /** --------- METRICS (시안 정렬값) --------- **/
@@ -46,8 +48,6 @@ const SECTION_GAP_TOP = 16;     // 섹션(푸퍼스/랭귀지) 시작 위여백
 const COL_GAP = 18;             // 좌/우 컬럼 사이 거리
 const LABEL_ICON_GAP = 6;
 
-const BTN_HEIGHT = 52;
-const BTN_RADIUS = 14;
 const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;      // 카드 위/아래 간격(상위 스크롤 컨테이너에서 gap으로 조절)
 
@@ -64,6 +64,7 @@ export default function FriendCard({
   isFollowed = false,
   onFollow,
   onChat,
+  footerSlot,
 }: Props) {
   const [expanded, setExpanded] = useState(true); // 시안은 펼친 화면이 기본이므로 true
   const langText = useMemo(() => languages.join(' • '), [languages]);
@@ -78,7 +79,7 @@ export default function FriendCard({
       >
         {/* 상단 */}
         <Top>
-          <Avatar />
+          <Avatar /* size 지정 가능: size={AVATAR.size} */ />
           <Name>{name}</Name>
 
           <MetaLine>
@@ -110,7 +111,7 @@ export default function FriendCard({
             <Row style={{ marginTop: SECTION_GAP_TOP }}>
               <Col>
                 <LabelRow>
-                  <Icon source={ICON_PURPOSE} />
+                  <Icon source={ICON_PURPOSE} style={{ tintColor: '#808080' }} />
                   <Label>Purpose</Label>
                 </LabelRow>
                 <Value>{purpose}</Value>
@@ -118,7 +119,7 @@ export default function FriendCard({
 
               <Col style={{ marginLeft: COL_GAP }}>
                 <LabelRow>
-                  <Icon source={ICON_GLOBAL} />
+                  <Icon source={ICON_GLOBAL} style={{ tintColor: '#808080' }} />
                   <Label>Language</Label>
                 </LabelRow>
                 <Value>{langText}</Value>
@@ -126,7 +127,7 @@ export default function FriendCard({
             </Row>
 
             <LabelRow style={{ marginTop: 14, marginBottom: 8 }}>
-              <HeartIcon source={ICON_HEART} />
+              <HeartIcon source={ICON_HEART} style={{ tintColor: '#808080' }} />
               <Label>Interest</Label>
             </LabelRow>
 
@@ -139,16 +140,20 @@ export default function FriendCard({
         )}
 
         {/* 버튼 */}
-        <Actions>
-          <CustomButton
-            label={isFollowed ? 'Following' : '+ Follow'}
-            tone={isFollowed ? 'black' : 'mint'}
-            filled={!isFollowed}
-            disabled={isFollowed}
-            onPress={() => !isFollowed && onFollow?.(userId)}
-          />
-          <CustomButton label="Chat" tone="black" filled onPress={onChat} />
-        </Actions>
+        {footerSlot ? (
+          footerSlot
+        ) : (
+          <Actions>
+            <CustomButton
+              label={isFollowed ? 'Following' : '+ Follow'}
+              tone={isFollowed ? 'black' : 'mint'}
+              filled={!isFollowed}
+              disabled={isFollowed}
+              onPress={() => !isFollowed && onFollow?.(userId)}
+            />
+            <CustomButton label="Chat" tone="black" filled onPress={onChat} />
+          </Actions>
+        )}
       </CardInner>
     </CardWrap>
   );
@@ -224,6 +229,7 @@ const DividerWrap = styled.View`
   align-self: stretch;
   align-items: center;
   justify-content: center;
+  margin-top: ${DIVIDER_MT}px;
 `;
 
 const Divider = styled.View`
@@ -270,13 +276,11 @@ const LabelRow = styled.View`
 const Icon = styled.Image`
   width: 12px;   /* Purpose/Language = 12px */
   height: 12px;
-  tint-color: #808080;
 `;
 
 const HeartIcon = styled.Image`
   width: 11px;   /* Interest만 더 작게 */
   height: 11px;
-  tint-color: #808080;
   margin-top: 1px;
 `;
 
@@ -309,6 +313,3 @@ const Actions = styled.View`
   flex-direction: row;
   gap: ${BTN_GAP}px;
 `;
-
-/* 버튼 컴포넌트에서 높이/라운드 맞추기 위해 propless로 통일:
-   CustomButton 내부 스타일이 다를 경우, 아래 값을 기준으로 맞춰주세요. */
