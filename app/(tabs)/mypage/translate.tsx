@@ -26,14 +26,22 @@ export default function TranslateScreen() {
     );
 }
 
-const Safe = styled.SafeAreaView`flex:1;background:#0f1011;`;
+const Safe = styled.SafeAreaView`
+    flex:1;
+    background:#0f1011;
+`;
 const Title = styled.Text`
   padding: 12px 16px;
   color: #fff;
   font-size: 18px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
-const Box = styled.View`margin: 4px 16px;background:#121314;border-radius:12px;overflow:hidden;`;
+const Box = styled.View`
+    margin: 4px 16px;
+    background:#121314;
+    border-radius:12px;
+    overflow:hidden;
+`;
 const LangRow = styled.Pressable`
   padding: 14px 16px;
   border-bottom-width: 1px;
@@ -46,5 +54,10 @@ const LangText = styled.Text<{ active: boolean }>`
   color: ${({ active }) => active ? '#30F59B' : '#e9ecef'};
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
-const Radio = styled.Text`color:#cfd4da;font-size:16px;`;
-const Footer = styled.View`padding: 16px;`;
+const Radio = styled.Text`
+    color:#cfd4da;
+    font-size:16px;
+`;
+const Footer = styled.View`
+    padding: 16px;
+`;

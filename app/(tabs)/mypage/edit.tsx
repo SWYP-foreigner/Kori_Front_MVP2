@@ -171,36 +171,109 @@ export default function EditProfileScreen() {
     );
 }
 
-/* ───────── styles ───────── */
-const Safe = styled.SafeAreaView`flex:1;background:#0f1011;`;
-const Scroll = styled.ScrollView`padding: 0 16px;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #0f1011;
+`;
 
-const Header = styled.View`flex-direction:row;justify-content:space-between;align-items:center;padding:12px 0;`;
-const Title = styled.Text`color:#fff;font-size:18px;font-family:'PlusJakartaSans_700Bold';`;
+const Scroll = styled.ScrollView`
+  padding: 0 16px;
+`;
+
+const Header = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+`;
+
+const Title = styled.Text`
+  color: #fff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+
 const Save = styled.Pressable``;
-const SaveText = styled.Text`color:#30F59B;font-family:'PlusJakartaSans_700Bold';`;
 
-const Center = styled.View`align-items:center;padding:8px 0 16px 0;`;
-const Name = styled.Text`margin-top:8px;color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';`;
-const Email = styled.Text`margin-top:2px;color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const SaveText = styled.Text`
+  color: #30F59B;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+
+const Center = styled.View`
+  align-items: center;
+  padding: 8px 0 16px 0;
+`;
+
+const Name = styled.Text`
+  margin-top: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+
+const Email = styled.Text`
+  margin-top: 2px;
+  color: #b7babd;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
 
 const Field = styled.View`
   margin-bottom: 14px;
 `;
-const LabelRow = styled.View`flex-direction:row;justify-content:space-between;align-items:flex-end;`;
-const LabelText = styled.Text`color:#e9ecef;font-size:13px;margin-bottom:6px;font-family:'PlusJakartaSans_600SemiBold';`;
-const Count = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+
+const LabelRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+`;
+
+const LabelText = styled.Text`
+  color: #e9ecef;
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+
+const Count = styled.Text`
+  color: #7e848a;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
 
 const Input = styled.TextInput`
-  background:#121314;border-radius:10px;padding:12px 14px;color:#fff;
-  border-width:1px;border-color:#222426;font-family:'PlusJakartaSans_400Regular';
+  background: #121314;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  border-width: 1px;
+  border-color: #222426;
+  font-family: 'PlusJakartaSans_400Regular';
 `;
+
 const SelectWrap = styled.Pressable`
-  background:#121314;border-radius:10px;padding:12px 14px;
-  border-width:1px;border-color:#222426;flex-direction:row;justify-content:space-between;align-items:center;
+  background: #121314;
+  border-radius: 10px;
+  padding: 12px 14px;
+  border-width: 1px;
+  border-color: #222426;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 `;
-const SelectValue = styled.Text`color:#e9ecef;font-family:'PlusJakartaSans_400Regular';`;
-const Arrow = styled.Text`color:#7e848a;font-size:16px;margin-left:8px;`;
+
+const SelectValue = styled.Text`
+  color: #e9ecef;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+
+const Arrow = styled.Text`
+  color: #7e848a;
+  font-size: 16px;
+  margin-left: 8px;
+`;
+
 const Select = ({ value, onPress }: { value: string; onPress?: () => void }) => (
     <SelectWrap onPress={onPress}>
         <SelectValue>{value}</SelectValue>
@@ -208,51 +281,130 @@ const Select = ({ value, onPress }: { value: string; onPress?: () => void }) => 
     </SelectWrap>
 );
 
-const ChipRow = styled.View`flex-direction:row;flex-wrap:wrap;gap:8px;margin-top:8px;`;
-const Chip = styled.Pressable<{ active: boolean }>`
-  border-width: 1px; border-color: ${({ active }) => active ? '#30F59B' : '#2a2b2c'};
-  background: ${({ active }) => active ? 'rgba(48,245,155,0.08)' : '#121314'};
-  padding: 6px 12px; border-radius: 999px;
-`;
-const ChipText = styled.Text<{ active: boolean }>`
-  color: ${({ active }) => active ? '#30F59B' : '#cfd4da'};
-  font-size: 12px; font-family:'PlusJakartaSans_600SemiBold';
+const ChipRow = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 `;
 
-const TopRow = styled.View`flex-direction:row;justify-content:space-between;align-items:center;margin-bottom:6px;`;
-const SmallMuted = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const TagsWrap = styled.View`flex-direction:row;flex-wrap:wrap;gap:8px;margin-top:6px;`;
-const SmallEditBtn = styled.Pressable`margin-top:10px;align-self:flex-start;padding:4px 8px;border-radius:999px;border:1px solid #2a2b2c;background:#121314;`;
-const SmallEditText = styled.Text`color:#cfd4da;font-size:12px;font-family:'PlusJakartaSans_600SemiBold';`;
+const Chip = styled.Pressable<{ active: boolean }>`
+  border-width: 1px;
+  border-color: ${({ active }) => (active ? '#30F59B' : '#2a2b2c')};
+  background: ${({ active }) => (active ? 'rgba(48,245,155,0.08)' : '#121314')};
+  padding: 6px 12px;
+  border-radius: 999px;
+`;
+
+const ChipText = styled.Text<{ active: boolean }>`
+  color: ${({ active }) => (active ? '#30F59B' : '#cfd4da')};
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+
+const TopRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+`;
+
+const SmallMuted = styled.Text`
+  color: #7e848a;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+
+const TagsWrap = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+`;
+
+const SmallEditBtn = styled.Pressable`
+  margin-top: 10px;
+  align-self: flex-start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #2a2b2c;
+  background: #121314;
+`;
+
+const SmallEditText = styled.Text`
+  color: #cfd4da;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
 
 const TextArea = styled.TextInput`
-  background:#121314;border-radius:10px;padding:12px 14px;color:#fff;
-  border-width:1px;border-color:#222426;font-family:'PlusJakartaSans_400Regular';
-  min-height: 110px; text-align-vertical: top;
+  background: #121314;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  border-width: 1px;
+  border-color: #222426;
+  font-family: 'PlusJakartaSans_400Regular';
+  min-height: 110px;
+  text-align-vertical: top;
 `;
-const BottomPad = styled.View`height: 20px;`;
+
+const BottomPad = styled.View`
+  height: 20px;
+`;
 
 /* Modal(관심사) */
 const ModalOverlay = styled.Pressable`
   ...StyleSheet.absoluteFillObject;
-  background: rgba(0,0,0,0.6);
-  justify-content:flex-end;
+  background: rgba(0, 0, 0, 0.6);
+  justify-content: flex-end;
 `;
+
 const ModalSheet = styled.Pressable`
-  background:#0f1011;border-top-left-radius:16px;border-top-right-radius:16px;padding:16px;
+  background: #0f1011;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 16px;
   max-height: 80%;
 `;
-const SheetHeader = styled.View`flex-direction:row;justify-content:space-between;align-items:flex-end;margin-bottom:8px;`;
-const SheetTitle = styled.Text`color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';`;
-const SheetCount = styled.Text`color:#9aa0a6;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+
+const SheetHeader = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 8px;
+`;
+
+const SheetTitle = styled.Text`
+  color: #fff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+
+const SheetCount = styled.Text`
+  color: #9aa0a6;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+
 const TagGrid = styled.ScrollView``;
+
 const SelTag = styled.Pressable<{ active: boolean }>`
-  border-width:1px;border-color:${({ active }) => active ? '#30F59B' : '#2a2b2c'};
-  background:${({ active }) => active ? 'rgba(48,245,155,0.08)' : '#121314'};
-  padding:6px 12px;border-radius:999px;
+  border-width: 1px;
+  border-color: ${({ active }) => (active ? '#30F59B' : '#2a2b2c')};
+  background: ${({ active }) => (active ? 'rgba(48,245,155,0.08)' : '#121314')};
+  padding: 6px 12px;
+  border-radius: 999px;
 `;
+
 const SelTagText = styled.Text<{ active: boolean }>`
-  color:${({ active }) => active ? '#30F59B' : '#cfd4da'};
-  font-size:12px;font-family:'PlusJakartaSans_600SemiBold';
+  color: ${({ active }) => (active ? '#30F59B' : '#cfd4da')};
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
 `;
-const SheetBtns = styled.View`margin-top:12px;flex-direction:row;gap:10px;`;
+
+const SheetBtns = styled.View`
+  margin-top: 12px;
+  flex-direction: row;
+  gap: 10px;
+`;

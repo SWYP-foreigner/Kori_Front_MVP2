@@ -117,20 +117,45 @@ export default function FollowListScreen() {
     );
 }
 
-/* ---------- styles ---------- */
-const Safe = styled.SafeAreaView`flex:1;background:#0f1011;`;
-const Header = styled.View`
-  height: 48px; padding: 0 12px;
-  flex-direction: row; align-items: center; justify-content: space-between;
+const Safe = styled.SafeAreaView`
+    flex:1;
+    background:#0f1011;
 `;
-const Back = styled.Pressable`width:40px;align-items:flex-start;`;
-const HeaderTitle = styled.Text`color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';`;
-const IconRow = styled.View`flex-direction:row;align-items:center;`;
-const Icon = styled.Text`color:#cfd4da;font-size:16px;`;
+const Header = styled.View`
+    height: 48px;
+    padding: 0 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+`;
+const Back = styled.Pressable`
+    width:40px;
+    align-items:flex-start;
+`;
+const HeaderTitle = styled.Text`
+    color:#fff;
+    font-size:16px;
+    font-family:'PlusJakartaSans_700Bold';
+`;
+const IconRow = styled.View`
+    flex-direction:row;
+    align-items:center;
+`;
+const Icon = styled.Text`
+    color:#cfd4da;
+    font-size:16px;
+`;
 
-const Tabs = styled.View`flex-direction:row;padding:10px;gap:8px;`;
+const Tabs = styled.View`
+    flex-direction:row;
+    padding:10px;
+    gap:8px;
+`;
 const TabBtn = styled.Pressable<{ active: boolean }>`
-  flex:1;padding:10px;border-radius:12px;align-items:center;
+  flex:1;
+  padding:10px;
+  border-radius:12px;
+  align-items:center;
   background-color: ${({ active }) => active ? '#121314' : '#0b0c0c'};
   border: 1px solid #2a2b2c;
 `;
@@ -139,25 +164,84 @@ const TabTxt = styled.Text<{ active: boolean }>`
   font-family:'PlusJakartaSans_600SemiBold';
 `;
 
-const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
+const List = styled.FlatList`
+` as unknown as typeof import('react-native').FlatList;
 
-const ActionRow = styled.View`margin-top: 16px; flex-direction: row; gap: 14px;`;
-const TrailingRow = styled.View`margin: 8px 24px 12px 24px; align-items: flex-end;`;
-const SmallLink = styled.Text`color:#8aa0ff;font-size:12px;font-family:'PlusJakartaSans_600SemiBold';`;
+const ActionRow = styled.View`
+    margin-top: 16px;
+    flex-direction: row;
+    gap: 14px;
+  `;
+const TrailingRow = styled.View`
+    margin: 8px 24px 12px 24px;
+    align-items: flex-end;
+ `;
+const SmallLink = styled.Text`
+    color:#8aa0ff;
+    font-size:12px;
+    font-family:'PlusJakartaSans_600SemiBold';
+`;
 
 /* 모달 */
 const Overlay = styled.View`
-  position: absolute; top:0; left:0; right:0; bottom:0;
-  justify-content: center; align-items: center;
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    justify-content: center;
+    align-items: center;
 `;
 const Backdrop = styled.Pressable`
-  position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5);
+    position: absolute;
+    top:0;
+    eft:0;
+    right:0;
+    bottom:0;
+    background: rgba(0,0,0,0.5);
 `;
-const Modal = styled.View`width:84%;background:#fff;border-radius:12px;padding:16px;z-index:1;`;
-const ModalTitle = styled.Text`color:#1a1c1e;font-size:14px;font-family:'PlusJakartaSans_700Bold';`;
-const ModalDesc = styled.Text`margin-top:6px;color:#5a5f64;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const ModalRow = styled.View`margin-top:12px;flex-direction:row;gap:10px;`;
-const ModalBtn = styled.Pressable`flex:1;border-radius:8px;padding:10px;background:#f1f3f5;align-items:center;`;
-const ModalBtnText = styled.Text`color:#1a1c1e;font-family:'PlusJakartaSans_600SemiBold';`;
-const ModalBtnDanger = styled.Pressable`flex:1;border-radius:8px;padding:10px;background:#ffeded;align-items:center;`;
-const ModalBtnDangerText = styled.Text`color:#e03131;font-family:'PlusJakartaSans_700Bold';`;
+const Modal = styled.View`
+    width:84%;
+    background:#fff;
+    border-radius:12px;
+    padding:16px;
+    z-index:1;
+`;
+const ModalTitle = styled.Text`
+    color:#1a1c1e;
+    font-size:14px;
+    font-family:'PlusJakartaSans_700Bold';
+`;
+const ModalDesc = styled.Text`
+    margin-top:6px;
+    color:#5a5f64;
+    font-size:12px;
+    font-family:'PlusJakartaSans_400Regular';
+`;
+const ModalRow = styled.View`
+    margin-top:12px;
+    flex-direction:row;
+    gap:10px;
+`;
+const ModalBtn = styled.Pressable`
+    flex:1;
+    border-radius:8px;
+    padding:10px;
+    background:#f1f3f5;
+    align-items:center;
+`;
+const ModalBtnText = styled.Text`
+    color:#1a1c1e;
+    font-family:'PlusJakartaSans_600SemiBold';
+`;
+const ModalBtnDanger = styled.Pressable`
+    flex:1;
+    border-radius:8px;
+    padding:10px;
+    background:#ffeded;
+    align-items:center;
+`;
+const ModalBtnDangerText = styled.Text`
+    color:#e03131;
+    font-family:'PlusJakartaSans_700Bold';
+`;

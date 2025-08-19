@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
-/** 실제로는 서버에서 "이미 친구" 목록만 가져오면 됩니다 */
+/** 서버에서 친구 목록 가져오기(임시) */
 const MOCK_FRIENDS = [
     {
         id: 201,
@@ -29,7 +29,7 @@ const MOCK_FRIENDS = [
 
 export default function FriendsOnlyScreen() {
     const [friends, setFriends] = useState(MOCK_FRIENDS);
-    const totalPages = 3; // 목업용
+    const totalPages = 3;
     const [page, setPage] = useState(1);
 
     const list = useMemo(() => friends, [friends]);
@@ -62,7 +62,7 @@ export default function FriendsOnlyScreen() {
                         languages={item.languages}
                         personalities={item.personalities}
                         bio={item.bio}
-                        isFollowed={true}     // ✅ 이미 친구 → Following 버튼 노출
+                        isFollowed={true}
                         onChat={() => { }}
                     />
                 )}
@@ -78,26 +78,53 @@ export default function FriendsOnlyScreen() {
     );
 }
 
-/* ---------- styles ---------- */
-const Safe = styled.SafeAreaView`flex:1;background:#0f1011;`;
-const Header = styled.View`
-  height: 48px; padding: 0 12px;
-  flex-direction: row; align-items: center; justify-content: space-between;
+const Safe = styled.SafeAreaView`
+    flex:1;
+    background:#0f1011;
 `;
-const Back = styled.Pressable`width:40px;align-items:flex-start;`;
-const HeaderTitle = styled.Text`color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';`;
-const IconRow = styled.View`flex-direction:row;align-items:center;`;
-const Icon = styled.Text`color:#cfd4da;font-size:16px;`;
+const Header = styled.View`
+    height: 48px;
+    padding: 0 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+`;
+const Back = styled.Pressable`
+    width:40px;
+    align-items:flex-start;
+`;
+const HeaderTitle = styled.Text`
+    color:#fff;
+    font-size:16px;
+    font-family:'PlusJakartaSans_700Bold';
+`;
+const IconRow = styled.View`
+    flex-direction:row;
+    align-items:center;
+`;
+const Icon = styled.Text`
+    color:#cfd4da;
+    font-size:16px;
+`;
 
-const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
+const List = styled.FlatList`
+` as unknown as typeof import('react-native').FlatList;
 
-/* Pager */
 const Pager = styled.View`
-  position: absolute; bottom: 10px; left: 0; right: 0;
-  flex-direction: row; align-items: center; justify-content: center;
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
 `;
 const PagerBtn = styled.Pressable<{ disabled?: boolean }>`
   opacity: ${({ disabled }) => (disabled ? 0.3 : 1)};
   padding: 6px 10px;
 `;
-const PagerText = styled.Text`color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const PagerText = styled.Text`
+    color:#b7babd;
+    font-size:12px;
+    font-family:'PlusJakartaSans_400Regular';
+`;
