@@ -1,38 +1,62 @@
 import FriendCard from '@/components/FriendCard';
-import ProfileBubble from '@/components/ProfileBubble';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import styled from 'styled-components/native';
 
 export default function HomeScreen() {
-
-  //테스트
-  const targetUserId = 42;
   const followMutation = useFollowUser();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ProfileBubble bio="Hello~ I came to Korea from the U.S. as an exchange student" />
-      <FriendCard
-        userId={targetUserId}
-        name="Jane Doe"
-        country="United States"
-        age={20}
-        purpose="Education"
-        languages={['EN', 'KO', 'JP']}
-        personalities={['Swimming', 'Reading']}
-        isFollowed={false}
-        onFollow={(userId) => followMutation.mutate(userId)}
-        onChat={() => console.log('Chat clicked')}
-      />
-    </SafeAreaView>
+    <Safe>
+      <Header>
+        <Title>Find Friends</Title>
+      </Header>
+
+      <Content
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}
+      >
+        <FriendCard
+          userId={42}
+          name="Alice Kori, Kim"
+          country='United States'
+          birth={2025}
+          purpose="Business"
+          languages={['EN', 'KO']}
+          personalities={['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover']}
+          isFollowed={false}
+          onFollow={(userId) => followMutation.mutate(userId)}
+          onChat={() => { }}
+        />
+        <FriendCard
+          userId={99}
+          name="John Lee"
+          country="United States"
+          birth={2025}
+          purpose="Education"
+          languages={['EN']}
+          personalities={['Hiking', 'Reading']}
+          isFollowed={false}
+          onFollow={(userId) => followMutation.mutate(userId)}
+          onChat={() => { }}
+        />
+      </Content>
+    </Safe>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-  },
-});
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background-color: #1D1E1F;
+`;
+const Header = styled.View`
+  padding: 12px 18px 8px 18px;
+`;
+const Title = styled.Text`
+  color: #ffffff;
+  font-size: 40px;
+  font-family: 'InstrumentSerif_400Regular';
+  font-weight: normal;                      
+  letter-spacing: -0.2px;
+`;
+
+const Content = styled.ScrollView``;

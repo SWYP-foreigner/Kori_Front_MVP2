@@ -1,34 +1,73 @@
-import { PressableProps } from 'react-native';
 import styled from 'styled-components/native';
 
-type Variant = 'filled' | 'outline';
-type VariantProps = { variant: Variant };
+type Tone = 'mint' | 'black';
 
-type ButtonProps = PressableProps & {
+type ButtonProps = {
     label: string;
-    variant?: 'filled' | 'outline';
+    tone?: Tone;
+    filled?: boolean;
+    isLoading?: boolean;
+    disabled?: boolean;
+    onPress?: () => void;
 };
 
-export default function CustomButton({ label, variant = 'filled', ...props }: ButtonProps) {
+const PALETTE = {
+    mint: '#30F59B',
+    black: '#1D1E1F',
+    white: '#FFFFFF',
+} as const;
+
+export default function CustomButton({
+    label,
+    tone = 'mint',
+    filled = true,
+    isLoading = false,
+    disabled,
+    onPress,
+}: ButtonProps) {
     return (
-        <StyledPressable variant={variant} {...props}>
-            <StyledText variant={variant}>{label}</StyledText>
-        </StyledPressable>
+        <Btn
+            tone={tone}
+            filled={filled}
+            disabled={disabled || isLoading}
+            onPress={onPress}
+        >
+            {isLoading ? (
+                <Spinner />
+            ) : (
+                <BtnText tone={tone} filled={filled}>
+                    {label}
+                </BtnText>
+            )}
+        </Btn>
     );
 }
 
-const StyledPressable = styled.Pressable <VariantProps>`
+const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }>`
   flex: 1;
-  padding-vertical: 10px;
+  height: 50px;
   border-radius: 8px;
   justify-content: center;
   align-items: center;
-  border-width: 1px;
-  background-color: ${({ variant }: VariantProps) => variant === 'filled' ? '#000' : '#fff'};
-  border-color: #000;
+  border-width: 1.5px;
+  background-color: ${({ filled, tone }) =>
+        filled ? PALETTE[tone] : 'transparent'};
+  border-color: ${({ tone }) => PALETTE[tone]};
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 
-const StyledText = styled.Text<VariantProps>`
-  font-weight: 600;
-  color: ${({ variant }: VariantProps) => variant === 'filled' ? '#fff' : '#000'};
-  `;
+const BtnText = styled.Text<{ tone: Tone; filled: boolean }>`
+  font-weight: 700;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_600Bold';
+  color: ${({ tone, filled }) =>
+        filled
+            ? tone === 'mint'
+                ? '#000000'
+                : PALETTE.white
+            : PALETTE[tone]};
+`;
+
+const Spinner = styled.ActivityIndicator.attrs({
+    size: 'small',
+})``;
