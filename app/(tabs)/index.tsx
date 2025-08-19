@@ -9,6 +9,7 @@ export default function HomeScreen() {
     <Safe>
       <Header>
         <Title>Find Friends</Title>
+        <IconImage source={require('../../assets/images/IsolationMode.png')} />
       </Header>
 
       <Content
@@ -50,13 +51,20 @@ const Safe = styled.SafeAreaView`
 `;
 const Header = styled.View`
   padding: 12px 18px 8px 18px;
+  flex-direction: row;
+  align-items: center;
+
 `;
 const Title = styled.Text`
   color: #ffffff;
-  font-size: 40px;
+  font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
-  font-weight: normal;                      
   letter-spacing: -0.2px;
+`;
+const IconImage = styled.Image`
+  margin-left: 4px; /* 텍스트와 간격 주기 */
+  width: 20px;
+  height: 20px;
 `;
 
 const Content = styled.ScrollView``;
