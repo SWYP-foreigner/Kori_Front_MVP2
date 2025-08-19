@@ -20,8 +20,10 @@ export default function MyPageScreen() {
         <Safe>
             <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
                 {/* 헤더 타이틀 */}
-                <Title>My page</Title>
-
+                <Header>
+                    <Title>My page</Title>
+                    <IconImage source={require('../../../assets/images/IsolationMode.png')} />
+                </Header>
                 {/* 프로필 히어로 */}
                 <ProfileView>
                     <Avatar />
@@ -111,6 +113,19 @@ const Safe = styled.SafeAreaView`
   background-color: #0f1011;
 `;
 const Scroll = styled.ScrollView``;
+
+const Header = styled.View`
+  padding: 12px 18px 8px 18px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const IconImage = styled.Image`
+  margin-left: 4px; /* 텍스트와 간격 */
+  width: 20px;
+  height: 20px;
+`;
+
 const Title = styled.Text`
     font-family: 'InstrumentSerif_400Regular';
     font-size: 32px;
