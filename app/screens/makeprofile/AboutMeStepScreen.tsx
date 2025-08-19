@@ -91,11 +91,11 @@ const StepText = styled.Text`
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
-  margin-top: 87px;
+  margin-top: 40px;
 `;
 
 const TitleWrapper = styled.View`
-  margin-top: 46px;
+  margin-top: 30px;
 `;
 
 const Title = styled.Text`

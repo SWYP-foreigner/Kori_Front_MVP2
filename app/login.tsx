@@ -75,7 +75,7 @@ const LoginScreen = () => {
       <AppleSignInButton />
 
       {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
-      <TabsMoveButton onPress={() => router.push('./screens/makeprofile/GenderStepScreen')}>
+      <TabsMoveButton onPress={() => router.push('./screens/makeprofile/BirthStepScreen')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
       </TabsMoveButton>
     </Container>
