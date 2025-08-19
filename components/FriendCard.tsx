@@ -1,19 +1,20 @@
 import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
-import React, { useMemo, useState } from 'react';
-import { ImageSourcePropType, Platform } from 'react-native';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Platform } from 'react-native';
 import styled from 'styled-components/native';
 
-const ICON_PURPOSE: ImageSourcePropType = require('@/assets/icons/purpose.png');
-const ICON_GLOBAL: ImageSourcePropType = require('@/assets/icons/global.png');
-const ICON_HEART: ImageSourcePropType = require('@/assets/icons/heart.png');
+const ICON_PURPOSE = require('@/assets/icons/purpose.png');
+const ICON_GLOBAL = require('@/assets/icons/global.png');
 
 type Props = {
   userId: number;
   name: string;
   country: string;
   birth?: number;
+  gender?: 'male' | 'female' | 'unspecified';
   purpose: string;
   languages: string[];
   personalities: string[];
@@ -29,31 +30,36 @@ const P_H = 20;
 const P_TOP = 22;
 const P_BOTTOM = 18;
 
-const AVATAR = { size: 112 };
 const NAME_MT = 14;
 const META_MT = 6;
 const BIO_MT = 14;
 const BIO_MB = 18;
 
-const DIVIDER_MT = 12;
 const DIVIDER_COLOR = '#EAEAEA';
-
 const CHEVRON = { size: 28, ring: 1, lift: 13 };
 
 const SECTION_GAP_TOP = 16;
 const COL_GAP = 18;
 const LABEL_ICON_GAP = 6;
 
-const BTN_HEIGHT = 52;
-const BTN_RADIUS = 14;
 const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;
+
+const genderIconByType: Record<
+  NonNullable<Props['gender']>,
+  keyof typeof MaterialCommunityIcons.glyphMap
+> = {
+  male: 'gender-male',
+  female: 'gender-female',
+  unspecified: 'help-circle-outline',
+};
 
 export default function FriendCard({
   userId,
   name,
   country,
   birth,
+  gender = 'unspecified',
   purpose,
   languages,
   personalities,
@@ -63,7 +69,6 @@ export default function FriendCard({
   onChat,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
-  const langText = useMemo(() => languages.join(' • '), [languages]);
 
   return (
     <CardWrap>
@@ -78,10 +83,18 @@ export default function FriendCard({
           <Avatar />
           <Name>{name}</Name>
 
+          {/* 성별 */}
           <MetaLine>
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth}</MetaStrong>
-            <Dot>  •  </Dot>
+
+            <MaterialCommunityIcons
+              name={genderIconByType[gender]}
+              size={14}
+              color="#B5B5B5"
+              style={{ marginHorizontal: 4, marginTop: 1 }}
+            />
+
             <MetaDim>From </MetaDim>
             <MetaStrong>{country}</MetaStrong>
           </MetaLine>
@@ -89,7 +102,7 @@ export default function FriendCard({
           <Bio numberOfLines={expanded ? 4 : 2}>{bio}</Bio>
         </Top>
 
-        {/* Divider + Chevron(중앙 겹침) */}
+        {/* Divider + Chevron */}
         <DividerWrap>
           <Divider />
           <ChevronButton
@@ -97,7 +110,11 @@ export default function FriendCard({
             accessibilityRole="button"
             style={{ transform: [{ translateY: -CHEVRON.lift }] }}
           >
-            <ChevronText style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}>⌄</ChevronText>
+            <MaterialIcons
+              name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              size={20}
+              color="#8a8a8a"
+            />
           </ChevronButton>
         </DividerWrap>
 
@@ -110,7 +127,7 @@ export default function FriendCard({
                   <Icon source={ICON_PURPOSE} />
                   <Label>Purpose</Label>
                 </LabelRow>
-                <Value>{purpose}</Value>
+                <CategoryValue>{purpose}</CategoryValue>
               </Col>
 
               <Col style={{ marginLeft: COL_GAP }}>
@@ -118,12 +135,24 @@ export default function FriendCard({
                   <Icon source={ICON_GLOBAL} />
                   <Label>Language</Label>
                 </LabelRow>
-                <Value>{langText}</Value>
+                <LangWrap>
+                  {languages.map((lg, i) => (
+                    <React.Fragment key={lg}>
+                      {i > 0 && <LangDot>•</LangDot>}
+                      <LangText>{lg}</LangText>
+                    </React.Fragment>
+                  ))}
+                </LangWrap>
               </Col>
             </Row>
 
             <LabelRow style={{ marginTop: 14, marginBottom: 8 }}>
-              <HeartIcon source={ICON_HEART} />
+              <MaterialCommunityIcons
+                name="heart-outline"
+                size={13}
+                color="#808080"
+                style={{ marginRight: 4 }}
+              />
               <Label>Interest</Label>
             </LabelRow>
 
@@ -138,13 +167,20 @@ export default function FriendCard({
         {/* 버튼 */}
         <Actions>
           <CustomButton
-            label={isFollowed ? 'Following' : '+ Follow'}
+            label={isFollowed ? 'Following' : 'Follow'}
             tone={isFollowed ? 'black' : 'mint'}
             filled={!isFollowed}
+            leftIcon={!isFollowed ? 'add' : undefined}
             disabled={isFollowed}
             onPress={() => !isFollowed && onFollow?.(userId)}
           />
-          <CustomButton label="Chat" tone="black" filled onPress={onChat} />
+          <CustomButton
+            label="Chat"
+            tone="black"
+            filled
+            leftIcon="chat-bubble-outline"
+            onPress={onChat}
+          />
         </Actions>
       </CardInner>
     </CardWrap>
@@ -198,19 +234,14 @@ const MetaStrong = styled.Text`
   color: #111;
 `;
 
-const Dot = styled.Text`
-  color: #c0c0c0;
-`;
-
 const Bio = styled.Text`
   margin-top: ${BIO_MT}px;
   margin-bottom: ${BIO_MB}px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 22px;
+  color: #000000;
   text-align: center;
-  color: #4b4b4b;
-  font-family: 'PlusJakartaSans_400Regular';
-  letter-spacing: 0.1px;
+  font-family: 'PlusJakartaSans_500Medium';
 `;
 
 const DividerWrap = styled.View`
@@ -218,6 +249,8 @@ const DividerWrap = styled.View`
   align-self: stretch;
   align-items: center;
   justify-content: center;
+  margin-top: 9px;
+  margin-bottom: 18px;
 `;
 
 const Divider = styled.View`
@@ -239,12 +272,6 @@ const ChevronButton = styled.Pressable`
   justify-content: center;
 `;
 
-const ChevronText = styled.Text`
-  font-size: 18px;
-  color: #8a8a8a;
-  margin-top: -1px;
-`;
-
 const Row = styled.View`
   flex-direction: row;
   align-self: stretch;
@@ -257,20 +284,12 @@ const Col = styled.View`
 const LabelRow = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: ${LABEL_ICON_GAP}px;
 `;
 
 const Icon = styled.Image`
-  width: 12px;   /* Purpose/Language = 12px */
+  width: 12px;
   height: 12px;
   tint-color: #808080;
-`;
-
-const HeartIcon = styled.Image`
-  width: 11px;   /* Interest만 더 작게 */
-  height: 11px;
-  tint-color: #808080;
-  margin-top: 1px;
 `;
 
 const Label = styled.Text`
@@ -280,18 +299,38 @@ const Label = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-const Value = styled.Text`
+const CategoryValue = styled.Text`
   margin-top: 4px;
+  font-size: 14px;
+  line-height: 18px;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: #000000;
+`;
+
+const LangWrap = styled.View`
+  margin-top: 4px;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const LangText = styled.Text`
   font-size: 13px;
   line-height: 18px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-  color: #1a1a1a;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: #000000;
+`;
+
+const LangDot = styled.Text`
+  font-size: 8px;
+  color: #9e9e9e;
+  margin: 0 6px;
 `;
 
 const TagsWrap = styled.View`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 10px;             
+  gap: 10px;
   margin-top: 2px;
 `;
 

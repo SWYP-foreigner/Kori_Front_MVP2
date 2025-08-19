@@ -1,3 +1,5 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
 import styled from 'styled-components/native';
 
 type Tone = 'mint' | 'black';
@@ -9,6 +11,9 @@ type ButtonProps = {
     isLoading?: boolean;
     disabled?: boolean;
     onPress?: () => void;
+    leftIcon?: keyof typeof MaterialIcons.glyphMap;
+    rightIcon?: keyof typeof MaterialIcons.glyphMap;
+    iconSize?: number;
 };
 
 const PALETTE = {
@@ -24,7 +29,13 @@ export default function CustomButton({
     isLoading = false,
     disabled,
     onPress,
+    leftIcon,
+    rightIcon,
+    iconSize = 18,
 }: ButtonProps) {
+    const contentColor =
+        filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone];
+
     return (
         <Btn
             tone={tone}
@@ -33,11 +44,17 @@ export default function CustomButton({
             onPress={onPress}
         >
             {isLoading ? (
-                <Spinner />
+                <Spinner color={contentColor} />
             ) : (
-                <BtnText tone={tone} filled={filled}>
-                    {label}
-                </BtnText>
+                <Content>
+                    {leftIcon && (
+                        <MaterialIcons name={leftIcon} size={iconSize} color={contentColor} />
+                    )}
+                    <BtnText tone={tone} filled={filled}>{label}</BtnText>
+                    {rightIcon && (
+                        <MaterialIcons name={rightIcon} size={iconSize} color={contentColor} />
+                    )}
+                </Content>
             )}
         </Btn>
     );
@@ -50,24 +67,25 @@ const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }
   justify-content: center;
   align-items: center;
   border-width: 1.5px;
-  background-color: ${({ filled, tone }) =>
-        filled ? PALETTE[tone] : 'transparent'};
+  background-color: ${({ filled, tone }) => (filled ? PALETTE[tone] : 'transparent')};
   border-color: ${({ tone }) => PALETTE[tone]};
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 
-const BtnText = styled.Text<{ tone: Tone; filled: boolean }>`
-  font-weight: 700;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans_600Bold';
-  color: ${({ tone, filled }) =>
-        filled
-            ? tone === 'mint'
-                ? '#000000'
-                : PALETTE.white
-            : PALETTE[tone]};
+const Content = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px; 
 `;
 
-const Spinner = styled.ActivityIndicator.attrs({
+const BtnText = styled.Text<{ tone: Tone; filled: boolean }>`
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: ${({ tone, filled }) =>
+        filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone]};
+`;
+
+const Spinner = styled.ActivityIndicator.attrs<{ color: string }>(props => ({
     size: 'small',
-})``;
+    color: props.color,
+}))``;
