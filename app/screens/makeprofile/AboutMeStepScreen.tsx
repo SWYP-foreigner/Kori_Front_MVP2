@@ -18,7 +18,7 @@ export default function NameStepScreen({ navigation}) {
     if (canProceed) {
       console.log("버튼 눌림");
       router.push({
-        pathname: './AddPhotoStepScreen'
+        pathname: './PurposeStepScreen'
       });
     }
   };
