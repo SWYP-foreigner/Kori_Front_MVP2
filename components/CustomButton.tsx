@@ -1,34 +1,91 @@
-import { PressableProps } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
 import styled from 'styled-components/native';
 
-type Variant = 'filled' | 'outline';
-type VariantProps = { variant: Variant };
+type Tone = 'mint' | 'black';
 
-type ButtonProps = PressableProps & {
+type ButtonProps = {
     label: string;
-    variant?: 'filled' | 'outline';
+    tone?: Tone;
+    filled?: boolean;
+    isLoading?: boolean;
+    disabled?: boolean;
+    onPress?: () => void;
+    leftIcon?: keyof typeof MaterialIcons.glyphMap;
+    rightIcon?: keyof typeof MaterialIcons.glyphMap;
+    iconSize?: number;
 };
 
-export default function CustomButton({ label, variant = 'filled', ...props }: ButtonProps) {
+const PALETTE = {
+    mint: '#30F59B',
+    black: '#1D1E1F',
+    white: '#FFFFFF',
+} as const;
+
+export default function CustomButton({
+    label,
+    tone = 'mint',
+    filled = true,
+    isLoading = false,
+    disabled,
+    onPress,
+    leftIcon,
+    rightIcon,
+    iconSize = 18,
+}: ButtonProps) {
+    const contentColor =
+        filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone];
+
     return (
-        <StyledPressable variant={variant} {...props}>
-            <StyledText variant={variant}>{label}</StyledText>
-        </StyledPressable>
+        <Btn
+            tone={tone}
+            filled={filled}
+            disabled={disabled || isLoading}
+            onPress={onPress}
+        >
+            {isLoading ? (
+                <Spinner color={contentColor} />
+            ) : (
+                <Content>
+                    {leftIcon && (
+                        <MaterialIcons name={leftIcon} size={iconSize} color={contentColor} />
+                    )}
+                    <BtnText tone={tone} filled={filled}>{label}</BtnText>
+                    {rightIcon && (
+                        <MaterialIcons name={rightIcon} size={iconSize} color={contentColor} />
+                    )}
+                </Content>
+            )}
+        </Btn>
     );
 }
 
-const StyledPressable = styled.Pressable <VariantProps>`
+const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }>`
   flex: 1;
-  padding-vertical: 10px;
+  height: 50px;
   border-radius: 8px;
   justify-content: center;
   align-items: center;
-  border-width: 1px;
-  background-color: ${({ variant }: VariantProps) => variant === 'filled' ? '#000' : '#fff'};
-  border-color: #000;
+  border-width: 1.5px;
+  background-color: ${({ filled, tone }) => (filled ? PALETTE[tone] : 'transparent')};
+  border-color: ${({ tone }) => PALETTE[tone]};
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 
-const StyledText = styled.Text<VariantProps>`
-  font-weight: 600;
-  color: ${({ variant }: VariantProps) => variant === 'filled' ? '#fff' : '#000'};
-  `;
+const Content = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 6px; 
+`;
+
+const BtnText = styled.Text<{ tone: Tone; filled: boolean }>`
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: ${({ tone, filled }) =>
+        filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone]};
+`;
+
+const Spinner = styled.ActivityIndicator.attrs<{ color: string }>(props => ({
+    size: 'small',
+    color: props.color,
+}))``;

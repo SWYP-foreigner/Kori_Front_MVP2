@@ -15,14 +15,14 @@ export default function Tag({ label }: TagProps) {
 
 const TagContainer = styled.View`
     border-width: 1px;
-    border-color: #ccc;
+    border-color: #d9d9d9;
     border-radius: 999px;
-    padding: 4px 10px;
-    margin-right: 6px;
-    margin-bottom: 6px;
-`;
+    padding: 5px 10px;
+    margin: 0px;
+    `;
 
 const TagText = styled.Text`
-    font-size: 12px;
+    font-size: 13px;
+    font-family: 'PlusJakartaSans_600Regular';
 `;
 
