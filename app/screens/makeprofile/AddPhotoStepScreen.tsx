@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { launchImageLibrary } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
@@ -12,7 +12,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 export default function AddPhotoStepScreen({ navigation }) {
   const [selectedAvatar, setSelectedAvatar] = useState(-1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [showPhotoSelection, setShowPhotoSelection] = useState(false);
+  const [isPhoto,setisPhoto]=useState(false);
   const canProceed = selectedAvatar !== -1 || selectedPhoto !== null;
   const router = useRouter();
 
@@ -34,36 +34,72 @@ export default function AddPhotoStepScreen({ navigation }) {
   const handleAvatarSelect = (index) => {
     setSelectedAvatar(index);
     setSelectedPhoto(null);
-    setShowPhotoSelection(false);
+   
   };
 
-  const handleCameraPress = () => {
-    setShowPhotoSelection(true);
+  // 권한 요청 함수
+  const requestPermissions = async () => {
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (cameraPermission.status !== 'granted' || mediaLibraryPermission.status !== 'granted') {
+      Alert.alert('권한 필요', '카메라와 갤러리 접근 권한이 필요합니다.');
+      return false;
+    }
+    return true;
   };
 
-  const handleSelectFromAlbum = () => {
-    const options = {
-      mediaType: 'photo',
-      quality: 1.0, // 최고 품질
-      maxWidth: 1000,
-      maxHeight: 1000,
-    };
+  // 카메라 버튼 클릭 시
+  const PickProfilePhoto = async () => {
+    const hasPermission = await requestPermissions(); // 권한 
+    if (!hasPermission) return;
 
-    launchImageLibrary(options, (response) => {
-      if (response.assets && response.assets[0]) {
-        setSelectedPhoto(response.assets[0].uri);
-        setSelectedAvatar(-1);
-        setShowPhotoSelection(false);
-      }
+    Alert.alert(
+      "Pick photo",
+      "How to pick your profile photo?",
+      [
+        { text: "Camera", onPress: openCamera },
+        { text: "Gallery", onPress: openGallery },
+        { text: "cancel", style: "cancel" }
+      ]
+    );
+  };
+
+  // 카메라에서 사진 촬영
+  const openCamera = async () => {
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: 'Images',
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 1,
+  });
+
+  // 5. 사진 선택 시 상태 업데이트
+  if (!result.canceled) {
+    setSelectedPhoto(result.assets[0].uri);
+    setSelectedAvatar(-1); // 아바타 선택 해제
+  }
+};
+
+
+  // 갤러리에서 사진 선택
+  const openGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'Images',
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
+
+    if (!result.canceled) {
+      setSelectedPhoto(result.assets[0].uri);
+      setSelectedAvatar(-1); // 아바타 선택 해제
+    }
   };
 
-  const handleCancel = () => {
-    setShowPhotoSelection(false);
-  };
+ 
 
   const handleNext = () => {
-    console.log("버튼 눌림");
     router.push({
       pathname: './GenderStepScreen'
     });
@@ -99,13 +135,12 @@ export default function AddPhotoStepScreen({ navigation }) {
             </AvatarContainer>
           ))}
           
-          <AvatarContainer onPress={handleCameraPress}>
+          <AvatarContainer onPress={PickProfilePhoto}>
             {selectedPhoto ? (
               <>
-                <PhotoAvatar 
-                  source={{ uri: selectedPhoto }} 
-                  selected={!!selectedPhoto}
-                />
+                <PhotoContainer selected={!!selectedPhoto}>
+                  <PhotoAvatar source={{ uri: selectedPhoto }} />
+                </PhotoContainer>
                 {selectedPhoto && (
                   <CheckmarkContainer>
                     <FontAwesome6 name="check" size={19} color="black" />
@@ -121,17 +156,6 @@ export default function AddPhotoStepScreen({ navigation }) {
         </AvatarGrid>
 
         <Spacer />
-
-        {showPhotoSelection && (
-          <PhotoSelectionContainer>
-            <AlbumButton onPress={handleSelectFromAlbum}>
-              <AlbumText>Select from the album</AlbumText>
-            </AlbumButton>
-            <CancelButton onPress={handleCancel}>
-              <CancelText>Cancel</CancelText>
-            </CancelButton>
-          </PhotoSelectionContainer>
-        )}
 
         <NextButton
           onPress={handleNext}
@@ -243,10 +267,20 @@ const CameraIcon = styled.Text`
   font-size: 30px;
 `;
 
+const PhotoContainer = styled.View`
+  width: 100%;
+  height: 100%;
+  border-radius: 1000px;
+  border: ${props => props.selected ? '4px solid #02F59B' : '4px solid transparent'};
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+`;
+
 const PhotoAvatar = styled.Image`
   width: 100%;
   height: 100%;
-  resize-mode: contain;
+  resize-mode: cover;
 `;
 
 const CheckmarkContainer = styled.View`
@@ -264,12 +298,6 @@ const CheckmarkContainer = styled.View`
   shadow-opacity: 0.25;
   shadow-radius: 3.84px;
   elevation: 5;
-`;
-
-const Checkmark = styled.Text`
-  color: #1D1E1F;
-  font-size: 18px;
-  font-weight: bold;
 `;
 
 const PhotoSelectionContainer = styled.View`
