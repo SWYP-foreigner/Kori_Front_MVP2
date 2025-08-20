@@ -4,6 +4,7 @@ import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Fontisto from '@expo/vector-icons/Fontisto';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 // ------------------------
 // AddPhotoStepScreen
@@ -92,7 +93,7 @@ export default function AddPhotoStepScreen({ navigation }) {
               </ImageContainer>
               {selectedAvatar === index && !selectedPhoto && (
                 <CheckmarkContainer>
-                  <Checkmark>✓</Checkmark>
+                  <FontAwesome6 name="check" size={19} color="black" />
                 </CheckmarkContainer>
               )}
             </AvatarContainer>
@@ -107,7 +108,7 @@ export default function AddPhotoStepScreen({ navigation }) {
                 />
                 {selectedPhoto && (
                   <CheckmarkContainer>
-                    <Checkmark>✓</Checkmark>
+                    <FontAwesome6 name="check" size={19} color="black" />
                   </CheckmarkContainer>
                 )}
               </>
@@ -258,7 +259,6 @@ const CheckmarkContainer = styled.View`
   background-color: #02F59B;
   justify-content: center;
   align-items: center;
-  border: 3px solid #0F0F10;
   shadow-color: #000;
   shadow-offset: 0px 2px;
   shadow-opacity: 0.25;
