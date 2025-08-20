@@ -2,100 +2,81 @@ import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import Tag from '@/components/Tag';
 
-const { height, width } = Dimensions.get('window');
 
-// 비율 기반 사이즈
-const scale = height / 812; // iPhone 11 Pro (812pt) 기준
-const wp = (size) => Math.round((width / 375) * size);
-const hp = (size) => Math.round((height / 812) * size);
+const HobbyBox = ({ title, tags }) => {
+  return (
+    <>
+      <TagTitle>
+        <TagTitleText>{title}</TagTitleText>
+      </TagTitle>
+      <TagWrapper>
+        {tags.map((tag, index) => (
+          <HobbyTag key={index}>
+            <Imogi/>
+            <HobbyTagText>{tag}</HobbyTagText>
+          </HobbyTag>
+        ))}
+      </TagWrapper>
+    </>
+  );
+};
 
-export default function InterestSelectionScreen() {
+
+export default function TagStepScreen() {
   const router = useRouter();
   const [selectedInterests, setSelectedInterests] = useState([]);
   const maxSelections = 5;
 
-  const interestCategories = [
-    { title: 'Entertainment & Hobbies', interests: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'] },
-    { title: 'Lifestyle & Social', interests: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'] },
-    { title: 'Activities & Wellness', interests: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'] },
-    { title: 'Creativity & Personal Growth', interests: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'] },
-    { title: 'Korean Culture', interests: ['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover'] },
-  ];
-
-  const handleInterestToggle = (interest) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(item => item !== interest));
-    } else {
-      if (selectedInterests.length < maxSelections) {
-        setSelectedInterests([...selectedInterests, interest]);
-      } else {
-        Alert.alert('Maximum Selection', `You can choose up to ${maxSelections} interests.`);
-      }
-    }
-  };
-
-  const handleDone = () => {
-    if (selectedInterests.length > 0) {
-      router.push({
-        pathname: './NextStepScreen',
-        params: { interests: JSON.stringify(selectedInterests) }
-      });
-    } else {
-      Alert.alert('Selection Required', 'Please select at least one interest.');
-    }
-  };
-
-  const renderInterestTag = (interest) => {
-    const isSelected = selectedInterests.includes(interest);
-
-    return (
-      <InterestTag
-        key={interest}
-        isSelected={isSelected}
-        onPress={() => handleInterestToggle(interest)}
-        activeOpacity={0.7}
-      >
-        <InterestText isSelected={isSelected}>{interest}</InterestText>
-        {isSelected && <SelectedIndicator>×</SelectedIndicator>}
-      </InterestTag>
-    );
-  };
+  
 
   return (
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container>
-        <Header>
-          <StepText>Step 9 / 9</StepText>
+        <StepText>Step 9 / 9</StepText>
+
           <TitleWrapper>
             <Title>Tell us about</Title>
             <Title>your interest</Title>
           </TitleWrapper>
-          <Subtitle>You can choose up to {maxSelections} interests.</Subtitle>
-          <CounterText>{selectedInterests.length}/{maxSelections} selected</CounterText>
-        </Header>
+          <Subtitle>You can choose up to 5 interests.</Subtitle>
+          <TagContainer>
+            <HobbyBox 
+            title="Entertainment & Hobbies"
+            tags={['Music','Movies','Reading','Anime','Gaming']}
+            />
+            <HobbyBox 
+            title="LifeStyle & Social"
+            tags={['Drinking','Exploring Cafes','Traveling','Board Games',
+              'Shopping','Beauty','Doing Nothing'
+            ]}
+            />
+            <HobbyBox 
+            title="Activities & Wellness"
+            tags={['Yoga','Running','Fitness','Camping','Dancing','Hiking']}
+            />
+            <HobbyBox 
+            title="Creativity & Personal Growth"
+            tags={['Exhibition','Singing','Cooking','Pets'
+              ,'Career','Photography'
+            ]}
+            />
+            <HobbyBox 
+            title="Korean Culture"
+            tags={['K-Pop Lover','K-Drama Lover','K-Food Lover']}
+            />
+          </TagContainer>
+          <Spacer />
+          <NextButton
+          // onPress={handleNext}
+          //   disabled={!canProceed}
+          //   canProceed={canProceed}
+          >
+            <ButtonText>Done</ButtonText>
+          </NextButton>
 
-        <InterestsWrapper>
-          {interestCategories.map((category) => (
-            <CategorySection key={category.title}>
-              <CategoryTitle>{category.title}</CategoryTitle>
-              <TagsContainer>
-                {category.interests.map(renderInterestTag)}
-              </TagsContainer>
-            </CategorySection>
-          ))}
-        </InterestsWrapper>
-
-        <DoneButton
-          onPress={handleDone}
-          hasSelection={selectedInterests.length > 0}
-          activeOpacity={selectedInterests.length > 0 ? 0.8 : 1}
-        >
-          <DoneButtonText hasSelection={selectedInterests.length > 0}>
-            Done
-          </DoneButtonText>
-        </DoneButton>
       </Container>
     </SafeArea>
   );
@@ -108,95 +89,111 @@ const SafeArea = styled(SafeAreaView)`
   flex: 1;
   background-color: #0F0F10;
 `;
-
-const Container = styled.View`
-  flex: 1;
-  justify-content: space-between; /* 상단 - 중간 - 하단 자동 분배 */
-  padding: ${hp(10)}px ${wp(15)}px;
+const Container=styled.View`
+  flex:1;
+  padding: 0px 20px;
 `;
-
-const Header = styled.View``;
 
 const StepText = styled.Text`
   color: #5BD08D;
-  font-size: ${hp(12)}px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  font-family: 'PlusJakartaSans-Regular';
+  margin-top:40px;
 `;
 
 const TitleWrapper = styled.View`
-  margin-top: ${hp(10)}px;
+  margin-top: 30px;
 `;
 
 const Title = styled.Text`
   color: #FFFFFF;
-  font-size: ${hp(26)}px;
-  line-height: ${hp(28)}px;
+  font-size: 40px;
+  line-height: 40px;
+  letter-spacing: 0.2px;
+  font-family: 'InstrumentSerif-Regular';
 `;
 
 const Subtitle = styled.Text`
-  margin-top: ${hp(5)}px;
+  margin-top: 15px;
   color: #949899;
-  font-size: ${hp(12)}px;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Light';
 `;
+ const TagContainer=styled.View`
+    flex:1;
+ `;
 
-const CounterText = styled.Text`
-  margin-top: ${hp(5)}px;
-  color: #5BD08D;
-  font-size: ${hp(12)}px;
-  text-align: right;
+ const TagTitle=styled.View` 
+    margin-top:10px;
+    width:100%;
+    height:20px;
+    background-color:red;
+    justify-content:space-between;
+    flex-direction:row;
+    align-items:center;
+    
+ `;
+
+ const TagTitleText=styled.Text`
+    color:#848687;
+    padding-right:20px;
+ `;
+
+ const SelectedText=styled.Text`
+    color:#848687;
+ `;
+ 
+ const TagWrapper=styled.View`
+    background-color:blue;
+    width:100%;
+    flex-direction:row;
+    flex-wrap: wrap;
+ `;
+
+ const Imogi=styled.View`
+  background-color:black;
+  width:10px;
+  height:10px;
+
+ `;
+const HobbyTag=styled.TouchableOpacity`
+  margin:5px 5px 5px 5px;
+  padding:5px 5px 5px 5px;
+  background-color:yellow;
+  height:30px;
+  border-radius: 12px;
+  justify-content:center;
+  border-color:black;
+  border-width:1px;
+  flex-direction:row;
+  align-items:center;
+  
 `;
-
-const InterestsWrapper = styled.View`
+const HobbyTagText=styled.Text`
+   color:black;
+   font-size:10px;
+   margin-left:3px;
+`;
+ 
+const Spacer = styled.View`
   flex: 1;
-  margin-top: ${hp(10)}px;
 `;
 
-const CategorySection = styled.View`
-  margin-bottom: ${hp(5)}px;
-`;
-
-const CategoryTitle = styled.Text`
-  color: #949899;
-  font-size: ${hp(11)}px;
-  margin-bottom: ${hp(3)}px;
-`;
-
-const TagsContainer = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: ${wp(4)}px;
-`;
-
-const InterestTag = styled.TouchableOpacity`
-  background-color: ${props => props.isSelected ? '#02F59B20' : '#2A2B2D'};
-  border: ${props => props.isSelected ? '1px solid #02F59B' : '1px solid #2A2B2D'};
-  border-radius: ${hp(10)}px;
-  padding: ${hp(4)}px ${wp(8)}px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const InterestText = styled.Text`
-  color: ${props => props.isSelected ? '#02F59B' : '#FFFFFF'};
-  font-size: ${hp(11)}px;
-`;
-
-const SelectedIndicator = styled.Text`
-  color: #02F59B;
-  font-size: ${hp(11)}px;
-  font-weight: bold;
-  margin-left: ${wp(2)}px;
-  transform: rotate(45deg);
-`;
-
-const DoneButton = styled.TouchableOpacity`
-  height: ${hp(44)}px;
-  border-radius: ${hp(6)}px;
+const NextButton = styled.TouchableOpacity`
+  height: 50px;
+  border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: ${props => props.hasSelection ? '#02F59B' : '#2A2B2D'};
+  background-color: #02F59B;
+  margin-bottom: 8px;
+  opacity: ${(props) => (props.canProceed ? 1 : 1)};
 `;
 
-const DoneButtonText = styled.Text`
-  color: ${props => props.hasSelection ? '#1D1E1F' : '#616262'};
-  font-size: ${hp(13)}px;
+const ButtonText = styled.Text`
+  color: #1D1E1F;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'PlusJakartaSans-Medium';
+
 `;
