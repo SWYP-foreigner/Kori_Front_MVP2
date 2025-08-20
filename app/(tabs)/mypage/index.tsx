@@ -2,7 +2,8 @@ import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
+import { Alert } from 'react-native';
 import styled from 'styled-components/native';
 
 // API 연동 전
@@ -15,7 +16,23 @@ const MOCK_ME = {
 };
 
 export default function MyPageScreen() {
-    const [showDelete, setShowDelete] = useState(false);
+    const confirmDelete = () => {
+        Alert.alert(
+            'Are you sure you want to leave the this app?',
+            'After deleting it, you cannot restore it.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => {
+                        // TODO: 실제 탈퇴 API 연동
+                        // await deleteAccount();
+                    },
+                },
+            ],
+        );
+    };
 
     return (
         <Safe>
@@ -45,7 +62,6 @@ export default function MyPageScreen() {
                         />
                     </EditButtonWrap>
                 </ProfileView>
-                <SectionSpacer />
 
                 {/* 섹션: My Friends */}
                 <SectionTitleRow>
@@ -88,9 +104,10 @@ export default function MyPageScreen() {
 
                 {/* 섹션: My Account */}
                 <SectionTitleRow>
-                    <SectionTitleIconSetting />
+                    <SectionTitleIconGlobe />
                     <SectionTitle>My Account</SectionTitle>
                 </SectionTitleRow>
+
                 <RowLink onPress={() => { /* 로그아웃 로직 예정 */ }}>
                     <RowLeft>Account Logout</RowLeft>
                     <Chevron>›</Chevron>
@@ -98,29 +115,10 @@ export default function MyPageScreen() {
                 <RowSeparator />
 
                 {/* Delete Account */}
-                <DeletePressable onPress={() => setShowDelete(true)}>
+                <DeletePressable onPress={confirmDelete}>
                     <DeleteText>Delete Account</DeleteText>
                 </DeletePressable>
             </Scroll>
-
-            {/* 삭제 확인 모달 */}
-            {showDelete && (
-                <Overlay>
-                    <Backdrop onPress={() => setShowDelete(false)} />
-                    <ModalCard>
-                        <ModalTitle>Are you sure you want to leave the this app?</ModalTitle>
-                        <ModalDesc>After deleting it, you cannot restore it.</ModalDesc>
-                        <ModalRow>
-                            <ModalBtn onPress={() => setShowDelete(false)}>
-                                <ModalBtnText>Cancel</ModalBtnText>
-                            </ModalBtn>
-                            <ModalBtnDelete onPress={() => { setShowDelete(false); /* 실제 삭제 연동 예정 */ }}>
-                                <ModalBtnDeleteText>Delete</ModalBtnDeleteText>
-                            </ModalBtnDelete>
-                        </ModalRow>
-                    </ModalCard>
-                </Overlay>
-            )}
         </Safe>
     );
 }
@@ -154,7 +152,7 @@ const IconImage = styled.Image`
 
 const ProfileView = styled.View`
   align-items: center;
-  padding: 8px 16px 8px 16px;
+  padding: 8px 16px 12px 16px;
 `;
 
 const Name = styled.Text`
@@ -174,16 +172,12 @@ const Email = styled.Text`
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
-  margin-bottom: 0px; 
-`;
-
-const SectionSpacer = styled.View`
-  height: 12px;  /* 필요하면 16~20으로 키워도 OK */
+  margin-bottom: 12px;
 `;
 
 const SectionTitle = styled.Text`
   color: #9aa0a6;
-  font-size: 13px;
+  font-size: 14px; /* 섹션 타이틀 14pt */
   line-height: 18px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans_600SemiBold';
@@ -192,7 +186,7 @@ const SectionTitle = styled.Text`
 const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
-  margin: 22px 16px 10px 16px; /* ↑ 이전 18/8 → 22/10 */
+  margin: 22px 16px 10px 16px;
 `;
 
 const SectionTitleIcon = styled(Ionicons).attrs({
@@ -215,19 +209,8 @@ const SectionTitleIconGlobe = styled.Image.attrs({
   transform: translateY(1px);
 `;
 
-const SectionTitleIconSetting = styled.Image.attrs({
-    source: require('@/assets/icons/setting.png'),
-})`
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  resize-mode: contain;
-  tint-color: #9aa0a6;
-  transform: translateY(1px);
-`;
-
 const RowLink = styled.Pressable`
-  padding: 14px 16px; /* 16 → 14로 자연스러운 높이 */
+  padding: 14px 16px;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
@@ -235,7 +218,7 @@ const RowLink = styled.Pressable`
 
 const RowLeft = styled.Text`
   color: #e9ecef;
-  font-size: 15px;
+  font-size: 15px; /* 리스트 항목 15pt */
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
@@ -246,21 +229,21 @@ const Chevron = styled.Text`
 `;
 
 const RowHeader = styled.Text`
-  margin: 20px 16px 8px 16px; /* 16/6 → 20/8, 헤더 위쪽 여백 증가 */
+  margin: 20px 16px 8px 16px;
   color: #e9ecef;
-  font-size: 15px;
+  font-size: 15px; /* Follow List 헤더 15pt */
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
 const RowSeparator = styled.View`
   height: 1px;
-  margin: 4px 16px 18px 16px; /* 아래쪽 18px로 증가 */
+  margin: 4px 16px 18px 16px;
   background-color: #2a2b2c;
   opacity: 0.6;
 `;
 
 const CountCard = styled.View`
-  margin: 10px 16px 12px 16px; /* 4/0 → 10/12 */
+  margin: 10px 16px 12px 16px;
   background: #2a2f33;
   border-radius: 12px;
   padding: 8px;
@@ -283,14 +266,14 @@ const CountItem = styled.Pressable`
 
 const CountLabel = styled.Text`
   color: #c7cbcf;
-  font-size: 14px;
+  font-size: 15px; /* Received / Sent 15pt */
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
 const CountNumber = styled.Text`
   margin-top: 2px;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 16px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
 
@@ -303,70 +286,4 @@ const DeleteText = styled.Text`
   color: #ff5a5a;
   font-size: 14px;
   font-family: 'PlusJakartaSans_600SemiBold';
-`;
-
-const Overlay = styled.View`
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  justify-content: center;
-  align-items: center;
-`;
-
-const Backdrop = styled.Pressable`
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-`;
-
-const ModalCard = styled.Pressable`
-  width: 84%;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-`;
-
-const ModalTitle = styled.Text`
-  color: #1a1c1e;
-  font-size: 14px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const ModalDesc = styled.Text`
-  margin-top: 6px;
-  color: #5a5f64;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const ModalRow = styled.View`
-  margin-top: 12px;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 10px;
-`;
-
-const ModalBtn = styled.Pressable`
-  flex: 1;
-  border-radius: 8px;
-  padding: 10px;
-  background: #f1f3f5;
-  align-items: center;
-`;
-
-const ModalBtnText = styled.Text`
-  color: #1a1c1e;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-
-const ModalBtnDelete = styled.Pressable`
-  flex: 1;
-  border-radius: 8px;
-  padding: 10px;
-  background: #ffeded;
-  align-items: center;
-`;
-
-const ModalBtnDeleteText = styled.Text`
-  color: #e03131;
-  font-family: 'PlusJakartaSans_700Bold';
 `;
