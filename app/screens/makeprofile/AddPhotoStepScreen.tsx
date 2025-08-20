@@ -3,6 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { launchImageLibrary } from 'react-native-image-picker';
+import Fontisto from '@expo/vector-icons/Fontisto';
 
 // ------------------------
 // AddPhotoStepScreen
@@ -112,7 +113,7 @@ export default function AddPhotoStepScreen({ navigation }) {
               </>
             ) : (
               <CameraAvatar>
-                <CameraIcon>📷</CameraIcon>
+                 <Fontisto name="camera" size={30} color='#b3b2ad' />
               </CameraAvatar>
             )}
           </AvatarContainer>
