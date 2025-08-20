@@ -45,7 +45,8 @@ export default function CustomButton({
 
 const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }>`
   flex: 1;
-  height: 50px;
+  height: 50px
+  ;min-height: 50px;
   border-radius: 8px;
   justify-content: center;
   align-items: center;

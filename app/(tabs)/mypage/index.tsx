@@ -1,5 +1,6 @@
 import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
@@ -39,16 +40,20 @@ export default function MyPageScreen() {
                             label="Edit Profile"
                             tone="mint"
                             filled
+                            style={{ width: '100%', height: 44 }}   // ✅ 눌림/라인만 보이는 현상 방지
                             onPress={() => router.push('/mypage/edit')}
                         />
                     </EditButtonWrap>
                 </ProfileView>
 
-                {/* 섹션: My Friends */}
-                <SectionTitle>My Friends</SectionTitle>
-                <RowLink>
+                {/* 섹션: My Friends (아이콘 정렬 보정) */}
+                <SectionTitleRow>
+                    <SectionTitleIcon />
+                    <SectionTitle>My Friends</SectionTitle>
+                </SectionTitleRow>
+                <RowLink onPress={() => router.push('/mypage/friends')}>
                     <RowLeft>Friends List</RowLeft>
-                    <Chevron onPress={() => router.push('/mypage/friends')}>›</Chevron>
+                    <Chevron>›</Chevron>
                 </RowLink>
 
                 {/* 섹션: Follow List */}
@@ -117,14 +122,14 @@ const Scroll = styled.ScrollView``;
 const Header = styled.View`
   padding: 12px 16px 8px 16px;
   flex-direction: row;
-  align-items: center;      
+  align-items: center;
 `;
 
 const Title = styled.Text`
   font-family: 'InstrumentSerif_400Regular';
   font-size: 32px;
   color: #ffffff;
-  margin-right: 8px; 
+  margin-right: 8px;
 `;
 
 const IconImage = styled.Image`
@@ -134,7 +139,6 @@ const IconImage = styled.Image`
   transform: translateY(-3px);
 `;
 
-/* 프로필 */
 const ProfileView = styled.View`
   align-items: center;
   padding: 8px 16px 12px 16px;
@@ -161,11 +165,27 @@ const EditButtonWrap = styled.View`
 `;
 
 const SectionTitle = styled.Text`
-  margin: 18px 16px 8px 16px;
   color: #9aa0a6;
   font-size: 12px;
+  line-height: 18px;                 /* ✅ 텍스트 기준으로 높이 통일 */
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans_600SemiBold';
+`;
+
+const SectionTitleRow = styled.View`
+  flex-direction: row;
+  align-items: center;                /* ✅ 세로 중앙정렬 */
+  margin: 18px 16px 8px 16px;
+  height: 18px;                       /* ✅ 아이콘/텍스트 라인 맞춤 */
+`;
+
+const SectionTitleIcon = styled(Ionicons).attrs({
+    name: 'person-outline',
+    size: 12,
+    color: '#9aa0a6',
+})`
+  margin-right: 6px;                  /* ✅ 간격 */
+  transform: translateY(0.5px);       /* ✅ 베이스라인 미세 보정 */
 `;
 
 const RowLink = styled.Pressable`
