@@ -197,6 +197,8 @@ const AvatarContainer = styled.TouchableOpacity`
   aspect-ratio: 1;
   margin-bottom: 20px;
   position: relative;
+  justify-content: center;
+  align-items: center;
 `;
 
 const Avatar = styled.View`
@@ -211,26 +213,27 @@ const Avatar = styled.View`
 const ImageContainer = styled.View`
   width: 100%;
   height: 100%;
-  border-radius: 50px;
+  border-radius: 1000px;
   border: ${props => props.selected ? '4px solid #02F59B' : '4px solid transparent'};
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 `;
 
 const CharacterImage = styled.Image`
   width: 100%;
   height: 100%;
   resize-mode: contain;
-  border-radius: 50px;
 `;
 
 const CameraAvatar = styled.View`
-  flex: 1;
-  border-radius: 50px;
+  width: 95%;
+  height: 95%;
+  border-radius: 1000px;
   justify-content: center;
   align-items: center;
   background-color: #353637;
-  border: 3px solid transparent;
+  border: 4px solid transparent;
 `;
 
 const CameraIcon = styled.Text`
@@ -241,25 +244,30 @@ const CameraIcon = styled.Text`
 const PhotoAvatar = styled.Image`
   width: 100%;
   height: 100%;
-  border-radius: 50px;
+  resize-mode: contain;
 `;
 
 const CheckmarkContainer = styled.View`
   position: absolute;
-  top: 0px;
-  right: 0px;
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
+  top: 5%;
+  right: 5%;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
   background-color: #02F59B;
   justify-content: center;
   align-items: center;
   border: 3px solid #0F0F10;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.84px;
+  elevation: 5;
 `;
 
 const Checkmark = styled.Text`
   color: #1D1E1F;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
 `;
 
