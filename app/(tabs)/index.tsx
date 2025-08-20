@@ -9,20 +9,33 @@ export default function HomeScreen() {
     <Safe>
       <Header>
         <Title>Find Friends</Title>
+        <IconImage source={require('../../assets/images/IsolationMode.png')} />
       </Header>
 
       <Content
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 24,
+          gap: 16,
+        }}
       >
         <FriendCard
           userId={42}
           name="Alice Kori, Kim"
-          country='United States'
+          country="United States"
           birth={2025}
+          gender="female"
           purpose="Business"
           languages={['EN', 'KO']}
-          personalities={['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover']}
+          personalities={[
+            'Exploring Cafés',
+            'Board Games',
+            'Doing Nothing',
+            'K-Food Lover',
+            'K-Drama Lover',
+          ]}
           isFollowed={false}
           onFollow={(userId) => followMutation.mutate(userId)}
           onChat={() => { }}
@@ -32,6 +45,7 @@ export default function HomeScreen() {
           name="John Lee"
           country="United States"
           birth={2025}
+          gender="unspecified"
           purpose="Education"
           languages={['EN']}
           personalities={['Hiking', 'Reading']}
@@ -46,17 +60,28 @@ export default function HomeScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background-color: #1D1E1F;
+  background-color: #1d1e1f;
 `;
+
 const Header = styled.View`
   padding: 12px 18px 8px 18px;
+  flex-direction: row;
+  align-items: center;
 `;
+
 const Title = styled.Text`
   color: #ffffff;
-  font-size: 40px;
+  font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
-  font-weight: normal;                      
   letter-spacing: -0.2px;
 `;
 
-const Content = styled.ScrollView``;
+const IconImage = styled.Image`
+  margin-left: 4px;
+  width: 20px;
+  height: 20px;
+`;
+
+const Content = styled.ScrollView`
+  flex: 1;
+`;

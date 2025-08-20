@@ -51,6 +51,8 @@ const Button = styled(Pressable)`
   width:250px;
   height: 48px;
   border-radius: 8px;
+  border-color:#ffffff;
+  border-width:1px;
   padding-horizontal: 16px;
   margin-bottom: 12px;
 `;
