@@ -40,24 +40,27 @@ export default function MyPageScreen() {
                             label="Edit Profile"
                             tone="mint"
                             filled
-                            style={{ width: '100%', height: 44 }}   // ✅ 눌림/라인만 보이는 현상 방지
+                            style={{ width: '100%', height: 44 }}
                             onPress={() => router.push('/mypage/edit')}
                         />
                     </EditButtonWrap>
                 </ProfileView>
 
-                {/* 섹션: My Friends (아이콘 정렬 보정) */}
+                {/* 섹션: My Friends */}
                 <SectionTitleRow>
                     <SectionTitleIcon />
                     <SectionTitle>My Friends</SectionTitle>
                 </SectionTitleRow>
+
                 <RowLink onPress={() => router.push('/mypage/friends')}>
                     <RowLeft>Friends List</RowLeft>
                     <Chevron>›</Chevron>
                 </RowLink>
+                <RowSeparator />
 
-                {/* 섹션: Follow List */}
-                <SectionTitle>Follow List</SectionTitle>
+                {/* 섹션: Follow List (Friends List와 동일 스타일) */}
+                <RowHeader>Follow List</RowHeader>
+
                 <CountCard>
                     <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
                         <CountLabel>Received</CountLabel>
@@ -71,18 +74,20 @@ export default function MyPageScreen() {
                 </CountCard>
 
                 {/* 섹션: Translate Setting */}
-                <SectionTitle>Translate Setting</SectionTitle>
+                <RowHeader>Translate Setting</RowHeader>
                 <RowLink onPress={() => router.push('/mypage/translate')}>
                     <RowLeft>Chat Translation Language</RowLeft>
                     <Chevron>›</Chevron>
                 </RowLink>
+                <RowSeparator />
 
                 {/* 섹션: My Account */}
-                <SectionTitle>My Account</SectionTitle>
+                <RowHeader>My Account</RowHeader>
                 <RowLink onPress={() => { /* 로그아웃 로직 예정 */ }}>
                     <RowLeft>Account Logout</RowLeft>
                     <Chevron>›</Chevron>
                 </RowLink>
+                <RowSeparator />
 
                 {/* Delete Account */}
                 <DeletePressable onPress={() => setShowDelete(true)}>
@@ -161,22 +166,21 @@ const Email = styled.Text`
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
-  margin-bottom: 12px;
+  margin-bottom: 20px;         /* ↑ 여백 늘려 겹침 방지 */
 `;
 
 const SectionTitle = styled.Text`
   color: #9aa0a6;
   font-size: 12px;
-  line-height: 18px;                 /* ✅ 텍스트 기준으로 높이 통일 */
+  line-height: 18px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
 const SectionTitleRow = styled.View`
   flex-direction: row;
-  align-items: center;                /* ✅ 세로 중앙정렬 */
+  align-items: center;
   margin: 18px 16px 8px 16px;
-  height: 18px;                       /* ✅ 아이콘/텍스트 라인 맞춤 */
 `;
 
 const SectionTitleIcon = styled(Ionicons).attrs({
@@ -184,17 +188,12 @@ const SectionTitleIcon = styled(Ionicons).attrs({
     size: 12,
     color: '#9aa0a6',
 })`
-  margin-right: 6px;                  /* ✅ 간격 */
-  transform: translateY(0.5px);       /* ✅ 베이스라인 미세 보정 */
+  margin-right: 6px;
+  transform: translateY(0.5px);
 `;
 
 const RowLink = styled.Pressable`
   padding: 16px;
-  background: #121314;
-  border-top-width: 1px;
-  border-top-color: #222426;
-  border-bottom-width: 1px;
-  border-bottom-color: #222426;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
@@ -210,6 +209,20 @@ const Chevron = styled.Text`
   color: #b8bdc2;
   font-size: 18px;
   margin-left: 8px;
+`;
+
+const RowHeader = styled.Text`
+  margin: 16px 16px 6px 16px;  /* 좌우 16 정렬 */
+  color: #e9ecef;
+  font-size: 14px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+
+const RowSeparator = styled.View`
+  height: 1px;
+  margin: 8px 16px 12px 16px;
+  background-color: #2a2b2c;
+  opacity: 0.6;
 `;
 
 const CountCard = styled.View`
