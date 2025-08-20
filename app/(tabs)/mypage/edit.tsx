@@ -1,6 +1,8 @@
 import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import styled from 'styled-components/native';
@@ -36,7 +38,7 @@ export default function EditProfileScreen() {
         setSelectedInterests(prev => {
             const exists = prev.includes(label);
             if (exists) return prev.filter(x => x !== label);
-            if (prev.length >= MAX_INTEREST) return prev; // 최대 5개
+            if (prev.length >= MAX_INTEREST) return prev;
             return [...prev, label];
         });
     };
@@ -49,11 +51,17 @@ export default function EditProfileScreen() {
         <Safe>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
                 <Scroll showsVerticalScrollIndicator={false}>
+                    {/* ✅ 커스텀 헤더: 가운데 타이틀, 좌/우 버튼 */}
                     <Header>
+                        <BackBtn onPress={() => router.back()} hitSlop={12}>
+                            <Ionicons name="chevron-back" size={22} color="#cfd4da" />
+                        </BackBtn>
+
                         <Title>My Profile</Title>
-                        <Save onPress={() => {/* 저장 예정 */ }}>
+
+                        <SaveBtn onPress={() => {/* 저장 예정 */ }} hitSlop={12}>
                             <SaveText>Save</SaveText>
-                        </Save>
+                        </SaveBtn>
                     </Header>
 
                     <Center>
@@ -180,25 +188,43 @@ const Scroll = styled.ScrollView`
   padding: 0 16px;
 `;
 
+/* ===== 헤더 ===== */
 const Header = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
+  height: 52px;
   align-items: center;
-  padding: 12px 0;
+  justify-content: center;     
+  position: relative;         
+  margin-bottom: 4px;
 `;
 
 const Title = styled.Text`
   color: #fff;
-  font-size: 18px;
+  font-size: 20px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
 
-const Save = styled.Pressable``;
+const SideBase = styled.Pressable`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  justify-content: center;
+  padding: 0 12px;
+`;
+
+const BackBtn = styled(SideBase)`
+  left: -4px;               
+`;
+
+const SaveBtn = styled(SideBase)`
+  right: -4px;
+`;
 
 const SaveText = styled.Text`
   color: #30F59B;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_600SemiBold';
 `;
+
+/* ===== 본문 ===== */
 
 const Center = styled.View`
   align-items: center;
@@ -353,9 +379,9 @@ const BottomPad = styled.View`
   height: 20px;
 `;
 
-/* Modal(관심사) */
 const ModalOverlay = styled.Pressable`
-  ...StyleSheet.absoluteFillObject;
+  position: absolute;         
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(0, 0, 0, 0.6);
   justify-content: flex-end;
 `;
