@@ -154,7 +154,7 @@ const IconImage = styled.Image`
 
 const ProfileView = styled.View`
   align-items: center;
-  padding: 8px 16px 24px 16px;
+  padding: 8px 16px 8px 16px;
 `;
 
 const Name = styled.Text`
@@ -174,7 +174,7 @@ const Email = styled.Text`
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
-  margin-bottom: 20px; 
+  margin-bottom: 0px; 
 `;
 
 const SectionSpacer = styled.View`
