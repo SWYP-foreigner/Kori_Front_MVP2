@@ -45,6 +45,7 @@ export default function MyPageScreen() {
                         />
                     </EditButtonWrap>
                 </ProfileView>
+                <SectionSpacer />
 
                 {/* 섹션: My Friends */}
                 <SectionTitleRow>
@@ -58,7 +59,7 @@ export default function MyPageScreen() {
                 </RowLink>
                 <RowSeparator />
 
-                {/* 섹션: Follow List (Friends List와 동일 스타일) */}
+                {/* 섹션: Follow List */}
                 <RowHeader>Follow List</RowHeader>
 
                 <CountCard>
@@ -74,7 +75,11 @@ export default function MyPageScreen() {
                 </CountCard>
 
                 {/* 섹션: Translate Setting */}
-                <RowHeader>Translate Setting</RowHeader>
+                <SectionTitleRow>
+                    <SectionTitleIconGlobe />
+                    <SectionTitle>Translate Setting</SectionTitle>
+                </SectionTitleRow>
+
                 <RowLink onPress={() => router.push('/mypage/translate')}>
                     <RowLeft>Chat Translation Language</RowLeft>
                     <Chevron>›</Chevron>
@@ -82,7 +87,10 @@ export default function MyPageScreen() {
                 <RowSeparator />
 
                 {/* 섹션: My Account */}
-                <RowHeader>My Account</RowHeader>
+                <SectionTitleRow>
+                    <SectionTitleIconSetting />
+                    <SectionTitle>My Account</SectionTitle>
+                </SectionTitleRow>
                 <RowLink onPress={() => { /* 로그아웃 로직 예정 */ }}>
                     <RowLeft>Account Logout</RowLeft>
                     <Chevron>›</Chevron>
@@ -146,7 +154,7 @@ const IconImage = styled.Image`
 
 const ProfileView = styled.View`
   align-items: center;
-  padding: 8px 16px 12px 16px;
+  padding: 8px 16px 24px 16px;
 `;
 
 const Name = styled.Text`
@@ -166,12 +174,16 @@ const Email = styled.Text`
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
-  margin-bottom: 20px;         /* ↑ 여백 늘려 겹침 방지 */
+  margin-bottom: 20px; 
+`;
+
+const SectionSpacer = styled.View`
+  height: 12px;  /* 필요하면 16~20으로 키워도 OK */
 `;
 
 const SectionTitle = styled.Text`
   color: #9aa0a6;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans_600SemiBold';
@@ -180,7 +192,7 @@ const SectionTitle = styled.Text`
 const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
-  margin: 18px 16px 8px 16px;
+  margin: 22px 16px 10px 16px; /* ↑ 이전 18/8 → 22/10 */
 `;
 
 const SectionTitleIcon = styled(Ionicons).attrs({
@@ -189,11 +201,33 @@ const SectionTitleIcon = styled(Ionicons).attrs({
     color: '#9aa0a6',
 })`
   margin-right: 6px;
-  transform: translateY(0.5px);
+  transform: translateY(1px);
+`;
+
+const SectionTitleIconGlobe = styled.Image.attrs({
+    source: require('@/assets/icons/global.png'),
+})`
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  resize-mode: contain;
+  tint-color: #9aa0a6;
+  transform: translateY(1px);
+`;
+
+const SectionTitleIconSetting = styled.Image.attrs({
+    source: require('@/assets/icons/setting.png'),
+})`
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  resize-mode: contain;
+  tint-color: #9aa0a6;
+  transform: translateY(1px);
 `;
 
 const RowLink = styled.Pressable`
-  padding: 16px;
+  padding: 14px 16px; /* 16 → 14로 자연스러운 높이 */
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
@@ -201,7 +235,7 @@ const RowLink = styled.Pressable`
 
 const RowLeft = styled.Text`
   color: #e9ecef;
-  font-size: 14px;
+  font-size: 15px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
@@ -212,21 +246,21 @@ const Chevron = styled.Text`
 `;
 
 const RowHeader = styled.Text`
-  margin: 16px 16px 6px 16px;  /* 좌우 16 정렬 */
+  margin: 20px 16px 8px 16px; /* 16/6 → 20/8, 헤더 위쪽 여백 증가 */
   color: #e9ecef;
-  font-size: 14px;
+  font-size: 15px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
 const RowSeparator = styled.View`
   height: 1px;
-  margin: 8px 16px 12px 16px;
+  margin: 4px 16px 18px 16px; /* 아래쪽 18px로 증가 */
   background-color: #2a2b2c;
   opacity: 0.6;
 `;
 
 const CountCard = styled.View`
-  margin: 4px 16px 0 16px;
+  margin: 10px 16px 12px 16px; /* 4/0 → 10/12 */
   background: #2a2f33;
   border-radius: 12px;
   padding: 8px;
@@ -249,14 +283,14 @@ const CountItem = styled.Pressable`
 
 const CountLabel = styled.Text`
   color: #c7cbcf;
-  font-size: 12px;
+  font-size: 14px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
 const CountNumber = styled.Text`
   margin-top: 2px;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 18px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
 
