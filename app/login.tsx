@@ -78,7 +78,7 @@ const LoginScreen = () => {
       <TabsMoveButton onPress={() => router.push('./(tabs)')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
       </TabsMoveButton>
-      <ProfileMoveButton onPress={() => router.push('./screens/makeprofile/NameStepScreen')}>
+      <ProfileMoveButton onPress={() => router.push('./screens/makeprofile/AddPhotoStepScreen')}>
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>
