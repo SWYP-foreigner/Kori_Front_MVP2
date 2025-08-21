@@ -1,16 +1,12 @@
 {
   "expo": {
+    "scheme":"myapp",
     "name": "Kori_Front",
     "slug": "Kori_Front",
-    "splash":{
-      "image":"./assets/images/character_02.png",
-      "resizeMode":"contain",
-      "backgroundColor":"#0F0F10"
-    },
-    "owner":"koriapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "scheme": "korifront",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -19,7 +15,6 @@
     },
     "android": {
       "package": "com.SWYP.kori",
-      "windowSoftInputMode": "adjustPan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -42,14 +37,7 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
-        }
-      ],
-      "expo-secure-store",
-      "expo-web-browser"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -59,7 +47,6 @@
       "eas": {
         "projectId": "ebde49c4-4dbe-4c95-9f09-52f33096566c"
       }
-    },
-    "scheme": "koriapp"
+    }
   }
 }
