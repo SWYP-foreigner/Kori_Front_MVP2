@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
 
 // ------------------------
@@ -8,6 +9,7 @@ import { useRouter } from 'expo-router';
 // ------------------------
 export default function NameStepScreen({ navigation}) {
   const [AboutMe, setAboutMe] = useState('');
+  const { profileData, updateProfile } = useProfile();
   const router = useRouter();
   const maxLength = 70;
   
@@ -16,10 +18,8 @@ export default function NameStepScreen({ navigation}) {
   
   const handleNext = () => {
     if (canProceed) {
-      console.log("버튼 눌림");
-      router.push({
-        pathname: './AddPhotoStepScreen'
-      });
+      updateProfile('introduction',AboutMe);
+      router.push('./AddPhotoStepScreen');
     }
   };
 

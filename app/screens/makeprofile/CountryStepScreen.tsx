@@ -3,11 +3,13 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, Modal, FlatList, TouchableOpacity } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
+import {useProfile} from '../../contexts/ProfileContext'
 
 
 export default function CountryStepScreen({ navigation}) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('');
+  const { profileData, updateProfile } = useProfile();
 
   const countries = [
     'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan',
@@ -50,13 +52,8 @@ export default function CountryStepScreen({ navigation}) {
   };
 
   const handleNext = () => {
-    console.log("Selected country:", selectedCountry);
-    router.push
-    (
-        {
-            pathname:'./LangStepScreen'
-        }
-    );
+    updateProfile('country',selectedCountry);
+    router.push('./LangStepScreen');
     // router.push({
     //   pathname: './NextStepScreen',
     //   params: { selectedCountry },

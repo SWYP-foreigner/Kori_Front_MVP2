@@ -3,10 +3,12 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
+import {useProfile} from '../../contexts/ProfileContext'
 
 export default function LanguageStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const { profileData, updateProfile } = useProfile();
 
   const languages = [
     'Afrikaans (AF)', 'Albanian (SQ)', 'Amharic (AM)', 'Arabic (AR)', 'Armenian (HY)', 'Azerbaijani (AZ)',
@@ -52,9 +54,8 @@ export default function LanguageStepScreen({ navigation }) {
 
   const handleNext = () => {
     console.log("Selected languages:", selectedLanguages);
-    router.push({
-      pathname: './AboutMeStepScreen'
-    });
+    updateProfile('language',selectedLanguages);
+    router.push('./AboutMeStepScreen');
   };
 
   const handleSkip = () => {

@@ -3,10 +3,12 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5, AntDesign, Feather } from '@expo/vector-icons';
+import {useProfile} from '../../contexts/ProfileContext'
 
 export default function PurposeStepScreen({ navigation }) {
   const [selectedPurpose, setSelectedPurpose] = useState(null);
   const router = useRouter();
+  const { profileData, updateProfile } = useProfile();
 
   // Journey purposes with vector icons and age ranges
   const purposes = [
@@ -68,10 +70,8 @@ export default function PurposeStepScreen({ navigation }) {
 
   const handleNext = () => {
     if (canProceed) {
-      console.log("Selected purpose:", selectedPurpose);
-      router.push({
-        pathname: './TagStepScreen'
-      });
+      updateProfile('purpose',selectedPurpose.title);
+      router.push('./BirthStepScreen');
     }
   };
 

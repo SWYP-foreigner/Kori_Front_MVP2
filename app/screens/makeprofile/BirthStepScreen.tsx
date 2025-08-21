@@ -3,11 +3,13 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import {useProfile} from '../../contexts/ProfileContext'
 
 export default function BirthdaySelectionScreen() {
   const router = useRouter();
   const [text, setText] = useState('');
   const [validbirth, setValidBirth] = useState(false);
+  const { profileData, updateProfile } = useProfile();
 
   const handleChange = (value) => {
     setText(value);
@@ -46,6 +48,7 @@ export default function BirthdaySelectionScreen() {
   };
 
   const moveNextScreen = () => {
+    updateProfile('birthday',text);
     router.push('./TagStepScreen');
   };
 

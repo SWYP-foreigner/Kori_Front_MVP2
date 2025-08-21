@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useRoute } from '@react-navigation/native';
+import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
 
 // ------------------------
@@ -15,15 +15,15 @@ export default function NameStepScreen({ navigation}) {
   const [LastNameSubmitted,setLastNameSubmitted]=useState(false);
   const canProceed = FirstNameSubmitted && LastNameSubmitted;
   const router=useRouter();
+  const { profileData, updateProfile } = useProfile();
   const handleNext=()=>{
   //  router.push({
   //     pathname: './GenderStepScreen',
   //     params: { firstName, lastName }, // userData 대신 개별 필드
   //   });
-    console.log("버튼 눌림")
-    router.push({
-      pathname:'./GenderStepScreen'
-    })
+    updateProfile('firstname',firstName);
+    updateProfile('lastname',lastName);
+    router.push('./GenderStepScreen')
   }
 
   return (
@@ -47,7 +47,6 @@ export default function NameStepScreen({ navigation}) {
               placeholder="First Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
-              returnKeyType="Next"
               onFocus={() => setFirstNameSubmitted(false)}
               onSubmitEditing={()=>{
                setFirstNameSubmitted(true);
@@ -63,7 +62,6 @@ export default function NameStepScreen({ navigation}) {
               placeholder="Last Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
-              returnKeyType="Done"
               onFocus={() => setLastNameSubmitted(false)}
               onSubmitEditing={()=>{
                setLastNameSubmitted(true);

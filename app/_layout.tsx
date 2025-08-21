@@ -10,6 +10,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
+import { ProfileProvider } from './contexts/ProfileContext';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -23,6 +24,7 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
+    <ProfileProvider>
     <QueryClientProvider client={queryClient}>
       <Stack initialRouteName="login"
         screenOptions={{headerShown:false}}>
@@ -32,5 +34,6 @@ export default function RootLayout() {
       </Stack>
       <Toast />
     </QueryClientProvider>
+    </ProfileProvider>
   );
 }

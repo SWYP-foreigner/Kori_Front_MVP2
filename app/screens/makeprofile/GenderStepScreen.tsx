@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useRoute } from '@react-navigation/native';
+import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
 
 // ------------------------
@@ -12,7 +12,7 @@ export default function GenderStepScreen({ navigation}) {
   const [FemaleClicked, setFemaleClicked] = useState(false);
   const [MaleClicked,setMaleClicked]=useState(false);
   const [NotSayingClicked,setNotSayingClicked]=useState(false);
-
+  const { profileData, updateProfile } = useProfile();
   const canProceed = FemaleClicked||MaleClicked||NotSayingClicked
   const router=useRouter();
 
@@ -22,14 +22,18 @@ export default function GenderStepScreen({ navigation}) {
   setNotSayingClicked(gender === 'NotSaying');
 };
   const handleNext=()=>{
-  //  router.push({
-  //     pathname: './GenderStepScreen',
-  //     params: { firstName, lastName }, // userData 대신 개별 필드
-  //   });
-  router.push({
-    pathname:'./CountryStepScreen'
-  })
-    console.log("버튼 눌림")
+  let gender;
+  if(FemaleClicked){
+    gender='Female';
+  }else if(MaleClicked)
+  {
+    gender='Male';
+  }
+  else{
+    gender='NoGender';
+  }
+  updateProfile('gender',gender);
+  router.push('./CountryStepScreen');
   }
 
   return (

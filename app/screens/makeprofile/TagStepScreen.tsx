@@ -3,6 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert ,ScrollView} from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import {useProfile} from '../../contexts/ProfileContext'
 
 const HobbyBox = ({ title, tags, selectedTags, selectTag }) => {
   return (
@@ -34,6 +35,7 @@ export default function TagStepScreen() {
   const router = useRouter();
   const maxSelections = 5;
   const [selectedTags, setSelectedTags] = useState([]);
+  const { profileData, updateProfile } = useProfile();
 
   const selectTag = (tag) => {
     if (selectedTags.includes(tag)) {
@@ -51,7 +53,7 @@ export default function TagStepScreen() {
 
   const handleDone = () => {
     console.log('Selected tags:', selectedTags);
-    console.log('Count',selectedTags.length)
+    updateProfile('hobby',selectedTags);
     router.push('./NextScreen'); // 원하는 다음 화면
   };
 

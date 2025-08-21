@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import {useProfile} from '../../contexts/ProfileContext'
 
 // ------------------------
 // AddPhotoStepScreen
@@ -12,7 +13,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 export default function AddPhotoStepScreen({ navigation }) {
   const [selectedAvatar, setSelectedAvatar] = useState(-1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [isPhoto,setisPhoto]=useState(false);
+  const { profileData, updateProfile } = useProfile();
   const canProceed = selectedAvatar !== -1 || selectedPhoto !== null;
   const router = useRouter();
 
@@ -100,9 +101,7 @@ export default function AddPhotoStepScreen({ navigation }) {
  
 
   const handleNext = () => {
-    router.push({
-      pathname: './PurposeStepScreen'
-    });
+    router.push('./PurposeStepScreen');
   };
 
   return (
