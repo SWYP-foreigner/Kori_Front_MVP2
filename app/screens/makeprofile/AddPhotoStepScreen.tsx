@@ -101,7 +101,7 @@ export default function AddPhotoStepScreen({ navigation }) {
 
   const handleNext = () => {
     router.push({
-      pathname: './GenderStepScreen'
+      pathname: './PurposeStepScreen'
     });
   };
 

@@ -133,7 +133,7 @@ const Form = styled.View`
   margin-top: 50px;
 `;
 const InputWrapper=styled.View`
-  width:335px;
+  width:100%;
   height:44px;
   border-radius:4px;
   background-color: #353637 ;

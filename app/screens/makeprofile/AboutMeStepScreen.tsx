@@ -18,7 +18,7 @@ export default function NameStepScreen({ navigation}) {
     if (canProceed) {
       console.log("버튼 눌림");
       router.push({
-        pathname: './PurposeStepScreen'
+        pathname: './AddPhotoStepScreen'
       });
     }
   };
@@ -118,7 +118,7 @@ const Form = styled.View`
 `;
 
 const InputWrapper = styled.View`
-  width: 335px;
+  width: 100%;
   height: 199px;
   border-radius: 10px;
   background-color: #353637;
