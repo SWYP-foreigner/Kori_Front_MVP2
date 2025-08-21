@@ -1,4 +1,6 @@
 import CustomButton from '@/components/CustomButton';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
 
@@ -9,7 +11,16 @@ export default function TranslateScreen() {
 
     return (
         <Safe>
-            <Title>Chat Translation Language</Title>
+            {/* 헤더 */}
+            <Header>
+                <BackBtn onPress={() => router.back()}>
+                    <AntDesign name="left" size={20} color="#fff" />
+                </BackBtn>
+                <Title>Chat Translation</Title>
+                <Spacer /> {/* 오른쪽 빈공간 정렬용 */}
+            </Header>
+
+            {/* 언어 선택 */}
             <Box>
                 {OPTIONS.map(opt => (
                     <LangRow key={opt} onPress={() => setSelected(opt)}>
@@ -19,6 +30,7 @@ export default function TranslateScreen() {
                 ))}
             </Box>
 
+            {/* Save 버튼 */}
             <Footer>
                 <CustomButton label="Save" tone="mint" filled onPress={() => { /* 저장 예정 */ }} />
             </Footer>
@@ -27,20 +39,34 @@ export default function TranslateScreen() {
 }
 
 const Safe = styled.SafeAreaView`
-    flex:1;
-    background:#0f1011;
+  flex: 1;
+  background: #0f1011;
+`;
+
+const Header = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+`;
+const BackBtn = styled.Pressable`
+  width: 40px;
+  align-items: flex-start;
 `;
 const Title = styled.Text`
-  padding: 12px 16px;
   color: #fff;
   font-size: 18px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+const Spacer = styled.View`
+  width: 40px;
+`;
+
 const Box = styled.View`
-    margin: 4px 16px;
-    background:#121314;
-    border-radius:12px;
-    overflow:hidden;
+  margin: 4px 16px;
+  background: #121314;
+  border-radius: 12px;
+  overflow: hidden;
 `;
 const LangRow = styled.Pressable`
   padding: 14px 16px;
@@ -51,13 +77,14 @@ const LangRow = styled.Pressable`
   align-items: center;
 `;
 const LangText = styled.Text<{ active: boolean }>`
-  color: ${({ active }) => active ? '#30F59B' : '#e9ecef'};
+  color: ${({ active }) => (active ? '#30F59B' : '#e9ecef')};
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 const Radio = styled.Text`
-    color:#cfd4da;
-    font-size:16px;
+  color: #cfd4da;
+  font-size: 16px;
 `;
+
 const Footer = styled.View`
-    padding: 16px;
+  padding: 16px;
 `;

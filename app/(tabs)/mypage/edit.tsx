@@ -1,243 +1,247 @@
 import Avatar from '@/components/Avatar';
-import CustomButton from '@/components/CustomButton';
-import Tag from '@/components/Tag';
 import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
 import styled from 'styled-components/native';
 
-const PURPOSES = ['Working', 'Education', 'Travel', 'Business'];
-const LANGS = ['KO', 'EN', 'FR', 'JP', 'ZH'];
+import CountryPicker, {
+    CountryDropdownButton,
+    CountryDropdownText
+} from '@/components/CountryPicker';
+
+import LanguagePicker, {
+    LanguageDropdownButton,
+    LanguageDropdownText,
+    MAX_LANGUAGES
+} from '@/components/LanguagePicker';
+
+import PurposePicker, {
+    PurposeDropdownButton,
+    PurposeDropdownText
+} from '@/components/PurposePicker';
+
 const INTERESTS = [
-    'Music', 'Movies', 'Reading', 'Anime', 'Gaming',
-    'Drinking', 'Exploring Cafés', 'Traveling', 'Board Games', 'Shopping',
-    'Beauty', 'Doing Nothing',
-    'Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking',
-    'Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography',
-    'K-Pop Lover', 'K-Drama Lover', 'K-Food Lover',
+    'Music', 'Movies', 'Reading', 'Anime', 'Gaming', 'Drinking', 'Exploring Cafés', 'Traveling', 'Board Games', 'Shopping',
+    'Beauty', 'Doing Nothing', 'Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking', 'Exhibition', 'Singing', 'Cooking',
+    'Pets', 'Career', 'Photography', 'K-Pop Lover', 'K-Drama Lover', 'K-Food Lover',
 ];
 
-const MAX_INTEREST = 5;
+const INPUT_HEIGHT = 50;
+const INPUT_RADIUS = 8;
+const INPUT_BG = '#353637';
+const INPUT_BORDER = '#FFFFFF';
 
 export default function EditProfileScreen() {
     const [name, setName] = useState('Alice Kori, Kim');
     const [email] = useState('Kori@gmail.com');
+
     const [country, setCountry] = useState('United States');
+    const [showCountry, setShowCountry] = useState(false);
+
+    const [langs, setLangs] = useState<string[]>(['Korean (KO)', 'English (EN)', 'French (FR)']);
+    const [showLang, setShowLang] = useState(false);
+
     const [birth, setBirth] = useState('08/16/2025');
-    const [purpose, setPurpose] = useState('Working');
-    const [languages, setLanguages] = useState<string[]>(['KO', 'EN', 'FR']);
-    const [bio, setBio] = useState('Hello~ I came to Korea from the U.S. as an exchange student');
+
+    const [purpose, setPurpose] = useState('Study'); // 기본값 자유롭게 변경
+    const [showPurpose, setShowPurpose] = useState(false);
 
     const [showInterest, setShowInterest] = useState(false);
-    const [selectedInterests, setSelectedInterests] = useState<string[]>(['Gaming', 'Yoga', 'Anime', 'Exploring Cafés', 'Doing Nothing']);
+    const [selectedInterests] = useState<string[]>([
+        'Gaming', 'Yoga', 'Anime', 'Exploring Cafés', 'Doing Nothing',
+    ]);
 
-    const selectedText = useMemo(() => languages.join(' / '), [languages]);
-
-    const toggleInterest = (label: string) => {
-        setSelectedInterests(prev => {
-            const exists = prev.includes(label);
-            if (exists) return prev.filter(x => x !== label);
-            if (prev.length >= MAX_INTEREST) return prev;
-            return [...prev, label];
+    const languagesDisplay = useMemo(() => {
+        if (!langs.length) return 'Select your language';
+        const codes = langs.map((l) => {
+            const m = l.match(/\(([^)]+)\)/);
+            return m ? m[1] : l;
         });
-    };
-
-    const toggleLang = (code: string) => {
-        setLanguages(prev => prev.includes(code) ? prev.filter(x => x !== code) : [...prev, code]);
-    };
+        return codes.join(' / ');
+    }, [langs]);
 
     return (
         <Safe>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-                <Scroll showsVerticalScrollIndicator={false}>
-                    {/* ✅ 커스텀 헤더: 가운데 타이틀, 좌/우 버튼 */}
-                    <Header>
-                        <BackBtn onPress={() => router.back()} hitSlop={12}>
-                            <Ionicons name="chevron-back" size={22} color="#cfd4da" />
-                        </BackBtn>
+            <Header>
+                <Side onPress={() => router.back()} hitSlop={12} style={{ left: -4 }}>
+                    <Ionicons name="chevron-back" size={22} color="#cfd4da" />
+                </Side>
+                <Title>My Profile</Title>
+                <Side onPress={() => { /* 저장 */ }} hitSlop={12} style={{ right: -4 }}>
+                    <SaveText>Save</SaveText>
+                </Side>
+            </Header>
 
-                        <Title>My Profile</Title>
+            <Scroll showsVerticalScrollIndicator={false}>
+                <Center>
+                    <Avatar />
+                    <Name>{name}</Name>
+                    <Email>{email}</Email>
+                </Center>
 
-                        <SaveBtn onPress={() => {/* 저장 예정 */ }} hitSlop={12}>
-                            <SaveText>Save</SaveText>
-                        </SaveBtn>
-                    </Header>
+                {/* Name */}
+                <Field>
+                    <LabelRow>
+                        <LabelText>Name</LabelText>
+                        <Count>{name.length}/20</Count>
+                    </LabelRow>
+                    <NameInput
+                        value={name}
+                        onChangeText={(t: string) => t.length <= 20 && setName(t)}
+                        placeholder="Your name"
+                        placeholderTextColor="#EDEDED99"
+                    />
+                </Field>
 
-                    <Center>
-                        <Avatar />
-                        <Name>{name}</Name>
-                        <Email>{email}</Email>
-                    </Center>
+                {/* Country */}
+                <Field>
+                    <LabelText>Country</LabelText>
+                    <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
+                        <CountryDropdownText selected={!!country}>
+                            {country || 'Select your country'}
+                        </CountryDropdownText>
+                        <AntDesign name="down" size={16} color="#949899" />
+                    </CountryDropdownButton>
+                </Field>
 
-                    <Field>
-                        <LabelRow>
-                            <LabelText>Name</LabelText>
-                            <Count>{name.length}/20</Count>
-                        </LabelRow>
-                        <Input value={name} onChangeText={(t: string) => t.length <= 20 && setName(t)} placeholder="Your name" placeholderTextColor="#6b6e72" />
-                    </Field>
+                {/* Birth */}
+                <Field>
+                    <LabelText>Birth</LabelText>
+                    <SelectBox onPress={() => { /* DatePicker 예정 */ }}>
+                        <SelectText>{birth || 'Select your birth'}</SelectText>
+                        <AntDesign name="down" size={16} color="#949899" />
+                    </SelectBox>
+                </Field>
 
-                    <Field>
-                        <LabelText>Country</LabelText>
-                        <Select value={country} onPress={() => { /* Country 선택 바텀시트 예정 */ }} />
-                    </Field>
+                {/* Purpose (방문 목적) */}
+                <Field>
+                    <LabelText>Purpose</LabelText>
+                    <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
+                        <PurposeDropdownText selected={!!purpose}>
+                            {purpose || 'Select purpose'}
+                        </PurposeDropdownText>
+                        <AntDesign name="down" size={16} color="#949899" />
+                    </PurposeDropdownButton>
+                </Field>
 
-                    <Field>
-                        <LabelText>Birth</LabelText>
-                        <Select value={birth} onPress={() => { /* DatePicker 예정 */ }} />
-                    </Field>
-
-                    <Field>
-                        <LabelText>Purpose</LabelText>
-                        <Select value={purpose} onPress={() => { /* Picker 예정 */ }} />
-                        <ChipRow>
-                            {PURPOSES.map(p => (
-                                <Chip key={p} active={p === purpose} onPress={() => setPurpose(p)}>
-                                    <ChipText active={p === purpose}>{p}</ChipText>
-                                </Chip>
-                            ))}
-                        </ChipRow>
-                    </Field>
-
-                    <Field>
+                {/* Language */}
+                <Field>
+                    <LabelRow>
                         <LabelText>Language</LabelText>
-                        <Select value={selectedText} onPress={() => { }} />
-                        <ChipRow>
-                            {LANGS.map(code => (
-                                <Chip key={code} active={languages.includes(code)} onPress={() => toggleLang(code)}>
-                                    <ChipText active={languages.includes(code)}>{code}</ChipText>
-                                </Chip>
-                            ))}
-                        </ChipRow>
-                    </Field>
+                        {!!langs.length && <SmallMuted>{langs.length}/{MAX_LANGUAGES} selected</SmallMuted>}
+                    </LabelRow>
+                    <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
+                        <LanguageDropdownText selected={langs.length > 0}>
+                            {languagesDisplay}
+                        </LanguageDropdownText>
+                        <AntDesign name="down" size={16} color="#949899" />
+                    </LanguageDropdownButton>
+                </Field>
 
-                    <Field>
-                        <TopRow>
-                            <LabelText>Personality</LabelText>
-                            <SmallMuted>{selectedInterests.length}/{MAX_INTEREST} selected</SmallMuted>
-                        </TopRow>
+                {/* Personality preview */}
+                <Field>
+                    <TopRow>
+                        <LabelText>Personality</LabelText>
+                        <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
+                    </TopRow>
+                    <TagsWrap>
+                        {selectedInterests.map((t) => (
+                            <PreviewTag key={t}>
+                                <PreviewTagText>{t}</PreviewTagText>
+                            </PreviewTag>
+                        ))}
+                    </TagsWrap>
+                    <SmallEditBtn onPress={() => setShowInterest(true)}>
+                        <SmallEditText>+ Edit</SmallEditText>
+                    </SmallEditBtn>
+                </Field>
 
-                        {/* 선택된 태그 프리뷰 (재사용: Tag) */}
-                        <TagsWrap>
-                            {selectedInterests.map(t => <Tag key={t} label={t} />)}
-                        </TagsWrap>
+                {/* About Me */}
+                <Field>
+                    <LabelText>About Me</LabelText>
+                    <TextArea
+                        value={''}
+                        onChangeText={() => { }}
+                        placeholder="Introduce yourself"
+                        placeholderTextColor="#EDEDED99"
+                        multiline
+                    />
+                </Field>
 
-                        <SmallEditBtn onPress={() => setShowInterest(true)}>
-                            <SmallEditText>+ Edit</SmallEditText>
-                        </SmallEditBtn>
-                    </Field>
+                <BottomPad />
+            </Scroll>
 
-                    <Field>
-                        <LabelText>About Me</LabelText>
-                        <TextArea
-                            value={bio}
-                            onChangeText={setBio}
-                            multiline
-                            numberOfLines={4}
-                            maxLength={160}
-                            placeholder="Introduce yourself"
-                            placeholderTextColor="#6b6e72"
-                        />
-                        <SmallMuted style={{ alignSelf: 'flex-end' }}>{bio.length}/160</SmallMuted>
-                    </Field>
-
-                    <BottomPad />
-                </Scroll>
-            </KeyboardAvoidingView>
-
-            {/* 관심사 모달 */}
-            {showInterest && (
-                <ModalOverlay onPress={() => setShowInterest(false)}>
-                    <ModalSheet onPress={() => { }}>
-                        <SheetHeader>
-                            <SheetTitle>Select Your Interest</SheetTitle>
-                            <SheetCount>{selectedInterests.length}/{MAX_INTEREST} selected</SheetCount>
-                        </SheetHeader>
-
-                        <TagGrid
-                            contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}
-                        >
-                            {INTERESTS.map(tag => {
-                                const active = selectedInterests.includes(tag);
-                                return (
-                                    <SelTag key={tag} active={active} onPress={() => toggleInterest(tag)}>
-                                        <SelTagText active={active}>{tag}</SelTagText>
-                                    </SelTag>
-                                );
-                            })}
-                        </TagGrid>
-
-                        <SheetBtns>
-                            <CustomButton label="Cancel" tone="black" filled={false} onPress={() => setShowInterest(false)} />
-                            <CustomButton label="Save" tone="mint" filled onPress={() => setShowInterest(false)} />
-                        </SheetBtns>
-                    </ModalSheet>
-                </ModalOverlay>
-            )}
+            {/* 모달들 */}
+            <CountryPicker
+                visible={showCountry}
+                value={country}
+                onClose={() => setShowCountry(false)}
+                onSelect={(c) => {
+                    setCountry(c);
+                    setShowCountry(false);
+                }}
+            />
+            <LanguagePicker
+                visible={showLang}
+                value={langs}
+                onClose={() => setShowLang(false)}
+                onChange={(next) => setLangs(next)}
+            />
+            <PurposePicker
+                visible={showPurpose}
+                value={purpose}
+                onClose={() => setShowPurpose(false)}
+                onSelect={(p) => {
+                    setPurpose(p);
+                    setShowPurpose(false);
+                }}
+            />
         </Safe>
     );
 }
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #0f1011;
+  background: #171818;
 `;
-
 const Scroll = styled.ScrollView`
   padding: 0 16px;
 `;
 
-/* ===== 헤더 ===== */
 const Header = styled.View`
   height: 52px;
   align-items: center;
-  justify-content: center;     
-  position: relative;         
-  margin-bottom: 4px;
+  justify-content: center;
+  position: relative;
 `;
-
 const Title = styled.Text`
   color: #fff;
   font-size: 20px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
-
-const SideBase = styled.Pressable`
+const Side = styled.Pressable`
   position: absolute;
   top: 0;
   bottom: 0;
   justify-content: center;
   padding: 0 12px;
 `;
-
-const BackBtn = styled(SideBase)`
-  left: -4px;               
-`;
-
-const SaveBtn = styled(SideBase)`
-  right: -4px;
-`;
-
 const SaveText = styled.Text`
   color: #30F59B;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-/* ===== 본문 ===== */
-
 const Center = styled.View`
   align-items: center;
   padding: 8px 0 16px 0;
 `;
-
 const Name = styled.Text`
   margin-top: 8px;
   color: #fff;
   font-size: 16px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
-
 const Email = styled.Text`
   margin-top: 2px;
   color: #b7babd;
@@ -248,84 +252,48 @@ const Email = styled.Text`
 const Field = styled.View`
   margin-bottom: 14px;
 `;
-
 const LabelRow = styled.View`
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-end;
 `;
-
 const LabelText = styled.Text`
   color: #e9ecef;
   font-size: 13px;
   margin-bottom: 6px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
-
 const Count = styled.Text`
   color: #7e848a;
   font-size: 12px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-const Input = styled.TextInput`
-  background: #121314;
-  border-radius: 10px;
-  padding: 12px 14px;
+const NameInput = styled.TextInput`
+  height: ${INPUT_HEIGHT}px;
+  border-radius: ${INPUT_RADIUS}px;
+  background: ${INPUT_BG};
+  padding: 0 16px;
   color: #fff;
-  border-width: 1px;
-  border-color: #222426;
+  border-width: 0.48px;
+  border-color: ${INPUT_BORDER};
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-const SelectWrap = styled.Pressable`
-  background: #121314;
-  border-radius: 10px;
-  padding: 12px 14px;
-  border-width: 1px;
-  border-color: #222426;
+const SelectBox = styled.Pressable`
+  height: ${INPUT_HEIGHT}px;
+  border-radius: ${INPUT_RADIUS}px;
+  background: ${INPUT_BG};
+  padding: 0 16px;
+  border-width: 0.48px;
+  border-color: ${INPUT_BORDER};
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 `;
-
-const SelectValue = styled.Text`
-  color: #e9ecef;
+const SelectText = styled.Text`
+  color: #ededed;
   font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const Arrow = styled.Text`
-  color: #7e848a;
-  font-size: 16px;
-  margin-left: 8px;
-`;
-
-const Select = ({ value, onPress }: { value: string; onPress?: () => void }) => (
-    <SelectWrap onPress={onPress}>
-        <SelectValue>{value}</SelectValue>
-        <Arrow>▾</Arrow>
-    </SelectWrap>
-);
-
-const ChipRow = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-`;
-
-const Chip = styled.Pressable<{ active: boolean }>`
-  border-width: 1px;
-  border-color: ${({ active }) => (active ? '#30F59B' : '#2a2b2c')};
-  background: ${({ active }) => (active ? 'rgba(48,245,155,0.08)' : '#121314')};
-  padding: 6px 12px;
-  border-radius: 999px;
-`;
-
-const ChipText = styled.Text<{ active: boolean }>`
-  color: ${({ active }) => (active ? '#30F59B' : '#cfd4da')};
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
 const TopRow = styled.View`
@@ -334,20 +302,28 @@ const TopRow = styled.View`
   align-items: center;
   margin-bottom: 6px;
 `;
-
 const SmallMuted = styled.Text`
   color: #7e848a;
   font-size: 12px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
-
 const TagsWrap = styled.View`
   flex-direction: row;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 6px;
 `;
-
+const PreviewTag = styled.View`
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #2a2b2c;
+  background: #121314;
+`;
+const PreviewTagText = styled.Text`
+  color: #fff;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
 const SmallEditBtn = styled.Pressable`
   margin-top: 10px;
   align-self: flex-start;
@@ -356,7 +332,6 @@ const SmallEditBtn = styled.Pressable`
   border: 1px solid #2a2b2c;
   background: #121314;
 `;
-
 const SmallEditText = styled.Text`
   color: #cfd4da;
   font-size: 12px;
@@ -364,12 +339,12 @@ const SmallEditText = styled.Text`
 `;
 
 const TextArea = styled.TextInput`
-  background: #121314;
-  border-radius: 10px;
+  background: ${INPUT_BG};
+  border-radius: ${INPUT_RADIUS}px;
   padding: 12px 14px;
   color: #fff;
   border-width: 1px;
-  border-color: #222426;
+  border-color: ${INPUT_BORDER};
   font-family: 'PlusJakartaSans_400Regular';
   min-height: 110px;
   text-align-vertical: top;
@@ -377,60 +352,4 @@ const TextArea = styled.TextInput`
 
 const BottomPad = styled.View`
   height: 20px;
-`;
-
-const ModalOverlay = styled.Pressable`
-  position: absolute;         
-  top: 0; right: 0; bottom: 0; left: 0;
-  background: rgba(0, 0, 0, 0.6);
-  justify-content: flex-end;
-`;
-
-const ModalSheet = styled.Pressable`
-  background: #0f1011;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  padding: 16px;
-  max-height: 80%;
-`;
-
-const SheetHeader = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 8px;
-`;
-
-const SheetTitle = styled.Text`
-  color: #fff;
-  font-size: 16px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const SheetCount = styled.Text`
-  color: #9aa0a6;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const TagGrid = styled.ScrollView``;
-
-const SelTag = styled.Pressable<{ active: boolean }>`
-  border-width: 1px;
-  border-color: ${({ active }) => (active ? '#30F59B' : '#2a2b2c')};
-  background: ${({ active }) => (active ? 'rgba(48,245,155,0.08)' : '#121314')};
-  padding: 6px 12px;
-  border-radius: 999px;
-`;
-
-const SelTagText = styled.Text<{ active: boolean }>`
-  color: ${({ active }) => (active ? '#30F59B' : '#cfd4da')};
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-
-const SheetBtns = styled.View`
-  margin-top: 12px;
-  flex-direction: row;
-  gap: 10px;
 `;

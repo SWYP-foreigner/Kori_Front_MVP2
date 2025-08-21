@@ -67,7 +67,7 @@ const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }
   border-radius: 8px;
   justify-content: center;
   align-items: center;
-  border-width: 1.5px;
+  border-width: 1px;
   background-color: ${({ filled, tone }) => (filled ? PALETTE[tone] : 'transparent')};
   border-color: ${({ tone }) => PALETTE[tone]};
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};

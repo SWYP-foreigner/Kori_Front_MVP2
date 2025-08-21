@@ -22,6 +22,7 @@ type Props = {
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
   onChat?: () => void;
+  footerSlot?: React.ReactNode;
 };
 
 const CARD_RADIUS = 22;
@@ -67,6 +68,7 @@ export default function FriendCard({
   isFollowed = false,
   onFollow,
   onChat,
+  footerSlot,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
 
@@ -80,7 +82,7 @@ export default function FriendCard({
       >
         {/* 상단 */}
         <Top>
-          <Avatar />
+          <Avatar /* size 지정 가능: size={AVATAR.size} */ />
           <Name>{name}</Name>
 
           {/* 성별 */}
@@ -124,7 +126,7 @@ export default function FriendCard({
             <Row style={{ marginTop: SECTION_GAP_TOP }}>
               <Col>
                 <LabelRow>
-                  <Icon source={ICON_PURPOSE} />
+                  <Icon source={ICON_PURPOSE} style={{ tintColor: '#808080' }} />
                   <Label>Purpose</Label>
                 </LabelRow>
                 <CategoryValue>{purpose}</CategoryValue>
@@ -132,7 +134,7 @@ export default function FriendCard({
 
               <Col style={{ marginLeft: COL_GAP }}>
                 <LabelRow>
-                  <Icon source={ICON_GLOBAL} />
+                  <Icon source={ICON_GLOBAL} style={{ tintColor: '#808080' }} />
                   <Label>Language</Label>
                 </LabelRow>
                 <LangWrap>
@@ -170,7 +172,7 @@ export default function FriendCard({
             label={isFollowed ? 'Following' : 'Follow'}
             tone={isFollowed ? 'black' : 'mint'}
             filled={!isFollowed}
-            leftIcon={!isFollowed ? 'add' : undefined}
+            leftIcon={!isFollowed ? 'add' : 'check'}
             disabled={isFollowed}
             onPress={() => !isFollowed && onFollow?.(userId)}
           />
@@ -289,7 +291,6 @@ const LabelRow = styled.View`
 const Icon = styled.Image`
   width: 12px;
   height: 12px;
-  tint-color: #808080;
 `;
 
 const Label = styled.Text`
