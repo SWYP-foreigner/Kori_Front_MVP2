@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {useProfile} from '../../contexts/ProfileContext'
+import { Asset } from 'expo-asset';
 
 // ------------------------
 // AddPhotoStepScreen
@@ -32,11 +33,22 @@ export default function AddPhotoStepScreen({ navigation }) {
     }
   ];
 
-  const handleAvatarSelect = (index) => {
-    setSelectedAvatar(index);
-    setSelectedPhoto(null);
-   
-  };
+  const handleAvatarSelect = async (index) => {
+  setSelectedAvatar(index);
+  setSelectedPhoto(null);
+
+  // 로컬 이미지 URI 가져오기
+  const asset = Asset.fromModule(avatarData[index].image);
+  await asset.downloadAsync(); // 캐시된 로컬 파일 확보
+  const uri = asset.localUri || asset.uri;
+
+  updateProfile('photo', {
+    type: 'avatar',
+    uri,
+    name: `avatar${index + 1}.png`,
+    typeMime: 'image/png'
+  });
+};
 
   // 권한 요청 함수
   const requestPermissions = async () => {
@@ -75,10 +87,18 @@ export default function AddPhotoStepScreen({ navigation }) {
     quality: 1,
   });
 
-  // 5. 사진 선택 시 상태 업데이트
   if (!result.canceled) {
-    setSelectedPhoto(result.assets[0].uri);
+    const uri = result.assets[0].uri;
+    setSelectedPhoto(uri);
     setSelectedAvatar(-1); // 아바타 선택 해제
+
+    // profileData.photo 업데이트
+    updateProfile('photo', {
+      type: 'custom',
+      uri: uri,
+      name: 'profile.jpg',
+      typeMime: 'image/jpeg'
+    });
   }
 };
 
@@ -93,9 +113,18 @@ export default function AddPhotoStepScreen({ navigation }) {
     });
 
     if (!result.canceled) {
-      setSelectedPhoto(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setSelectedPhoto(uri);
       setSelectedAvatar(-1); // 아바타 선택 해제
-    }
+
+      // profileData.photo 업데이트
+      updateProfile('photo', {
+        type: 'custom', // 사용자가 선택한 사진
+        uri: uri,
+        name: 'profile.jpg',
+        typeMime: 'image/jpeg'
+      });
+  }
   };
 
  

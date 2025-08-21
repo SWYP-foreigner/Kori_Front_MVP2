@@ -14,7 +14,7 @@ export const ProfileProvider=({children}) =>{
         country:'',
         language:[],
         introduction:'',
-        photo:[],
+        photo:null,
         purpose:'',
         birthday:'',
         hobby:[]
