@@ -395,7 +395,6 @@ const SortLabel = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-/* ✅ TextInput ref 타입 안전: forwardRef 래퍼 */
 const StyledRNInput = styled(RNTextInput)`
   flex: 1;
   height: 40px;
@@ -406,7 +405,6 @@ const StyledRNInput = styled(RNTextInput)`
   color: #fff;
 `;
 
-// Input은 ref를 그대로 전달
 const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
     return <StyledRNInput ref={ref} {...props} />;
 });
