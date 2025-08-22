@@ -30,12 +30,12 @@ const CustomSplashScreen = () => {
     const timeout = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 1000,
+        duration: 500,
         useNativeDriver: true,
       }).start(() => {
         router.replace("../../login");
       });
-    }, 1500);
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, []);

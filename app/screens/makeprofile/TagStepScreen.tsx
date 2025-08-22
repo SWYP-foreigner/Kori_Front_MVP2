@@ -1,101 +1,149 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert, Dimensions } from 'react-native';
+import { SafeAreaView, StatusBar, Alert ,ScrollView} from 'react-native';
 import { useRouter } from 'expo-router';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import {useProfile} from '../../contexts/ProfileContext'
+import axios from "axios";
+import { Platform } from 'react-native';
 
-const { height, width } = Dimensions.get('window');
+const HobbyBox = ({ title, tags, selectedTags, selectTag }) => {
+  return (
+    <>
+      <TagTitle>
+        <TagTitleText>{title}</TagTitleText>
+        {(title==='Entertainment & Hobbies')&&
+            <SelectedText selected={selectedTags.length>0}>{selectedTags.length}/5 selected</SelectedText>}
+      </TagTitle>
+      <HobbyTagWrapper>
+        {tags.map(tag => (
+          <HobbyTag
+            key={tag}
+            onPress={() => selectTag(tag)}
+            selected={selectedTags.includes(tag)}
+          >
+            <Imogi />
+            <HobbyTagText
+            selected={selectedTags.includes(tag)}>{tag}</HobbyTagText>
+            {selectedTags.includes(tag)&&<AntDesign name="close" size={14} color="#02F59B" />}
+          </HobbyTag>
+        ))}
+      </HobbyTagWrapper>
+    </>
+  );
+};
 
-// 비율 기반 사이즈
-const scale = height / 812; // iPhone 11 Pro (812pt) 기준
-const wp = (size) => Math.round((width / 375) * size);
-const hp = (size) => Math.round((height / 812) * size);
-
-export default function InterestSelectionScreen() {
+export default function TagStepScreen() {
   const router = useRouter();
-  const [selectedInterests, setSelectedInterests] = useState([]);
   const maxSelections = 5;
+  const [selectedTags, setSelectedTags] = useState([]);
+  const { profileData, updateProfile } = useProfile();
 
-  const interestCategories = [
-    { title: 'Entertainment & Hobbies', interests: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'] },
-    { title: 'Lifestyle & Social', interests: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'] },
-    { title: 'Activities & Wellness', interests: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'] },
-    { title: 'Creativity & Personal Growth', interests: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'] },
-    { title: 'Korean Culture', interests: ['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover'] },
-  ];
-
-  const handleInterestToggle = (interest) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(item => item !== interest));
+  const selectTag = (tag) => {
+    if (selectedTags.includes(tag)) {
+      // 이미 선택되어 있으면 제거
+      setSelectedTags(selectedTags.filter(t => t !== tag));
     } else {
-      if (selectedInterests.length < maxSelections) {
-        setSelectedInterests([...selectedInterests, interest]);
-      } else {
-        Alert.alert('Maximum Selection', `You can choose up to ${maxSelections} interests.`);
+      // 최대 선택 개수 제한
+      if (selectedTags.length >= maxSelections) {
+        Alert.alert(`You can only \nchoose up to ${maxSelections} tags !`);
+        return;
       }
+      setSelectedTags([...selectedTags, tag]);
     }
   };
 
-  const handleDone = () => {
-    if (selectedInterests.length > 0) {
-      router.push({
-        pathname: './NextStepScreen',
-        params: { interests: JSON.stringify(selectedInterests) }
+  const handleDone=async()=>{
+    try {
+    const formData = new FormData();
+
+    // 1. 텍스트 데이터(JSON으로 묶어서 보내기)
+    const { photo, ...textData } = profileData;
+    formData.append('data', JSON.stringify(textData));
+
+    // 2. 파일 데이터
+    if (photo && photo.uri) {
+      formData.append('photo', {
+        uri: Platform.OS === 'android' ? photo.uri : photo.uri.replace('file://', ''),
+        name: photo.name || 'profile.jpg',
+        type: photo.typeMime || 'image/jpeg',
       });
-    } else {
-      Alert.alert('Selection Required', 'Please select at least one interest.');
     }
-  };
+    console.log("formData",formData);
+    // 3. Axios POST
+    // const response = await axios.post(
+    //   'http://YOUR_SERVER_IP:8080/api/profile', // 서버 API
+    //   formData,
+    //   {
+    //     headers: {
+    //       'Content-Type': 'multipart/form-data',
+    //     },
+    //   }
+    // );
 
-  const renderInterestTag = (interest) => {
-    const isSelected = selectedInterests.includes(interest);
-
-    return (
-      <InterestTag
-        key={interest}
-        isSelected={isSelected}
-        onPress={() => handleInterestToggle(interest)}
-        activeOpacity={0.7}
-      >
-        <InterestText isSelected={isSelected}>{interest}</InterestText>
-        {isSelected && <SelectedIndicator>×</SelectedIndicator>}
-      </InterestTag>
-    );
+    // console.log('서버 응답:', response.data);
+  } catch (error) {
+    console.error('전송 실패:', error);
+  }
   };
 
   return (
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container>
-        <Header>
+        <ScrollableContainer>
+        <HeaderSection>
           <StepText>Step 9 / 9</StepText>
+
           <TitleWrapper>
             <Title>Tell us about</Title>
             <Title>your interest</Title>
           </TitleWrapper>
           <Subtitle>You can choose up to {maxSelections} interests.</Subtitle>
-          <CounterText>{selectedInterests.length}/{maxSelections} selected</CounterText>
-        </Header>
+        </HeaderSection>
 
-        <InterestsWrapper>
-          {interestCategories.map((category) => (
-            <CategorySection key={category.title}>
-              <CategoryTitle>{category.title}</CategoryTitle>
-              <TagsContainer>
-                {category.interests.map(renderInterestTag)}
-              </TagsContainer>
-            </CategorySection>
-          ))}
-        </InterestsWrapper>
+          <TagContainer>
+            <HobbyBox
+              title="Entertainment & Hobbies"
+              tags={['Music','Movies','Reading','Anime','Gaming']}
+              selectedTags={selectedTags}
+              selectTag={selectTag}
+            />
+            <HobbyBox
+              title="LifeStyle & Social"
+              tags={['Drinking','Exploring Cafes','Traveling','Board Games','Shopping','Beauty','Doing Nothing']}
+              selectedTags={selectedTags}
+              selectTag={selectTag}
+            />
+            <HobbyBox
+              title="Activities & Wellness"
+              tags={['Yoga','Running','Fitness','Camping','Dancing','Hiking']}
+              selectedTags={selectedTags}
+              selectTag={selectTag}
+            />
+            <HobbyBox
+              title="Creativity & Personal Growth"
+              tags={['Exhibition','Singing','Cooking','Pets','Career','Photography']}
+              selectedTags={selectedTags}
+              selectTag={selectTag}
+            />
+            <HobbyBox
+              title="Korean Culture"
+              tags={['K-Pop Lover','K-Drama Lover','K-Food Lover']}
+              selectedTags={selectedTags}
+              selectTag={selectTag}
+            />
+          </TagContainer>
+        </ScrollableContainer>
 
-        <DoneButton
-          onPress={handleDone}
-          hasSelection={selectedInterests.length > 0}
-          activeOpacity={selectedInterests.length > 0 ? 0.8 : 1}
-        >
-          <DoneButtonText hasSelection={selectedInterests.length > 0}>
-            Done
-          </DoneButtonText>
-        </DoneButton>
+        <ButtonSection>
+          <NextButton
+            onPress={handleDone}
+            disabled={selectedTags.length === 0}
+          >
+            <ButtonText>Done</ButtonText>
+          </NextButton>
+        </ButtonSection>
       </Container>
     </SafeArea>
   );
@@ -111,92 +159,117 @@ const SafeArea = styled(SafeAreaView)`
 
 const Container = styled.View`
   flex: 1;
-  justify-content: space-between; /* 상단 - 중간 - 하단 자동 분배 */
-  padding: ${hp(10)}px ${wp(15)}px;
+  padding: 0px 20px;
 `;
 
-const Header = styled.View``;
+const HeaderSection = styled.View``;
+
+const ScrollableContainer = styled.ScrollView.attrs(() => ({
+  showsVerticalScrollIndicator: false, 
+}))`
+  flex: 1;
+`;
+
+const ButtonSection = styled.View`
+  padding-bottom: 8px;
+`;
 
 const StepText = styled.Text`
   color: #5BD08D;
-  font-size: ${hp(12)}px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  font-family: 'PlusJakartaSans-Regular';
+  margin-top:40px;
 `;
 
 const TitleWrapper = styled.View`
-  margin-top: ${hp(10)}px;
+  margin-top: 30px;
 `;
 
 const Title = styled.Text`
   color: #FFFFFF;
-  font-size: ${hp(26)}px;
-  line-height: ${hp(28)}px;
+  font-size: 40px;
+  line-height: 40px;
+  letter-spacing: 0.2px;
+  font-family: 'InstrumentSerif-Regular';
 `;
 
 const Subtitle = styled.Text`
-  margin-top: ${hp(5)}px;
+  margin-top: 15px;
   color: #949899;
-  font-size: ${hp(12)}px;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Light';
 `;
 
-const CounterText = styled.Text`
-  margin-top: ${hp(5)}px;
-  color: #5BD08D;
-  font-size: ${hp(12)}px;
-  text-align: right;
-`;
-
-const InterestsWrapper = styled.View`
+const TagContainer = styled.View`
   flex: 1;
-  margin-top: ${hp(10)}px;
+  justify-content: space-between;
+  margin-top:30px;
 `;
 
-const CategorySection = styled.View`
-  margin-bottom: ${hp(5)}px;
+const TagTitle = styled.View`
+  margin-top:10px;
+  margin-bottom: 8px;
+  width: 100%;
+  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
 `;
 
-const CategoryTitle = styled.Text`
-  color: #949899;
-  font-size: ${hp(11)}px;
-  margin-bottom: ${hp(3)}px;
+const TagTitleText = styled.Text`
+  color: #848687;
+  padding-right: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family:  PlusJakartaSans_600SemiBold
 `;
-
-const TagsContainer = styled.View`
+const SelectedText=styled.Text`
+  color:${props => (props.selected ? '#02F59B' : '#848687')};
+`;
+const HobbyTagWrapper = styled.View`
+  width: 100%;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: ${wp(4)}px;
+  margin-bottom: 15px;
 `;
 
-const InterestTag = styled.TouchableOpacity`
-  background-color: ${props => props.isSelected ? '#02F59B20' : '#2A2B2D'};
-  border: ${props => props.isSelected ? '1px solid #02F59B' : '1px solid #2A2B2D'};
-  border-radius: ${hp(10)}px;
-  padding: ${hp(4)}px ${wp(8)}px;
+
+const HobbyTag = styled.TouchableOpacity`
+  margin: 5px 10px 5px 0px;
+  padding: 5px 10px;
+  height: 35px;
+  border-radius: 30px;
+  justify-content: center;
+  border-color: ${props => (props.selected ? '#02F59B' : '#848687')};
+  border-width: 1px;
   flex-direction: row;
   align-items: center;
 `;
-
-const InterestText = styled.Text`
-  color: ${props => props.isSelected ? '#02F59B' : '#FFFFFF'};
-  font-size: ${hp(11)}px;
+const Imogi = styled.View`
+  background-color: yellow;
+  width: 16px;
+  height: 16px;
+`;
+const HobbyTagText = styled.Text`
+  color: ${props => (props.selected ? '#02F59B' : '#ffffff')};
+  font-size: 13px;
+  margin:0px 7px;
+  font-family: PlusJakartaSans-Regular;
 `;
 
-const SelectedIndicator = styled.Text`
-  color: #02F59B;
-  font-size: ${hp(11)}px;
-  font-weight: bold;
-  margin-left: ${wp(2)}px;
-  transform: rotate(45deg);
-`;
-
-const DoneButton = styled.TouchableOpacity`
-  height: ${hp(44)}px;
-  border-radius: ${hp(6)}px;
+const NextButton = styled.TouchableOpacity`
+  height: 50px;
+  border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: ${props => props.hasSelection ? '#02F59B' : '#2A2B2D'};
+  background-color: #02F59B;
+  margin-bottom: 8px;
+  opacity: ${props => (props.disabled ? 0.5 : 1)};
 `;
 
-const DoneButtonText = styled.Text`
-  color: ${props => props.hasSelection ? '#1D1E1F' : '#616262'};
-  font-size: ${hp(13)}px;
+const ButtonText = styled.Text`
+  color: #1D1E1F;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'PlusJakartaSans-Medium';
 `;

@@ -3,6 +3,14 @@
     "scheme":"myapp",
     "name": "Kori_Front",
     "slug": "Kori_Front",
+    "splash": {
+      "image": "./assets/images/character_02.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F10"
+    },
+    "owner": "koriapp",
+
+
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,7 +45,15 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
