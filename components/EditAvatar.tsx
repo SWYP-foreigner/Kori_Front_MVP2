@@ -4,16 +4,16 @@ type AvatarProps = {
     uri?: string;
 };
 
-export default function Avatar({ uri }: AvatarProps) {
+export default function EditAvatar({ uri }: AvatarProps) {
     return (
         <StyledImage
-            source={uri ? { uri } : require('@/assets/images/avatar-placeholder.png')}
+            source={uri ? { uri } : require('@/assets/images/editprofile.png')}
         />
     );
 }
 
 const StyledImage = styled.Image`
     margin: 15px 15px;
-    width: 120px;
-    height: 120px;
+    width: 152px;
+    height: 152px;
     `;
