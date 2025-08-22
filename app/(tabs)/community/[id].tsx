@@ -3,13 +3,34 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import {
+    FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    TextInput as RNTextInput,
+    TextInputProps
+} from 'react-native';
 import styled from 'styled-components/native';
+
+type PostModel = {
+    id: string;
+    author: string;
+    avatar: any;
+    category: string;
+    minutesAgo?: number;
+    createdAt: string;
+    body: string;
+    images?: any[];
+    likes: number;
+    comments: number;
+    views?: number;
+    bookmarked?: boolean;
+};
 
 const AV = require('@/assets/images/character1.png');
 const IMG = require('@/assets/images/img.png');
 
-const MOCK_POSTS: Record<string, any> = {
+const MOCK_POSTS: Record<string, PostModel> = {
     p1: {
         id: 'p1',
         author: 'Shotaro',
@@ -81,7 +102,7 @@ const MOCK_COMMENTS_BY_POST: Record<string, Comment[]> = {
 export default function PostDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
 
-    const [post, setPost] = useState<any | null>(null);
+    const [post, setPost] = useState<PostModel | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
 
     useEffect(() => {
@@ -93,7 +114,8 @@ export default function PostDetailScreen() {
     const [sort, setSort] = useState<SortKey>('new');
     const [value, setValue] = useState('');
     const [anonymous, setAnonymous] = useState(false);
-    const inputRef = useRef<TextInput>(null);
+
+    const inputRef = useRef<RNTextInput>(null);
 
     const sorted = useMemo(() => {
         const arr = comments.slice();
@@ -127,10 +149,10 @@ export default function PostDetailScreen() {
     };
 
     const toggleBookmark = () =>
-        setPost(p => (p ? { ...p, bookmarked: !p.bookmarked } : p));
+        setPost(prev => (prev ? { ...prev, bookmarked: !prev.bookmarked } : prev));
 
     const likePost = () =>
-        setPost(p => (p ? { ...p, likes: p.likes + 1 } : p));
+        setPost(prev => (prev ? { ...prev, likes: prev.likes + 1 } : prev));
 
     if (!post) {
         return (
@@ -156,6 +178,7 @@ export default function PostDetailScreen() {
 
     return (
         <Safe>
+            {/* 헤더 */}
             <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
@@ -253,7 +276,6 @@ export default function PostDetailScreen() {
         </Safe>
     );
 }
-
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -373,6 +395,23 @@ const SortLabel = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
+/* ✅ TextInput ref 타입 안전: forwardRef 래퍼 */
+const StyledRNInput = styled(RNTextInput)`
+  flex: 1;
+  height: 40px;
+  border-radius: 10px;
+  background: #1a1b1c;
+  border: 1px solid #2a2b2c;
+  padding: 0 12px;
+  color: #fff;
+`;
+
+// Input은 ref를 그대로 전달
+const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
+    return <StyledRNInput ref={ref} {...props} />;
+});
+Input.displayName = 'Input';
+
 const InputBar = styled.View`
   padding: 8px 10px 12px 10px;
   background: #1d1e1f;
@@ -381,15 +420,6 @@ const InputBar = styled.View`
   flex-direction: row;
   align-items: center;
   gap: 8px;
-`;
-const Input = styled.TextInput`
-  flex: 1;
-  height: 40px;
-  border-radius: 10px;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
-  padding: 0 12px;
-  color: #fff;
 `;
 const Anon = styled.Pressable<{ $active?: boolean }>`
   height: 40px;
