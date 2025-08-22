@@ -23,7 +23,10 @@ export default function CategoryChips({ value, onChange }: Props) {
     );
 }
 
-const Row = styled.ScrollView`` as unknown as typeof import('react-native').ScrollView;
+const Row = styled.ScrollView`
+  padding: 8px 12px 0 12px; /* ⬅︎ 마지막 0으로 (아래 여백 제거) */
+  gap: 8px;
+` as unknown as typeof import('react-native').ScrollView;
 
 const Chip = styled.Pressable<{ $active?: boolean }>`
   padding: 6px 12px;   

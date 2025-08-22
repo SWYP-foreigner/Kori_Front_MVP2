@@ -1,9 +1,172 @@
-import { SafeAreaView, Text } from 'react-native';
+import CategoryChips, { Category } from '@/components/CategoryChips';
+import PostCard, { Post } from '@/components/PostCard';
+import SortTabs, { SortKey } from '@/components/SortTabs';
+import WriteFab from '@/components/WriteFab';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { router } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import styled from 'styled-components/native';
 
-export default function ComnunityScreen() {
+const AV = require('@/assets/images/character1.png');
+const IMG = require('@/assets/images/img.png');
+const ICON = require('@/assets/images/IsolationMode.png');
+
+const MOCK: Post[] = [
+    {
+        id: 'p1',
+        author: 'Shotaro',
+        avatar: AV,
+        category: 'Free talk',
+        minutesAgo: 23,
+        createdAt: '2025-08-14',
+        body:
+            "Hi! I came to Korea on a working holiday and I'm currently learning Korean at Yonsei Univ.",
+        images: [IMG],
+        likes: 999,
+        comments: 999,
+        hotScore: 1200,
+    },
+    {
+        id: 'p2',
+        author: 'Shotaro',
+        avatar: AV,
+        category: 'Event',
+        createdAt: '2025-08-14',
+        body: 'Second post without image.',
+        likes: 999,
+        comments: 999,
+        hotScore: 1001,
+    },
+];
+
+export default function CommunityScreen() {
+    const [q] = useState('');
+    const [cat, setCat] = useState<Category>('All');
+    const [sort, setSort] = useState<SortKey>('new');
+    const [items, setItems] = useState(MOCK);
+
+    const filtered = useMemo(() => {
+        let arr = items.filter(
+            (p) =>
+                (cat === 'All' || p.category === cat) &&
+                (q.trim() === '' ||
+                    (p.body + (p.title ?? '')).toLowerCase().includes(q.toLowerCase()))
+        );
+        if (sort === 'new') {
+            arr = arr
+                .slice()
+                .sort(
+                    (a, b) =>
+                        (b.minutesAgo ?? 1e9) - (a.minutesAgo ?? 1e9) ||
+                        b.createdAt.localeCompare(a.createdAt)
+                );
+        } else {
+            arr = arr.slice().sort((a, b) => b.hotScore - a.hotScore);
+        }
+        return arr;
+    }, [items, cat, q, sort]);
+
+    const toggleLike = (id: string) => {
+        setItems((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+        );
+    };
+
+    const toggleBookmark = (id: string) => {
+        setItems((prev) =>
+            prev.map((p) => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p))
+        );
+    };
+
     return (
-        <SafeAreaView>
-            <Text>커뮤니티</Text>
-        </SafeAreaView>
+        <Safe>
+            <Header>
+                <Left>
+                    <Title>Community</Title>
+                    <IconImage source={ICON} />
+                </Left>
+                <Right>
+                    <AntDesign name="search1" size={18} color="#cfd4da" />
+                    <AntDesign
+                        name="bells"
+                        size={18}
+                        color="#cfd4da"
+                        style={{ marginLeft: 14 }}
+                    />
+                </Right>
+            </Header>
+
+            <ChipsWrap>
+                <CategoryChips value={cat} onChange={setCat} />
+            </ChipsWrap>
+
+            <SortWrap>
+                <SortTabs value={sort} onChange={setSort} />
+            </SortWrap>
+
+            <List
+                data={filtered}
+                keyExtractor={(it) => it.id}
+                renderItem={({ item }) => (
+                    <PostCard
+                        data={item}
+                        onPress={() => router.push(`/community/${item.id}`)}
+                        onToggleLike={() => toggleLike(item.id)}
+                        onToggleBookmark={() => toggleBookmark(item.id)}
+                    />
+                )}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
+            />
+
+            <WriteFab onPress={() => router.push('/community/write')} />
+        </Safe>
     );
 }
+
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
+
+const Header = styled.View`
+  padding: 0 12px;
+  margin-top: 12px;          /* 상단 여백 */
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const Left = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const Title = styled.Text`
+  color: #ffffff;
+  font-size: 32px;
+  font-family: 'InstrumentSerif_400Regular';
+  letter-spacing: -0.2px;
+`;
+
+const IconImage = styled.Image`
+  margin-left: 4px;
+  width: 20px;
+  height: 20px;
+  resize-mode: contain;
+`;
+
+const Right = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const ChipsWrap = styled.View`
+  margin-top: 12px;
+`;
+
+const SortWrap = styled.View`
+  margin-top: 12px;
+`;
+
+const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
