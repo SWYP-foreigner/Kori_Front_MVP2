@@ -1,12 +1,29 @@
-import { SafeAreaView, Text,StatusBar } from 'react-native';
+import { SafeAreaView, Text,StatusBar ,FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import ChatRoomBox from '@/components/ChatRoomBox';
 
 export default function ChatScreen() {
+    const DATA = [
+        { id: "1", name: "Koori", message: "Hi nice to meet you", count: 10, time: "17:25",mcount:999 },
+        { id: "2", name: "Alice", message: "Hello!", count: 2, time: "16:50",mcount:99 },
+        { id: "3", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "4", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "5", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "6", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "7", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "8", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "9", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "10", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "11", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "12", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "13", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "14", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+        { id: "15", name: "Bob", message: "How are you?", count: 5, time: "15:30",mcount:9 },
+  // 원하는 만큼 추가
+    ];
     return (
         <Safe>
-        <StatusBar barStyle="light-content" />
         <Container>
         <Header>
         <TitleWrapper>
@@ -29,11 +46,11 @@ export default function ChatScreen() {
         </GroupChatBox>
         </ChatBox>
       </ChatWrapper>
-      <ChatRoomBox/>
-       <ChatRoomBox/>
-        <ChatRoomBox/>
-         <ChatRoomBox/>
-          <ChatRoomBox/>
+      <FlatList
+        data={DATA}
+        renderItem={({item})=> <ChatRoomBox data={item} />}
+        keyExtractor={item => item.id}
+      />
       </Container>
         </Safe>
     );
@@ -48,12 +65,10 @@ const Container = styled.View`
   padding: 0px 20px;
 `;
 const Header = styled.View`
- 
-  height:50px;
+  height:70px;
   flex-direction: row;
   justify-content:space-between;
   align-items: center;
-  margin-top:40px;
 `;
 
 const SearchButton=styled.TouchableOpacity`
@@ -70,7 +85,6 @@ const Title = styled.Text`
   color: #ffffff;
   font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
-  letter-spacing: -0.2px;
 `;
 
 const IconImage = styled.Image`
