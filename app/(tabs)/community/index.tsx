@@ -5,6 +5,7 @@ import WriteFab from '@/components/WriteFab';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
+import { FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
 const AV = require('@/assets/images/character1.png');
@@ -40,46 +41,40 @@ const MOCK: Post[] = [
 ];
 
 export default function CommunityScreen() {
-    const [q] = useState('');
     const [cat, setCat] = useState<Category>('All');
     const [sort, setSort] = useState<SortKey>('new');
     const [items, setItems] = useState(MOCK);
 
     const filtered = useMemo(() => {
-        let arr = items.filter(
-            (p) =>
-                (cat === 'All' || p.category === cat) &&
-                (q.trim() === '' ||
-                    (p.body + (p.title ?? '')).toLowerCase().includes(q.toLowerCase()))
-        );
+        let arr = items.filter((p) => cat === 'All' || p.category === cat);
         if (sort === 'new') {
             arr = arr
                 .slice()
                 .sort(
                     (a, b) =>
                         (b.minutesAgo ?? 1e9) - (a.minutesAgo ?? 1e9) ||
-                        b.createdAt.localeCompare(a.createdAt)
+                        b.createdAt.localeCompare(a.createdAt),
                 );
         } else {
             arr = arr.slice().sort((a, b) => b.hotScore - a.hotScore);
         }
         return arr;
-    }, [items, cat, q, sort]);
+    }, [items, cat, sort]);
 
     const toggleLike = (id: string) => {
         setItems((prev) =>
-            prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+            prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p)),
         );
     };
-
     const toggleBookmark = (id: string) => {
         setItems((prev) =>
-            prev.map((p) => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p))
+            prev.map((p) => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)),
         );
     };
 
     return (
         <Safe>
+            {/* 헤더 */}
             <Header>
                 <Left>
                     <Title>Community</Title>
@@ -87,30 +82,30 @@ export default function CommunityScreen() {
                 </Left>
                 <Right>
                     <AntDesign name="search1" size={18} color="#cfd4da" />
-                    <AntDesign
-                        name="bells"
-                        size={18}
-                        color="#cfd4da"
-                        style={{ marginLeft: 14 }}
-                    />
+                    <AntDesign name="bells" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
                 </Right>
             </Header>
 
+            {/* 카테고리 chips */}
             <ChipsWrap>
                 <CategoryChips value={cat} onChange={setCat} />
             </ChipsWrap>
 
+            {/* 정렬 탭 */}
             <SortWrap>
                 <SortTabs value={sort} onChange={setSort} />
             </SortWrap>
 
+            {/* 게시글 리스트 */}
             <List
                 data={filtered}
                 keyExtractor={(it) => it.id}
                 renderItem={({ item }) => (
                     <PostCard
                         data={item}
-                        onPress={() => router.push(`/community/${item.id}`)}
+                        onPress={() =>
+                            router.push({ pathname: '/community/[id]', params: { id: item.id } })
+                        }
                         onToggleLike={() => toggleLike(item.id)}
                         onToggleBookmark={() => toggleBookmark(item.id)}
                     />
@@ -119,6 +114,7 @@ export default function CommunityScreen() {
                 contentContainerStyle={{ paddingBottom: 80 }}
             />
 
+            {/* 글쓰기 버튼 */}
             <WriteFab onPress={() => router.push('/community/write')} />
         </Safe>
     );
@@ -131,7 +127,7 @@ const Safe = styled.SafeAreaView`
 
 const Header = styled.View`
   padding: 0 12px;
-  margin-top: 12px;          /* 상단 여백 */
+  margin-top: 12px; 
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -162,11 +158,12 @@ const Right = styled.View`
 `;
 
 const ChipsWrap = styled.View`
-  margin-top: 12px;
+  margin-top: 12px; 
 `;
 
 const SortWrap = styled.View`
-  margin-top: 12px;
+  margin-top: 20px; 
+  margin-bottom: 14px;
 `;
 
-const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
+const List = styled(FlatList as new () => FlatList<Post>)``;
