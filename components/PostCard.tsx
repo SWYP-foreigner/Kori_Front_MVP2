@@ -1,4 +1,5 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
 import { Image } from 'react-native';
 import styled from 'styled-components/native';
@@ -58,10 +59,10 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
                     </SubRow>
                 </Meta>
 
-                <BookBtn onPress={onToggleBookmark}>
-                    <AntDesign
-                        name="flag"
-                        size={16}
+                <BookBtn onPress={onToggleBookmark} hitSlop={8}>
+                    <MaterialIcons
+                        name={data.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 변경
+                        size={20}
                         color={data.bookmarked ? '#30F59B' : '#8a8a8a'}
                     />
                 </BookBtn>
@@ -84,11 +85,11 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
             <Body numberOfLines={3}>{data.body}</Body>
 
             <FooterRow>
-                <IconBtn onPress={onToggleLike}>
+                <IconBtn onPress={onToggleLike} hitSlop={8}>
                     <AntDesign name="like2" size={16} color="#30F59B" />
                     <Count>{data.likes}</Count>
                 </IconBtn>
-                <IconBtn>
+                <IconBtn hitSlop={8}>
                     <AntDesign name="message1" size={16} color="#cfd4da" />
                     <Count>{data.comments}</Count>
                 </IconBtn>
