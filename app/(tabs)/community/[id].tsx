@@ -1,11 +1,11 @@
+// app/(tabs)/community/[id].tsx
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    FlatList,
-    KeyboardAvoidingView,
+    FlatList, FlatList as RNFlatList, Keyboard, KeyboardAvoidingView,
     Platform,
     TextInput as RNTextInput,
     TextInputProps
@@ -116,6 +116,7 @@ export default function PostDetailScreen() {
     const [anonymous, setAnonymous] = useState(false);
 
     const inputRef = useRef<RNTextInput>(null);
+    const listRef = useRef<RNFlatList<Comment>>(null);
 
     const sorted = useMemo(() => {
         const arr = comments.slice();
@@ -146,6 +147,10 @@ export default function PostDetailScreen() {
         };
         setComments(prev => [c, ...prev]);
         setValue('');
+        Keyboard.dismiss();
+        requestAnimationFrame(() =>
+            listRef.current?.scrollToOffset({ offset: 0, animated: true }),
+        );
     };
 
     const toggleBookmark = () =>
@@ -200,14 +205,18 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
+                {/* ✅ 댓글 영역 배경 = #171818 */}
                 <FlatList<Comment>
+                    ref={listRef}
                     data={sorted}
                     keyExtractor={(it) => it.id}
                     renderItem={({ item }) => <CommentItem data={item} />}
+                    keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 16 }}
+                    style={{ backgroundColor: '#171818' }}          // ← 여기!
+                    contentContainerStyle={{ paddingBottom: 80 }}   // 입력바 높이만큼
                     ListHeaderComponent={
-                        <>
+                        <HeaderArea>
                             <Card>
                                 <Row>
                                     <Avatar source={post.avatar} />
@@ -247,14 +256,15 @@ export default function PostDetailScreen() {
                                 </Footer>
                             </Card>
 
+                            {/* ❌ SortLabel 제거 / ✅ SortTabs만 표시 */}
                             <SortWrap>
-                                <SortLabel>Sort by</SortLabel>
                                 <SortTabs value={sort} onChange={setSort} />
                             </SortWrap>
-                        </>
+                        </HeaderArea>
                     }
                 />
 
+                {/* 입력 바 */}
                 <InputBar>
                     <Input
                         ref={inputRef}
@@ -263,6 +273,7 @@ export default function PostDetailScreen() {
                         placeholder="Write Your Text"
                         placeholderTextColor="#8a8a8a"
                         returnKeyType="send"
+                        blurOnSubmit
                         onSubmitEditing={submit}
                     />
                     <Anon onPress={() => setAnonymous(v => !v)} $active={anonymous}>
@@ -276,6 +287,8 @@ export default function PostDetailScreen() {
         </Safe>
     );
 }
+
+/* ── styled ───────────────────────────────────────────── */
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -314,6 +327,10 @@ const EmptyWrap = styled.View`
 `;
 const EmptyText = styled.Text`
   color: #cfd4da;
+`;
+
+const HeaderArea = styled.View`
+  background: #1d1e1f; /* 본문/정렬 구간은 기존 배경 유지 */
 `;
 
 const Card = styled.View`
@@ -388,13 +405,8 @@ const ActText = styled.Text`
 const SortWrap = styled.View`
   padding: 10px 16px 0 16px;
 `;
-const SortLabel = styled.Text`
-  color: #9aa0a6;
-  font-size: 12px;
-  margin-bottom: 6px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
 
+/* 입력 바 */
 const StyledRNInput = styled(RNTextInput)`
   flex: 1;
   height: 40px;
@@ -404,7 +416,6 @@ const StyledRNInput = styled(RNTextInput)`
   padding: 0 12px;
   color: #fff;
 `;
-
 const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
     return <StyledRNInput ref={ref} {...props} />;
 });

@@ -1,4 +1,3 @@
-// app/(tabs)/community/write.tsx
 import { Category } from '@/components/CategoryChips';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,11 +9,9 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 
-/* ------ UI constants ------ */
 const CATS: Category[] = ['News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'];
 const GREEN = '#30F59B';
 
-/* ------ Screen ------ */
 export default function WriteScreen() {
     const [category, setCategory] = useState<Category>('Activity');
     const [body, setBody] = useState('');
@@ -41,14 +38,12 @@ export default function WriteScreen() {
 
     const onSave = () => {
         // TODO: API 연동 자리
-        // 예: await createPost({ category, body, anonymous, image })
         console.log({ category, body, anonymous, image });
         router.back();
     };
 
     return (
         <Safe>
-            {/* Header */}
             <Header>
                 <IconBtn onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
@@ -68,7 +63,6 @@ export default function WriteScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
-                {/* Category row */}
                 <CatRow onPress={() => setCatOpen(true)}>
                     <CatLabel>Category</CatLabel>
                     <CatChip>
@@ -94,14 +88,12 @@ export default function WriteScreen() {
                     />
                 </BodyWrap>
 
-                {/* (선택) 이미지가 있으면 미리보기 살짝 */}
                 {image ? (
                     <PreviewWrap>
                         <Preview source={{ uri: image }} />
                     </PreviewWrap>
                 ) : null}
 
-                {/* Bottom bar */}
                 <BottomBar>
                     <BarLeft>
                         <BarIcon onPress={() => setPickerOpen(true)}>
@@ -122,7 +114,6 @@ export default function WriteScreen() {
                 </BottomBar>
             </KeyboardAvoidingView>
 
-            {/* ---- Image ActionSheet ---- */}
             <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
                 <SheetBackdrop onPress={() => setPickerOpen(false)} />
                 <Sheet>
@@ -135,7 +126,6 @@ export default function WriteScreen() {
                 </Sheet>
             </Modal>
 
-            {/* ---- Category Picker (BottomSheet style) ---- */}
             <Modal visible={catOpen} transparent animationType="fade" onRequestClose={() => setCatOpen(false)}>
                 <SheetBackdrop onPress={() => setCatOpen(false)} />
                 <CatSheet>
@@ -154,7 +144,6 @@ export default function WriteScreen() {
     );
 }
 
-/* ---------- styled ---------- */
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
@@ -287,7 +276,6 @@ const AnonText = styled.Text<{ $active?: boolean }>`
   font-size: 12px;
 `;
 
-/* ---- BottomSheet styles ---- */
 const SheetBackdrop = styled(Pressable)`
   flex: 1;
   background: rgba(0,0,0,0.35);
