@@ -2,6 +2,7 @@ import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // ✅ 추가
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
@@ -184,16 +185,16 @@ export default function PostDetailScreen() {
 
     return (
         <Safe>
-            \            <Header>
+            <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
                 </Back>
                 <HeaderTitle>Post</HeaderTitle>
                 <Right>
                     <IconBtn onPress={toggleBookmark}>
-                        <AntDesign
-                            name="flag"
-                            size={18}
+                        <MaterialIcons
+                            name={post.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 교체
+                            size={22}
                             color={post.bookmarked ? '#30F59B' : '#cfd4da'}
                         />
                     </IconBtn>
@@ -205,7 +206,7 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
-                \                <FlatList<Comment>
+                <FlatList<Comment>
                     ref={listRef}
                     data={sorted}
                     keyExtractor={(it) => it.id}
@@ -216,7 +217,7 @@ export default function PostDetailScreen() {
                     contentContainerStyle={{ paddingBottom: 92 }}
                     ListHeaderComponent={
                         <>
-                            \                            <Card>
+                            <Card>
                                 <Row>
                                     <Avatar source={post.avatar} />
                                     <Meta>
@@ -229,9 +230,9 @@ export default function PostDetailScreen() {
                                         </MetaRow>
                                     </Meta>
                                     <SmallFlag onPress={toggleBookmark}>
-                                        <AntDesign
-                                            name="flag"
-                                            size={16}
+                                        <MaterialIcons
+                                            name={post.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 교체
+                                            size={20}
                                             color={post.bookmarked ? '#30F59B' : '#8a8a8a'}
                                         />
                                     </SmallFlag>
@@ -255,14 +256,14 @@ export default function PostDetailScreen() {
                                 </Footer>
                             </Card>
 
-                            \                            <SortWrap>
+                            <SortWrap>
                                 <SortTabs value={sort} onChange={setSort} />
                             </SortWrap>
                         </>
                     }
                 />
 
-                \                <InputBar>
+                <InputBar>
                     <Composer>
                         <Input
                             ref={inputRef}
@@ -435,7 +436,6 @@ const Input = React.forwardRef<RNTextInput, TextInputProps>(
         <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
     )
 );
-
 Input.displayName = 'Input';
 
 const AnonToggle = styled.Pressable`
@@ -466,4 +466,3 @@ const SendBtn = styled.Pressable`
   align-items: center;
   justify-content: center;
 `;
-
