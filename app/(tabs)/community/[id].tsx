@@ -430,9 +430,12 @@ const StyledRNInput = styled(RNTextInput)`
   padding: 0;
   background: transparent;    
 `;
-const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
-    return <StyledRNInput ref={ref} {...props} />;
-});
+const Input = React.forwardRef<RNTextInput, TextInputProps>(
+    ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
+        <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
+    )
+);
+
 Input.displayName = 'Input';
 
 const AnonToggle = styled.Pressable`
@@ -441,17 +444,17 @@ const AnonToggle = styled.Pressable`
   margin-left: 10px;
 `;
 const AnonLabel = styled.Text`
-  color: #e6e8ea;
+  color: #CCCFD5;
   font-size: 14px;
   margin-right: 8px;
-  font-family: 'PlusJakartaSans_600SemiBold';
+  font-family: 'PlusJakartaSans_Light';
 `;
 const Check = styled.View<{ $active?: boolean }>`
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border-width: 2px;
-  border-color: #d9d9d9;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border-width: 1.1px;
+  border-color: #CCCFD5;
   background: ${({ $active }) => ($active ? '#30F59B' : 'transparent')};
   align-items: center;
   justify-content: center;
