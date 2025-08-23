@@ -1,7 +1,8 @@
 import { SafeAreaView, Text,StatusBar ,FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
-import ChatRoomBox from '@/components/ChatRoomBox';
+import ChatRoomBox from '@/components/MyChatRoomBox';
+import GroupChatRoomBox from '@/components/GroupChatRoomBox';
 import { useState } from 'react';
 
 export default function ChatScreen() {
@@ -61,9 +62,10 @@ export default function ChatScreen() {
       data={DATA}
       renderItem={({ item }) => <ChatRoomBox data={item} />}
       keyExtractor={item => item.id}
+      showsVerticalScrollIndicator={false} 
       />
       ) : (
-        <Text style={{color:'white'}}>그룹채팅</Text>
+        <GroupChatRoomBox/>
       )}
       </Container>
         </Safe>

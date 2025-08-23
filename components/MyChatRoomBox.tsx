@@ -5,7 +5,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
-const ChatRoomBox = ({data}) => {
+const MyChatRoomBox = ({data}) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const isOpen = useRef(false);
   const onDelete=()=>
@@ -116,7 +116,7 @@ const ChatRoomBox = ({data}) => {
   );
 };
 
-export default ChatRoomBox;
+export default MyChatRoomBox;
 
 // 스타일 정의
 const ChatRoom = styled.View`
