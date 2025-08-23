@@ -2,8 +2,18 @@ import { SafeAreaView, Text,StatusBar ,FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import ChatRoomBox from '@/components/ChatRoomBox';
+import { useState } from 'react';
 
 export default function ChatScreen() {
+    const [isGroupChat,setisGroupChat]=useState(false);
+
+    const changeTomyChat=()=>{
+      setisGroupChat(false);
+    };
+     const changeToGroupChat=()=>{
+      setisGroupChat(true);
+    };
+    //서버에서 데이터 받아와야함
     const DATA = [
         { id: "1", name: "Koori", message: "Hi nice to meet you", count: 10, time: "17:25",mcount:999 },
         { id: "2", name: "Alice", message: "Hello!", count: 2, time: "16:50",mcount:99 },
@@ -36,21 +46,25 @@ export default function ChatScreen() {
       </Header>
       <ChatWrapper>
         <ChatBox>
-        <MyChatBox>
-            <ChatText>My chat</ChatText>
+        <MyChatBox isGroupChat={isGroupChat} onPress={changeTomyChat}>
+            <MyChatText isGroupChat={isGroupChat}>My chat</MyChatText>
         </MyChatBox>
         </ChatBox>
         <ChatBox>
-        <GroupChatBox>
-             <ChatText>Linked Space</ChatText>
+        <GroupChatBox isGroupChat={isGroupChat}  onPress={changeToGroupChat}>
+             <GroupChatText  isGroupChat={isGroupChat}>Linked Space</GroupChatText>
         </GroupChatBox>
         </ChatBox>
       </ChatWrapper>
+      {!isGroupChat ? (
       <FlatList
-        data={DATA}
-        renderItem={({item})=> <ChatRoomBox data={item} />}
-        keyExtractor={item => item.id}
+      data={DATA}
+      renderItem={({ item }) => <ChatRoomBox data={item} />}
+      keyExtractor={item => item.id}
       />
+      ) : (
+        <Text style={{color:'white'}}>그룹채팅</Text>
+      )}
       </Container>
         </Safe>
     );
@@ -109,7 +123,7 @@ const MyChatBox=styled.TouchableOpacity`
     width:70%;
     height:50px;
     margin:0px 100px;
-    border-bottom-color:#02F59B;
+    border-bottom-color:${(props)=>(props.isGroupChat ? '#616262' :'#02F59B')};
     border-bottom-width:2px;
     align-items:center;
     justify-content:center;
@@ -118,14 +132,22 @@ const GroupChatBox=styled.TouchableOpacity`
      
     width:70%;
     height:50px;
-    border-bottom-color:#02F59B;
+    border-bottom-color:${(props)=>(props.isGroupChat ? '#02F59B' :'#616262')};
     border-bottom-width:2px;
     align-items:center;
     justify-content:center;
 `;
 
-const ChatText=styled.Text`
-    color:#02F59B;
+const MyChatText=styled.Text`
+
+    color:${(props)=>(props.isGroupChat ? '#616262' :'#02F59B')};
+    font-family:'PlusJakartaSans_500Medium';
+    font-size:16px;
+`;
+
+const GroupChatText=styled.Text`
+
+    color:${(props)=>(props.isGroupChat ? '#02F59B' :'#616262')};
     font-family:'PlusJakartaSans_500Medium';
     font-size:16px;
 `;

@@ -76,9 +76,12 @@ const ChatRoomBox = ({data}) => {
   return (
     <ChatRoom>
       {/* 삭제 버튼 (배경에 깔림) */}
-      <DeleteButton activeOpacity={0.8} onPress={onDelete}>
-        <FontAwesome name="trash-o" size={24} color="#ffffff" />
-      </DeleteButton>
+
+      
+        <DeleteButton activeOpacity={0.8} onPress={onDelete}>
+          <FontAwesome name="trash-o" size={24} color="#ffffff" />
+        </DeleteButton>
+      
 
       {/* 채팅방 박스 (앞에서 움직이는 뷰) */}
       <Animated.View
