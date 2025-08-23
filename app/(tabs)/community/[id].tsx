@@ -1,4 +1,3 @@
-// app/(tabs)/community/[id].tsx
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -184,7 +183,6 @@ export default function PostDetailScreen() {
 
     return (
         <Safe>
-            {/* 상단 헤더(커스텀) */}
             <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
@@ -206,7 +204,6 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
-                {/* ✅ 리스트(정렬/댓글) 전체 배경을 #171818로 */}
                 <FlatList<Comment>
                     ref={listRef}
                     data={sorted}
@@ -218,7 +215,6 @@ export default function PostDetailScreen() {
                     contentContainerStyle={{ paddingBottom: 80 }}
                     ListHeaderComponent={
                         <>
-                            {/* ✅ 게시물 카드는 #1d1e1f 유지 */}
                             <Card>
                                 <Row>
                                     <Avatar source={post.avatar} />
@@ -258,7 +254,6 @@ export default function PostDetailScreen() {
                                 </Footer>
                             </Card>
 
-                            {/* ✅ 정렬 바부터는 리스트 배경(#171818) 위에 올림 */}
                             <SortWrap>
                                 <SortTabs value={sort} onChange={setSort} />
                             </SortWrap>
@@ -266,7 +261,6 @@ export default function PostDetailScreen() {
                     }
                 />
 
-                {/* ✅ 입력 바는 #1d1e1f 유지 */}
                 <InputBar>
                     <Input
                         ref={inputRef}
@@ -289,8 +283,6 @@ export default function PostDetailScreen() {
         </Safe>
     );
 }
-
-/* ── styled ───────────────────────────────────────────── */
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -331,7 +323,6 @@ const EmptyText = styled.Text`
   color: #cfd4da;
 `;
 
-/* 게시물 카드: 배경을 명시적으로 #1d1e1f */
 const Card = styled.View`
   background: #1d1e1f;
   padding: 12px 16px 10px 16px;
@@ -402,13 +393,11 @@ const ActText = styled.Text`
   font-size: 12px;
 `;
 
-/* 정렬 바: 리스트 배경에 맞춰 명시적 배경 지정 */
 const SortWrap = styled.View`
   background: #171818;
   padding: 10px 16px 0 16px;
 `;
 
-/* 입력 바: 기존 배경 유지 */
 const StyledRNInput = styled(RNTextInput)`
   flex: 1;
   height: 40px;
