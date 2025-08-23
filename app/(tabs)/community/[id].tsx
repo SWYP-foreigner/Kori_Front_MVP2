@@ -1,6 +1,7 @@
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import Feather from '@expo/vector-icons/Feather';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
@@ -183,7 +184,7 @@ export default function PostDetailScreen() {
 
     return (
         <Safe>
-            <Header>
+            \            <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
                 </Back>
@@ -204,7 +205,7 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
-                <FlatList<Comment>
+                \                <FlatList<Comment>
                     ref={listRef}
                     data={sorted}
                     keyExtractor={(it) => it.id}
@@ -212,10 +213,10 @@ export default function PostDetailScreen() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                     style={{ backgroundColor: '#171818' }}
-                    contentContainerStyle={{ paddingBottom: 80 }}
+                    contentContainerStyle={{ paddingBottom: 92 }}
                     ListHeaderComponent={
                         <>
-                            <Card>
+                            \                            <Card>
                                 <Row>
                                     <Avatar source={post.avatar} />
                                     <Meta>
@@ -254,30 +255,36 @@ export default function PostDetailScreen() {
                                 </Footer>
                             </Card>
 
-                            <SortWrap>
+                            \                            <SortWrap>
                                 <SortTabs value={sort} onChange={setSort} />
                             </SortWrap>
                         </>
                     }
                 />
 
-                <InputBar>
-                    <Input
-                        ref={inputRef}
-                        value={value}
-                        onChangeText={setValue}
-                        placeholder="Write Your Text"
-                        placeholderTextColor="#8a8a8a"
-                        returnKeyType="send"
-                        blurOnSubmit
-                        onSubmitEditing={submit}
-                    />
-                    <Anon onPress={() => setAnonymous(v => !v)} $active={anonymous}>
-                        <AnonText $active={anonymous}>Anonymous</AnonText>
-                    </Anon>
-                    <Send onPress={submit}>
-                        <AntDesign name="arrowup" size={16} color="#0f1011" />
-                    </Send>
+                \                <InputBar>
+                    <Composer>
+                        <Input
+                            ref={inputRef}
+                            value={value}
+                            onChangeText={setValue}
+                            placeholder="Write Your Text"
+                            placeholderTextColor="#BFC3C5"
+                            returnKeyType="send"
+                            blurOnSubmit
+                            onSubmitEditing={submit}
+                        />
+                        <AnonToggle onPress={() => setAnonymous(v => !v)}>
+                            <AnonLabel>Anonymous</AnonLabel>
+                            <Check $active={anonymous}>
+                                {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
+                            </Check>
+                        </AnonToggle>
+                    </Composer>
+
+                    <SendBtn onPress={submit} hitSlop={8}>
+                        <Feather name="send" size={22} color="#D9D9D9" />
+                    </SendBtn>
                 </InputBar>
             </KeyboardAvoidingView>
         </Safe>
@@ -286,7 +293,7 @@ export default function PostDetailScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #1d1e1f; /* 헤더/게시물/입력바가 얹히는 기본 배경 */
+  background: #1d1e1f;
 `;
 
 const Header = styled.View`
@@ -364,7 +371,6 @@ const Dot = styled.Text`
 const SmallFlag = styled.Pressable`
   padding: 6px;
 `;
-
 const Img = styled.Image`
   width: 100%;
   height: 200px;
@@ -398,48 +404,63 @@ const SortWrap = styled.View`
   padding: 10px 16px 0 16px;
 `;
 
+const InputBar = styled.View`
+  padding: 10px 12px 14px 12px;
+  background: #1d1e1f;
+  border-top-width: 1px;
+  border-top-color: #222426;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+`;
+
+const Composer = styled.View`
+  flex: 1;
+  background: #414142;      
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-direction: row;
+  align-items: center;
+`;
+
 const StyledRNInput = styled(RNTextInput)`
   flex: 1;
-  height: 40px;
-  border-radius: 10px;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
-  padding: 0 12px;
-  color: #fff;
+  color: #ffffff;
+  font-size: 14px;
+  padding: 0;
+  background: transparent;    
 `;
 const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
     return <StyledRNInput ref={ref} {...props} />;
 });
 Input.displayName = 'Input';
 
-const InputBar = styled.View`
-  padding: 8px 10px 12px 10px;
-  background: #1d1e1f;
-  border-top-width: 1px;
-  border-top-color: #222426;
+const AnonToggle = styled.Pressable`
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  margin-left: 10px;
 `;
-const Anon = styled.Pressable<{ $active?: boolean }>`
-  height: 40px;
-  border-radius: 10px;
-  padding: 0 12px;
+const AnonLabel = styled.Text`
+  color: #e6e8ea;
+  font-size: 14px;
+  margin-right: 8px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const Check = styled.View<{ $active?: boolean }>`
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border-width: 2px;
+  border-color: #d9d9d9;
+  background: ${({ $active }) => ($active ? '#30F59B' : 'transparent')};
   align-items: center;
   justify-content: center;
-  background: ${({ $active }) => ($active ? '#2d3f38' : '#1a1b1c')};
-  border: 1px solid ${({ $active }) => ($active ? '#30F59B' : '#2a2b2c')};
 `;
-const AnonText = styled.Text<{ $active?: boolean }>`
-  color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
-  font-family: 'PlusJakartaSans_600SemiBold';
-  font-size: 12px;
-`;
-const Send = styled.Pressable`
+
+const SendBtn = styled.Pressable`
   width: 36px;
   height: 36px;
-  border-radius: 18px;
-  background: #30f59b;
   align-items: center;
   justify-content: center;
 `;
+
