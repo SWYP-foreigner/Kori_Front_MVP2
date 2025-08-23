@@ -2,31 +2,20 @@ import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // ✅ 추가
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
     FlatList, Keyboard, KeyboardAvoidingView,
-    Platform,
-    TextInput as RNTextInput,
-    TextInputProps
+    Platform, TextInput as RNTextInput, TextInputProps
 } from 'react-native';
 import styled from 'styled-components/native';
 
 type PostModel = {
-    id: string;
-    author: string;
-    avatar: any;
-    category: string;
-    minutesAgo?: number;
-    createdAt: string;
-    body: string;
-    images?: any[];
-    likes: number;
-    comments: number;
-    views?: number;
-    bookmarked?: boolean;
+    id: string; author: string; avatar: any; category: string;
+    minutesAgo?: number; createdAt: string; body: string; images?: any[];
+    likes: number; comments: number; views?: number; bookmarked?: boolean;
 };
 
 const AV = require('@/assets/images/character1.png');
@@ -34,71 +23,30 @@ const IMG = require('@/assets/images/img.png');
 
 const MOCK_POSTS: Record<string, PostModel> = {
     p1: {
-        id: 'p1',
-        author: 'Shotaro',
-        avatar: AV,
-        category: 'Free talk',
-        minutesAgo: 23,
-        createdAt: '2025-08-14',
-        body:
-            "Hi! I came to Korea on a working holiday and I'm currently learning Korean at Yonsei Univ.",
-        images: [IMG],
-        likes: 999,
-        comments: 999,
-        views: 1998,
-        bookmarked: false,
+        id: 'p1', author: 'Shotaro', avatar: AV, category: 'Free talk', minutesAgo: 23, createdAt: '2025-08-14',
+        body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean at Yonsei Univ.",
+        images: [IMG], likes: 999, comments: 999, views: 1998, bookmarked: false
     },
     p2: {
-        id: 'p2',
-        author: 'Shotaro',
-        avatar: AV,
-        category: 'Event',
-        createdAt: '2025-08-14',
-        body: 'Second post without image.',
-        likes: 999,
-        comments: 999,
-        views: 1998,
-        bookmarked: false,
+        id: 'p2', author: 'Shotaro', avatar: AV, category: 'Event', createdAt: '2025-08-14',
+        body: 'Second post without image.', likes: 999, comments: 999, views: 1998, bookmarked: false
     },
 };
 
 const MOCK_COMMENTS_BY_POST: Record<string, Comment[]> = {
     p1: [
         {
-            id: 'c1',
-            author: 'John',
-            avatar: AV,
-            createdAt: '2025-08-14',
-            body:
-                "Hi! I came to Korea on a working holiday and I'm currently learning Korean.",
-            likes: 999,
-            isChild: false,
-            hotScore: 1200,
+            id: 'c1', author: 'John', avatar: AV, createdAt: '2025-08-14',
+            body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean.",
+            likes: 999, isChild: false, hotScore: 1200
         },
         {
-            id: 'c2',
-            author: 'Alice',
-            avatar: AV,
-            createdAt: '2025-08-14',
-            body:
-                "Hi! I came to Korea on a working holiday and I'm currently learning Korean.",
-            likes: 999,
-            isChild: true,
-            hotScore: 900,
+            id: 'c2', author: 'Alice', avatar: AV, createdAt: '2025-08-14',
+            body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean.",
+            likes: 999, isChild: true, hotScore: 900
         },
     ],
-    p2: [
-        {
-            id: 'c3',
-            author: 'Tom',
-            avatar: AV,
-            createdAt: '2025-08-14',
-            body: 'Event looks great!',
-            likes: 3,
-            isChild: false,
-            hotScore: 10,
-        },
-    ],
+    p2: [{ id: 'c3', author: 'Tom', avatar: AV, createdAt: '2025-08-14', body: 'Event looks great!', likes: 3, isChild: false, hotScore: 10 }],
 };
 
 export default function PostDetailScreen() {
@@ -123,11 +71,8 @@ export default function PostDetailScreen() {
     const sorted = useMemo(() => {
         const arr = comments.slice();
         if (sort === 'new') {
-            arr.sort(
-                (a, b) =>
-                    b.createdAt.localeCompare(a.createdAt) ||
-                    Number(a.isChild) - Number(b.isChild),
-            );
+            arr.sort((a, b) =>
+                b.createdAt.localeCompare(a.createdAt) || Number(a.isChild) - Number(b.isChild));
         } else {
             arr.sort((a, b) => b.hotScore - a.hotScore);
         }
@@ -142,10 +87,7 @@ export default function PostDetailScreen() {
             avatar: AV,
             createdAt: new Date().toISOString().slice(0, 10),
             body: value.trim(),
-            likes: 0,
-            isChild: false,
-            hotScore: 0,
-            anonymous,
+            likes: 0, isChild: false, hotScore: 0, anonymous,
         };
         setComments(prev => [c, ...prev]);
         setValue('');
@@ -169,7 +111,7 @@ export default function PostDetailScreen() {
                         <AntDesign name="left" size={20} color="#fff" />
                     </Back>
                     <HeaderTitle>Post</HeaderTitle>
-                    <Right />
+                    <RightPlaceholder />
                 </Header>
                 <EmptyWrap>
                     <EmptyText>Post not found.</EmptyText>
@@ -190,15 +132,7 @@ export default function PostDetailScreen() {
                     <AntDesign name="left" size={20} color="#fff" />
                 </Back>
                 <HeaderTitle>Post</HeaderTitle>
-                <Right>
-                    <IconBtn onPress={toggleBookmark}>
-                        <MaterialIcons
-                            name={post.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 교체
-                            size={22}
-                            color={post.bookmarked ? '#30F59B' : '#cfd4da'}
-                        />
-                    </IconBtn>
-                </Right>
+                <RightPlaceholder />
             </Header>
 
             <KeyboardAvoidingView
@@ -231,7 +165,7 @@ export default function PostDetailScreen() {
                                     </Meta>
                                     <SmallFlag onPress={toggleBookmark}>
                                         <MaterialIcons
-                                            name={post.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 교체
+                                            name={post.bookmarked ? 'bookmark' : 'bookmark-border'}
                                             size={20}
                                             color={post.bookmarked ? '#30F59B' : '#8a8a8a'}
                                         />
@@ -312,14 +246,11 @@ const HeaderTitle = styled.Text`
   color: #fff;
   font-size: 18px;
   font-family: 'PlusJakartaSans_700Bold';
+  text-align: center; 
+  flex: 1;       
 `;
-const Right = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-const IconBtn = styled.Pressable`
-  padding: 6px;
-  margin-left: 6px;
+const RightPlaceholder = styled.View`
+  width: 40px;
 `;
 
 const EmptyWrap = styled.View`
