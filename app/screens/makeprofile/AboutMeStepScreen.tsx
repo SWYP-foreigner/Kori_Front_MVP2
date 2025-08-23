@@ -19,7 +19,7 @@ export default function NameStepScreen({ navigation}) {
   const handleNext = () => {
     if (canProceed) {
       updateProfile('introduction',AboutMe);
-      router.push('./AddPhotoStepScreen');
+      router.push('./BirthStepScreen');
     }
   };
 

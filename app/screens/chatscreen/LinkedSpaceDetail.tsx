@@ -66,7 +66,8 @@ const LinkedSpaceDetail=()=>{
                     </BottomTitleContainer>
                     <BottomContentContainer>
                         <BottomContent>
-                            Hello~anyone that loves to hike can join this chat! Let's go bro!!
+                            Hello~anyone that loves to hike can join this chat! We regulary do an
+                            offline meeting every two weeks and go to any random mountains near Seoul.
                         </BottomContent>
                     </BottomContentContainer>
                 </DetailBottomContainer>

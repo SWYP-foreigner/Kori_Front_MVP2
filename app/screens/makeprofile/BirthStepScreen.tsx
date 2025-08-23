@@ -49,14 +49,14 @@ export default function BirthdaySelectionScreen() {
 
   const moveNextScreen = () => {
     updateProfile('birthday',text);
-    router.push('./TagStepScreen');
+    router.push('./PurposeStepScreen');
   };
 
   return (
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
-        <StepText>Step 8 / 9</StepText>
+        <StepText>Step 6 / 9</StepText>
 
         <TitleWrapper>
           <Title>When is your</Title>

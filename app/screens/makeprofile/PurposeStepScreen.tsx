@@ -71,7 +71,7 @@ export default function PurposeStepScreen({ navigation }) {
   const handleNext = () => {
     if (canProceed) {
       updateProfile('purpose',selectedPurpose.title);
-      router.push('./BirthStepScreen');
+      router.push('./TagStepScreen');
     }
   };
 

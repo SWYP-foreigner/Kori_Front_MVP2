@@ -52,7 +52,9 @@ export default function TagStepScreen() {
       setSelectedTags([...selectedTags, tag]);
     }
   };
-
+  const handleNext=()=>{
+    router.push('./AddPhotoStepScreen');
+  };
   const handleDone=async()=>{
     try {
     const formData = new FormData();
@@ -93,7 +95,7 @@ export default function TagStepScreen() {
       <Container>
         <ScrollableContainer>
         <HeaderSection>
-          <StepText>Step 9 / 9</StepText>
+          <StepText>Step 8 / 9</StepText>
 
           <TitleWrapper>
             <Title>Tell us about</Title>
@@ -138,10 +140,10 @@ export default function TagStepScreen() {
 
         <ButtonSection>
           <NextButton
-            onPress={handleDone}
+            onPress={handleNext}
             disabled={selectedTags.length === 0}
           >
-            <ButtonText>Done</ButtonText>
+            <ButtonText>Next</ButtonText>
           </NextButton>
         </ButtonSection>
       </Container>
