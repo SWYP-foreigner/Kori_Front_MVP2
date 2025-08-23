@@ -4,8 +4,9 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { FlatList as RNFlatList } from 'react-native';
 import {
-    FlatList, FlatList as RNFlatList, Keyboard, KeyboardAvoidingView,
+    FlatList, Keyboard, KeyboardAvoidingView,
     Platform,
     TextInput as RNTextInput,
     TextInputProps
@@ -183,7 +184,7 @@ export default function PostDetailScreen() {
 
     return (
         <Safe>
-            {/* 헤더 */}
+            {/* 상단 헤더(커스텀) */}
             <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
@@ -205,7 +206,7 @@ export default function PostDetailScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
             >
-                {/* ✅ 댓글 영역 배경 = #171818 */}
+                {/* ✅ 리스트(정렬/댓글) 전체 배경을 #171818로 */}
                 <FlatList<Comment>
                     ref={listRef}
                     data={sorted}
@@ -213,10 +214,11 @@ export default function PostDetailScreen() {
                     renderItem={({ item }) => <CommentItem data={item} />}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
-                    style={{ backgroundColor: '#171818' }}          // ← 여기!
-                    contentContainerStyle={{ paddingBottom: 80 }}   // 입력바 높이만큼
+                    style={{ backgroundColor: '#171818' }}
+                    contentContainerStyle={{ paddingBottom: 80 }}
                     ListHeaderComponent={
-                        <HeaderArea>
+                        <>
+                            {/* ✅ 게시물 카드는 #1d1e1f 유지 */}
                             <Card>
                                 <Row>
                                     <Avatar source={post.avatar} />
@@ -256,15 +258,15 @@ export default function PostDetailScreen() {
                                 </Footer>
                             </Card>
 
-                            {/* ❌ SortLabel 제거 / ✅ SortTabs만 표시 */}
+                            {/* ✅ 정렬 바부터는 리스트 배경(#171818) 위에 올림 */}
                             <SortWrap>
                                 <SortTabs value={sort} onChange={setSort} />
                             </SortWrap>
-                        </HeaderArea>
+                        </>
                     }
                 />
 
-                {/* 입력 바 */}
+                {/* ✅ 입력 바는 #1d1e1f 유지 */}
                 <InputBar>
                     <Input
                         ref={inputRef}
@@ -292,7 +294,7 @@ export default function PostDetailScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #1d1e1f;
+  background: #1d1e1f; /* 헤더/게시물/입력바가 얹히는 기본 배경 */
 `;
 
 const Header = styled.View`
@@ -329,11 +331,9 @@ const EmptyText = styled.Text`
   color: #cfd4da;
 `;
 
-const HeaderArea = styled.View`
-  background: #1d1e1f; /* 본문/정렬 구간은 기존 배경 유지 */
-`;
-
+/* 게시물 카드: 배경을 명시적으로 #1d1e1f */
 const Card = styled.View`
+  background: #1d1e1f;
   padding: 12px 16px 10px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
@@ -402,11 +402,13 @@ const ActText = styled.Text`
   font-size: 12px;
 `;
 
+/* 정렬 바: 리스트 배경에 맞춰 명시적 배경 지정 */
 const SortWrap = styled.View`
+  background: #171818;
   padding: 10px 16px 0 16px;
 `;
 
-/* 입력 바 */
+/* 입력 바: 기존 배경 유지 */
 const StyledRNInput = styled(RNTextInput)`
   flex: 1;
   height: 40px;
