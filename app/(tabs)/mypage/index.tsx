@@ -185,7 +185,7 @@ export default function MyPageScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #171818;
+  background: #1D1E1F;
 `;
 
 const Scroll = styled.ScrollView``;
