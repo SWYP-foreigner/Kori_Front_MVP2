@@ -7,99 +7,94 @@ import styled from 'styled-components/native';
 type Tab = 'received' | 'sent';
 
 const MOCK_RECEIVED = [
-    {
-        id: 101, name: 'Jenny', country: 'United States', birth: 2025, purpose: 'Business',
-        languages: ['EN', 'KO'], personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
-        bio: 'Hi there!',
-    },
+  {
+    id: 101, name: 'Jenny', country: 'United States', birth: 2025, purpose: 'Business',
+    languages: ['EN', 'KO'], personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
+    bio: 'Hi there!',
+  },
 ];
 const MOCK_SENT = [
-    {
-        id: 201, name: 'Tom', country: 'France', birth: 2025, purpose: 'Travel',
-        languages: ['EN'], personalities: ['Board Games', 'K-Food Lover'], bio: 'Bonjour!',
-    },
+  {
+    id: 201, name: 'Tom', country: 'France', birth: 2025, purpose: 'Travel',
+    languages: ['EN'], personalities: ['Board Games', 'K-Food Lover'], bio: 'Bonjour!',
+  },
 ];
 
 export default function FollowListScreen() {
-    const [tab, setTab] = useState<Tab>('received');
-    const [showCancel, setShowCancel] = useState<number | null>(null);
+  const [tab, setTab] = useState<Tab>('received');
+  const [showCancel, setShowCancel] = useState<number | null>(null);
 
-    const list = useMemo(() => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT), [tab]);
+  const list = useMemo(() => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT), [tab]);
 
-    return (
-        <Safe>
-            {/* Header */}
-            <Header>
-                <BackBtn onPress={() => router.back()}>
-                    <AntDesign name="left" size={20} color="#fff" />
-                </BackBtn>
-                <Title>Friends List</Title>
-                <IconRow>
-                    <AntDesign name="search1" size={18} color="#cfd4da" />
-                    <AntDesign name="ellipsis1" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
-                </IconRow>
-            </Header>
+  return (
+    <Safe>
+      {/* Header */}
+      <Header>
+        <BackBtn onPress={() => router.back()}>
+          <AntDesign name="left" size={20} color="#fff" />
+        </BackBtn>
+        <Title>Friends List</Title>
+        <IconRow>
+          <AntDesign name="search1" size={18} color="#cfd4da" />
+          <AntDesign name="ellipsis1" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
+        </IconRow>
+      </Header>
 
-            {/* Tabs: underline style */}
-            <TabsWrap>
-                <TabsRow>
-                    <TabItem active={tab === 'received'} onPress={() => setTab('received')}>
-                        <TabText active={tab === 'received'}>Received</TabText>
-                    </TabItem>
-                    <TabItem active={tab === 'sent'} onPress={() => setTab('sent')}>
-                        <TabText active={tab === 'sent'}>Sent</TabText>
-                    </TabItem>
-                </TabsRow>
-                <TabsBottomLine />
-            </TabsWrap>
+      <TabsWrap>
+        <TabsRow>
+          <TabItem active={tab === 'received'} onPress={() => setTab('received')}>
+            <TabText active={tab === 'received'}>Received</TabText>
+          </TabItem>
+          <TabItem active={tab === 'sent'} onPress={() => setTab('sent')}>
+            <TabText active={tab === 'sent'}>Sent</TabText>
+          </TabItem>
+        </TabsRow>
+        <TabsBottomLine />
+      </TabsWrap>
 
-            {/* List */}
-            <List
-                data={list}
-                keyExtractor={(item) => String(item.id)}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 10, paddingBottom: 56 }}
-                renderItem={({ item }) => (
-                    <FriendCard
-                        userId={item.id}
-                        name={item.name}
-                        country={item.country}
-                        birth={item.birth}
-                        purpose={item.purpose}
-                        languages={item.languages}
-                        personalities={item.personalities}
-                        bio={item.bio}
-                        isFollowed={false}
-                        onFollow={() => { }}
-                        onChat={() => { }}
-                        footerSlot={
-                            tab === 'received' ? (
-                                <ActionRow>
-                                    {/* 원하는 버튼 조합으로 유지 */}
-                                </ActionRow>
-                            ) : (
-                                <ActionRow>
-                                    {/* 원하는 버튼 조합으로 유지 */}
-                                </ActionRow>
-                            )
-                        }
-                    />
-                )}
-            />
+      <List
+        data={list}
+        keyExtractor={(item) => String(item.id)}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 10, paddingBottom: 56 }}
+        renderItem={({ item }) => (
+          <FriendCard
+            userId={item.id}
+            name={item.name}
+            country={item.country}
+            birth={item.birth}
+            purpose={item.purpose}
+            languages={item.languages}
+            personalities={item.personalities}
+            bio={item.bio}
+            isFollowed={false}
+            onFollow={() => { }}
+            onChat={() => { }}
+            footerSlot={
+              tab === 'received' ? (
+                <ActionRow>
+                </ActionRow>
+              ) : (
+                <ActionRow>
+                </ActionRow>
+              )
+            }
+          />
+        )}
+      />
 
-            {showCancel !== null && (
-                <Overlay>
-                    <Backdrop onPress={() => setShowCancel(null)} />
-                    {/* ...모달 내용 생략(기존 그대로) */}
-                </Overlay>
-            )}
-        </Safe>
-    );
+      {showCancel !== null && (
+        <Overlay>
+          <Backdrop onPress={() => setShowCancel(null)} />
+        </Overlay>
+      )}
+    </Safe>
+  );
 }
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #0f1011;
+  background: #1D1E1F;
 `;
 
 const Header = styled.View`

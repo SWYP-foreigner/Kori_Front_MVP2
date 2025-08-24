@@ -129,7 +129,7 @@ export default function FriendsOnlyScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #0f1011;
+  background: #1D1E1F;
 `;
 
 const Header = styled.View`
