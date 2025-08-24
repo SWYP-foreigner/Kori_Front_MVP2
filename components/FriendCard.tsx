@@ -21,6 +21,7 @@ type Props = {
   bio?: string;
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
+  onUnfollow?: (userId: number) => void;
   onChat?: () => void;
   footerSlot?: React.ReactNode;
 };
@@ -67,6 +68,7 @@ export default function FriendCard({
   bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
   isFollowed = false,
   onFollow,
+  onUnfollow,
   onChat,
   footerSlot,
 }: Props) {
@@ -80,12 +82,10 @@ export default function FriendCard({
           android: { elevation: 2 },
         })}
       >
-        {/* 상단 */}
         <Top>
-          <Avatar /* size 지정 가능: size={AVATAR.size} */ />
+          <Avatar />
           <Name>{name}</Name>
 
-          {/* 성별 */}
           <MetaLine>
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth}</MetaStrong>
@@ -104,7 +104,6 @@ export default function FriendCard({
           <Bio numberOfLines={expanded ? 4 : 2}>{bio}</Bio>
         </Top>
 
-        {/* Divider + Chevron */}
         <DividerWrap>
           <Divider />
           <ChevronButton
@@ -120,7 +119,6 @@ export default function FriendCard({
           </ChevronButton>
         </DividerWrap>
 
-        {/* 상세 */}
         {expanded && (
           <>
             <Row style={{ marginTop: SECTION_GAP_TOP }}>
@@ -166,15 +164,17 @@ export default function FriendCard({
           </>
         )}
 
-        {/* 버튼 */}
         <Actions>
           <CustomButton
             label={isFollowed ? 'Following' : 'Follow'}
             tone={isFollowed ? 'black' : 'mint'}
             filled={!isFollowed}
             leftIcon={!isFollowed ? 'add' : 'check'}
-            disabled={isFollowed}
-            onPress={() => !isFollowed && onFollow?.(userId)}
+            disabled={false}
+            onPress={() => {
+              if (isFollowed) onUnfollow?.(userId);
+              else onFollow?.(userId);
+            }}
           />
           <CustomButton
             label="Chat"
@@ -184,6 +184,8 @@ export default function FriendCard({
             onPress={onChat}
           />
         </Actions>
+
+        {footerSlot}
       </CardInner>
     </CardWrap>
   );
