@@ -10,6 +10,20 @@ export default function CommunityLayout() {
                     title: "커뮤니티",
                 }}
             />
+            <Stack.Screen
+                name="[id]"
+                options={{
+                    headerShown: false,
+                    title: "게시글",
+                }}
+            />
+            <Stack.Screen
+                name="write"
+                options={{
+                    headerShown: false,
+                    title: "글쓰기",
+                }}
+            />
         </Stack>
     )
 }
