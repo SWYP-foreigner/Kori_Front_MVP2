@@ -19,7 +19,7 @@ export default function NameStepScreen({ navigation}) {
   const handleNext = () => {
     if (canProceed) {
       updateProfile('introduction',AboutMe);
-      router.push('./AddPhotoStepScreen');
+      router.push('./BirthStepScreen');
     }
   };
 
@@ -132,7 +132,7 @@ const Input = styled.TextInput`
   color: #EDEDED;
   font-size: 16px;
   line-height: 24px;
-  font-family: 'PlusJakartaSans-Regular';
+  font-family: PlusJakartaSans_400Regular;
   text-align-vertical: top;
 `;
 

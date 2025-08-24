@@ -137,7 +137,7 @@ export default function AddPhotoStepScreen({ navigation }) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
-        <StepText>Step 6 / 9</StepText>
+        <StepText>Step 9 / 9</StepText>
 
         <TitleWrapper>
           <Title>Let's add</Title>
@@ -186,7 +186,7 @@ export default function AddPhotoStepScreen({ navigation }) {
         <Spacer />
 
         <NextButton
-          onPress={handleNext}
+          // onPress={handleNext}
           disabled={!canProceed}
           canProceed={canProceed}
         >
