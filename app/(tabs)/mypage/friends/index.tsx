@@ -35,7 +35,7 @@ export default function FriendsOnlyScreen() {
     const list = useMemo(() => friends, [friends]);
 
     const totalPages = list.length;
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(1); // 1-based
     const listRef = useRef<import('react-native').FlatList>(null);
 
     const confirmUnfollow = (userId: number) => {
@@ -89,7 +89,7 @@ export default function FriendsOnlyScreen() {
                 })}
                 onScroll={(e) => {
                     const x = e.nativeEvent.contentOffset.x;
-                    const idx = Math.round(x / SCREEN_WIDTH);
+                    const idx = Math.round(x / SCREEN_WIDTH); // 0-based
                     setPage(idx + 1);
                 }}
                 scrollEventThrottle={16}
@@ -116,11 +116,13 @@ export default function FriendsOnlyScreen() {
 
             <Pager>
                 <PagerBtn disabled={page <= 1} onPress={() => goToIndex(page - 2)}>
-                    {'‹'}
+                    <PagerArrow>‹</PagerArrow>
                 </PagerBtn>
+
                 <PagerText>{` ${page} / ${totalPages} `}</PagerText>
+
                 <PagerBtn disabled={page >= totalPages} onPress={() => goToIndex(page)}>
-                    {'›'}
+                    <PagerArrow>›</PagerArrow>
                 </PagerBtn>
             </Pager>
         </Safe>
@@ -129,7 +131,7 @@ export default function FriendsOnlyScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #1D1E1F;
+  background: #1d1e1f;
 `;
 
 const Header = styled.View`
@@ -178,6 +180,12 @@ const Pager = styled.View`
 const PagerBtn = styled.Pressable<{ disabled?: boolean }>`
   opacity: ${({ disabled }) => (disabled ? 0.3 : 1)};
   padding: 6px 10px;
+`;
+
+const PagerArrow = styled.Text`
+  color: #b7babd;
+  font-size: 20px;
+  padding: 0 4px;
 `;
 
 const PagerText = styled.Text`

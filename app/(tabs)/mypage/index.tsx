@@ -3,8 +3,7 @@ import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ImageSourcePropType, Modal } from 'react-native';
-import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource';
+import { Alert, Image as RNImage, ImageSourcePropType, Modal } from 'react-native'; // ← RNImage alias 사용
 import styled from 'styled-components/native';
 
 const MOCK_ME = {
@@ -40,14 +39,14 @@ export default function MyPageScreen() {
 
   const openAvatarSheet = () => {
     const cur = AVATARS.findIndex(
-      img => (resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? '')
+      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? '')
     );
     setTempIdx(cur >= 0 ? cur : 0);
     setShowAvatarSheet(true);
   };
 
   const saveAvatar = () => {
-    const src = resolveAssetSource(AVATARS[tempIdx]);
+    const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
     if (src?.uri) setAvatarUrl(src.uri);
     setShowAvatarSheet(false);
   };
@@ -191,7 +190,6 @@ export default function MyPageScreen() {
     </Safe>
   );
 }
-
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -363,7 +361,6 @@ const DeleteText = styled.Text`
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-
 const SheetOverlay = styled.TouchableOpacity`
   flex: 1;
   background: rgba(0, 0, 0, 0.55);
@@ -449,7 +446,7 @@ const ButtonRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin-top: 10px;
-  padding-bottom: 28px; 
+  padding-bottom: 28px;
 `;
 
 const Gap = styled.View`
