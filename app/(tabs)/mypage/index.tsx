@@ -3,7 +3,11 @@ import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image as RNImage, ImageSourcePropType, Modal } from 'react-native'; // ← RNImage alias 사용
+import {
+  Alert, Image, Image as RNImage,
+  ImageSourcePropType,
+  Modal
+} from 'react-native';
 import styled from 'styled-components/native';
 
 const MOCK_ME = {
@@ -22,7 +26,6 @@ const AVATARS: ImageSourcePropType[] = [
 
 export default function MyPageScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
-
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [tempIdx, setTempIdx] = useState<number>(0);
 
@@ -39,7 +42,7 @@ export default function MyPageScreen() {
 
   const openAvatarSheet = () => {
     const cur = AVATARS.findIndex(
-      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? '')
+      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? ''),
     );
     setTempIdx(cur >= 0 ? cur : 0);
     setShowAvatarSheet(true);
@@ -53,10 +56,7 @@ export default function MyPageScreen() {
 
   return (
     <Safe>
-      <Scroll
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 28 }}
-      >
+      <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <Header>
           <Title>My page</Title>
           <IconImage source={require('../../../assets/images/IsolationMode.png')} />
@@ -138,10 +138,7 @@ export default function MyPageScreen() {
         animationType="slide"
         onRequestClose={() => setShowAvatarSheet(false)}
       >
-        <SheetOverlay
-          onPress={() => setShowAvatarSheet(false)}
-          activeOpacity={1}
-        >
+        <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
           <Sheet onStartShouldSetResponder={() => true}>
             <Handle />
             <SheetTitle>Select Profile</SheetTitle>
@@ -155,7 +152,7 @@ export default function MyPageScreen() {
                       <AvatarImg source={img} />
                       {selected && (
                         <CheckBadge>
-                          <Ion name="checkmark" size={14} color="#0f1011" />
+                          <Ionicons name="checkmark" size={14} color="#0f1011" />
                         </CheckBadge>
                       )}
                     </AvatarCircle>
@@ -165,7 +162,7 @@ export default function MyPageScreen() {
 
               <AvatarItem onPress={() => { }}>
                 <CameraCircle>
-                  <Ion name="camera" size={22} color="#cfd4da" />
+                  <Ionicons name="camera" size={22} color="#cfd4da" />
                 </CameraCircle>
               </AvatarItem>
             </AvatarRow>
@@ -177,12 +174,7 @@ export default function MyPageScreen() {
                 onPress={() => setShowAvatarSheet(false)}
               />
               <Gap />
-              <CustomButton
-                label="Save"
-                tone="mint"
-                filled
-                onPress={saveAvatar}
-              />
+              <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
             </ButtonRow>
           </Sheet>
         </SheetOverlay>
@@ -227,8 +219,6 @@ const AvatarPress = styled.Pressable`
   position: relative;
 `;
 
-const Ion = styled(Ionicons)``;
-
 const Name = styled.Text`
   margin-top: 8px;
   font-size: 16px;
@@ -262,25 +252,32 @@ const SectionTitleRow = styled.View`
   margin: 22px 16px 10px 16px;
 `;
 
-const SectionTitleIcon = styled(Ionicons).attrs({
-  name: 'person-outline',
-  size: 12,
-  color: '#9aa0a6',
-})`
-  margin-right: 6px;
-  transform: translateY(1px);
-`;
+function SectionTitleIcon() {
+  return (
+    <Ionicons
+      name="person-outline"
+      size={12}
+      color="#9aa0a6"
+      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
+    />
+  );
+}
 
-const SectionTitleIconGlobe = styled.Image.attrs({
-  source: require('@/assets/icons/global.png'),
-})`
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  resize-mode: contain;
-  tint-color: #9aa0a6;
-  transform: translateY(1px);
-`;
+function SectionTitleIconGlobe() {
+  return (
+    <Image
+      source={require('@/assets/icons/global.png')}
+      resizeMode="contain"
+      style={{
+        width: 12,
+        height: 12,
+        marginRight: 6,
+        tintColor: '#9aa0a6',
+        transform: [{ translateY: 1 }],
+      }}
+    />
+  );
+}
 
 const RowLink = styled.Pressable`
   padding: 14px 16px;
