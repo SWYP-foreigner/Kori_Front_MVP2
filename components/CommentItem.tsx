@@ -4,63 +4,59 @@ import React from 'react';
 import styled from 'styled-components/native';
 
 export type Comment = {
-    id: string;
-    author: string;
-    avatar: any;
-    createdAt: string;
-    body: string;
-    likes: number;
-    isChild?: boolean;
-    hotScore: number;
-    anonymous?: boolean;
+  id: string;
+  author: string;
+  avatar: any;
+  createdAt: string;
+  body: string;
+  likes: number;
+  isChild?: boolean;
+  hotScore: number;
+  anonymous?: boolean;
 };
 
 type Props = { data: Comment };
 
 export default function CommentItem({ data }: Props) {
-    const isChild = !!data.isChild;
+  const isChild = !!data.isChild;
 
-    return (
-        <Wrap $child={isChild}>
-            <Row>
-                {isChild && (
-                    <ReplyIcon>
-                        <Feather name="corner-down-right" size={18} color="#9aa0a6" />
-                    </ReplyIcon>
-                )}
-                <Avatar source={data.avatar} />
-                <Meta>
-                    <Author>{data.author}</Author>
-                    <Sub>{data.createdAt.slice(5).replace('-', '/')}</Sub>
-                </Meta>
-                <More>···</More>
-            </Row>
+  return (
+    <Wrap $child={isChild}>
+      <Row>
+        {isChild && (
+          <ReplyIcon>
+            <Feather name="corner-down-right" size={18} color="#9aa0a6" />
+          </ReplyIcon>
+        )}
+        <Avatar source={data.avatar} />
+        <Meta>
+          <Author>{data.author}</Author>
+          <Sub>{data.createdAt.slice(5).replace('-', '/')}</Sub>
+        </Meta>
+        <More>···</More>
+      </Row>
 
-            <Body>{data.body}</Body>
+      <Body>{data.body}</Body>
 
-            <Footer>
-                <Act>
-                    <AntDesign name="like2" size={14} color="#30F59B" />
-                    <Count>{data.likes}</Count>
-                </Act>
-                <Act>
-                    <AntDesign name="message1" size={14} color="#cfd4da" />
-                    <Count>999</Count>
-                </Act>
-            </Footer>
-        </Wrap>
-    );
+      <Footer>
+        <Act>
+          <AntDesign name="like2" size={14} color="#30F59B" />
+          <Count>{data.likes}</Count>
+        </Act>
+        <Act>
+          <AntDesign name="message1" size={14} color="#cfd4da" />
+          <Count>999</Count>
+        </Act>
+      </Footer>
+    </Wrap>
+  );
 }
 
 const Wrap = styled.View<{ $child: boolean }>`
   background: #171818;
   padding: 12px 16px 10px 16px;
-
-  /* 위쪽 구분선: 대댓글이면 제거, 일반이면 표시 */
   border-top-width: ${({ $child }) => ($child ? 0 : 1)}px;
   border-top-color: #222426;
-
-  /* 아래(밑) 구분선: 모두 표시 */
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;

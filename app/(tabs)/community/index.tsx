@@ -5,14 +5,20 @@ import WriteFab from '@/components/WriteFab';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { FlatList } from 'react-native';
+import { FlatList, ListRenderItem, type FlatListProps } from 'react-native';
 import styled from 'styled-components/native';
 
 const AV = require('@/assets/images/character1.png');
 const IMG = require('@/assets/images/img.png');
 const ICON = require('@/assets/images/IsolationMode.png');
 
-const MOCK: Post[] = [
+type PostEx = Post & {
+    hotScore: number;
+    minutesAgo?: number;
+    bookmarked?: boolean;
+};
+
+const MOCK: PostEx[] = [
     {
         id: 'p1',
         author: 'Shotaro',
@@ -43,7 +49,7 @@ const MOCK: Post[] = [
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
     const [sort, setSort] = useState<SortKey>('new');
-    const [items, setItems] = useState(MOCK);
+    const [items, setItems] = useState<PostEx[]>(MOCK);
 
     const filtered = useMemo(() => {
         let arr = items.filter((p) => cat === 'All' || p.category === cat);
@@ -66,15 +72,26 @@ export default function CommunityScreen() {
             prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p)),
         );
     };
+
     const toggleBookmark = (id: string) => {
         setItems((prev) =>
             prev.map((p) => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)),
         );
     };
 
+    const renderPost: ListRenderItem<PostEx> = ({ item }) => (
+        <PostCard
+            data={item}
+            onPress={() =>
+                router.push({ pathname: '/community/[id]', params: { id: String(item.id) } })
+            }
+            onToggleLike={() => toggleLike(String(item.id))}
+            onToggleBookmark={() => toggleBookmark(String(item.id))}
+        />
+    );
+
     return (
         <Safe>
-            {/* 헤더 */}
             <Header>
                 <Left>
                     <Title>Community</Title>
@@ -86,35 +103,22 @@ export default function CommunityScreen() {
                 </Right>
             </Header>
 
-            {/* 카테고리 chips */}
             <ChipsWrap>
                 <CategoryChips value={cat} onChange={setCat} />
             </ChipsWrap>
 
-            {/* 정렬 탭 */}
             <SortWrap>
                 <SortTabs value={sort} onChange={setSort} />
             </SortWrap>
 
-            {/* 게시글 리스트 */}
             <List
                 data={filtered}
-                keyExtractor={(it) => it.id}
-                renderItem={({ item }) => (
-                    <PostCard
-                        data={item}
-                        onPress={() =>
-                            router.push({ pathname: '/community/[id]', params: { id: item.id } })
-                        }
-                        onToggleLike={() => toggleLike(item.id)}
-                        onToggleBookmark={() => toggleBookmark(item.id)}
-                    />
-                )}
+                keyExtractor={(it: PostEx) => String(it.id)}
+                renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 80 }}
             />
 
-            {/* 글쓰기 버튼 */}
             <WriteFab onPress={() => router.push('/community/write')} />
         </Safe>
     );
@@ -127,7 +131,7 @@ const Safe = styled.SafeAreaView`
 
 const Header = styled.View`
   padding: 0 12px;
-  margin-top: 12px; 
+  margin-top: 12px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -158,12 +162,14 @@ const Right = styled.View`
 `;
 
 const ChipsWrap = styled.View`
-  margin-top: 12px; 
+  margin-top: 12px;
 `;
 
 const SortWrap = styled.View`
-  margin-top: 20px; 
+  margin-top: 20px;
   margin-bottom: 14px;
 `;
 
-const List = styled(FlatList as new () => FlatList<Post>)``;
+const List = styled(
+    FlatList as React.ComponentType<FlatListProps<PostEx>>
+)``;

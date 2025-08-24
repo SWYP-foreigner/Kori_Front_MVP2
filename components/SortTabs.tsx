@@ -4,28 +4,28 @@ import styled from 'styled-components/native';
 export type SortKey = 'new' | 'hot';
 
 type Props = {
-    value: SortKey;
-    onChange: (v: SortKey) => void;
+  value: SortKey;
+  onChange: (v: SortKey) => void;
 };
 
 export default function SortTabs({ value, onChange }: Props) {
-    return (
-        <Bar>
-            <SortBy>Sort by</SortBy>
-            <Tab $active={value === 'new'} onPress={() => onChange('new')}>
-                <TabText $active={value === 'new'}>New</TabText>
-            </Tab>
-            <Tab $active={value === 'hot'} onPress={() => onChange('hot')}>
-                <TabText $active={value === 'hot'}>Hot</TabText>
-            </Tab>
-        </Bar>
-    )
+  return (
+    <Bar>
+      <SortBy>Sort by</SortBy>
+      <Tab $active={value === 'new'} onPress={() => onChange('new')}>
+        <TabText $active={value === 'new'}>New</TabText>
+      </Tab>
+      <Tab $active={value === 'hot'} onPress={() => onChange('hot')}>
+        <TabText $active={value === 'hot'}>Hot</TabText>
+      </Tab>
+    </Bar>
+  )
 }
 
 const Bar = styled.View`
   flex-direction: row;
   align-items: center;
-  padding: 4px 12px 0 12px;  /* or 0 */
+  padding: 4px 12px 0 12px; 
 
   gap: 8px;
 `;
