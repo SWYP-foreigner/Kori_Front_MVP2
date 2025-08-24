@@ -1,9 +1,11 @@
 import FriendCard from '@/components/FriendCard';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { Alert } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Alert, Dimensions } from 'react-native';
 import styled from 'styled-components/native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const MOCK_FRIENDS = [
     {
@@ -30,10 +32,11 @@ const MOCK_FRIENDS = [
 
 export default function FriendsOnlyScreen() {
     const [friends, setFriends] = useState(MOCK_FRIENDS);
-    const totalPages = 3;
-    const [page, setPage] = useState(1);
-
     const list = useMemo(() => friends, [friends]);
+
+    const totalPages = list.length;
+    const [page, setPage] = useState(1);
+    const listRef = useRef<import('react-native').FlatList>(null);
 
     const confirmUnfollow = (userId: number) => {
         Alert.alert(
@@ -44,12 +47,16 @@ export default function FriendsOnlyScreen() {
                 {
                     text: 'Action',
                     style: 'destructive',
-                    onPress: () => {
-                        setFriends(prev => prev.filter(f => f.id !== userId));
-                    },
+                    onPress: () => setFriends(prev => prev.filter(f => f.id !== userId)),
                 },
             ],
         );
+    };
+
+    const goToIndex = (indexZeroBased: number) => {
+        if (!listRef.current) return;
+        const safeIndex = Math.max(0, Math.min(totalPages - 1, indexZeroBased));
+        listRef.current.scrollToIndex({ index: safeIndex, animated: true });
     };
 
     return (
@@ -65,34 +72,54 @@ export default function FriendsOnlyScreen() {
                 </IconRow>
             </Header>
 
-            <List
+            <HList
+                ref={listRef}
                 data={list}
                 keyExtractor={(item) => String(item.id)}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 10, paddingBottom: 56 }}
+                horizontal
+                pagingEnabled
+                decelerationRate="fast"
+                snapToInterval={SCREEN_WIDTH}
+                snapToAlignment="start"
+                showsHorizontalScrollIndicator={false}
+                getItemLayout={(_, index) => ({
+                    length: SCREEN_WIDTH,
+                    offset: SCREEN_WIDTH * index,
+                    index,
+                })}
+                onScroll={(e) => {
+                    const x = e.nativeEvent.contentOffset.x;
+                    const idx = Math.round(x / SCREEN_WIDTH);
+                    setPage(idx + 1);
+                }}
+                scrollEventThrottle={16}
                 renderItem={({ item }) => (
-                    <FriendCard
-                        userId={item.id}
-                        name={item.name}
-                        country={item.country}
-                        birth={item.birth}
-                        purpose={item.purpose}
-                        languages={item.languages}
-                        personalities={item.personalities}
-                        bio={item.bio}
-                        isFollowed={true}
-                        onChat={() => { }}
-                        onUnfollow={() => confirmUnfollow(item.id)}
-                    />
+                    <Page style={{ width: SCREEN_WIDTH }}>
+                        <Inner>
+                            <FriendCard
+                                userId={item.id}
+                                name={item.name}
+                                country={item.country}
+                                birth={item.birth}
+                                purpose={item.purpose}
+                                languages={item.languages}
+                                personalities={item.personalities}
+                                bio={item.bio}
+                                isFollowed
+                                onChat={() => { }}
+                                onUnfollow={() => confirmUnfollow(item.id)}
+                            />
+                        </Inner>
+                    </Page>
                 )}
             />
 
             <Pager>
-                <PagerBtn disabled={page <= 1} onPress={() => setPage((p) => Math.max(1, p - 1))}>
+                <PagerBtn disabled={page <= 1} onPress={() => goToIndex(page - 2)}>
                     {'‹'}
                 </PagerBtn>
                 <PagerText>{` ${page} / ${totalPages} `}</PagerText>
-                <PagerBtn disabled={page >= totalPages} onPress={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                <PagerBtn disabled={page >= totalPages} onPress={() => goToIndex(page)}>
                     {'›'}
                 </PagerBtn>
             </Pager>
@@ -128,7 +155,15 @@ const IconRow = styled.View`
   align-items: center;
 `;
 
-const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
+const HList = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
+
+const Page = styled.View`
+  justify-content: center;
+`;
+
+const Inner = styled.View`
+  padding: 0 16px;
+`;
 
 const Pager = styled.View`
   position: absolute;
