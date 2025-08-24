@@ -24,7 +24,7 @@ export default function CategoryChips({ value, onChange }: Props) {
 }
 
 const Row = styled.ScrollView`
-  padding: 8px 12px 0 12px; /* ⬅︎ 마지막 0으로 (아래 여백 제거) */
+  padding: 8px 12px 0 12px; 
   gap: 8px;
 ` as unknown as typeof import('react-native').ScrollView;
 
