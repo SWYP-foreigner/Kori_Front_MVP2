@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components/native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView } from "react-native";
 
 
 const LinkedSpaceDetail=()=>{

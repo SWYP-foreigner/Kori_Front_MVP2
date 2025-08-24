@@ -57,7 +57,6 @@ const SmallText=styled.Text`
     color:#949899;
     font-family:PlusJakartaSans_400Regular;
     font-size:13px;
-    margin-top:7px;
 `;
 
 const NextButton = styled.TouchableOpacity`

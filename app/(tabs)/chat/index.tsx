@@ -3,9 +3,12 @@ import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import ChatRoomBox from '@/components/MyChatRoomBox';
 import GroupChatRoomBox from '@/components/GroupChatRoomBox';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 
 export default function ChatScreen() {
+  const router=useRouter();
     const [isGroupChat,setisGroupChat]=useState(false);
 
     const changeTomyChat=()=>{
@@ -14,6 +17,9 @@ export default function ChatScreen() {
      const changeToGroupChat=()=>{
       setisGroupChat(true);
     };
+    const createNewSpace=()=>{
+      router.push('/chat/CreateSpaceScreen')
+    }
     //서버에서 데이터 받아와야함
     const DATA = [
         { id: "1", name: "Koori", message: "Hi nice to meet you", count: 10, time: "17:25",mcount:999 },
@@ -67,6 +73,9 @@ export default function ChatScreen() {
       ) : (
         <GroupChatRoomBox/>
       )}
+        <CreateSpaceButton onPress={createNewSpace}>
+          <AntDesign name="plus" size={24} color="black" />
+        </CreateSpaceButton>
       </Container>
         </Safe>
     );
@@ -153,4 +162,20 @@ const GroupChatText=styled.Text`
     font-family:'PlusJakartaSans_500Medium';
     font-size:16px;
 `;
-
+const CreateSpaceButton=styled.TouchableOpacity`
+    position:absolute;
+    bottom:20px;
+    right:20px;
+    width:50px;
+    height:50px;
+    border-radius:30px;
+    background-color:#02F59B;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+    elevation: 5;          /* Android 그림자 */
+    shadow-color: #000;    /* iOS 그림자 */
+    shadow-offset: 0px 2px;
+    shadow-opacity: 0.3;
+    shadow-radius: 3.84px;
+`;
