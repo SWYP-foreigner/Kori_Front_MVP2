@@ -9,6 +9,8 @@ import styled from 'styled-components/native';
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
+type RequestMode = 'friend' | 'received' | 'sent';
+
 type Props = {
   userId: number;
   name: string;
@@ -19,9 +21,15 @@ type Props = {
   languages: string[];
   personalities: string[];
   bio?: string;
+
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
   onUnfollow?: (userId: number) => void;
+
+  mode?: RequestMode;
+  onAccept?: (userId: number) => void;
+  onCancel?: (userId: number) => void;
+
   onChat?: () => void;
   footerSlot?: React.ReactNode;
   collapsible?: boolean;
@@ -43,7 +51,6 @@ const CHEVRON = { size: 28, ring: 1, lift: 13 };
 
 const SECTION_GAP_TOP = 16;
 const COL_GAP = 18;
-const LABEL_ICON_GAP = 6;
 
 const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;
@@ -67,14 +74,57 @@ export default function FriendCard({
   languages,
   personalities,
   bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
+
   isFollowed = false,
-  collapsible = true,
   onFollow,
   onUnfollow,
+
+  mode = 'friend',
+  onAccept,
+  onCancel,
+
+  collapsible = true,
   onChat,
   footerSlot,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
+
+  const primaryLabel = (() => {
+    if (mode === 'received') return 'Accept';
+    if (mode === 'sent') return 'Requested';
+    return isFollowed ? 'Following' : 'Follow';
+  })();
+
+  const primaryTone = (() => {
+    if (mode === 'received') return 'mint';
+    if (mode === 'sent') return 'black';
+    return isFollowed ? 'black' : 'mint';
+  })();
+
+  const primaryFilled = (() => {
+    if (mode === 'received') return true;
+    if (mode === 'sent') return true;
+    return !isFollowed;
+  })();
+
+  const primaryIcon = (() => {
+    if (mode === 'received') return 'add';
+    if (mode === 'sent') return 'check';
+    return isFollowed ? 'check' : 'add';
+  })();
+
+  const handlePrimaryPress = () => {
+    if (mode === 'received') {
+      onAccept?.(userId);
+      return;
+    }
+    if (mode === 'sent') {
+      onCancel?.(userId);
+      return;
+    }
+    if (isFollowed) onUnfollow?.(userId);
+    else onFollow?.(userId);
+  };
 
   return (
     <CardWrap>
@@ -92,12 +142,13 @@ export default function FriendCard({
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth}</MetaStrong>
 
-            <MaterialCommunityIcons
-              name={genderIconByType[gender]}
-              size={14}
-              color="#B5B5B5"
-              style={{ marginHorizontal: 4, marginTop: 1 }}
-            />
+            <GenderIconWrap>
+              <MaterialCommunityIcons
+                name={genderIconByType[gender]}
+                size={14}
+                color="#B5B5B5"
+              />
+            </GenderIconWrap>
 
             <MetaDim>From </MetaDim>
             <MetaStrong>{country}</MetaStrong>
@@ -109,11 +160,7 @@ export default function FriendCard({
         <DividerWrap>
           <Divider />
           {collapsible && (
-            <ChevronButton
-              onPress={() => setExpanded(!expanded)}
-              accessibilityRole="button"
-              style={{ transform: [{ translateY: -CHEVRON.lift }] }}
-            >
+            <ChevronButton onPress={() => setExpanded(!expanded)}>
               <MaterialIcons
                 name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
                 size={20}
@@ -125,7 +172,7 @@ export default function FriendCard({
 
         {expanded && (
           <>
-            <Row style={{ marginTop: SECTION_GAP_TOP }}>
+            <RowTop>
               <Col>
                 <LabelRow>
                   <Icon source={ICON_PURPOSE} style={{ tintColor: '#808080' }} />
@@ -134,7 +181,7 @@ export default function FriendCard({
                 <CategoryValue>{purpose}</CategoryValue>
               </Col>
 
-              <Col style={{ marginLeft: COL_GAP }}>
+              <ColRight>
                 <LabelRow>
                   <Icon source={ICON_GLOBAL} style={{ tintColor: '#808080' }} />
                   <Label>Language</Label>
@@ -147,18 +194,15 @@ export default function FriendCard({
                     </React.Fragment>
                   ))}
                 </LangWrap>
-              </Col>
-            </Row>
+              </ColRight>
+            </RowTop>
 
-            <LabelRow style={{ marginTop: 14, marginBottom: 8 }}>
-              <MaterialCommunityIcons
-                name="heart-outline"
-                size={13}
-                color="#808080"
-                style={{ marginRight: 4 }}
-              />
+            <InterestHeader>
+              <HeartIconWrap>
+                <MaterialCommunityIcons name="heart-outline" size={13} color="#808080" />
+              </HeartIconWrap>
               <Label>Interest</Label>
-            </LabelRow>
+            </InterestHeader>
 
             <TagsWrap>
               {personalities.map((p) => (
@@ -170,23 +214,31 @@ export default function FriendCard({
 
         <Actions>
           <CustomButton
-            label={isFollowed ? 'Following' : 'Follow'}
-            tone={isFollowed ? 'black' : 'mint'}
-            filled={!isFollowed}
-            leftIcon={!isFollowed ? 'add' : 'check'}
-            disabled={false}
-            onPress={() => {
-              if (isFollowed) onUnfollow?.(userId);
-              else onFollow?.(userId);
-            }}
+            label={primaryLabel}
+            tone={primaryTone as any}
+            filled={primaryFilled}
+            leftIcon={primaryIcon as any}
+            onPress={handlePrimaryPress}
           />
-          <CustomButton
-            label="Chat"
-            tone="black"
-            filled
-            leftIcon="chat-bubble-outline"
-            onPress={onChat}
-          />
+
+          {mode === 'received' ? (
+            <DeclineButton
+              label="Decline"
+              tone="black"
+              filled
+              leftIcon="close"
+              onPress={() => {
+              }}
+            />
+          ) : (
+            <CustomButton
+              label="Chat"
+              tone="black"
+              filled
+              leftIcon="chat-bubble-outline"
+              onPress={onChat}
+            />
+          )}
         </Actions>
 
         {footerSlot}
@@ -194,6 +246,7 @@ export default function FriendCard({
     </CardWrap>
   );
 }
+
 
 const CardWrap = styled.View`
   width: 100%;
@@ -230,6 +283,10 @@ const MetaLine = styled.Text`
   line-height: 18px;
   font-family: 'PlusJakartaSans_400Regular';
   color: #8a8a8a;
+`;
+
+const GenderIconWrap = styled.View`
+  margin: 1px 4px 0 4px; 
 `;
 
 const MetaDim = styled.Text`
@@ -270,6 +327,7 @@ const Divider = styled.View`
 const ChevronButton = styled.Pressable`
   position: absolute;
   top: 50%;
+  margin-top: -${CHEVRON.lift}px; 
   width: ${CHEVRON.size}px;
   height: ${CHEVRON.size}px;
   border-radius: ${CHEVRON.size / 2}px;
@@ -285,13 +343,30 @@ const Row = styled.View`
   align-self: stretch;
 `;
 
+const RowTop = styled(Row)`
+  margin-top: ${SECTION_GAP_TOP}px;
+`;
+
 const Col = styled.View`
   flex: 1;
+`;
+
+const ColRight = styled(Col)`
+  margin-left: ${COL_GAP}px;
 `;
 
 const LabelRow = styled.View`
   flex-direction: row;
   align-items: center;
+`;
+
+const HeartIconWrap = styled.View`
+  margin-right: 4px;
+`;
+
+const InterestHeader = styled(LabelRow)`
+  margin-top: 14px;
+  margin-bottom: 8px;
 `;
 
 const Icon = styled.Image`
@@ -346,3 +421,7 @@ const Actions = styled.View`
   flex-direction: row;
   gap: ${BTN_GAP}px;
 `;
+
+const DeclineButton = styled(CustomButton as any).attrs({
+  style: { backgroundColor: '#FF4F4F' },
+})``;

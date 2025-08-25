@@ -6,25 +6,58 @@ import styled from 'styled-components/native';
 
 type Tab = 'received' | 'sent';
 
-const MOCK_RECEIVED = [
+type FriendItem = {
+  id: number;
+  name: string;
+  country: string;
+  birth?: number;
+  purpose: string;
+  languages: string[];
+  personalities: string[];
+  bio?: string;
+};
+
+const MOCK_RECEIVED: FriendItem[] = [
   {
-    id: 101, name: 'Jenny', country: 'United States', birth: 2025, purpose: 'Business',
-    languages: ['EN', 'KO'], personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
+    id: 101,
+    name: 'Jenny',
+    country: 'United States',
+    birth: 2025,
+    purpose: 'Business',
+    languages: ['EN', 'KO'],
+    personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
     bio: 'Hi there!',
   },
 ];
-const MOCK_SENT = [
+
+const MOCK_SENT: FriendItem[] = [
   {
-    id: 201, name: 'Tom', country: 'France', birth: 2025, purpose: 'Travel',
-    languages: ['EN'], personalities: ['Board Games', 'K-Food Lover'], bio: 'Bonjour!',
+    id: 201,
+    name: 'Tom',
+    country: 'France',
+    birth: 2025,
+    purpose: 'Travel',
+    languages: ['EN'],
+    personalities: ['Board Games', 'K-Food Lover'],
+    bio: 'Bonjour!',
   },
 ];
 
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
-  const [showCancel, setShowCancel] = useState<number | null>(null);
 
-  const list = useMemo(() => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT), [tab]);
+  const list = useMemo(
+    () => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT),
+    [tab],
+  );
+
+  const handleAccept = (userId: number) => {
+    console.log('accept', userId);
+  };
+
+  const handleCancelRequest = (userId: number) => {
+    console.log('cancel request', userId);
+  };
 
   return (
     <Safe>
@@ -40,6 +73,7 @@ export default function FollowListScreen() {
         </IconRow>
       </Header>
 
+      {/* Tabs */}
       <TabsWrap>
         <TabsRow>
           <TabItem active={tab === 'received'} onPress={() => setTab('received')}>
@@ -52,11 +86,12 @@ export default function FollowListScreen() {
         <TabsBottomLine />
       </TabsWrap>
 
+      {/* List */}
       <List
         data={list}
         keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingVertical: 10, paddingBottom: 56 }}
+        contentContainerStyle={{ paddingVertical: 10, paddingBottom: 56, paddingHorizontal: 16, gap: 16 }}
         renderItem={({ item }) => (
           <FriendCard
             userId={item.id}
@@ -67,27 +102,15 @@ export default function FollowListScreen() {
             languages={item.languages}
             personalities={item.personalities}
             bio={item.bio}
-            isFollowed={false}
-            onFollow={() => { }}
+            collapsible={false}
+            mode={tab === 'received' ? 'received' : 'sent'}
+            onAccept={handleAccept}
+            onCancel={handleCancelRequest}
             onChat={() => { }}
-            footerSlot={
-              tab === 'received' ? (
-                <ActionRow>
-                </ActionRow>
-              ) : (
-                <ActionRow>
-                </ActionRow>
-              )
-            }
+            isFollowed={false}
           />
         )}
       />
-
-      {showCancel !== null && (
-        <Overlay>
-          <Backdrop onPress={() => setShowCancel(null)} />
-        </Overlay>
-      )}
     </Safe>
   );
 }
@@ -147,20 +170,3 @@ const TabsBottomLine = styled.View`
 `;
 
 const List = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
-const ActionRow = styled.View`
-  margin-top: 16px;
-  flex-direction: row;
-  gap: 14px;
-`;
-
-const Overlay = styled.View`
-  position: absolute;
-  inset: 0;
-  justify-content: center;
-  align-items: center;
-`;
-const Backdrop = styled.Pressable`
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-`;
