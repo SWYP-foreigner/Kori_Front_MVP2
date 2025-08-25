@@ -165,6 +165,7 @@ const Page = styled.View`
 
 const Inner = styled.View`
   padding: 0 16px;
+  margin-top: -27px;
 `;
 
 const Pager = styled.View`
