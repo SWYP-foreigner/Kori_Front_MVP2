@@ -89,7 +89,7 @@ export default function FriendsOnlyScreen() {
                 })}
                 onScroll={(e) => {
                     const x = e.nativeEvent.contentOffset.x;
-                    const idx = Math.round(x / SCREEN_WIDTH); // 0-based
+                    const idx = Math.round(x / SCREEN_WIDTH);
                     setPage(idx + 1);
                 }}
                 scrollEventThrottle={16}
@@ -108,6 +108,7 @@ export default function FriendsOnlyScreen() {
                                 isFollowed
                                 onChat={() => { }}
                                 onUnfollow={() => confirmUnfollow(item.id)}
+                                collapsible={false}
                             />
                         </Inner>
                     </Page>

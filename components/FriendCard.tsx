@@ -24,6 +24,7 @@ type Props = {
   onUnfollow?: (userId: number) => void;
   onChat?: () => void;
   footerSlot?: React.ReactNode;
+  collapsible?: boolean;
 };
 
 const CARD_RADIUS = 22;
@@ -67,6 +68,7 @@ export default function FriendCard({
   personalities,
   bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
   isFollowed = false,
+  collapsible = true,
   onFollow,
   onUnfollow,
   onChat,
@@ -106,17 +108,19 @@ export default function FriendCard({
 
         <DividerWrap>
           <Divider />
-          <ChevronButton
-            onPress={() => setExpanded(!expanded)}
-            accessibilityRole="button"
-            style={{ transform: [{ translateY: -CHEVRON.lift }] }}
-          >
-            <MaterialIcons
-              name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-              size={20}
-              color="#8a8a8a"
-            />
-          </ChevronButton>
+          {collapsible && (
+            <ChevronButton
+              onPress={() => setExpanded(!expanded)}
+              accessibilityRole="button"
+              style={{ transform: [{ translateY: -CHEVRON.lift }] }}
+            >
+              <MaterialIcons
+                name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                size={20}
+                color="#8a8a8a"
+              />
+            </ChevronButton>
+          )}
         </DividerWrap>
 
         {expanded && (
