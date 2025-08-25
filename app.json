@@ -1,6 +1,5 @@
 {
   "expo": {
-    "scheme":"myapp",
     "name": "Kori_Front",
     "slug": "Kori_Front",
     "splash": {
@@ -49,6 +48,12 @@
         "expo-image-picker",
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.299218725304-4di38h71hjma35m0qsjqcam10119le71"
         }
       ],
       "expo-secure-store",
