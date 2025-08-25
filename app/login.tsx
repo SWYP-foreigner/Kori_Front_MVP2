@@ -7,70 +7,73 @@ import GoogleSignInButton from '@/components/GoogleSignInButton';
 import AppleSignInButton from '@/components/AppleSignInButton';
 import {
   GoogleSignin,
-  GoogleSigninButton,
   isSuccessResponse,
   statusCodes,
   isErrorWithCode
 } from '@react-native-google-signin/google-signin';
 import axios from "axios";
-import * as AuthSession from 'expo-auth-session';
-import * as Random from 'expo-random';
-import * as Crypto from 'expo-crypto';
-
 
 GoogleSignin.configure({
-  "webClientId":"299218725304-p6lv46kv7t6bhvglu72glfmaisvn7p5p.apps.googleusercontent.com",
-  "iosClientId":"299218725304-4di38h71hjma35m0qsjqcam10119le71.apps.googleusercontent.com"
+  "webClientId":"86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
+  offlineAccess: true
 });
 
 const LoginScreen = () => {
   const router = useRouter();
-  const [userInfo,setUserInfo]=useState<any>(null);
-  const handleGoogleSignIn = async () => {
+  const [userInfo, setUserInfo] = useState(null);
+
+  const sendTokenToServer=async(code)=>{
+      try {
+      const res = await axios.post('https://dev.ko-ri.cloud/api/v1/member/google/app-login', {
+        "code": code
+      });
+      console.log(res)
+      console.log('서버 JWT:', res.data.token);
+    } catch (error) {
+      console.error('서버 요청 실패', error);
+    }
+  }
+  
+const signIn = async () => {
   try {
     await GoogleSignin.hasPlayServices();
     const response = await GoogleSignin.signIn();
     if (isSuccessResponse(response)) {
+      console.log('들어옴');
       setUserInfo({ userInfo: response.data });
-      console.log(response.data.idToken);
-    //   try {
-    //     const res = await axios.post("https://your-server.com/auth/google", {
-    //       idToken: userInfo.idToken,
-    //     });
-    //     console.log("서버 JWT:", res.data.jwt);
-    //   } catch (error) {
-    //     console.error("서버 요청 실패:", error);
-    //   }
-    // } else {
-    //   console.log(' sign in was cancelled by user');
-    //   // sign in was cancelled by user
-    // }
-  } }catch (error) {
+      console.log(response.data);
+      const code=response.data.serverAuthCode;
+      sendTokenToServer(code);
+    } else {
+      console.log('sign in was cancelled by user');
+      // sign in was cancelled by user
+    }
+  } catch (error) {
     if (isErrorWithCode(error)) {
       switch (error.code) {
         case statusCodes.IN_PROGRESS:
-          Alert.alert("sign in is in progress");
+          console.log('operation (eg. sign in) already in progress');
           // operation (eg. sign in) already in progress
           break;
         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-           Alert.alert("play services not available");
+          console.log('Android only, play services not available or outdated');
           // Android only, play services not available or outdated
           break;
         default:
         // some other error happened
       }
     } else {
-      Alert.alert("an error that's not related to google sign in occurred");
+      console.log('error');
       // an error that's not related to google sign in occurred
     }
   }
 };
- 
-  const signOut = async () => {
+
+const signOut = async () => {
   try {
     await GoogleSignin.signOut();
-    console.log("google sign out");
     setUserInfo({ user: null }); // Remember to remove the user from your app's state as well
+    console.log('로그아웃');
   } catch (error) {
     console.error(error);
   }
@@ -80,10 +83,10 @@ const LoginScreen = () => {
     <Container>
       <GoogleSignInButton
         // disabled={!request}
-        onPress={handleGoogleSignIn}
+       onPress={signIn}
       />
       <AppleSignInButton /> 
-      <TabsMoveButton onPress={signOut}>
+      <TabsMoveButton  onPress={signOut}>
         <TabsMoveText>구글 Sign out</TabsMoveText>
       </TabsMoveButton>
       {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
