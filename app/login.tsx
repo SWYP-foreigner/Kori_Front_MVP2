@@ -1,74 +1,94 @@
-import React from 'react';
+import React , { useEffect ,useState} from 'react';
+import { Alert } from "react-native";
 import styled from 'styled-components/native';
 // import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
 import { useRouter } from 'expo-router';
-import * as WebBrowser from "expo-web-browser";
+import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AppleSignInButton from '@/components/AppleSignInButton';
+import {
+  GoogleSignin,
+  isSuccessResponse,
+  statusCodes,
+  isErrorWithCode
+} from '@react-native-google-signin/google-signin';
+import axios from "axios";
 
-
-WebBrowser.maybeCompleteAuthSession();
+GoogleSignin.configure({
+  "webClientId":"86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
+  offlineAccess: true
+});
 
 const LoginScreen = () => {
-
   const router = useRouter();
-  // const redirectUri="https://dev.ko-ri.cloud/api/v1/member/google/callback"
-  // //   // 디버깅용 - 실제 사용되는 URI 확인
-  //   const redirectUri = makeRedirectUri({
-  //   scheme: "koriapp",
-  //   useProxy: false // 네이티브 EAS 빌드에서는 반드시 false
-  // });
-  // const redirectUri="https://dev.ko-ri.cloud/google/AppLogin";
-  // console.log("실제 redirectUri:", redirectUri);
-  // const [request, response, promptAsync] = Google.useAuthRequest({
-  //   clientId: "299218725304-p6lv46kv7t6bhvglu72glfmaisvn7p5p.apps.googleusercontent.com",
-  //   responseType: "code",
-  //   redirectUri:redirectUri,
-  //   scopes: ["openid", "profile", "email"],
-  // });
+  const [userInfo, setUserInfo] = useState(null);
 
-  // const [request,response,promptAsync]=Google.useAuthRequest({
-  //   androidClientId:"299218725304-hukh2lg5tu68oestcc4t3lfhbeipgchr.apps.googleusercontent.com",
-  //   webClientId:"299218725304-p6lv46kv7t6bhvglu72glfmaisvn7p5p.apps.googleusercontent.com"
-  // })
-  // useEffect(() => {
-  //   console.log("들어옴");
-  //   console.log("response",response);
-  //   if (response?.type === "success") {
-  //     const { code } = response.params;
-  //     console.log("인가 코드:", code);
-  //     Alert.alert("인가 코드 받기 성공", code);
+  const sendTokenToServer=async(code)=>{
+      try {
+      const res = await axios.post('https://dev.ko-ri.cloud/api/v1/member/google/app-login', {
+        "code": code
+      });
+      console.log(res)
+      console.log('서버 JWT:', res.data.token);
+    } catch (error) {
+      console.error('서버 요청 실패', error);
+    }
+  }
+  
+const signIn = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const response = await GoogleSignin.signIn();
+    if (isSuccessResponse(response)) {
+      console.log('들어옴');
+      setUserInfo({ userInfo: response.data });
+      console.log(response.data);
+      const code=response.data.serverAuthCode;
+      sendTokenToServer(code);
+    } else {
+      console.log('sign in was cancelled by user');
+      // sign in was cancelled by user
+    }
+  } catch (error) {
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.IN_PROGRESS:
+          console.log('operation (eg. sign in) already in progress');
+          // operation (eg. sign in) already in progress
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          console.log('Android only, play services not available or outdated');
+          // Android only, play services not available or outdated
+          break;
+        default:
+        // some other error happened
+      }
+    } else {
+      console.log('error');
+      // an error that's not related to google sign in occurred
+    }
+  }
+};
 
-  // // ⚡ Spring Boot 서버로 인가 코드 전달
-  // fetch("https://your-backend.com/oauth/google", {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({ code }),
-  // })
-  //   .then(async (res) => {
-  //     if (!res.ok) throw new Error("서버 요청 실패");
-  //     const data = await res.json();
-
-  //     // 서버에서 JWT(access token 등) 발급받았다고 가정
-  //     if (data?.jwt) {
-  //       await SecureStore.setItemAsync("jwt", data.jwt);
-  //       Alert.alert("로그인 성공", "JWT 저장 완료!");
-  //       router.push("./(tabs)");
-  //     }
-  //   })
-  //   .catch((err) => {
-  //     console.error(err);
-  //     Alert.alert("서버 전송 실패", err.message);
-  //   });
-  //   }
-  // }, [response]);
+const signOut = async () => {
+  try {
+    await GoogleSignin.signOut();
+    setUserInfo({ user: null }); // Remember to remove the user from your app's state as well
+    console.log('로그아웃');
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   return (
     <Container>
-      {/* <GoogleSignInButton
-        disabled={!request}
-        onPress={() => promptAsync()}
+      <GoogleSignInButton
+        // disabled={!request}
+       onPress={signIn}
       />
-      <AppleSignInButton /> */}
-
+      <AppleSignInButton /> 
+      <TabsMoveButton  onPress={signOut}>
+        <TabsMoveText>구글 Sign out</TabsMoveText>
+      </TabsMoveButton>
       {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
       <TabsMoveButton onPress={() => router.push('./(tabs)')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
@@ -78,7 +98,7 @@ const LoginScreen = () => {
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
 
-      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/CreateSpaceScreen')}>
+      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/ChattingRoomScreen')}>
         <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>
