@@ -68,7 +68,6 @@ export default function FriendsOnlyScreen() {
                 <Title>Friends List</Title>
                 <IconRow>
                     <AntDesign name="search1" size={18} color="#cfd4da" />
-                    <AntDesign name="ellipsis1" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
                 </IconRow>
             </Header>
 
