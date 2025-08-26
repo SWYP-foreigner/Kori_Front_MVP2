@@ -1,219 +1,289 @@
-// app/mypage/index.tsx (또는 현재 MyPageScreen 파일 경로)
 import CustomButton from '@/components/CustomButton';
 import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ImageSourcePropType, Modal } from 'react-native';
+import {
+  Alert,
+  Image,
+  Image as RNImage,
+  ImageSourcePropType,
+  Modal
+} from 'react-native';
 import styled from 'styled-components/native';
-// RN 내부 유틸 (Image.resolveAssetSource 아님)
-import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource';
 
 const MOCK_ME = {
-    name: 'Alice Kori, Kim',
-    email: 'Kori@gmail.com',
-    avatarUrl: undefined as string | undefined,
-    receivedCount: 2,
-    sentCount: 3,
+  name: 'Alice Kori, Kim',
+  email: 'Kori@gmail.com',
+  avatarUrl: undefined as string | undefined,
+  receivedCount: 2,
+  sentCount: 3,
 };
 
-// 교체 가능한 프로필 이미지들
 const AVATARS: ImageSourcePropType[] = [
-    require('@/assets/images/character1.png'),
-    require('@/assets/images/character2.png'),
-    require('@/assets/images/character3.png'),
+  require('@/assets/images/character1.png'),
+  require('@/assets/images/character2.png'),
+  require('@/assets/images/character3.png'),
 ];
 
 export default function MyPageScreen() {
-    // 현재 아바타
-    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
 
-    // 바텀시트 상태
-    const [showAvatarSheet, setShowAvatarSheet] = useState(false);
-    const [tempIdx, setTempIdx] = useState<number>(0);
+  const [tempIdx, setTempIdx] = useState<number>(0);
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
 
-    const confirmDelete = () => {
-        Alert.alert(
-            'Are you sure you want to leave the this app?',
-            'After deleting it, you cannot restore it.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => { } },
-            ],
-        );
-    };
-
-    const openAvatarSheet = () => {
-        // 현재 선택된 아바타 인덱스로 포커스
-        const cur = AVATARS.findIndex(
-            img => (resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? '')
-        );
-        setTempIdx(cur >= 0 ? cur : 0);
-        setShowAvatarSheet(true);
-    };
-
-    const saveAvatar = () => {
-        const src = resolveAssetSource(AVATARS[tempIdx]);
-        if (src?.uri) setAvatarUrl(src.uri);
-        setShowAvatarSheet(false);
-    };
-
-    return (
-        <Safe>
-            <Scroll
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 28 }}
-            >
-                {/* 헤더 */}
-                <Header>
-                    <Title>My page</Title>
-                    <IconImage source={require('../../../assets/images/IsolationMode.png')} />
-                </Header>
-
-                {/* 프로필 히어로 */}
-                <ProfileView>
-                    <AvatarPress onPress={openAvatarSheet}>
-                        {/* 필요하면 <EditAvatar avatarUrl={avatarUrl} /> 로 변경 */}
-                        <EditAvatar />
-                    </AvatarPress>
-
-                    <Name>{MOCK_ME.name}</Name>
-                    <Email>{MOCK_ME.email}</Email>
-
-                    <EditButtonWrap>
-                        <CustomButton
-                            label="Edit Profile"
-                            tone="mint"
-                            filled
-                            onPress={() => router.push('/mypage/edit')}
-                        />
-                    </EditButtonWrap>
-                </ProfileView>
-
-                {/* 섹션: My Friends */}
-                <SectionTitleRow>
-                    <SectionTitleIcon />
-                    <SectionTitle>My Friends</SectionTitle>
-                </SectionTitleRow>
-
-                <RowLink onPress={() => router.push('/mypage/friends')}>
-                    <RowLeft>Friends List</RowLeft>
-                    <Chevron>›</Chevron>
-                </RowLink>
-                <RowSeparator />
-
-                {/* 섹션: Follow List */}
-                <RowHeader>Follow List</RowHeader>
-
-                <CountCard>
-                    <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
-                        <CountLabel>Received</CountLabel>
-                        <CountNumber>{MOCK_ME.receivedCount}</CountNumber>
-                    </CountItem>
-                    <Divider />
-                    <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
-                        <CountLabel>Sent</CountLabel>
-                        <CountNumber>{MOCK_ME.sentCount}</CountNumber>
-                    </CountItem>
-                </CountCard>
-
-                {/* 섹션: Translate Setting */}
-                <SectionTitleRow>
-                    <SectionTitleIconGlobe />
-                    <SectionTitle>Translate Setting</SectionTitle>
-                </SectionTitleRow>
-
-                <RowLink onPress={() => router.push('/mypage/translate')}>
-                    <RowLeft>Chat Translation Language</RowLeft>
-                    <Chevron>›</Chevron>
-                </RowLink>
-                <RowSeparator />
-
-                {/* 섹션: My Account */}
-                <SectionTitleRow>
-                    <SectionTitleIconGlobe />
-                    <SectionTitle>My Account</SectionTitle>
-                </SectionTitleRow>
-
-                <RowLink onPress={() => { }}>
-                    <RowLeft>Account Logout</RowLeft>
-                    <Chevron>›</Chevron>
-                </RowLink>
-                <RowSeparator />
-
-                {/* Delete Account */}
-                <DeletePressable onPress={confirmDelete}>
-                    <DeleteText>Delete Account</DeleteText>
-                </DeletePressable>
-            </Scroll>
-
-            {/* ▼ 아바타 선택 바텀시트 */}
-            <Modal
-                visible={showAvatarSheet}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowAvatarSheet(false)}
-            >
-                <SheetOverlay
-                    onPress={() => setShowAvatarSheet(false)}
-                    activeOpacity={1}
-                >
-                    <Sheet onStartShouldSetResponder={() => true}>
-                        <Handle />
-                        <SheetTitle>Select Profile</SheetTitle>
-
-                        <AvatarRow>
-                            {AVATARS.map((img, idx) => {
-                                const selected = idx === tempIdx;
-                                return (
-                                    <AvatarItem key={idx} onPress={() => setTempIdx(idx)}>
-                                        <AvatarCircle selected={selected}>
-                                            <AvatarImg source={img} />
-                                            {selected && (
-                                                <CheckBadge>
-                                                    <Ion name="checkmark" size={14} color="#0f1011" />
-                                                </CheckBadge>
-                                            )}
-                                        </AvatarCircle>
-                                    </AvatarItem>
-                                );
-                            })}
-
-                            {/* 추후 이미지 피커 연결 */}
-                            <AvatarItem onPress={() => { }}>
-                                <CameraCircle>
-                                    <Ion name="camera" size={22} color="#cfd4da" />
-                                </CameraCircle>
-                            </AvatarItem>
-                        </AvatarRow>
-
-                        {/* ✅ 버튼은 CustomButton 재사용, 하단 여백은 Row에서 관리 */}
-                        <ButtonRow>
-                            <CustomButton
-                                label="Cancel"
-                                filled={false}
-                                onPress={() => setShowAvatarSheet(false)}
-                            />
-                            <Gap />
-                            <CustomButton
-                                label="Save"
-                                tone="mint"
-                                filled
-                                onPress={saveAvatar}
-                            />
-                        </ButtonRow>
-                    </Sheet>
-                </SheetOverlay>
-            </Modal>
-        </Safe>
+  const confirmDelete = () => {
+    Alert.alert(
+      'Are you sure you want to leave the this app?',
+      'After deleting it, you cannot restore it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => { } },
+      ],
     );
-}
+  };
 
-/* ---------------- styles ---------------- */
+  const openAvatarSheet = () => {
+    const cur = AVATARS.findIndex(
+      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? ''),
+    );
+    if (cur >= 0) {
+      setTempIdx(cur);
+      setCustomPhotoUri(undefined);
+    } else if (avatarUrl) {
+      setTempIdx(-1);
+      setCustomPhotoUri(avatarUrl);
+    } else {
+      setTempIdx(0);
+      setCustomPhotoUri(undefined);
+    }
+    setShowAvatarSheet(true);
+  };
+
+  const saveAvatar = () => {
+    if (tempIdx === -1 && customPhotoUri) {
+      setAvatarUrl(customPhotoUri);
+    } else {
+      const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
+      if (src?.uri) setAvatarUrl(src.uri);
+    }
+    setShowAvatarSheet(false);
+  };
+
+  const requestPermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const granted = cam.status === 'granted' && lib.status === 'granted';
+    if (!granted) {
+      Alert.alert('Permission required', 'Camera and photo library access is needed.');
+    }
+    return granted;
+  };
+
+  const openCamera = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setCustomPhotoUri(uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const openGallery = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setCustomPhotoUri(uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const pickFromCameraOrGallery = () => {
+    Alert.alert(
+      'Pick photo',
+      'How to pick your profile photo?',
+      [
+        { text: 'Camera', onPress: openCamera },
+        { text: 'Gallery', onPress: openGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
+  };
+
+  return (
+    <Safe>
+      <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+        <Header>
+          <Title>My page</Title>
+          <IconImage source={require('../../../assets/images/IsolationMode.png')} />
+        </Header>
+
+        <ProfileView>
+          <AvatarPress onPress={openAvatarSheet}>
+            <EditAvatar />
+          </AvatarPress>
+
+          <Name>{MOCK_ME.name}</Name>
+          <Email>{MOCK_ME.email}</Email>
+
+          <EditButtonWrap>
+            <CustomButton
+              label="Edit Profile"
+              tone="mint"
+              filled
+              onPress={() => router.push('/mypage/edit')}
+            />
+          </EditButtonWrap>
+        </ProfileView>
+
+        <SectionTitleRow>
+          <SectionTitleIcon />
+          <SectionTitle>My Friends</SectionTitle>
+        </SectionTitleRow>
+
+        <RowLink onPress={() => router.push('/mypage/friends')}>
+          <RowLeft>Friends List</RowLeft>
+          <Chevron>›</Chevron>
+        </RowLink>
+        <RowSeparator />
+
+        <RowHeader>Follow List</RowHeader>
+
+        <CountCard>
+          <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
+            <CountLabel>Received</CountLabel>
+            <CountNumber>{MOCK_ME.receivedCount}</CountNumber>
+          </CountItem>
+          <Divider />
+          <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
+            <CountLabel>Sent</CountLabel>
+            <CountNumber>{MOCK_ME.sentCount}</CountNumber>
+          </CountItem>
+        </CountCard>
+
+        <SectionTitleRow>
+          <SectionTitleIconGlobe />
+          <SectionTitle>Translate Setting</SectionTitle>
+        </SectionTitleRow>
+
+        <RowLink onPress={() => router.push('/mypage/translate')}>
+          <RowLeft>Chat Translation Language</RowLeft>
+          <Chevron>›</Chevron>
+        </RowLink>
+        <RowSeparator />
+
+        <SectionTitleRow>
+          <SectionTitleIconGlobe />
+          <SectionTitle>My Account</SectionTitle>
+        </SectionTitleRow>
+
+        <RowLink onPress={() => { }}>
+          <RowLeft>Account Logout</RowLeft>
+          <Chevron>›</Chevron>
+        </RowLink>
+        <RowSeparator />
+
+        <DeletePressable onPress={confirmDelete}>
+          <DeleteText>Delete Account</DeleteText>
+        </DeletePressable>
+      </Scroll>
+
+      <Modal
+        visible={showAvatarSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAvatarSheet(false)}
+      >
+        <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
+          <Sheet onStartShouldSetResponder={() => true}>
+            <Handle />
+            <SheetTitle>Select Profile</SheetTitle>
+
+            <AvatarRow>
+              {AVATARS.map((img, idx) => {
+                const selected = idx === tempIdx;
+                return (
+                  <AvatarItem
+                    key={idx}
+                    onPress={() => {
+                      setTempIdx(idx);
+                      setCustomPhotoUri(undefined);
+                    }}
+                  >
+                    <AvatarCircle selected={selected}>
+                      <AvatarImg source={img} />
+                      {selected && (
+                        <CheckBadge>
+                          <Ionicons name="checkmark" size={14} color="#0f1011" />
+                        </CheckBadge>
+                      )}
+                    </AvatarCircle>
+                  </AvatarItem>
+                );
+              })}
+
+              <AvatarItem onPress={pickFromCameraOrGallery}>
+                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
+                  {customPhotoUri ? (
+                    <AvatarImg source={{ uri: customPhotoUri }} />
+                  ) : (
+                    <CameraCircleInner>
+                      <Ionicons name="camera" size={22} color="#cfd4da" />
+                    </CameraCircleInner>
+                  )}
+                  {tempIdx === -1 && !!customPhotoUri && (
+                    <CheckBadge>
+                      <Ionicons name="checkmark" size={14} color="#0f1011" />
+                    </CheckBadge>
+                  )}
+                </AvatarCircle>
+              </AvatarItem>
+            </AvatarRow>
+
+            <ButtonRow>
+              <CustomButton
+                label="Cancel"
+                filled={false}
+                onPress={() => setShowAvatarSheet(false)}
+              />
+              <Gap />
+              <CustomButton
+                label="Save"
+                tone="mint"
+                filled
+                onPress={saveAvatar}
+              />
+            </ButtonRow>
+          </Sheet>
+        </SheetOverlay>
+      </Modal>
+    </Safe>
+  );
+}
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #171818;
+  background: #1D1E1F;
 `;
 
 const Scroll = styled.ScrollView``;
@@ -246,8 +316,6 @@ const ProfileView = styled.View`
 const AvatarPress = styled.Pressable`
   position: relative;
 `;
-
-const Ion = styled(Ionicons)``;
 
 const Name = styled.Text`
   margin-top: 8px;
@@ -282,25 +350,32 @@ const SectionTitleRow = styled.View`
   margin: 22px 16px 10px 16px;
 `;
 
-const SectionTitleIcon = styled(Ionicons).attrs({
-    name: 'person-outline',
-    size: 12,
-    color: '#9aa0a6',
-})`
-  margin-right: 6px;
-  transform: translateY(1px);
-`;
+function SectionTitleIcon() {
+  return (
+    <Ionicons
+      name="person-outline"
+      size={12}
+      color="#9aa0a6"
+      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
+    />
+  );
+}
 
-const SectionTitleIconGlobe = styled.Image.attrs({
-    source: require('@/assets/icons/global.png'),
-})`
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  resize-mode: contain;
-  tint-color: #9aa0a6;
-  transform: translateY(1px);
-`;
+function SectionTitleIconGlobe() {
+  return (
+    <Image
+      source={require('@/assets/icons/global.png')}
+      resizeMode="contain"
+      style={{
+        width: 12,
+        height: 12,
+        marginRight: 6,
+        tintColor: '#9aa0a6',
+        transform: [{ translateY: 1 }],
+      }}
+    />
+  );
+}
 
 const RowLink = styled.Pressable`
   padding: 14px 16px;
@@ -381,8 +456,6 @@ const DeleteText = styled.Text`
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-/* ---------- Bottom Sheet ---------- */
-
 const SheetOverlay = styled.TouchableOpacity`
   flex: 1;
   background: rgba(0, 0, 0, 0.55);
@@ -455,23 +528,22 @@ const CheckBadge = styled.View`
   border-color: #353637;
 `;
 
-const CameraCircle = styled.View`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
+const CameraCircleInner = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
   align-items: center;
   justify-content: center;
+  background: #1f2021;
 `;
 
-/* ✅ 공용 버튼 재사용 + 하단 여백 확보 */
 const ButtonRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin-top: 10px;
-  padding-bottom: 28px; /* 버튼 아래 공간 */
+  padding-bottom: 28px;
 `;
 
 const Gap = styled.View`
-  width: 12px; /* 버튼 사이 간격 */
+  width: 12px;
 `;

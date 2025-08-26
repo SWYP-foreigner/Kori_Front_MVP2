@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import styled from 'styled-components/native';
 
-type Tone = 'mint' | 'black';
+type Tone = 'mint' | 'black' | 'danger';
 
 type ButtonProps = {
     label: string;
@@ -20,6 +20,7 @@ const PALETTE = {
     mint: '#30F59B',
     black: '#1D1E1F',
     white: '#FFFFFF',
+    danger: '#FF4F4F',
 } as const;
 
 export default function CustomButton({
@@ -34,7 +35,9 @@ export default function CustomButton({
     iconSize = 18,
 }: ButtonProps) {
     const contentColor =
-        filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone];
+        filled
+            ? (tone === 'mint' ? '#000000' : PALETTE.white)
+            : PALETTE[tone];
 
     return (
         <Btn
@@ -62,8 +65,8 @@ export default function CustomButton({
 
 const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }>`
   flex: 1;
-  height: 50px
-  ;min-height: 50px;
+  height: 50px;
+  min-height: 50px;
   border-radius: 8px;
   justify-content: center;
   align-items: center;
@@ -76,7 +79,7 @@ const Btn = styled.Pressable<{ tone: Tone; filled: boolean; disabled?: boolean }
 const Content = styled.View`
   flex-direction: row;
   align-items: center;
-  gap: 6px; 
+  gap: 6px;
 `;
 
 const BtnText = styled.Text<{ tone: Tone; filled: boolean }>`
