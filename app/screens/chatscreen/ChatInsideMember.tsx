@@ -29,6 +29,7 @@ const ChatInsideMember=()=>{
                 <MembersTextContainer>
                     <MembersText>Members(2)</MembersText>
                 </MembersTextContainer>
+                {/* FlatList로 변경예정 */}
                 <ScrollView>
                 <MembersScreen>
                     <MembersBox/>

@@ -407,7 +407,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.pmnnn.Kori-Front";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.SWYP.kori";
 				PRODUCT_NAME = KoriFront;
 				SWIFT_OBJC_BRIDGING_HEADER = "KoriFront/KoriFront-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

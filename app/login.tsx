@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
-// import * as SecureStore from 'expo-secure-store'; // JWT 토큰을 저장하기 위함
 import AppleSignInButton from '@/components/AppleSignInButton';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import {
@@ -9,6 +8,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import axios from "axios";
 import { useRouter } from 'expo-router';
+import * as SecureStore from "expo-secure-store";
 
 GoogleSignin.configure({
   "webClientId": "86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
@@ -27,6 +27,8 @@ const LoginScreen = () => {
       });
       console.log(res)
       console.log('서버 JWT:', res.data.token);
+      const token=res.data.token;
+      SecureStore.setItemAsync("jwt",token)
     } catch (error) {
       console.error('서버 요청 실패', error);
     }
@@ -70,6 +72,7 @@ const signIn = async () => {
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
+      SecureStore.deleteItemAsync("jwt");
       setUserInfo({ user: null }); // Remember to remove the user from your app's state as well
       console.log('로그아웃');
     } catch (error) {
