@@ -7,6 +7,6 @@ export type FollowResponse = {
 };
 
 export async function postFollow(userId: number) {
-    const { data } = await api.post<FollowResponse>(`/api/v1/follow/{userId}`, {});
+    const { data } = await api.post<FollowResponse>(`/api/v1/follow/${userId}`, {});
     return data;
 }
