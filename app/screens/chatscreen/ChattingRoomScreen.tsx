@@ -2,29 +2,37 @@ import React from "react";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,TouchableOpacity} from 'react-native';
 
 
 const ChattingRoomScreen=()=>{
+    const router = useRouter();
+
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
              <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
             <Container>
                 <HeaderContainer>
                         <Left>
+                            <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
+                            </TouchableOpacity>
                         </Left>
                         <Center>
                             <HeaderTitleText>Kori</HeaderTitleText>
                         </Center>
                         <Right>
+                            <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="search" size={26} color="#CCCFD0" />
+                            </TouchableOpacity>
+                             <TouchableOpacity onPress={() => router.back()}>
                             <SimpleLineIcons name="menu" size={26} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
+                            </TouchableOpacity>
                         </Right>
                 </HeaderContainer>
                 <ScrollView
