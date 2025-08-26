@@ -7,27 +7,37 @@ import {useProfile} from '../../contexts/ProfileContext'
 import axios from "axios";
 import { Platform } from 'react-native';
 
-const HobbyBox = ({ title, tags, selectedTags, selectTag }) => {
+const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
   return (
     <>
       <TagTitle>
         <TagTitleText>{title}</TagTitleText>
-        {(title==='Entertainment & Hobbies')&&
-            <SelectedText selected={selectedTags.length>0}>{selectedTags.length}/5 selected</SelectedText>}
+        {title === 'Entertainment & Hobbies' && (
+          <SelectedText selected={selectedTags.length > 0}>
+            {selectedTags.length}/5 selected
+          </SelectedText>
+        )}
       </TagTitle>
+
       <HobbyTagWrapper>
-        {tags.map(tag => (
-          <HobbyTag
-            key={tag}
-            onPress={() => selectTag(tag)}
-            selected={selectedTags.includes(tag)}
-          >
-            <Imogi />
-            <HobbyTagText
-            selected={selectedTags.includes(tag)}>{tag}</HobbyTagText>
-            {selectedTags.includes(tag)&&<AntDesign name="close" size={14} color="#02F59B" />}
-          </HobbyTag>
-        ))}
+        {tags.map((tag, index) => {
+          const isSelected = selectedTags.includes(tag);
+          const emoji = imogi[index] ?? ''; // 안전하게 꺼내기
+
+          return (
+            <HobbyTag
+              key={tag}
+              onPress={() => selectTag(tag)}
+              selected={isSelected}
+            >
+              {emoji !== '' && <Imogi>{emoji}</Imogi>}
+              <HobbyTagText selected={isSelected}>{tag}</HobbyTagText>
+              {isSelected && (
+                <AntDesign name="close" size={14} color="#02F59B" />
+              )}
+            </HobbyTag>
+          );
+        })}
       </HobbyTagWrapper>
     </>
   );
@@ -106,30 +116,35 @@ export default function TagStepScreen() {
 
           <TagContainer>
             <HobbyBox
+              imogi={["🎵","🎬","📚","🎬","🎮"]}
               title="Entertainment & Hobbies"
               tags={['Music','Movies','Reading','Anime','Gaming']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
+              imogi={["🍺","☕️","✈️","🧩","🛍️","💄️","🛏️"]}
               title="LifeStyle & Social"
               tags={['Drinking','Exploring Cafes','Traveling','Board Games','Shopping','Beauty','Doing Nothing']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
+              imogi={["🧘","🏃","🏋️","🥾","💃","⛰️"]}
               title="Activities & Wellness"
               tags={['Yoga','Running','Fitness','Camping','Dancing','Hiking']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
+              imogi={["🎨","🎤","🍳","🐶","💼","📸"]}
               title="Creativity & Personal Growth"
               tags={['Exhibition','Singing','Cooking','Pets','Career','Photography']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
+              imogi={["💖","💖","🍚"]}
               title="Korean Culture"
               tags={['K-Pop Lover','K-Drama Lover','K-Food Lover']}
               selectedTags={selectedTags}
@@ -247,10 +262,8 @@ const HobbyTag = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
 `;
-const Imogi = styled.View`
-  background-color: yellow;
-  width: 16px;
-  height: 16px;
+const Imogi = styled.Text`
+
 `;
 const HobbyTagText = styled.Text`
   color: ${props => (props.selected ? '#02F59B' : '#ffffff')};

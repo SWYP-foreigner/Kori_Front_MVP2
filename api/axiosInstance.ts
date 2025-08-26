@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from "expo-secure-store";
 import axios, {
     AxiosError,
     AxiosInstance,
@@ -7,11 +7,10 @@ import axios, {
 
 const BASE_URL = (`https://dev.ko-ri.cloud`);
 
-export const ACCESS_TOKEN_KEY = 'accessToken';
 
 const api: AxiosInstance = axios.create({
     baseURL: BASE_URL,
-    timeout: 15000,
+    timeout: 5000,
     headers: {
         Accept: 'application/json',
     },
@@ -23,7 +22,7 @@ api.interceptors.request.use(
         if (!isFormData) {
             (config.headers as any)['Content-Type'] = 'application/json';
         }
-        const token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+        const token = await SecureStore.getItemAsync("jwt");
         if (token) {
             (config.headers as any).Authorization = `Bearer ${token}`;
         }
@@ -40,15 +39,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
-export async function setAccessToken(token: string | null) {
-    if (token) {
-        await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
-    } else {
-        await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-    }
-}
-
-export function setBaseURL(url: string) {
-    api.defaults.baseURL = url;
-}
