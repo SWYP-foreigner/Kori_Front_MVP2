@@ -69,7 +69,7 @@ const HIT = { top: 8, bottom: 8, left: 8, right: 8 };
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #111213;
+  background: #1D1E1F;
 `;
 
 const Header = styled.View`
