@@ -15,6 +15,14 @@ const api: AxiosInstance = axios.create({
         Accept: 'application/json',
     },
 });
+const fetchItems = async () => {
+  try {
+    const res = await api.get('/health'); // /api/v1/items 경로 예시
+    console.log('데이터 조회 성공:', res.data);
+  } catch (err: any) {
+    console.error('조회 실패:', err.response?.data || err.message);
+  }
+};
 
 api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {

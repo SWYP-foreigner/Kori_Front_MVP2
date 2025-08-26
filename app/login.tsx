@@ -1,80 +1,98 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
 import AppleSignInButton from '@/components/AppleSignInButton';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import {
-  GoogleSignin, isErrorWithCode, isSuccessResponse,
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
   statusCodes
 } from '@react-native-google-signin/google-signin';
-import axios from "axios";
+import axios from 'axios';
 import { useRouter } from 'expo-router';
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from 'expo-secure-store';
+import React, { useState } from 'react';
+import styled from 'styled-components/native';
 
 GoogleSignin.configure({
-  "webClientId": "86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
-  "iosClientId": "86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com",
-  offlineAccess: true
+  webClientId: '86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com',
+  iosClientId: '86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com',
+  offlineAccess: true,
 });
+
+type AppLoginResponse = {
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    id: number;
+  };
+  message: string;
+  timestamp: string;
+};
 
 const LoginScreen = () => {
   const router = useRouter();
-  const [userInfo, setUserInfo] = useState(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
-  const sendTokenToServer = async (code) => {
+  const sendTokenToServer = async (code: string) => {
     try {
-      const res = await axios.post('https://dev.ko-ri.cloud/api/v1/member/google/app-login', {
-        "code": code
-      });
-      console.log(res)
-      console.log('서버 JWT:', res.data.token);
-      const token=res.data.token;
-      SecureStore.setItemAsync("jwt",token)
+      const res = await axios.post<AppLoginResponse>(
+        'https://dev.ko-ri.cloud/api/v1/member/google/app-login',
+        { code }
+      );
+
+      const { accessToken, refreshToken } = res.data.data;
+
+      await SecureStore.setItemAsync('jwt', accessToken);
+      await SecureStore.setItemAsync('refresh', refreshToken); // (선택)
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('서버 요청 실패', error);
     }
-  }
-  
-const signIn = async () => {
-  try {
-    await GoogleSignin.hasPlayServices();
-    const response = await GoogleSignin.signIn();
-    if (isSuccessResponse(response)) {
-      console.log('들어옴');
-      setUserInfo({ userInfo: response.data });
-      console.log(response.data);
-      const code=response.data.serverAuthCode;
-      sendTokenToServer(code);
-    } else {
-      console.log('sign in was cancelled by user');
-      // sign in was cancelled by user
-    }
-  } catch (error) {
-    if (isErrorWithCode(error)) {
-      switch (error.code) {
-        case statusCodes.IN_PROGRESS:
-          console.log('operation (eg. sign in) already in progress');
-          // operation (eg. sign in) already in progress
-          break;
-        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-          console.log('Android only, play services not available or outdated');
-          // Android only, play services not available or outdated
-          break;
-        default:
-        // some other error happened
+  };
+
+  const signIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      if (isSuccessResponse(response)) {
+        setUserInfo({ userInfo: response.data });
+        const code = response.data.serverAuthCode;
+        if (!code) {
+          console.log('serverAuthCode 없음 (Google 설정 확인 필요)');
+          return;
+        }
+        await sendTokenToServer(code);
+      } else {
+        console.log('사용자가 로그인 취소');
       }
-    } else {
-      console.log('error');
-      // an error that's not related to google sign in occurred
+    } catch (error: any) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            console.log('이미 로그인 진행 중');
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            console.log('Play Services 문제 (Android)');
+            break;
+          default:
+            console.log('기타 로그인 오류', error);
+        }
+      } else {
+        console.log('Google Sign-In 이외 오류', error);
+      }
     }
-  }
-};
+  };
 
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
-      SecureStore.deleteItemAsync("jwt");
-      setUserInfo({ user: null }); // Remember to remove the user from your app's state as well
-      console.log('로그아웃');
+      await SecureStore.deleteItemAsync('jwt');
+      await SecureStore.deleteItemAsync('refresh');
+      setUserInfo(null);
+      console.log('로그아웃 완료');
     } catch (error) {
       console.error(error);
     }
@@ -82,15 +100,13 @@ const signIn = async () => {
 
   return (
     <Container>
-      <GoogleSignInButton
-        // disabled={!request}
-        onPress={signIn}
-      />
+      <GoogleSignInButton onPress={signIn} />
       <AppleSignInButton />
+
       <TabsMoveButton onPress={signOut}>
         <TabsMoveText>구글 Sign out</TabsMoveText>
       </TabsMoveButton>
-      {/* 테스트용 / 로그인 없이 탭 이동 버튼 */}
+
       <TabsMoveButton onPress={() => router.push('./(tabs)')}>
         <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
       </TabsMoveButton>
@@ -108,15 +124,13 @@ const signIn = async () => {
 
 export default LoginScreen;
 
-// Styled Components
 const Container = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
   padding: 20px;
-  background-color: #0F0F10;
+  background-color: #0f0f10;
 `;
-
 const TabsMoveButton = styled.TouchableOpacity`
   padding: 12px 24px;
   background-color: gray;
@@ -125,13 +139,11 @@ const TabsMoveButton = styled.TouchableOpacity`
   align-items: center;
   margin-top: 20px;
 `;
-
 const TabsMoveText = styled.Text`
   color: white;
   font-weight: bold;
   font-size: 17px;
 `;
-
 const ProfileMoveButton = styled.TouchableOpacity`
   padding: 12px 24px;
   background-color: yellow;
@@ -140,8 +152,6 @@ const ProfileMoveButton = styled.TouchableOpacity`
   align-items: center;
   margin-top: 20px;
 `;
-
-
 const ProfileMoveText = styled.Text`
   color: black;
   font-weight: bold;
