@@ -1,4 +1,4 @@
-import { postFollow } from '@/api/follow';
+import { postFollow } from '@/api/home/follow';
 import { useMutation } from '@tanstack/react-query';
 import Toast from "react-native-toast-message";
 

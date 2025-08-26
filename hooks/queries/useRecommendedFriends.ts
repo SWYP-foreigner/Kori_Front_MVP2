@@ -1,4 +1,4 @@
-import { getRecommended, toFriendCard } from '@/api/recommend';
+import { getRecommended, toFriendCard } from '@/api/home/recommend';
 import { useQuery } from '@tanstack/react-query';
 
 export default function useRecommendedFriends(limit = 20) {
