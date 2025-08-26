@@ -2,27 +2,36 @@ import React from "react";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 const ChattingRoomScreen=()=>{
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
+             <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
             <Container>
                 <HeaderContainer>
                         <Left>
-                            <Feather name="arrow-left" size={24} color="#CCCFD0" />
+                            <Feather name="arrow-left" size={27} color="#CCCFD0" />
                         </Left>
                         <Center>
                             <HeaderTitleText>Kori</HeaderTitleText>
                         </Center>
                         <Right>
-                            <Feather name="search" size={24} color="#CCCFD0" />
-                            <SimpleLineIcons name="menu" size={20} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
+                            <Feather name="search" size={26} color="#CCCFD0" />
+                            <SimpleLineIcons name="menu" size={26} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
                         </Right>
                 </HeaderContainer>
-                <ChatScreenContainer>
+                <ScrollView
+                        contentContainerStyle={{ paddingBottom: 100 }} // 아래 여백 확보
+                        showsVerticalScrollIndicator={false}
+                    >
+                <ChattingScreen>
                 <TimeView>
                     <TimeText>2025.08.15(Fri)</TimeText>
                 </TimeView>
@@ -34,30 +43,39 @@ const ChattingRoomScreen=()=>{
                     </ProfileContainer>
                     <OtherContainer>
                         <OtherNameText>Kori</OtherNameText>
-                        <OtherFirstTextBox>
+                        <LeftMessageBox>
+                          <OtherFirstTextBox>
                             <OtherText>Hola~</OtherText>
-                        </OtherFirstTextBox>
+                          </OtherFirstTextBox>
+                          <ChatTimeText>16:30</ChatTimeText>
+                        </LeftMessageBox>
+                        <LeftMessageBox>
                         <OtherNotFirstTextBox>
                             <OtherText>Hola~ Vine a Corea desde Estados Unidos como estudiante de intercambio</OtherText>
                         </OtherNotFirstTextBox>
-                    </OtherContainer>
-                    <TimeTextContainer>
                         <ChatTimeText>16:30</ChatTimeText>
-                    </TimeTextContainer>
+                        </LeftMessageBox>
+                    </OtherContainer>
+                    
                 </ChattingLeftContainer>
                 <ChattingRightContainer>
-                    <TimeTextContainer>
-                        <ChatTimeText>08:30</ChatTimeText>
-                    </TimeTextContainer>
-                    <MyTextContainer>
+                    <MyChatTimeText>08:30</MyChatTimeText>
+                    <MyTextFirstBox>
                         <MyText>I think</MyText>
-                    </MyTextContainer>
+                    </MyTextFirstBox>
                 </ChattingRightContainer>
-                <ChatDivider/>
+                <ChattingRightContainer>
+                    <MyChatTimeText>08:30</MyChatTimeText>
+                    <MyTextNotFirstBox>
+                        <MyText>I think</MyText>
+                    </MyTextNotFirstBox>
+                </ChattingRightContainer>
+                <Divider/>
                 <TimeView>
                     <TimeText>2025.08.15(Fri)</TimeText>
                 </TimeView>
-                 <ChattingLeftContainer>
+
+                <ChattingLeftContainer>
                     <ProfileContainer>
                         <ProfileBox>
                             <ProfileImage source={require("@/assets/images/character2.png")}/>
@@ -65,26 +83,38 @@ const ChattingRoomScreen=()=>{
                     </ProfileContainer>
                     <OtherContainer>
                         <OtherNameText>Kori</OtherNameText>
-                        <OtherFirstTextBox>
+                        <LeftMessageBox>
+                          <OtherFirstTextBox>
                             <OtherText>Hola~</OtherText>
-                        </OtherFirstTextBox>
+                          </OtherFirstTextBox>
+                          <ChatTimeText>16:30</ChatTimeText>
+                        </LeftMessageBox>
+                        <LeftMessageBox>
                         <OtherNotFirstTextBox>
                             <OtherText>Hola~ Vine a Corea desde Estados Unidos como estudiante de intercambio</OtherText>
                         </OtherNotFirstTextBox>
-                    </OtherContainer>
-                    <TimeTextContainer>
                         <ChatTimeText>16:30</ChatTimeText>
-                    </TimeTextContainer>
+                        </LeftMessageBox>
+                    </OtherContainer>
+                    
                 </ChattingLeftContainer>
-                </ChatScreenContainer>
+                </ChattingScreen>
+                </ScrollView>
+                
                 <BottomContainer>
-                    <InputTextBox
+                    <BottomInputBox
                         placeholder="Write Your Text"
                         placeholderTextColor="#616262"
                     />
-                    <Feather name="send" size={23} color="#ffffff" />
+                    <SendImageBox>
+                        <SendImage source={require("@/assets/images/Send.png")}/>
+                    </SendImageBox>
                 </BottomContainer>
+                 <TranslateButtonBox>
+                        <TranslateImage source={require("@/assets/images/translate.png")}/>
+                    </TranslateButtonBox>
             </Container>
+            </KeyboardAvoidingView>
         </SafeArea>
 
 
@@ -108,7 +138,6 @@ const Container=styled.View`
 
 const HeaderContainer=styled.View`
     flex-direction:row;
-    background-color:yellow;
     height:10%;
     align-items:center;
     justify-content: center;
@@ -118,61 +147,56 @@ const HeaderContainer=styled.View`
 const HeaderTitleText=styled.Text`
     color:#FFFFFF;
     font-family:PlusJakartaSans_500Medium;
-    font-size:16px;
+    font-size:18px;
 
 `;
 
 const Left=styled.View`
-    background-color:green;
     flex:1;
 `;
 const Center=styled.View`
-    background-color:red;
     flex:2;
     align-items:center;
 `;
 const Right=styled.View`
-    background-color:blue;
     flex-direction:row;
     flex:1;
     justify-content:center;
 
 `;
 
-const ChatScreenContainer=styled.View`
-    background-color:blue;
-    flex-direction:column;
-    height:76%;
+const ChattingScreen=styled.View`
+    flex:1;
+    flex-direction: column; 
+    
 `;
-
 const TimeView=styled.View`
-    background-color:green;
     align-items:center;
     justify-content:center;
-    height:20px;
-    margin:20px 0px;
+    margin:5px 0px;
 `;
 const TimeText=styled.Text`
     color:#848687;
     font-family:PlusJakartaSans_600SemiBold;
     font-size:11px;
 `;
+
 const ChattingLeftContainer = styled.View`
-  background-color: yellow;
-  max-width:285px;   /* 최대 너비 */
- 
+  align-self: flex-start; /* 왼쪽 끝 */
+  max-width:280px;   /* 최대 너비 */
   flex-direction: row;
+  margin:10px 0px;
 `;
 
 const ProfileContainer=styled.View`
-    background-color:red;
+   
     width:38px; 
 
 `;
 const ProfileBox=styled.View`
     width:38x;
     height:38px;
-    background-color:green;
+
 `;
 
 const ProfileImage=styled.Image`
@@ -180,8 +204,10 @@ const ProfileImage=styled.Image`
     height:100%;
     resize-mode:contain;
 `;
+
+
 const OtherContainer=styled.View`
-    background-color:blue;
+
     max-width:242px;
     padding-left:7px;
 `;
@@ -190,17 +216,26 @@ const OtherNameText=styled.Text`
     font-family:PlusJakartaSans_600SemiBold;
     font-size:13px;
 `;
-const OtherFirstTextBox = styled.View`
+
+const LeftMessageBox=styled.View`
+    max-width:250px;
+    align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
+    margin-top:5px;
+    flex-direction:row;
+    justify-content: flex-end;   /* 가로 방향 끝 */
+    align-items: flex-end;       /* 세로 방향 끝 */
+`;
+const OtherFirstTextBox=styled.View`
   background-color: #414142;
-  padding: 10px 14px;              /* 안쪽 여백 */
-  margin-top: 5px;
-  border-top-left-radius: 0px;
+  padding: 8px 12px;
+  max-width: 210px;        /* 최대 너비만 제한 */
+  border-top-left-radius: 0px;   /* 왼쪽 상단만 0 */
   border-top-right-radius: 16px;
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
-
-  align-self: flex-start;          /* 텍스트 크기에 맞게 좌측 정렬 */
-  max-width: 210px;                /* 최대 너비 */
+  align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
+  align-items:center;
+  justify-content:center;
 `;
 
 const OtherText=styled.Text`
@@ -209,74 +244,125 @@ const OtherText=styled.Text`
     font-family:PlusJakartaSans_300Light;
 `;
 const OtherNotFirstTextBox=styled.View`
-  background-color: #414142;
-  padding: 10px 14px;              /* 안쪽 여백 */
-  margin-top: 5px;
-  border-radius:16px;
-  align-self: flex-start;          /* 텍스트 크기에 맞게 좌측 정렬 */
-  max-width: 210px;                /* 최대 너비 */
-`;
-
-const TimeTextContainer=styled.View`
-    background-color:red;
-    width:32px;
-    align-items:center; 
-    justify-content:flex-end;
-    margin : 0px 3px;
+    background-color:#414142;
+    max-width:210px;
+    padding:8px 12px;;
+    border-radius:16px;
+    align-items:center;
+    justify-content:center;
+    align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
 `;
 const ChatTimeText=styled.Text`
     color:#848687;
-    font-family:PlusJakartaSans_300Light;
     font-size:10px;
+    font-family:PlusJakartaSans_300Light;
+    margin-left:3px;
+    
 `;
 
 const ChattingRightContainer = styled.View`
-  align-self: flex-end;      /* 부모 기준 오른쪽 정렬 */
-  max-width: 285px;
-  background-color: yellow;
-  margin-top:20px;       /* 위/아래 간격 */
-  margin-right:10px;
-  flex-direction:row;
+  align-self: flex-end;  /* 부모 기준 왼쪽 정렬 */
+  max-width:280px;   /* 최대 너비 */
+  flex-direction: row;
+  margin:2px 0px;
+  justify-content: flex-start;   /* 가로 방향 끝 */
+  align-items: flex-end;       /* 세로 방향 끝 */
+  margin-right:8px;
+  
 `;
 
-const MyTextContainer=styled.View`
-  padding: 10px 14px;        /* 말풍선 안쪽 여백 */
-  max-width: 285px;
-  border-top-left-radius: 16px;
+const MyChatTimeText=styled.Text`
+    color:#848687;
+    font-size:10px;
+    font-family:PlusJakartaSans_300Light;
+    margin-right:4px;
+    
+`;
+const MyTextFirstBox=styled.View`
+  background-color: #02F59B;
+  padding: 8px 12px;
+  max-width: 210px;        /* 최대 너비만 제한 */
+  border-top-left-radius: 16px;   /* 왼쪽 상단만 0 */
   border-top-right-radius: 16px;
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 0px;
-  background-color:#02F59B;
+  align-self: flex-end;  /* 부모 기준 왼쪽 정렬 */
+  align-items:center;
+  justify-content:center;
+`;
+
+const MyTextNotFirstBox=styled.View`
+  background-color: #02F59B;
+  padding: 8px 12px;
+  max-width: 210px;        /* 최대 너비만 제한 */
+  border-top-left-radius: 16px;   /* 왼쪽 상단만 0 */
+  border-top-right-radius: 16px;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  align-self: flex-end;  /* 부모 기준 왼쪽 정렬 */
+  align-items:center;
+  justify-content:center;
 `;
 const MyText=styled.Text`
     color:#1D1E1F;
     font-size:14px;
-    font-family: PlusJakartaSans_400Regular;
+    font-family:PlusJakartaSans_400Regular;
+    
 `;
 
-const ChatDivider=styled.View`
-    width:100%;
-    height:4px;
-    background-color:#35363799;
-    margin:20px 0px;
+const Divider=styled.View`
+   height:3px;
+   background-color:#35363799;
+   margin:10px 0px;
 `;
-
-const BottomContainer=styled.View`
-    background-color:#1D1E1F;
-    height:60px;
-    border-top-width: 1px;
-    border-top-color: #353637;
+const TranslateButtonBox=styled.TouchableOpacity`
+    position:absolute;
+    bottom:100px;
+    right:10px;
+    width:50px;
+    height:50px;
+    border-radius:30px;
+    z-index:999;
+    align-items:center;
     justify-content:center;
     flex-direction:row;
     align-items:center;
 
 `;
-const InputTextBox=styled.TextInput`
-    margin-left:5px;
+
+const TranslateImage=styled.Image`
+    width:75px;
+    heigth:75px;
+    resize-mode:contain;
+`;
+const BottomContainer=styled.View`
+    background-color:#1D1E1F;
+    height:90px;
+    border-top-width:1px;
+    border-top-color:#353637;
+    flex-direction:row;
+    
+`;
+const BottomInputBox=styled.TextInput`
     background-color:#353637;
+    border-radius:8px;
     width:85%;
     height:45px;
-    border-radius:8px;
-    margin-right:30px;
-    margin-left:-5px;
+    margin-top:10px;
+    padding-left:10px;
 `;
+
+const SendImageBox=styled.TouchableOpacity`
+    width:23px;
+    height:23px;
+    margin:20px;
+`;
+
+const SendImage=styled.Image`
+    width:100%;
+    height:100%;
+    resize-mode:contain;
+`;
+
+
+
