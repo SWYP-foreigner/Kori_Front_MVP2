@@ -170,7 +170,7 @@ export default function FriendCard({
             </RowTop>
 
             <InterestHeader>
-              <MaterialCommunityIcons name="heart-outline" size={13} color="#808080" style={{ marginRight: 4 }} />
+              <HeartIcon name="heart-outline" size={13} color="#808080" />
               <Label>Interest</Label>
             </InterestHeader>
 
@@ -197,8 +197,7 @@ export default function FriendCard({
                 tone="danger"
                 filled
                 leftIcon="close"
-                onPress={() => {
-                }}
+                onPress={() => { }}
               />
             </>
           ) : mode === 'sent' ? (
@@ -273,12 +272,10 @@ const Name = styled.Text`
   letter-spacing: 0.1px;
 `;
 
-const MetaLine = styled.Text`
+const MetaLine = styled.View`
   margin-top: ${META_MT}px;
-  font-size: 12px;
-  line-height: 18px;
-  font-family: 'PlusJakartaSans_400Regular';
-  color: #8a8a8a;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const GenderIconSpacer = styled.View`
@@ -288,11 +285,15 @@ const GenderIconSpacer = styled.View`
 const MetaDim = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';
   color: #9a9a9a;
+  font-size: 12px;
+  line-height: 18px;
 `;
 
 const MetaStrong = styled.Text`
   font-family: 'PlusJakartaSans_600SemiBold';
   color: #111;
+  font-size: 12px;
+  line-height: 18px;
 `;
 
 const Bio = styled.Text`
@@ -413,4 +414,11 @@ const Actions = styled.View`
 
 const InterestHeader = styled.View`
   flex-direction: row;
+  align-items: center;
+  margin-top: 14px;
+  margin-bottom: 8px;
+`;
+
+const HeartIcon = styled(MaterialCommunityIcons)`
+  margin-right: 4px;
 `;
