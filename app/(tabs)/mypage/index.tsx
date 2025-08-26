@@ -1,10 +1,13 @@
 import CustomButton from '@/components/CustomButton';
 import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert, Image, Image as RNImage,
+  Alert,
+  Image,
+  Image as RNImage,
   ImageSourcePropType,
   Modal
 } from 'react-native';
@@ -27,7 +30,9 @@ const AVATARS: ImageSourcePropType[] = [
 export default function MyPageScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+
   const [tempIdx, setTempIdx] = useState<number>(0);
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
 
   const confirmDelete = () => {
     Alert.alert(
@@ -44,14 +49,85 @@ export default function MyPageScreen() {
     const cur = AVATARS.findIndex(
       img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? ''),
     );
-    setTempIdx(cur >= 0 ? cur : 0);
+    if (cur >= 0) {
+      setTempIdx(cur);
+      setCustomPhotoUri(undefined);
+    } else if (avatarUrl) {
+      setTempIdx(-1);
+      setCustomPhotoUri(avatarUrl);
+    } else {
+      setTempIdx(0);
+      setCustomPhotoUri(undefined);
+    }
     setShowAvatarSheet(true);
   };
 
   const saveAvatar = () => {
-    const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
-    if (src?.uri) setAvatarUrl(src.uri);
+    if (tempIdx === -1 && customPhotoUri) {
+      setAvatarUrl(customPhotoUri);
+    } else {
+      const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
+      if (src?.uri) setAvatarUrl(src.uri);
+    }
     setShowAvatarSheet(false);
+  };
+
+  const requestPermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const granted = cam.status === 'granted' && lib.status === 'granted';
+    if (!granted) {
+      Alert.alert('Permission required', 'Camera and photo library access is needed.');
+    }
+    return granted;
+  };
+
+  const openCamera = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setCustomPhotoUri(uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const openGallery = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setCustomPhotoUri(uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const pickFromCameraOrGallery = () => {
+    Alert.alert(
+      'Pick photo',
+      'How to pick your profile photo?',
+      [
+        { text: 'Camera', onPress: openCamera },
+        { text: 'Gallery', onPress: openGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
   };
 
   return (
@@ -147,7 +223,13 @@ export default function MyPageScreen() {
               {AVATARS.map((img, idx) => {
                 const selected = idx === tempIdx;
                 return (
-                  <AvatarItem key={idx} onPress={() => setTempIdx(idx)}>
+                  <AvatarItem
+                    key={idx}
+                    onPress={() => {
+                      setTempIdx(idx);
+                      setCustomPhotoUri(undefined);
+                    }}
+                  >
                     <AvatarCircle selected={selected}>
                       <AvatarImg source={img} />
                       {selected && (
@@ -160,10 +242,21 @@ export default function MyPageScreen() {
                 );
               })}
 
-              <AvatarItem onPress={() => { }}>
-                <CameraCircle>
-                  <Ionicons name="camera" size={22} color="#cfd4da" />
-                </CameraCircle>
+              <AvatarItem onPress={pickFromCameraOrGallery}>
+                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
+                  {customPhotoUri ? (
+                    <AvatarImg source={{ uri: customPhotoUri }} />
+                  ) : (
+                    <CameraCircleInner>
+                      <Ionicons name="camera" size={22} color="#cfd4da" />
+                    </CameraCircleInner>
+                  )}
+                  {tempIdx === -1 && !!customPhotoUri && (
+                    <CheckBadge>
+                      <Ionicons name="checkmark" size={14} color="#0f1011" />
+                    </CheckBadge>
+                  )}
+                </AvatarCircle>
               </AvatarItem>
             </AvatarRow>
 
@@ -174,7 +267,12 @@ export default function MyPageScreen() {
                 onPress={() => setShowAvatarSheet(false)}
               />
               <Gap />
-              <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
+              <CustomButton
+                label="Save"
+                tone="mint"
+                filled
+                onPress={saveAvatar}
+              />
             </ButtonRow>
           </Sheet>
         </SheetOverlay>
@@ -430,13 +528,13 @@ const CheckBadge = styled.View`
   border-color: #353637;
 `;
 
-const CameraCircle = styled.View`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
+const CameraCircleInner = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
   align-items: center;
   justify-content: center;
+  background: #1f2021;
 `;
 
 const ButtonRow = styled.View`
