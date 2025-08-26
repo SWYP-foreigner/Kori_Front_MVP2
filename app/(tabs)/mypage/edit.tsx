@@ -25,12 +25,6 @@ import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { useQueryClient } from '@tanstack/react-query';
 
-const INTERESTS = [
-  'Music', 'Movies', 'Reading', 'Anime', 'Gaming', 'Drinking', 'Exploring Cafés', 'Traveling', 'Board Games', 'Shopping',
-  'Beauty', 'Doing Nothing', 'Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking', 'Exhibition', 'Singing', 'Cooking',
-  'Pets', 'Career', 'Photography', 'K-Pop Lover', 'K-Drama Lover', 'K-Food Lover',
-];
-
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
 const INPUT_BG = '#353637';
@@ -42,14 +36,14 @@ export default function EditProfileScreen() {
   const editMutation = useProfileEdit();
 
   const [name, setName] = useState('');
-  const [email] = useState('');
+  const [email] = useState(''); // 서버에서 이메일 안 주면 숨김 처리 유지
   const [country, setCountry] = useState('');
   const [showCountry, setShowCountry] = useState(false);
 
   const [langs, setLangs] = useState<string[]>([]);
   const [showLang, setShowLang] = useState(false);
 
-  const [birth, setBirth] = useState('');
+  const [birth, setBirth] = useState(''); // MM/DD/YY 형태로 입력
   const [purpose, setPurpose] = useState('');
   const [showPurpose, setShowPurpose] = useState(false);
 
@@ -85,9 +79,16 @@ export default function EditProfileScreen() {
     return { firstname: parts[0], lastname: parts.slice(1).join(' ') };
   };
 
+  // MM/DD/YY 자동 포매터
+  const formatBirth = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits; // M, MM
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`; // MM/DD
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`; // MM/DD/YY
+  };
+
   const onSave = async () => {
     const { firstname, lastname } = splitName(name);
-
     const language = langs.map((l) => {
       const m = l.match(/\(([^)]+)\)/);
       return (m ? m[1] : l).trim();
@@ -130,10 +131,13 @@ export default function EditProfileScreen() {
       <Scroll showsVerticalScrollIndicator={false}>
         <Center>
           <Avatar />
-          <NameText numberOfLines={1} ellipsizeMode="tail">{name || (isLoading ? 'Loading...' : '—')}</NameText>
+          <NameText numberOfLines={1} ellipsizeMode="tail">
+            {name || (isLoading ? 'Loading...' : '—')}
+          </NameText>
           {!!email && <EmailText>{email}</EmailText>}
         </Center>
 
+        {/* Name */}
         <Field>
           <LabelRow>
             <LabelText>Name</LabelText>
@@ -147,6 +151,7 @@ export default function EditProfileScreen() {
           />
         </Field>
 
+        {/* Country */}
         <Field>
           <LabelText>Country</LabelText>
           <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
@@ -157,13 +162,21 @@ export default function EditProfileScreen() {
           </CountryDropdownButton>
         </Field>
 
+        {/* Birth - TextInput 버전 */}
         <Field>
           <LabelText>Birth</LabelText>
-          <SelectBox onPress={() => { /* 텍스트 입력 유지 */ }}>
-            <SelectText>{birth || 'MM/DD/YY'}</SelectText>
-          </SelectBox>
+          <BirthInput
+            value={birth}
+            onChangeText={(t) => setBirth(formatBirth(t))}
+            placeholder="MM/DD/YY"
+            placeholderTextColor="#EDEDED99"
+            keyboardType="number-pad"
+            maxLength={10}
+            returnKeyType="done"
+          />
         </Field>
 
+        {/* Purpose */}
         <Field>
           <LabelText>Purpose</LabelText>
           <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
@@ -174,10 +187,15 @@ export default function EditProfileScreen() {
           </PurposeDropdownButton>
         </Field>
 
+        {/* Language */}
         <Field>
           <LabelRow>
             <LabelText>Language</LabelText>
-            {!!langs.length && <SmallMuted>{langs.length}/{MAX_LANGUAGES} selected</SmallMuted>}
+            {!!langs.length && (
+              <SmallMuted>
+                {langs.length}/{MAX_LANGUAGES} selected
+              </SmallMuted>
+            )}
           </LabelRow>
           <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
             <LanguageDropdownText selected={langs.length > 0}>
@@ -187,6 +205,7 @@ export default function EditProfileScreen() {
           </LanguageDropdownButton>
         </Field>
 
+        {/* Personality Preview */}
         <Field>
           <TopRow>
             <LabelText>Personality</LabelText>
@@ -201,6 +220,7 @@ export default function EditProfileScreen() {
           </TagsWrap>
         </Field>
 
+        {/* About Me */}
         <Field>
           <LabelText>About Me</LabelText>
           <TextArea
@@ -215,6 +235,7 @@ export default function EditProfileScreen() {
         <BottomPad />
       </Scroll>
 
+      {/* Pickers */}
       <CountryPicker
         visible={showCountry}
         value={country}
@@ -243,6 +264,7 @@ export default function EditProfileScreen() {
   );
 }
 
+/* ===================== styles ===================== */
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -271,7 +293,7 @@ const Side = styled.Pressable`
   padding: 0 12px;
 `;
 const SaveText = styled.Text`
-  color: #30F59B;
+  color: #30f59b;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
@@ -325,19 +347,14 @@ const NameInput = styled.TextInput`
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-const SelectBox = styled.View`
+const BirthInput = styled.TextInput`
   height: ${INPUT_HEIGHT}px;
   border-radius: ${INPUT_RADIUS}px;
   background: ${INPUT_BG};
   padding: 0 16px;
+  color: #fff;
   border-width: 0.48px;
   border-color: ${INPUT_BORDER};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-const SelectText = styled.Text`
-  color: #ededed;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
