@@ -89,30 +89,6 @@ export default function FriendCard({
 }: Props) {
   const [expanded, setExpanded] = useState(true);
 
-  const primaryLabel = (() => {
-    if (mode === 'received') return 'Accept';
-    if (mode === 'sent') return 'Requested';
-    return isFollowed ? 'Following' : 'Follow';
-  })();
-
-  const primaryTone = (() => {
-    if (mode === 'received') return 'mint';
-    if (mode === 'sent') return 'black';
-    return isFollowed ? 'black' : 'mint';
-  })();
-
-  const primaryFilled = (() => {
-    if (mode === 'received') return true;
-    if (mode === 'sent') return true;
-    return !isFollowed;
-  })();
-
-  const primaryIcon = (() => {
-    if (mode === 'received') return 'add';
-    if (mode === 'sent') return 'check';
-    return isFollowed ? 'check' : 'add';
-  })();
-
   const handlePrimaryPress = () => {
     if (mode === 'received') {
       onAccept?.(userId);
@@ -142,13 +118,9 @@ export default function FriendCard({
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth}</MetaStrong>
 
-            <GenderIconWrap>
-              <MaterialCommunityIcons
-                name={genderIconByType[gender]}
-                size={14}
-                color="#B5B5B5"
-              />
-            </GenderIconWrap>
+            <GenderIconSpacer>
+              <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
+            </GenderIconSpacer>
 
             <MetaDim>From </MetaDim>
             <MetaStrong>{country}</MetaStrong>
@@ -175,7 +147,7 @@ export default function FriendCard({
             <RowTop>
               <Col>
                 <LabelRow>
-                  <Icon source={ICON_PURPOSE} style={{ tintColor: '#808080' }} />
+                  <Icon source={ICON_PURPOSE} />
                   <Label>Purpose</Label>
                 </LabelRow>
                 <CategoryValue>{purpose}</CategoryValue>
@@ -183,7 +155,7 @@ export default function FriendCard({
 
               <ColRight>
                 <LabelRow>
-                  <Icon source={ICON_GLOBAL} style={{ tintColor: '#808080' }} />
+                  <Icon source={ICON_GLOBAL} />
                   <Label>Language</Label>
                 </LabelRow>
                 <LangWrap>
@@ -198,9 +170,7 @@ export default function FriendCard({
             </RowTop>
 
             <InterestHeader>
-              <HeartIconWrap>
-                <MaterialCommunityIcons name="heart-outline" size={13} color="#808080" />
-              </HeartIconWrap>
+              <MaterialCommunityIcons name="heart-outline" size={13} color="#808080" style={{ marginRight: 4 }} />
               <Label>Interest</Label>
             </InterestHeader>
 
@@ -213,31 +183,58 @@ export default function FriendCard({
         )}
 
         <Actions>
-          <CustomButton
-            label={primaryLabel}
-            tone={primaryTone as any}
-            filled={primaryFilled}
-            leftIcon={primaryIcon as any}
-            onPress={handlePrimaryPress}
-          />
-
           {mode === 'received' ? (
-            <DeclineButton
-              label="Decline"
-              tone="black"
-              filled
-              leftIcon="close"
-              onPress={() => {
-              }}
-            />
+            <>
+              <CustomButton
+                label="Accept"
+                tone="mint"
+                filled
+                leftIcon="add"
+                onPress={handlePrimaryPress}
+              />
+              <CustomButton
+                label="Decline"
+                tone="danger"
+                filled
+                leftIcon="close"
+                onPress={() => {
+                }}
+              />
+            </>
+          ) : mode === 'sent' ? (
+            <>
+              <CustomButton
+                label="Requested"
+                tone="black"
+                filled={false}
+                leftIcon="check"
+                onPress={handlePrimaryPress}
+              />
+              <CustomButton
+                label="Chat"
+                tone="black"
+                filled
+                leftIcon="chat-bubble-outline"
+                onPress={onChat}
+              />
+            </>
           ) : (
-            <CustomButton
-              label="Chat"
-              tone="black"
-              filled
-              leftIcon="chat-bubble-outline"
-              onPress={onChat}
-            />
+            <>
+              <CustomButton
+                label={isFollowed ? 'Following' : 'Follow'}
+                tone={isFollowed ? 'black' : 'mint'}
+                filled={!isFollowed}
+                leftIcon={isFollowed ? 'check' : 'add'}
+                onPress={handlePrimaryPress}
+              />
+              <CustomButton
+                label="Chat"
+                tone="black"
+                filled
+                leftIcon="chat-bubble-outline"
+                onPress={onChat}
+              />
+            </>
           )}
         </Actions>
 
@@ -246,7 +243,6 @@ export default function FriendCard({
     </CardWrap>
   );
 }
-
 
 const CardWrap = styled.View`
   width: 100%;
@@ -285,8 +281,8 @@ const MetaLine = styled.Text`
   color: #8a8a8a;
 `;
 
-const GenderIconWrap = styled.View`
-  margin: 1px 4px 0 4px; 
+const GenderIconSpacer = styled.View`
+  margin: 1px 4px 0 4px;
 `;
 
 const MetaDim = styled.Text`
@@ -327,7 +323,7 @@ const Divider = styled.View`
 const ChevronButton = styled.Pressable`
   position: absolute;
   top: 50%;
-  margin-top: -${CHEVRON.lift}px; 
+  margin-top: -${CHEVRON.lift}px;
   width: ${CHEVRON.size}px;
   height: ${CHEVRON.size}px;
   border-radius: ${CHEVRON.size / 2}px;
@@ -360,18 +356,10 @@ const LabelRow = styled.View`
   align-items: center;
 `;
 
-const HeartIconWrap = styled.View`
-  margin-right: 4px;
-`;
-
-const InterestHeader = styled(LabelRow)`
-  margin-top: 14px;
-  margin-bottom: 8px;
-`;
-
 const Icon = styled.Image`
   width: 12px;
   height: 12px;
+  tint-color: #808080;
 `;
 
 const Label = styled.Text`
@@ -379,6 +367,7 @@ const Label = styled.Text`
   line-height: 16px;
   color: #808080;
   font-family: 'PlusJakartaSans_400Regular';
+  margin-left: 6px;
 `;
 
 const CategoryValue = styled.Text`
@@ -422,6 +411,6 @@ const Actions = styled.View`
   gap: ${BTN_GAP}px;
 `;
 
-const DeclineButton = styled(CustomButton as any).attrs({
-  style: { backgroundColor: '#FF4F4F' },
-})``;
+const InterestHeader = styled.View`
+  flex-direction: row;
+`;

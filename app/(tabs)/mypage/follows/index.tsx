@@ -46,10 +46,7 @@ const MOCK_SENT: FriendItem[] = [
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
 
-  const list = useMemo(
-    () => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT),
-    [tab],
-  );
+  const list = useMemo(() => (tab === 'received' ? MOCK_RECEIVED : MOCK_SENT), [tab]);
 
   const handleAccept = (userId: number) => {
     console.log('accept', userId);
@@ -61,7 +58,6 @@ export default function FollowListScreen() {
 
   return (
     <Safe>
-      {/* Header */}
       <Header>
         <BackBtn onPress={() => router.back()}>
           <AntDesign name="left" size={20} color="#fff" />
@@ -69,11 +65,11 @@ export default function FollowListScreen() {
         <Title>Friends List</Title>
         <IconRow>
           <AntDesign name="search1" size={18} color="#cfd4da" />
-          <AntDesign name="ellipsis1" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
+          <IconSpacer />
+          <AntDesign name="ellipsis1" size={18} color="#cfd4da" />
         </IconRow>
       </Header>
 
-      {/* Tabs */}
       <TabsWrap>
         <TabsRow>
           <TabItem active={tab === 'received'} onPress={() => setTab('received')}>
@@ -86,7 +82,6 @@ export default function FollowListScreen() {
         <TabsBottomLine />
       </TabsWrap>
 
-      {/* List */}
       <List
         data={list}
         keyExtractor={(item) => String(item.id)}
@@ -138,6 +133,9 @@ const Title = styled.Text`
 const IconRow = styled.View`
   flex-direction: row;
   align-items: center;
+`;
+const IconSpacer = styled.View`
+  width: 14px;
 `;
 
 const TabsWrap = styled.View`

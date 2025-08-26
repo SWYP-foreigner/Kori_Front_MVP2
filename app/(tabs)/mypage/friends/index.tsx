@@ -35,7 +35,7 @@ export default function FriendsOnlyScreen() {
     const list = useMemo(() => friends, [friends]);
 
     const totalPages = list.length;
-    const [page, setPage] = useState(1); // 1-based
+    const [page, setPage] = useState(1);
     const listRef = useRef<import('react-native').FlatList>(null);
 
     const confirmUnfollow = (userId: number) => {
@@ -65,7 +65,11 @@ export default function FriendsOnlyScreen() {
                 <BackBtn onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
                 </BackBtn>
-                <Title>Friends List</Title>
+
+                \                <TitleWrap pointerEvents="none">
+                    <Title>Friends List</Title>
+                </TitleWrap>
+
                 <IconRow>
                     <AntDesign name="search1" size={18} color="#cfd4da" />
                 </IconRow>
@@ -135,6 +139,7 @@ const Safe = styled.SafeAreaView`
 `;
 
 const Header = styled.View`
+  position: relative;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
@@ -144,6 +149,13 @@ const Header = styled.View`
 const BackBtn = styled.Pressable`
   width: 40px;
   align-items: flex-start;
+`;
+
+const TitleWrap = styled.View`
+  position: absolute;
+  left: 0;
+  right: 0;
+  align-items: center;
 `;
 
 const Title = styled.Text`
@@ -165,7 +177,7 @@ const Page = styled.View`
 
 const Inner = styled.View`
   padding: 0 16px;
-  margin-top: -27px;
+  margin-top: -30px;
 `;
 
 const Pager = styled.View`
