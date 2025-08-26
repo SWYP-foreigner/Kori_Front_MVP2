@@ -1,20 +1,26 @@
 import React, { useState } from "react";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
-import {StatusBar} from 'react-native';
+import {StatusBar,TouchableOpacity} from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
 
 const CreateSpaceScreen=()=>{
     const [text,onChangeText]=useState('');
+    const router = useRouter();
    
     return(
         <SafeArea>
             <StatusBar barStyle="light-content" />
             <Container>
                 <HeaderContainer>
+                    <TouchableOpacity onPress={() => router.back()}>
                     <Feather name="arrow-left" size={23} color="#CCCFD0" />
+                      </TouchableOpacity>
                     <HeaderTitleText>Create Space</HeaderTitleText>
+                    <TouchableOpacity onPress={() => console.log("Space 생성")}>
                     <SaveText>Save</SaveText>
+                    </TouchableOpacity>
                 </HeaderContainer>
                 <ProfileContainer>
                     <ProfileBox>
