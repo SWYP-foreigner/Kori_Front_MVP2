@@ -1,4 +1,4 @@
-import { patchMyProfile, type ProfileEditBody } from '@/api/mypage';
+import { patchMyProfile, type ProfileEditBody } from '@/api/mypage/mypage';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function useProfileEdit() {

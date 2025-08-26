@@ -1,4 +1,4 @@
-import { getMyProfile } from '@/api/mypage';
+import { getMyProfile } from '@/api/mypage/mypage';
 import { useQuery } from '@tanstack/react-query';
 
 export default function useMyProfile() {
