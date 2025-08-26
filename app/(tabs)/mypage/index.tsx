@@ -3,7 +3,7 @@ import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -13,13 +13,7 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 
-const MOCK_ME = {
-  name: 'Alice Kori, Kim',
-  email: 'Kori@gmail.com',
-  avatarUrl: undefined as string | undefined,
-  receivedCount: 2,
-  sentCount: 3,
-};
+import useMyProfile from '@/hooks/queries/useMyProfile';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -28,9 +22,18 @@ const AVATARS: ImageSourcePropType[] = [
 ];
 
 export default function MyPageScreen() {
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
-  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const { data: me, isLoading } = useMyProfile();
 
+  const fullName = useMemo(() => {
+    if (isLoading) return 'Loading...';
+    const name = [me?.firstname, me?.lastname].filter(Boolean).join(' ');
+    return name || '—';
+  }, [me, isLoading]);
+
+  // imageKey -> URL 매핑 필요하면 여기에 구현
+
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [tempIdx, setTempIdx] = useState<number>(0);
   const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
 
@@ -143,8 +146,7 @@ export default function MyPageScreen() {
             <EditAvatar />
           </AvatarPress>
 
-          <Name>{MOCK_ME.name}</Name>
-          <Email>{MOCK_ME.email}</Email>
+          <Name numberOfLines={1} ellipsizeMode="tail">{fullName}</Name>
 
           <EditButtonWrap>
             <CustomButton
@@ -172,12 +174,12 @@ export default function MyPageScreen() {
         <CountCard>
           <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
             <CountLabel>Received</CountLabel>
-            <CountNumber>{MOCK_ME.receivedCount}</CountNumber>
+            <CountNumber>{0}</CountNumber>
           </CountItem>
           <Divider />
           <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
             <CountLabel>Sent</CountLabel>
-            <CountNumber>{MOCK_ME.sentCount}</CountNumber>
+            <CountNumber>{0}</CountNumber>
           </CountItem>
         </CountCard>
 
@@ -318,17 +320,13 @@ const AvatarPress = styled.Pressable`
 `;
 
 const Name = styled.Text`
-  margin-top: 8px;
-  font-size: 16px;
+  margin-top: 10px;
   color: #ffffff;
+  font-size: 18px;
+  line-height: 22px;
   font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const Email = styled.Text`
-  margin-top: 2px;
-  font-size: 12px;
-  color: #b7babd;
-  font-family: 'PlusJakartaSans_400Regular';
+  max-width: 80%;
+  text-align: center;
 `;
 
 const EditButtonWrap = styled.View`
@@ -413,8 +411,8 @@ const RowSeparator = styled.View`
 const CountCard = styled.View`
   margin: 10px 16px 12px 16px;
   background: #2a2f33;
-  border-radius: 12px;
-  padding: 8px;
+  border-radius: 14px;
+  padding: 10px;
   flex-direction: row;
   align-items: stretch;
 `;
