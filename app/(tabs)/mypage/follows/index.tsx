@@ -62,12 +62,12 @@ export default function FollowListScreen() {
         <BackBtn onPress={() => router.back()}>
           <AntDesign name="left" size={20} color="#fff" />
         </BackBtn>
-        <Title>Friends List</Title>
-        <IconRow>
-          <AntDesign name="search1" size={18} color="#cfd4da" />
-          <IconSpacer />
-          <AntDesign name="ellipsis1" size={18} color="#cfd4da" />
-        </IconRow>
+
+        <HeaderCenter>
+          <Title>Friends List</Title>
+        </HeaderCenter>
+
+        <RightSlot />
       </Header>
 
       <TabsWrap>
@@ -117,25 +117,29 @@ const Safe = styled.SafeAreaView`
 
 const Header = styled.View`
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
 `;
+
 const BackBtn = styled.Pressable`
   width: 40px;
   align-items: flex-start;
 `;
+
+const HeaderCenter = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+
+const RightSlot = styled.View`
+  width: 40px; /* BackBtn과 동일 폭으로 좌우 균형 */
+`;
+
 const Title = styled.Text`
   color: #fff;
   font-size: 20px;
   font-family: 'PlusJakartaSans_700Bold';
-`;
-const IconRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-const IconSpacer = styled.View`
-  width: 14px;
 `;
 
 const TabsWrap = styled.View`
