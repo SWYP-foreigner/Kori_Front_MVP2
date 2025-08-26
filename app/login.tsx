@@ -31,43 +31,41 @@ const LoginScreen = () => {
       console.error('서버 요청 실패', error);
     }
   }
-
-  const signIn = async () => {
-    try {
-
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      console.log(response);
-      if (isSuccessResponse(response)) {
-        console.log('들어옴');
-        setUserInfo({ userInfo: response.data });
-        console.log(response.data);
-        const code = response.data.serverAuthCode;
-        sendTokenToServer(code);
-      } else {
-        console.log('sign in was cancelled by user');
-        // sign in was cancelled by user
-      }
-    } catch (error) {
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.IN_PROGRESS:
-            console.log('operation (eg. sign in) already in progress');
-            // operation (eg. sign in) already in progress
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.log('Android only, play services not available or outdated');
-            // Android only, play services not available or outdated
-            break;
-          default:
-          // some other error happened
-        }
-      } else {
-        console.log('error');
-        // an error that's not related to google sign in occurred
-      }
+  
+const signIn = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const response = await GoogleSignin.signIn();
+    if (isSuccessResponse(response)) {
+      console.log('들어옴');
+      setUserInfo({ userInfo: response.data });
+      console.log(response.data);
+      const code=response.data.serverAuthCode;
+      sendTokenToServer(code);
+    } else {
+      console.log('sign in was cancelled by user');
+      // sign in was cancelled by user
     }
-  };
+  } catch (error) {
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.IN_PROGRESS:
+          console.log('operation (eg. sign in) already in progress');
+          // operation (eg. sign in) already in progress
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          console.log('Android only, play services not available or outdated');
+          // Android only, play services not available or outdated
+          break;
+        default:
+        // some other error happened
+      }
+    } else {
+      console.log('error');
+      // an error that's not related to google sign in occurred
+    }
+  }
+};
 
   const signOut = async () => {
     try {
@@ -98,7 +96,7 @@ const LoginScreen = () => {
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
 
-      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/ChattingRoomScreen')}>
+      <ProfileMoveButton onPress={() => router.push('./(tabs)/chat/CreateSpaceScreen')}>
         <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>
