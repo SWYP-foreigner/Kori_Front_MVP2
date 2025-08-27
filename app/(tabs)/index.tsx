@@ -1,9 +1,11 @@
+import { router } from 'expo-router';
 import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
 import FriendCard from '@/components/FriendCard';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
+import useDirectChat from '@/hooks/mutations/useSendChat';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
 
@@ -11,6 +13,7 @@ export default function HomeScreen() {
   const { data: friends, isLoading, isFetching, refetch } = useRecommendedFriends(20);
   const followMutation = useFollowUser();
   const { data: me } = useMyProfile();
+  const sendDirectChat = useDirectChat();
 
   const myId = useMemo(() => {
     const raw = (me as any)?.memberId ?? (me as any)?.id ?? (me as any)?.userId;
@@ -27,6 +30,23 @@ export default function HomeScreen() {
   const onRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
+
+  // 채팅 버튼 → DM 전송 시도 → 채팅방으로 이동
+  const openChat = useCallback((userId: number, name?: string) => {
+    const fallbackMsg = "Hi! 👋 Let's chat";
+
+    sendDirectChat.mutate(
+      { userId, message: fallbackMsg },
+      {
+        onSettled: () => {
+          router.push({
+            pathname: '/(tabs)/chat/direct/[userId]',
+            params: { userId: String(userId), name: name ?? '' },
+          });
+        },
+      }
+    );
+  }, [sendDirectChat]);
 
   return (
     <Safe>
@@ -62,7 +82,7 @@ export default function HomeScreen() {
                   if (myId && id === myId) return;
                   followMutation.mutate(id);
                 }}
-                onChat={() => { }}
+                onChat={() => openChat(Number(item.id), item.name)}
               />
             </CardWrap>
           )}
@@ -81,41 +101,34 @@ const Safe = styled.SafeAreaView`
   flex: 1;
   background-color: #1d1e1f;
 `;
-
 const Header = styled.View`
   padding: 12px 18px 8px 18px;
   flex-direction: row;
   align-items: center;
 `;
-
 const Title = styled.Text`
   color: #ffffff;
   font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
   letter-spacing: -0.2px;
 `;
-
 const IconImage = styled.Image`
   margin-left: 4px;
   width: 20px;
   height: 20px;
 `;
-
 const LoaderWrap = styled.View`
   flex: 1;
   align-items: center;
   justify-content: center;
 `;
-
 const CardWrap = styled.View`
   margin-top: 16px;
 `;
-
 const EmptyWrap = styled.View`
   padding: 40px 16px;
   align-items: center;
 `;
-
 const EmptyText = styled.Text`
   color: #cfcfcf;
 `;
