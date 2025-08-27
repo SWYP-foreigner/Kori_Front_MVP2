@@ -32,21 +32,23 @@ export default function HomeScreen() {
   }, [refetch]);
 
   // 채팅 버튼 → DM 전송 시도 → 채팅방으로 이동
-  const openChat = useCallback((userId: number, name?: string) => {
-    const fallbackMsg = "Hi! 👋 Let's chat";
-
-    sendDirectChat.mutate(
-      { userId, message: fallbackMsg },
-      {
-        onSettled: () => {
-          router.push({
-            pathname: '/(tabs)/chat/direct/[userId]',
-            params: { userId: String(userId), name: name ?? '' },
-          });
-        },
-      }
-    );
-  }, [sendDirectChat]);
+  const openChat = useCallback(
+    (userId: number, name?: string) => {
+      const fallbackMsg = "Hi! 👋 Let's chat";
+      sendDirectChat.mutate(
+        { userId, message: fallbackMsg },
+        {
+          onSettled: () => {
+            router.push({
+              pathname: '/screens/chatscreen/ChattingRoomScreen',
+              params: { userId: String(userId), name: name ?? '' },
+            });
+          },
+        }
+      );
+    },
+    [sendDirectChat]
+  );
 
   return (
     <Safe>
@@ -56,7 +58,9 @@ export default function HomeScreen() {
       </Header>
 
       {isLoading ? (
-        <LoaderWrap><ActivityIndicator /></LoaderWrap>
+        <LoaderWrap>
+          <ActivityIndicator />
+        </LoaderWrap>
       ) : (
         <FlatList
           data={list}
