@@ -43,7 +43,7 @@ export default function EditProfileScreen() {
   const [langs, setLangs] = useState<string[]>([]);
   const [showLang, setShowLang] = useState(false);
 
-  const [birth, setBirth] = useState(''); // MM/DD/YY 형태로 입력
+  const [birth, setBirth] = useState('');
   const [purpose, setPurpose] = useState('');
   const [showPurpose, setShowPurpose] = useState(false);
 
@@ -79,12 +79,11 @@ export default function EditProfileScreen() {
     return { firstname: parts[0], lastname: parts.slice(1).join(' ') };
   };
 
-  // MM/DD/YY 자동 포매터
   const formatBirth = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
-    if (digits.length <= 2) return digits; // M, MM
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`; // MM/DD
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`; // MM/DD/YY
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
   };
 
   const onSave = async () => {
@@ -137,7 +136,6 @@ export default function EditProfileScreen() {
           {!!email && <EmailText>{email}</EmailText>}
         </Center>
 
-        {/* Name */}
         <Field>
           <LabelRow>
             <LabelText>Name</LabelText>
@@ -151,7 +149,6 @@ export default function EditProfileScreen() {
           />
         </Field>
 
-        {/* Country */}
         <Field>
           <LabelText>Country</LabelText>
           <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
@@ -162,12 +159,11 @@ export default function EditProfileScreen() {
           </CountryDropdownButton>
         </Field>
 
-        {/* Birth - TextInput 버전 */}
         <Field>
           <LabelText>Birth</LabelText>
           <BirthInput
             value={birth}
-            onChangeText={(t) => setBirth(formatBirth(t))}
+            onChangeText={(t: string) => setBirth(formatBirth(t))}
             placeholder="MM/DD/YY"
             placeholderTextColor="#EDEDED99"
             keyboardType="number-pad"
@@ -176,7 +172,6 @@ export default function EditProfileScreen() {
           />
         </Field>
 
-        {/* Purpose */}
         <Field>
           <LabelText>Purpose</LabelText>
           <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
@@ -187,7 +182,6 @@ export default function EditProfileScreen() {
           </PurposeDropdownButton>
         </Field>
 
-        {/* Language */}
         <Field>
           <LabelRow>
             <LabelText>Language</LabelText>
@@ -205,7 +199,6 @@ export default function EditProfileScreen() {
           </LanguageDropdownButton>
         </Field>
 
-        {/* Personality Preview */}
         <Field>
           <TopRow>
             <LabelText>Personality</LabelText>
@@ -220,7 +213,6 @@ export default function EditProfileScreen() {
           </TagsWrap>
         </Field>
 
-        {/* About Me */}
         <Field>
           <LabelText>About Me</LabelText>
           <TextArea
@@ -235,7 +227,6 @@ export default function EditProfileScreen() {
         <BottomPad />
       </Scroll>
 
-      {/* Pickers */}
       <CountryPicker
         visible={showCountry}
         value={country}
@@ -264,7 +255,6 @@ export default function EditProfileScreen() {
   );
 }
 
-/* ===================== styles ===================== */
 
 const Safe = styled.SafeAreaView`
   flex: 1;
