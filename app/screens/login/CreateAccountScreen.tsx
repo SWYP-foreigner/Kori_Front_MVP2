@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect } from "react";
 import styled from "styled-components/native";
 import {StatusBar,TouchableOpacity} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
@@ -15,18 +15,28 @@ const CreateAccountScreen=()=>{
     const [lookPassword, setLookPassword] = useState(true);
     const [lookRepeatPassword,setLookRepeatPassword]=useState(true);
     const isFull=(email&&password);
+    const [checks,setChecks]=useState({
+        isnull:true,
+        uppercase:false,
+        length:false,
+        special:false,
+
+    });
+
+    useEffect(() => {
+    setChecks({
+      isnull:password.length===0,
+      length: password.length >= 8 && password.length <= 12,
+      uppercase: /[A-Z]/.test(password),
+      special: /[@!~]/.test(password),
+    });
+  }, [password]);
 
     // Verify 버튼 눌렀을때
     const VerifyEmail=()=>{
         console.log("이메일 검증");
 
     };
-
-    // 이메일 형식에 맞는지 체크
-    const CheckEmail=()=>{
-
-    };
-    
     
 
     return(<SafeArea>
@@ -87,16 +97,84 @@ const CreateAccountScreen=()=>{
                        </PasswordContainer>
                     <CheckPasswordContainer>
                         <CheckPasswordBox>
-                            <AntDesign name="check" size={18} color="#02F59B" />
-                            <CheckPasswordText>Use all case letters</CheckPasswordText>
+                            {checks.isnull ? (
+                                <>
+                                    <AntDesign name="check" size={18} color="#848687" />
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.uppercase}
+                                    >
+                                    Use all case letters
+                                    </CheckPasswordText>
+                                </>
+                                ) : (
+                                <>
+                                    {checks.uppercase ? (
+                                    <AntDesign name="check" size={18} color="#02F59B" />
+                                    ) : (
+                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                                    )}
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.uppercase}
+                                    >Use all case letters</CheckPasswordText>
+                                </>
+                            )}
+                            {/* {checks.uppercase ? (<AntDesign name="check" size={18} color="#02F59B"/>)
+                            :( <Ionicons name="close-sharp" size={18} color="#FF4F4F" />)}
+                            
+                            <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>Use all case letters</CheckPasswordText> */}
                         </CheckPasswordBox>
                         <CheckPasswordBox>
-                            <AntDesign name="check" size={18} color="#02F59B" />
-                            <CheckPasswordText>Enter 8-12 letters</CheckPasswordText>
+                              {checks.isnull ? (
+                                <>
+                                    <AntDesign name="check" size={18} color="#848687" />
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.length}
+                                    >
+                                    Enter 8-12 letters
+                                    </CheckPasswordText>
+                                </>
+                                ) : (
+                                <>
+                                    {checks.length ? (
+                                    <AntDesign name="check" size={18} color="#02F59B" />
+                                    
+                                    ) : (
+                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                                    )}
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.length}
+                                    >Enter 8-12 letters</CheckPasswordText>
+                                </>
+                            )}
                         </CheckPasswordBox>
                         <CheckPasswordBox>
-                            <AntDesign name="check" size={18} color="#02F59B" />
-                            <CheckPasswordText>Enter special letters (@/!/~)</CheckPasswordText>
+                             {checks.isnull ? (
+                                <>
+                                    <AntDesign name="check" size={18} color="#848687" />
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.special}
+                                    >
+                                    Enter special letters (@/!/~)
+                                    </CheckPasswordText>
+                                </>
+                                ) : (
+                                <>
+                                    {checks.special ? (
+                                    <AntDesign name="check" size={18} color="#02F59B" />
+                                    ) : (
+                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                                    )}
+                                    <CheckPasswordText 
+                                    isnull={checks.isnull} 
+                                    check={checks.special}
+                                    >Enter special letters (@/!/~)</CheckPasswordText>
+                                </>
+                            )}
                         </CheckPasswordBox>
                     </CheckPasswordContainer>
                     <TitleContainer>
@@ -294,8 +372,11 @@ const CheckPasswordBox=styled.View`
     margin:2px 0px;
 `;
 const CheckPasswordText=styled.Text`
+
     margin-left:9px;
-    color:#ffffff;
+    color:${(props)=>
+        props.isnull ?'#848687':
+        props.check? '#ffffff':'#FF4F4F'};
     font-size:13px;
     font-family:PlusJakartaSans_400Regular;
     

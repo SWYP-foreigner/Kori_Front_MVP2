@@ -90,7 +90,7 @@ const LoginScreen = () => {
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
-      const res=await api.delete("/api/v1/member/withdraw");
+      const res=await api.post("/api/v1/member/logout");
       await SecureStore.deleteItemAsync('jwt');
       await SecureStore.deleteItemAsync('refresh');
       setUserInfo(null);
@@ -100,7 +100,7 @@ const LoginScreen = () => {
       console.error(error);
     }
   };
-
+  
   return (
     <Container>
       <GoogleSignInButton onPress={signIn} />
