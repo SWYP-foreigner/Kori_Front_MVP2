@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
+import api from '@/api/axiosInstance';
 
 GoogleSignin.configure({
   webClientId: '86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com',
@@ -89,10 +90,12 @@ const LoginScreen = () => {
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
+      const res=await api.delete("/api/v1/member/withdraw");
       await SecureStore.deleteItemAsync('jwt');
       await SecureStore.deleteItemAsync('refresh');
       setUserInfo(null);
-      console.log('로그아웃 완료');
+      console.log('로그아웃 완료',res);
+      
     } catch (error) {
       console.error(error);
     }
@@ -115,7 +118,7 @@ const LoginScreen = () => {
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
 
-      <ProfileMoveButton onPress={() => router.push('./(tabs)/chat/CreateSpaceScreen')}>
+      <ProfileMoveButton onPress={() => router.push('./screens/login/GeneralLoginScreen')}>
         <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>
