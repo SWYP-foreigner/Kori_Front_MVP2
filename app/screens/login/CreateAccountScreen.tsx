@@ -12,7 +12,8 @@ const CreateAccountScreen=()=>{
     const [password, setPassword]=useState('');
     const [repeatPassword,setRepeatPassword]=useState('');
     const [firstCheck,setFirstCheck]=useState('');
-    
+    const [lookPassword, setLookPassword] = useState(true);
+    const [lookRepeatPassword,setLookRepeatPassword]=useState(true);
     const isFull=(email&&password);
 
     // Verify 버튼 눌렀을때
@@ -66,14 +67,24 @@ const CreateAccountScreen=()=>{
                     <TitleContainer>
                         <TitleText>Password</TitleText>
                     </TitleContainer>
-                    
-                      <InputBox
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="Enter Password"
-                        placeholderTextColor={"#616262"}
-                        secureTextEntry={true}
-                    />
+                       <PasswordContainer>
+                            <PasswordInputBox
+                            value={password}
+                            onChangeText={setPassword}
+                            placeholder="Enter Password"
+                            placeholderTextColor={"#616262"}
+                            secureTextEntry={lookPassword}
+                        />
+                        <EyeIconBox>
+                            <TouchableOpacity onPress={()=>{setLookPassword(!lookPassword)}}>
+                             <Ionicons
+                                name={lookPassword ? "eye-off-outline" : "eye-outline"}
+                                size={25}
+                                color="#616262"
+                            />
+                            </TouchableOpacity>
+                        </EyeIconBox>
+                       </PasswordContainer>
                     <CheckPasswordContainer>
                         <CheckPasswordBox>
                             <AntDesign name="check" size={18} color="#02F59B" />
@@ -91,13 +102,24 @@ const CreateAccountScreen=()=>{
                     <TitleContainer>
                         <TitleText>Repeat Password</TitleText>
                     </TitleContainer>
-                      <InputBox
-                        value={repeatPassword}
-                        onChangeText={setRepeatPassword}
-                        placeholder="Enter Password"
-                        placeholderTextColor={"#616262"}
-                        secureTextEntry={true}
-                    />
+                     <PasswordContainer>
+                            <PasswordInputBox
+                            value={repeatPassword}
+                            onChangeText={setRepeatPassword}
+                            placeholder="Enter Password"
+                            placeholderTextColor={"#616262"}
+                            secureTextEntry={lookRepeatPassword}
+                        />
+                        <EyeIconBox>
+                            <TouchableOpacity onPress={()=>{setLookRepeatPassword(!lookRepeatPassword)}}>
+                             <Ionicons
+                                name={lookRepeatPassword ? "eye-off-outline" : "eye-outline"}
+                                size={25}
+                                color="#616262"
+                            />
+                            </TouchableOpacity>
+                        </EyeIconBox>
+                       </PasswordContainer>
                      <ErrorBox>
                         <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
                         <ErrorText>Your password do not match. </ErrorText>
@@ -163,16 +185,30 @@ const TitleText=styled.Text`
     font-size:13px;
     margin-bottom:5px;
 `;
-const InputBox=styled.TextInput`
-    color:#ffffff;
+const PasswordContainer=styled.View`
     background-color:#353637;
+    height:50px;
+    border-radius:4px;
+    flex-direction:row;
+    margin-top:5px;
+`;
+const PasswordInputBox=styled.TextInput`
+    color:#ffffff;
+    width:85%;
     height:50px;
     border-radius:4px;
     font-size:13px;
     font-family:PlusJakartaSans_400Regular;
-    margin-top:5px;
     padding-left:10px;
     
+`;
+const EyeIconBox=styled.View`
+    background-color:#353637;
+    border-radius:4px;
+    height:50px;
+    width:15%;
+    align-items:center;
+    justify-content:center;
 `;
 
 const VerifyContainer=styled.View`
