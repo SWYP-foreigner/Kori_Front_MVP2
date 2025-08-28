@@ -44,7 +44,7 @@ const CustomSplashScreen = () => {
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container style={{ opacity: fadeAnim }}>
-        <Logo source={require("../../../assets/images/character2.png")} resizeMode="contain" />
+        <Logo source={require("../../../assets/images/AppLogo.png")} resizeMode="contain" />
       </Container>
     </SafeArea>
   );

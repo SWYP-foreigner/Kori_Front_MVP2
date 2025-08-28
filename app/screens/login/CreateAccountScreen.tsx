@@ -1,410 +1,444 @@
-import React, { useState ,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components/native";
-import {StatusBar,TouchableOpacity} from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import {
+  StatusBar,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from "react-native";
+import Feather from "@expo/vector-icons/Feather";
+import { useRouter } from "expo-router";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-const CreateAccountScreen=()=>{
-    const router = useRouter();
-    const [email,setEmail]=useState('');
-    const [password, setPassword]=useState('');
-    const [repeatPassword,setRepeatPassword]=useState('');
-    const [firstCheck,setFirstCheck]=useState('');
-    const [lookPassword, setLookPassword] = useState(true);
-    const [lookRepeatPassword,setLookRepeatPassword]=useState(true);
-    const isFull=(email&&password);
-    const [checks,setChecks]=useState({
-        isnull:true,
-        uppercase:false,
-        length:false,
-        special:false,
+const CreateAccountScreen = () => {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [lookPassword, setLookPassword] = useState(true);
+  const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
+  const [verifyEmail, setVerifyEmail] = useState(false);
 
-    });
+  const isSamePassword = repeatPassword === password;
 
-    useEffect(() => {
+  const [checks, setChecks] = useState({
+    isnull: true,
+    uppercase: false,
+    length: false,
+    special: false,
+  });
+
+  const [EmailChecks, setEmailChecks] = useState({
+    isnull: true,
+    isEmail: false,
+    isVerified: false,
+  });
+
+  const completeCondition =
+    verifyEmail && checks.length && checks.uppercase && checks.special && isSamePassword;
+
+  useEffect(() => {
     setChecks({
-      isnull:password.length===0,
+      isnull: password.length === 0,
       length: password.length >= 8 && password.length <= 12,
       uppercase: /[A-Z]/.test(password),
       special: /[@!~]/.test(password),
     });
   }, [password]);
 
-    // Verify 버튼 눌렀을때
-    const VerifyEmail=()=>{
-        console.log("이메일 검증");
+  useEffect(() => {
+    setEmailChecks({
+      isnull: email.length === 0,
+      isEmail: isEmail(),
+      isVerified: verifyEmail,
+    });
+  }, [email]);
 
-    };
-    
+  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    return(<SafeArea>
-            <StatusBar barStyle="light-content" />
-            <Container>
-                <HeaderContainer>
-                    <HeaderBox>
-                    <TouchableOpacity onPress={() => router.back()}>
-                    <Feather name="arrow-left" size={23} color="#CCCFD0" />
-                      </TouchableOpacity>
-                    <HeaderTitleText>Create your account</HeaderTitleText>
-                    </HeaderBox>
-                </HeaderContainer>
-                <GeneralLoginContainer>
-                    <TitleContainer>
-                        <TitleText>Email</TitleText>
-                    </TitleContainer>
-                    <VerifyContainer>
-                    <EmailContainer>
-                        <EmailInputBox
-                            value={email}
-                            onChangeText={setEmail}
-                            placeholder="Enter email address"
-                            placeholderTextColor={"#616262"}
-                        />
-                        <CloseErrorBox>
-                             <Ionicons name="close-sharp" size={27} color="#FF4F4F" />
-                        </CloseErrorBox>
-                    </EmailContainer>
-                    <VerifyButton>
-                        <VerifyText>Verify</VerifyText>
-                    </VerifyButton>
-                    </VerifyContainer>
-                    <ErrorBox>
-                        <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
-                        <ErrorText>This email is already in use. </ErrorText>
-                    </ErrorBox>
-                    <TitleContainer>
-                        <TitleText>Password</TitleText>
-                    </TitleContainer>
-                       <PasswordContainer>
-                            <PasswordInputBox
-                            value={password}
-                            onChangeText={setPassword}
-                            placeholder="Enter Password"
-                            placeholderTextColor={"#616262"}
-                            secureTextEntry={lookPassword}
-                        />
-                        <EyeIconBox>
-                            <TouchableOpacity onPress={()=>{setLookPassword(!lookPassword)}}>
-                             <Ionicons
-                                name={lookPassword ? "eye-off-outline" : "eye-outline"}
-                                size={25}
-                                color="#616262"
-                            />
-                            </TouchableOpacity>
-                        </EyeIconBox>
-                       </PasswordContainer>
-                    <CheckPasswordContainer>
-                        <CheckPasswordBox>
-                            {checks.isnull ? (
-                                <>
-                                    <AntDesign name="check" size={18} color="#848687" />
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.uppercase}
-                                    >
-                                    Use all case letters
-                                    </CheckPasswordText>
-                                </>
-                                ) : (
-                                <>
-                                    {checks.uppercase ? (
-                                    <AntDesign name="check" size={18} color="#02F59B" />
-                                    ) : (
-                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                                    )}
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.uppercase}
-                                    >Use all case letters</CheckPasswordText>
-                                </>
-                            )}
-                            {/* {checks.uppercase ? (<AntDesign name="check" size={18} color="#02F59B"/>)
-                            :( <Ionicons name="close-sharp" size={18} color="#FF4F4F" />)}
-                            
-                            <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>Use all case letters</CheckPasswordText> */}
-                        </CheckPasswordBox>
-                        <CheckPasswordBox>
-                              {checks.isnull ? (
-                                <>
-                                    <AntDesign name="check" size={18} color="#848687" />
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.length}
-                                    >
-                                    Enter 8-12 letters
-                                    </CheckPasswordText>
-                                </>
-                                ) : (
-                                <>
-                                    {checks.length ? (
-                                    <AntDesign name="check" size={18} color="#02F59B" />
-                                    
-                                    ) : (
-                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                                    )}
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.length}
-                                    >Enter 8-12 letters</CheckPasswordText>
-                                </>
-                            )}
-                        </CheckPasswordBox>
-                        <CheckPasswordBox>
-                             {checks.isnull ? (
-                                <>
-                                    <AntDesign name="check" size={18} color="#848687" />
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.special}
-                                    >
-                                    Enter special letters (@/!/~)
-                                    </CheckPasswordText>
-                                </>
-                                ) : (
-                                <>
-                                    {checks.special ? (
-                                    <AntDesign name="check" size={18} color="#02F59B" />
-                                    ) : (
-                                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                                    )}
-                                    <CheckPasswordText 
-                                    isnull={checks.isnull} 
-                                    check={checks.special}
-                                    >Enter special letters (@/!/~)</CheckPasswordText>
-                                </>
-                            )}
-                        </CheckPasswordBox>
-                    </CheckPasswordContainer>
-                    <TitleContainer>
-                        <TitleText>Repeat Password</TitleText>
-                    </TitleContainer>
-                     <PasswordContainer>
-                            <PasswordInputBox
-                            value={repeatPassword}
-                            onChangeText={setRepeatPassword}
-                            placeholder="Enter Password"
-                            placeholderTextColor={"#616262"}
-                            secureTextEntry={lookRepeatPassword}
-                        />
-                        <EyeIconBox>
-                            <TouchableOpacity onPress={()=>{setLookRepeatPassword(!lookRepeatPassword)}}>
-                             <Ionicons
-                                name={lookRepeatPassword ? "eye-off-outline" : "eye-outline"}
-                                size={25}
-                                color="#616262"
-                            />
-                            </TouchableOpacity>
-                        </EyeIconBox>
-                       </PasswordContainer>
-                     <ErrorBox>
-                        <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                        <ErrorText>Your password do not match. </ErrorText>
-                    </ErrorBox>
-                </GeneralLoginContainer>
-                
-                <NextButtonContainer 
-                    // isFull={isFull} 
-                    // disabled={!isFull}
-                    // onPress={goLogin}
-                    >
-                    <NextText>Next</NextText>
-                </NextButtonContainer>
-                <BottomSpacer/>
-            </Container>
-            </SafeArea>);
+  const VerifyEmail = () => {
+    console.log("이메일 검증 API 요청");
+  };
+
+  return (
+    <SafeArea>
+      <StatusBar barStyle="light-content" />
+        <Container>
+          <HeaderContainer>
+            <HeaderBox>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Feather name="arrow-left" size={23} color="#CCCFD0" />
+              </TouchableOpacity>
+              <HeaderTitleText>Create your account</HeaderTitleText>
+            </HeaderBox>
+          </HeaderContainer>
+        <KeyboardAvoidingView>
+          {/* ScrollView 안에는 입력 폼만 */}
+          <ScrollView
+             contentContainerStyle={{ flexGrow: 1 }}
+             keyboardShouldPersistTaps="handled"
+          >
+            <GeneralLoginContainer>
+              {/* Email */}
+              <TitleContainer>
+                <TitleText>Email</TitleText>
+              </TitleContainer>
+              <VerifyContainer>
+                <EmailContainer>
+                  <EmailInputBox
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Enter email address"
+                    placeholderTextColor={"#616262"}
+                  />
+                  <CloseErrorBox>
+                    {!EmailChecks.isEmail && !EmailChecks.isnull && (
+                      <Ionicons name="close-sharp" size={27} color="#FF4F4F" />
+                    )}
+                  </CloseErrorBox>
+                </EmailContainer>
+                <VerifyButton
+                  onPress={VerifyEmail}
+                  disabled={!EmailChecks.isEmail}
+                  canVerify={EmailChecks.isEmail}
+                >
+                  <VerifyText>Verify</VerifyText>
+                </VerifyButton>
+              </VerifyContainer>
+              <ErrorBox>
+                {!EmailChecks.isEmail && !EmailChecks.isnull && (
+                  <>
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={18}
+                      color="#FF4F4F"
+                    />
+                    <ErrorText>Not the correct email format.</ErrorText>
+                  </>
+                )}
+              </ErrorBox>
+
+              {/* Password */}
+              <TitleContainer>
+                <TitleText>Password</TitleText>
+              </TitleContainer>
+              <PasswordContainer>
+                <PasswordInputBox
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter Password"
+                  placeholderTextColor={"#616262"}
+                  secureTextEntry={lookPassword}
+                />
+                <EyeIconBox>
+                  <TouchableOpacity onPress={() => setLookPassword(!lookPassword)}>
+                    <Ionicons
+                      name={lookPassword ? "eye-off-outline" : "eye-outline"}
+                      size={25}
+                      color="#616262"
+                    />
+                  </TouchableOpacity>
+                </EyeIconBox>
+              </PasswordContainer>
+
+              {/* Password 체크 */}
+              <CheckPasswordContainer>
+                {/* Uppercase */}
+                <CheckPasswordBox>
+                  {checks.isnull ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#848687" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                        Use all case letters
+                      </CheckPasswordText>
+                    </>
+                  ) : checks.uppercase ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#02F59B" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                        Use all case letters
+                      </CheckPasswordText>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                        Use all case letters
+                      </CheckPasswordText>
+                    </>
+                  )}
+                </CheckPasswordBox>
+
+                {/* Length */}
+                <CheckPasswordBox>
+                  {checks.isnull ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#848687" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                        Enter 8-12 letters
+                      </CheckPasswordText>
+                    </>
+                  ) : checks.length ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#02F59B" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                        Enter 8-12 letters
+                      </CheckPasswordText>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                        Enter 8-12 letters
+                      </CheckPasswordText>
+                    </>
+                  )}
+                </CheckPasswordBox>
+
+                {/* Special */}
+                <CheckPasswordBox>
+                  {checks.isnull ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#848687" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                        Enter special letters (@/!/~)
+                      </CheckPasswordText>
+                    </>
+                  ) : checks.special ? (
+                    <>
+                      <AntDesign name="check" size={18} color="#02F59B" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                        Enter special letters (@/!/~)
+                      </CheckPasswordText>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                      <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                        Enter special letters (@/!/~)
+                      </CheckPasswordText>
+                    </>
+                  )}
+                </CheckPasswordBox>
+              </CheckPasswordContainer>
+
+              {/* Repeat Password */}
+              <TitleContainer>
+                <TitleText>Repeat Password</TitleText>
+              </TitleContainer>
+              <PasswordContainer>
+                <PasswordInputBox
+                  value={repeatPassword}
+                  onChangeText={setRepeatPassword}
+                  placeholder="Enter Password"
+                  placeholderTextColor={"#616262"}
+                  secureTextEntry={lookRepeatPassword}
+                />
+                <EyeIconBox>
+                  <TouchableOpacity
+                    onPress={() => setLookRepeatPassword(!lookRepeatPassword)}
+                  >
+                    <Ionicons
+                      name={lookRepeatPassword ? "eye-off-outline" : "eye-outline"}
+                      size={25}
+                      color="#616262"
+                    />
+                  </TouchableOpacity>
+                </EyeIconBox>
+              </PasswordContainer>
+              {!isSamePassword && (
+                <ErrorBox>
+                  <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                  <ErrorText>Your password do not match.</ErrorText>
+                </ErrorBox>
+              )}
+            </GeneralLoginContainer>
+          </ScrollView>
+          </KeyboardAvoidingView>
+          <NextButtonContainer
+            disabled={!completeCondition}
+            completeCondition={completeCondition}
+          >
+            <NextText>Next</NextText>
+          </NextButtonContainer>
+        </Container>
+    </SafeArea>
+  );
 };
-
 
 export default CreateAccountScreen;
 
-
-const SafeArea=styled.SafeAreaView`
-    flex:1;
-`;
-const Container=styled.View`
-    flex:1;
-    background-color:#1D1E1F;
-    padding:0px 15px;
-`;
-const HeaderContainer=styled.View`
-    flex-direction:row;
-    height:10%;
-    align-items:center;
+/* 스타일 */
+const SafeArea = styled.SafeAreaView`
+  flex: 1;
 `;
 
-const HeaderBox=styled.View`
-    flex-direction:row;
-    width:72%;
-    height:50px;
-    align-items:center;
-    justify-content:space-between;
+const Container = styled.View`
+  flex: 1;
+  background-color: #1d1e1f;
+  padding: 0px 15px;
 `;
 
-const HeaderTitleText=styled.Text`
-    color:#FFFFFF;
-    font-family:PlusJakartaSans_500Medium;
-    font-size:16px;
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  height: 10%;
+  align-items: center;
 `;
 
-const GeneralLoginContainer=styled.View`
-    flex:1;
+const HeaderBox = styled.View`
+  flex-direction: row;
+  width: 72%;
+  height: 50px;
+  align-items: center;
+  justify-content: space-between;
 `;
 
-const TitleContainer=styled.View`
-    justify-content:flex-end;
-    height:50px;
-
-`;
-const TitleText=styled.Text`
-    color:#848687;
-    font-family:PlusJakartaSans_600SemiBold;
-    font-size:13px;
-    margin-bottom:5px;
-`;
-const PasswordContainer=styled.View`
-    background-color:#353637;
-    height:50px;
-    border-radius:4px;
-    flex-direction:row;
-    margin-top:5px;
-`;
-const PasswordInputBox=styled.TextInput`
-    color:#ffffff;
-    width:85%;
-    height:50px;
-    border-radius:4px;
-    font-size:13px;
-    font-family:PlusJakartaSans_400Regular;
-    padding-left:10px;
-    
-`;
-const EyeIconBox=styled.View`
-    background-color:#353637;
-    border-radius:4px;
-    height:50px;
-    width:15%;
-    align-items:center;
-    justify-content:center;
+const HeaderTitleText = styled.Text`
+  color: #ffffff;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 16px;
 `;
 
-const VerifyContainer=styled.View`
-    margin-top:5px;
-    height:50px;
-    flex-direction:row;
+const GeneralLoginContainer = styled.View`
+  flex: 1;
 `;
 
-const EmailContainer=styled.View`
-    background-color:#353637;
-    width:75%;
-    height:50px;
-    border-radius:4px;
-    flex-direction:row;
-    align-items:center;
+const TitleContainer = styled.View`
+  justify-content: flex-end;
+  height: 50px;
 `;
 
-const EmailInputBox=styled.TextInput`
-    width:80%;
-    color:#ffffff;
-    height:50px;
-    font-size:13px;
-    font-family:PlusJakartaSans_400Regular;
-    padding-left:10px;
+const TitleText = styled.Text`
+  color: #848687;
+  font-family: PlusJakartaSans_600SemiBold;
+  font-size: 13px;
+  margin-bottom: 5px;
 `;
 
-const CloseErrorBox=styled.View`
-    height:50px;
-    width:20%;
-    align-items:center;
-    justify-content:center;
+const PasswordContainer = styled.View`
+  background-color: #353637;
+  height: 50px;
+  border-radius: 4px;
+  flex-direction: row;
+  margin-top: 5px;
 `;
 
-const VerifyButton=styled.TouchableOpacity`
-    background-color:#02F59B;
-    width:20%;
-    border-radius:4px;
-    height:50px;
-    font-size:13px;
-    font-family:PlusJakartaSans_400Regular;
-    align-items:center;
-    justify-content:center;
-    margin-left:5px;
-`;
-const VerifyText=styled.Text`
-    color:#1D1E1F;
-    font-size:13px;
-    font-family:PlusJakartaSans_600SemiBold;
+const PasswordInputBox = styled.TextInput`
+  color: #ffffff;
+  width: 85%;
+  height: 50px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+  padding-left: 10px;
 `;
 
-const ErrorBox=styled.View`
-    height:20px;
-    margin-top:10px;
-    flex-direction:row;
-`;
-const ErrorText=styled.Text`
-    color:#ffffff;
-    font-family:PlusJakartaSans_500Medium;
-    font-size:11px;
-    margin-left:5px;
+const EyeIconBox = styled.View`
+  background-color: #353637;
+  border-radius: 4px;
+  height: 50px;
+  width: 15%;
+  align-items: center;
+  justify-content: center;
 `;
 
-const ForgotContainer=styled.View`
-    align-items:center;
-    justify-content:center;
-    height:80px;
+const VerifyContainer = styled.View`
+  margin-top: 5px;
+  height: 50px;
+  flex-direction: row;
 `;
 
-const ForgotText=styled.Text`
-    color:#CCCFD0;
-    font-size:13px;
-    font-family:PlusJakartaSans_500Medium;
-    text-decoration-line: underline;
+const EmailContainer = styled.View`
+  background-color: #353637;
+  width: 75%;
+  height: 50px;
+  border-radius: 4px;
+  flex-direction: row;
+  align-items: center;
 `;
 
-const CheckPasswordContainer=styled.View`
-    margin:20px 0px;
-    height:70px;
-`;
-const CheckPasswordBox=styled.View`
-    flex-direction:row;
-    height:20px;
-    margin:2px 0px;
-`;
-const CheckPasswordText=styled.Text`
-
-    margin-left:9px;
-    color:${(props)=>
-        props.isnull ?'#848687':
-        props.check? '#ffffff':'#FF4F4F'};
-    font-size:13px;
-    font-family:PlusJakartaSans_400Regular;
-    
+const EmailInputBox = styled.TextInput`
+  width: 80%;
+  color: #ffffff;
+  height: 50px;
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+  padding-left: 10px;
 `;
 
-
-const NextButtonContainer=styled.TouchableOpacity`
-    background-color:#02F59B;
-    border-radius:8px;
-    height:50px;
-    opacity: ${(props) => (props.isFull ? 1 : 0.5)};
-    align-items:center;
-    justify-content:center;
-`;
-const NextText=styled.Text`
-    color:#1D1E1F;
-    font-size:15px;
-    font-family:PlusJakartaSans_500Medium;
-`;
-const CNAContainter=styled(ForgotContainer)`
-    margin-bottom:30px;    
-    height:80px;
-
-`;
-const CNAText=styled(ForgotText)`
-    color:#ffffff;
+const CloseErrorBox = styled.View`
+  height: 50px;
+  width: 20%;
+  align-items: center;
+  justify-content: center;
 `;
 
-const BottomSpacer=styled.View`    
-    height:50px;
+const VerifyButton = styled.TouchableOpacity`
+  background-color: #02f59b;
+  width: 20%;
+  border-radius: 4px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  opacity: ${(props) => (props.canVerify ? 1 : 0.5)};
+`;
+
+const VerifyText = styled.Text`
+  color: #1d1e1f;
+  font-size: 13px;
+  font-family: PlusJakartaSans_600SemiBold;
+`;
+
+const ErrorBox = styled.View`
+  height: 20px;
+  margin-top: 10px;
+  flex-direction: row;
+`;
+
+const ErrorText = styled.Text`
+  color: #ffffff;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 11px;
+  margin-left: 5px;
+`;
+
+const CheckPasswordContainer = styled.View`
+  margin: 20px 0px;
+  height: 70px;
+`;
+
+const CheckPasswordBox = styled.View`
+  flex-direction: row;
+  height: 20px;
+  margin: 2px 0px;
+`;
+
+const CheckPasswordText = styled.Text`
+  margin-left: 9px;
+  color: ${(props) =>
+    props.isnull ? "#848687" : props.check ? "#ffffff" : "#FF4F4F"};
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+`;
+
+const NextButtonContainer = styled.TouchableOpacity`
+  position: absolute;
+  background-color: #02f59b;
+  border-radius: 8px;
+  width: 100%;
+  height: 50px;
+  bottom: 50px;
+  opacity: ${(props) => (props.completeCondition ? 1 : 0.5)};
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+`;
+
+const NextText = styled.Text`
+  color: #1d1e1f;
+  font-size: 15px;
+  font-family: PlusJakartaSans_500Medium;
 `;
