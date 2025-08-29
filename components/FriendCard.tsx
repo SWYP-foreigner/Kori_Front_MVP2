@@ -5,6 +5,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
+import { useRouter } from 'expo-router';
 
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
@@ -30,7 +31,7 @@ type Props = {
   onAccept?: (userId: number) => void;
   onCancel?: (userId: number) => void;
 
-  onChat?: () => void;
+  onChat?: () => void; 
   footerSlot?: React.ReactNode;
   collapsible?: boolean;
 };
@@ -88,6 +89,7 @@ export default function FriendCard({
   footerSlot,
 }: Props) {
   const [expanded, setExpanded] = useState(true);
+  const router = useRouter();
 
   const handlePrimaryPress = () => {
     if (mode === 'received') {
@@ -101,6 +103,17 @@ export default function FriendCard({
     if (isFollowed) onUnfollow?.(userId);
     else onFollow?.(userId);
   };
+  
+  const handleChat=()=>{
+    router.push({
+      pathname: '../screens/chatscreen/ChattingRoomScreen',
+      params: { 
+        userId: userId.toString(),       // props에서 바로 가져옴
+        name: encodeURIComponent(name),  // props에서 바로 가져옴
+      },
+    });
+  };
+
 
   return (
     <CardWrap>
@@ -214,7 +227,7 @@ export default function FriendCard({
                 tone="black"
                 filled
                 leftIcon="chat-bubble-outline"
-                onPress={onChat}
+                onPress={handleChat}
               />
             </>
           ) : (
@@ -231,7 +244,7 @@ export default function FriendCard({
                 tone="black"
                 filled
                 leftIcon="chat-bubble-outline"
-                onPress={onChat}
+                onPress={handleChat}
               />
             </>
           )}

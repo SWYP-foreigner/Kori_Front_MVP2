@@ -1,10 +1,11 @@
 import FriendCard from '@/components/FriendCard';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
 import styled from 'styled-components/native';
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const followMutation = useFollowUser();
-
+  const router=useRouter();
   return (
     <Safe>
       <Header>
@@ -38,7 +39,7 @@ export default function HomeScreen() {
           ]}
           isFollowed={false}
           onFollow={(userId) => followMutation.mutate(userId)}
-          onChat={() => { }}
+          onChat={() =>{}}
         />
         <FriendCard
           userId={99}

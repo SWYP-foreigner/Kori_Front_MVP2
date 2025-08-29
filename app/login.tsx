@@ -101,10 +101,25 @@ const LoginScreen = () => {
     }
   };
   
+  const temp = async () => {
+  console.log("Temp 들어옴");
+  try {
+    const res = await api.post("/api/v1/member/refresh");
+    console.log(res);
+  } catch (error) {
+    // 여기에 에러 응답 본문을 출력하는 코드를 추가합니다.
+    console.error("Axios Error:", error.response ? error.response.data : error.message);
+  }
+};
+
   return (
     <Container>
       <GoogleSignInButton onPress={signIn} />
-      <AppleSignInButton />
+      <AppleSignInButton/>
+
+      <TabsMoveButton onPress={temp}>
+        <TabsMoveText>Refresh Token 테스트</TabsMoveText>
+      </TabsMoveButton>
 
       <TabsMoveButton onPress={signOut}>
         <TabsMoveText>구글 Sign out</TabsMoveText>
