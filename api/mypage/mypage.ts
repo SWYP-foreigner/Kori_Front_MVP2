@@ -1,5 +1,7 @@
 import api from '@/api/axiosInstance';
 
+export type FollowStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+
 export type Profile = {
     firstname?: string;
     lastname?: string;
@@ -12,6 +14,13 @@ export type Profile = {
     hobby?: string[];
     imageKey?: string;
     email?: string;
+};
+
+export type FollowingRow = {
+    id: number;
+    username: string;
+    nationality?: string;
+    sex?: string;
 };
 
 export async function getMyProfile() {                 // 🔥 변경 (추가)
@@ -55,4 +64,11 @@ export async function declineFollow(fromUserId: number) {
 export async function unfollowUser(friendId: number) {
     const { data } = await api.delete(`/api/v1/mypage/users/follow/${friendId}`);
     return data as { message?: string; data?: unknown; timestamp?: string };
+}
+
+export async function getFollowing(status: FollowStatus) {
+    const { data } = await api.get<FollowingRow[]>('/api/v1/mypage/following', {
+        params: { status },
+    });
+    return data;
 }
