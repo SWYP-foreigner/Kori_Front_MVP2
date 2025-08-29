@@ -98,7 +98,7 @@ const MyChatRoomBox = ({data}) => {
           <FontAwesome name="trash-o" size={24} color="#ffffff" />
         </DeleteButton>
       
-
+      
       {/* 채팅방 박스 (앞에서 움직이는 뷰) */}
       <Animated.View
         style={{
@@ -107,22 +107,25 @@ const MyChatRoomBox = ({data}) => {
         }}
         {...panResponder.panHandlers}
       >
+   
         <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
-            <RoomImage source={require("../assets/images/character2.png")} />
+            
+            <RoomImage source={{ uri: "https://kr.object.ncloudstorage.com/foreigner-bucket/tempsss/계족산_1.jpg" }}/>
+    
           </RoomImageContainer>
           <RoomWrapper>
             <RoomTop>
               <ChatPeopleContainer>
-                <ChatPerson>{data.name}</ChatPerson>
-                <ChatPeople>{data.count}</ChatPeople>
+                <ChatPerson>{data.roomName}</ChatPerson>
+                <ChatPeople>{data.participantCount}</ChatPeople>
               </ChatPeopleContainer>
-              <ChatTime>{data.time}</ChatTime>
+              <ChatTime>{data.lastMessageTime}</ChatTime>
             </RoomTop>
             <RoomBottom>
-              <ChatContent>{data.message}</ChatContent>
+              <ChatContent>{data.lastMessageContent}</ChatContent>
               <ChatCountBox>
-                <ChatCount>{data.mcount}</ChatCount>
+                <ChatCount>{data.unreadCount}</ChatCount>
               </ChatCountBox>
             </RoomBottom>
           </RoomWrapper>
@@ -166,14 +169,18 @@ const RoomBox = styled.TouchableOpacity`
 `;
 
 const RoomImageContainer = styled.View`
+
   width: 20%;
-  height: 60px;
+  height: 100%;
+  align-items:center;
+  justify-content:center;
+  
 `;
 
 const RoomImage = styled.Image`
-  width: 100%;
-  height: 85%;
-  resize-mode: contain;
+  width: 85%;
+  height: 80%;
+  border-radius:30px;  
 `;
 
 const RoomWrapper = styled.View`

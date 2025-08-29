@@ -23,7 +23,7 @@ type AppLoginResponse = {
   data: {
     accessToken: string;
     refreshToken: string;
-    id: number;
+    userId: number;
   };
   message: string;
   timestamp: string;
@@ -40,11 +40,14 @@ const LoginScreen = () => {
         { code }
       );
 
-      const { accessToken, refreshToken } = res.data.data;
+      const { accessToken, refreshToken,userId} = res.data.data;
 
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken); // (선택)
-
+      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      console.log("로그인 성공");
+      console.log("userId",userId);
+      
       await new Promise((r) => setTimeout(r, 0));
 
       router.replace('/(tabs)');
@@ -93,6 +96,7 @@ const LoginScreen = () => {
       const res=await api.post("/api/v1/member/logout");
       await SecureStore.deleteItemAsync('jwt');
       await SecureStore.deleteItemAsync('refresh');
+      await SecureStore.deleteItemAsync('MyuserId');
       setUserInfo(null);
       console.log('로그아웃 완료',res);
       
