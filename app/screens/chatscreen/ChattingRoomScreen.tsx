@@ -4,11 +4,15 @@ import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,TouchableOpacity} from 'react-native';
-
+import { useLocalSearchParams } from "expo-router";
 
 const ChattingRoomScreen=()=>{
     const router = useRouter();
-
+    const { userId, name } = useLocalSearchParams<{ userId: string; name: string }>();
+    const { roomId }= useLocalSearchParams<{ roomId : string }>();
+    console.log("userId",userId);
+    console.log("name",name);
+    console.log("roomId",roomId);
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
@@ -24,7 +28,7 @@ const ChattingRoomScreen=()=>{
                             </TouchableOpacity>
                         </Left>
                         <Center>
-                            <HeaderTitleText>Kori</HeaderTitleText>
+                            <HeaderTitleText>{name}</HeaderTitleText>
                         </Center>
                         <Right>
                             <TouchableOpacity onPress={() => router.back()}>

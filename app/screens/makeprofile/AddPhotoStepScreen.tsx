@@ -7,6 +7,11 @@ import Fontisto from '@expo/vector-icons/Fontisto';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import {useProfile} from '../../contexts/ProfileContext'
 import { Asset } from 'expo-asset';
+import * as Crypto from "expo-crypto";
+import api from '@/api/axiosInstance';
+import axios from 'axios';
+import { Buffer } from "buffer";
+import * as FileSystem from 'expo-file-system';
 
 // ------------------------
 // AddPhotoStepScreen
@@ -34,6 +39,7 @@ export default function AddPhotoStepScreen({ navigation }) {
   ];
 
   const handleAvatarSelect = async (index) => {
+  console.log("index",index);
   setSelectedAvatar(index);
   setSelectedPhoto(null);
 
@@ -96,7 +102,7 @@ export default function AddPhotoStepScreen({ navigation }) {
     updateProfile('photo', {
       type: 'custom',
       uri: uri,
-      name: 'profile.jpg',
+      name: 'UserProfile.jpg',
       typeMime: 'image/jpeg'
     });
   }
@@ -121,17 +127,109 @@ export default function AddPhotoStepScreen({ navigation }) {
       updateProfile('photo', {
         type: 'custom', // 사용자가 선택한 사진
         uri: uri,
-        name: 'profile.jpg',
+        name: 'UserProfilePhoto.jpg',
         typeMime: 'image/jpeg'
       });
   }
   };
 
- 
+  // 프로필 등록 
+  const doneProfile=async()=>{
 
-  const handleNext = () => {
-    router.push('./PurposeStepScreen');
+    if(selectedPhoto !== null){
+        const filename=profileData.photo.name;
+        const uploadSessionId = Crypto.randomUUID();
+        const contentType=profileData.photo.typeMime;
+
+        const requestBody={
+          "imageType": "USER",
+          "uploadSessionId":uploadSessionId,
+          "files": [
+            {
+              "filename": filename,
+              "contentType": contentType,
+            }
+          ]
+        }
+
+    // presigned url 발급 받음
+    try{
+      const res= await api.post('/api/v1/images/presign',requestBody);
+      const presignedInfo = res.data.data[0]; // 첫 번째 파일 정보
+      const photo=profileData.photo;
+
+      // ncp에 이미지 전송
+      await SendImage(presignedInfo,photo);
+      // 프로필 등록 완료 
+       await CompleteProfile(presignedInfo.key);
+    }catch (err) {
+        console.error('API 요청 실패:', err);
+    }
+  }
+  else{
+      // 기본 아이콘 선택시 
+      let url;
+      if(selectedAvatar===0)
+      {
+        url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png"
+      }
+      else if(selectedAvatar===1)
+      {
+        url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png"
+      }
+      else{
+          url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png"
+      }
+      await CompleteProfile(url);
+  }
   };
+
+  const SendImage = async (presignedInfo, photo) => {
+  try {
+    // 1️⃣ Base64 인코딩된 파일 읽기
+    const fileData = await FileSystem.readAsStringAsync(photo.uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // 2️⃣ Base64 → Buffer 변환
+    const buffer = Buffer.from(fileData, "base64");
+
+    // 3️⃣ PUT 요청
+    await axios.put(presignedInfo.putUrl, buffer, {
+      headers: {
+        ...presignedInfo.headers,
+        "Content-Type": photo.typeMime,
+      },
+    });
+
+    console.log("✅ 업로드 성공");
+  } catch (err) {
+    console.error("❌ 업로드 실패:", err);
+  }
+};
+
+    // 프로필 완전 등록
+    const CompleteProfile = async (imageKey: string) => {
+    try {
+      // photo 제외하고 나머지 데이터만 추출
+      const { photo, ...profileWithoutPhoto } = profileData;
+
+      // imageKey 추가
+      const payload = {
+        ...profileWithoutPhoto,
+        imageKey,
+      };
+
+      // 서버로 전송
+      const res = await api.patch('/api/v1/member/profile/setup', payload);
+      console.log('프로필 업데이트 성공', res);
+    } catch (err) {
+      console.error('프로필 업데이트 실패', err);
+      throw err;
+    }
+  };
+
+
 
   return (
     <SafeArea bgColor="#0F0F10">
@@ -186,11 +284,11 @@ export default function AddPhotoStepScreen({ navigation }) {
         <Spacer />
 
         <NextButton
-          // onPress={handleNext}
+           onPress={doneProfile}
           disabled={!canProceed}
           canProceed={canProceed}
         >
-          <ButtonText>Next</ButtonText>
+          <ButtonText>Done</ButtonText>
         </NextButton>
 
         <BottomSpacer />

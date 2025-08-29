@@ -2,12 +2,16 @@ import React, { useRef } from "react";
 import { Animated, PanResponder, Text,Alert } from "react-native";
 import styled from "styled-components/native";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
 const MyChatRoomBox = ({data}) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const isOpen = useRef(false);
+   const router = useRouter();
+
+
   const onDelete=()=>
   {
     console.log('삭제 버튼 눌림');
@@ -21,6 +25,18 @@ const MyChatRoomBox = ({data}) => {
        }
     ]);
   };
+  
+  //채팅방 진입
+  const enterChattingRoom=()=>{
+    router.push({
+      pathname: '../screens/chatscreen/ChattingRoomScreen',
+      params: { 
+        roomId: data.id,       // props에서 바로 가져옴
+        name: data.name,  // props에서 바로 가져옴
+      },
+    });
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
@@ -91,7 +107,7 @@ const MyChatRoomBox = ({data}) => {
         }}
         {...panResponder.panHandlers}
       >
-        <RoomBox activeOpacity={0.8}>
+        <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
             <RoomImage source={require("../assets/images/character2.png")} />
           </RoomImageContainer>
