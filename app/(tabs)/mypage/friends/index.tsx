@@ -1,4 +1,5 @@
 import FriendCard from '@/components/FriendCard';
+import useUnfollow from '@/hooks/mutations/useUnfollow';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
@@ -38,16 +39,28 @@ export default function FriendsOnlyScreen() {
     const [page, setPage] = useState(1);
     const listRef = useRef<import('react-native').FlatList>(null);
 
+    const unfollowMutation = useUnfollow();
+
     const confirmUnfollow = (userId: number) => {
         Alert.alert(
             'Are you sure you want to cancel follow?',
-            'If you cancel follow, This will be removed from your friends list.',
+            'If you cancel follow, this will be removed from your friends list.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Action',
+                    text: 'Unfollow',
                     style: 'destructive',
-                    onPress: () => setFriends(prev => prev.filter(f => f.id !== userId)),
+                    onPress: async () => {
+                        const snapshot = friends;
+                        setFriends(prev => prev.filter(f => f.id !== userId));
+                        try {
+                            await unfollowMutation.mutateAsync(userId);
+                        } catch (e) {
+                            console.log('[unfollow] error', e);
+                            setFriends(snapshot);
+                            Alert.alert('Failed to unfollow', 'Please try again later.');
+                        }
+                    },
                 },
             ],
         );
@@ -66,7 +79,7 @@ export default function FriendsOnlyScreen() {
                     <AntDesign name="left" size={20} color="#fff" />
                 </BackBtn>
 
-                \                <TitleWrap pointerEvents="none">
+                <TitleWrap pointerEvents="none">
                     <Title>Friends List</Title>
                 </TitleWrap>
 
