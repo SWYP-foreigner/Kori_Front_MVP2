@@ -1,5 +1,6 @@
 import FriendCard from '@/components/FriendCard';
 import useUnfollow from '@/hooks/mutations/useUnfollow';
+import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
@@ -8,32 +9,34 @@ import styled from 'styled-components/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const MOCK_FRIENDS = [
-    {
-        id: 201,
-        name: 'Alice Kori, Kim',
-        country: 'United States',
-        birth: 2025,
-        purpose: 'Business',
-        languages: ['EN', 'KO'],
-        personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
-        bio: 'Hello~ I came to Korea from the U.S. as an exchange student',
-    },
-    {
-        id: 202,
-        name: 'Mina Park',
-        country: 'Korea',
-        birth: 2025,
-        purpose: 'Education',
-        languages: ['KO', 'EN'],
-        personalities: ['Exploring Cafés', 'Board Games', 'Doing Nothing', 'K-Food Lover', 'K-Drama Lover'],
-        bio: 'Nice to meet you!',
-    },
-];
+type FriendItem = {
+    id: number;
+    name: string;
+    country: string;
+    birth?: number;
+    purpose: string;
+    languages: string[];
+    personalities: string[];
+    bio?: string;
+};
+
+const toFriendItem = (row: any): FriendItem => ({
+    id: Number(row?.id),
+    name: row?.username ?? 'Unknown',
+    country: row?.nationality ?? '',
+    birth: undefined,
+    purpose: '',
+    languages: [],
+    personalities: [],
+    bio: '',
+});
 
 export default function FriendsOnlyScreen() {
-    const [friends, setFriends] = useState(MOCK_FRIENDS);
-    const list = useMemo(() => friends, [friends]);
+    const { data, isLoading, isError, refetch } = useAcceptedFollowing();
+    const list = useMemo<FriendItem[]>(
+        () => (data ?? []).map(toFriendItem),
+        [data]
+    );
 
     const totalPages = list.length;
     const [page, setPage] = useState(1);
@@ -51,13 +54,11 @@ export default function FriendsOnlyScreen() {
                     text: 'Unfollow',
                     style: 'destructive',
                     onPress: async () => {
-                        const snapshot = friends;
-                        setFriends(prev => prev.filter(f => f.id !== userId));
                         try {
                             await unfollowMutation.mutateAsync(userId);
+                            await refetch();
                         } catch (e) {
                             console.log('[unfollow] error', e);
-                            setFriends(snapshot);
                             Alert.alert('Failed to unfollow', 'Please try again later.');
                         }
                     },
@@ -129,16 +130,33 @@ export default function FriendsOnlyScreen() {
                         </Inner>
                     </Page>
                 )}
+                ListEmptyComponent={
+                    <Empty>
+                        <EmptyText>
+                            {isLoading
+                                ? 'Loading...'
+                                : isError
+                                    ? 'Failed to load.'
+                                    : 'No friends yet.'}
+                        </EmptyText>
+                    </Empty>
+                }
             />
 
             <Pager>
-                <PagerBtn disabled={page <= 1} onPress={() => goToIndex(page - 2)}>
+                <PagerBtn
+                    disabled={page <= 1}
+                    onPress={() => goToIndex(page - 2)}
+                >
                     <PagerArrow>‹</PagerArrow>
                 </PagerBtn>
 
                 <PagerText>{` ${page} / ${totalPages} `}</PagerText>
 
-                <PagerBtn disabled={page >= totalPages} onPress={() => goToIndex(page)}>
+                <PagerBtn
+                    disabled={page >= totalPages}
+                    onPress={() => goToIndex(page)}
+                >
                     <PagerArrow>›</PagerArrow>
                 </PagerBtn>
             </Pager>
@@ -218,4 +236,13 @@ const PagerText = styled.Text`
   color: #b7babd;
   font-size: 12px;
   font-family: 'PlusJakartaSans_400Regular';
+`;
+
+const Empty = styled.View`
+  padding: 40px 16px;
+  align-items: center;
+`;
+
+const EmptyText = styled.Text`
+  color: #cfcfcf;
 `;

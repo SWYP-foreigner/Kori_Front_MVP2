@@ -1,4 +1,4 @@
-import { FollowingRow, FollowStatus, getFollowing } from '@/api/mypage';
+import { FollowingRow, FollowStatus, getFollowing } from '@/api/mypage/mypage';
 import { useQuery } from '@tanstack/react-query';
 
 export function useFollowing(status: FollowStatus) {

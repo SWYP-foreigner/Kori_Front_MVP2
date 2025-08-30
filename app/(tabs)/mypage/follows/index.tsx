@@ -1,9 +1,10 @@
 import FriendCard from '@/components/FriendCard';
 import useAcceptFollow from '@/hooks/mutations/useAcceptFollow';
 import useDeclineFollow from '@/hooks/mutations/useDeclineFollow';
+import { usePendingFollowing } from '@/hooks/queries/useFollowing';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -22,63 +23,27 @@ type FriendItem = {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const MOCK_RECEIVED: FriendItem[] = [
-  {
-    id: 101,
-    name: 'Jenny',
-    country: 'United States',
-    birth: 2025,
-    purpose: 'Business',
-    languages: ['EN', 'KO'],
-    personalities: [
-      'Exploring Cafés',
-      'Board Games',
-      'Doing Nothing',
-      'K-Food Lover',
-      'K-Drama Lover',
-    ],
-    bio: 'Hi there!',
-  },
-  {
-    id: 102,
-    name: 'Alex',
-    country: 'Canada',
-    birth: 2025,
-    purpose: 'Travel',
-    languages: ['EN'],
-    personalities: ['Hiking', 'Reading'],
-    bio: 'Hey!',
-  },
-];
-
-const MOCK_SENT: FriendItem[] = [
-  {
-    id: 201,
-    name: 'Tom',
-    country: 'France',
-    birth: 2025,
-    purpose: 'Travel',
-    languages: ['EN'],
-    personalities: ['Board Games', 'K-Food Lover'],
-    bio: 'Bonjour!',
-  },
-  {
-    id: 202,
-    name: 'Mina',
-    country: 'Korea',
-    birth: 2025,
-    purpose: 'Education',
-    languages: ['KO', 'EN'],
-    personalities: ['Exploring Cafés', 'K-Drama Lover'],
-    bio: 'Nice to meet you!',
-  },
-];
+const toFriendItem = (row: any): FriendItem => ({
+  id: Number(row?.id),
+  name: row?.username ?? 'Unknown',
+  country: row?.nationality ?? '',
+  birth: undefined,
+  purpose: '',
+  languages: [],
+  personalities: [],
+  bio: '',
+});
 
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
 
-  const [rData, setRData] = useState<FriendItem[]>(MOCK_RECEIVED);
-  const [sData] = useState<FriendItem[]>(MOCK_SENT);
+  const { data, isLoading, isError, refetch } = usePendingFollowing();
+  const receivedList = useMemo<FriendItem[]>(
+    () => (data ?? []).map(toFriendItem),
+    [data]
+  );
+
+  const sentList: FriendItem[] = [];
 
   const rRef = useRef<FlatList<FriendItem>>(null);
   const sRef = useRef<FlatList<FriendItem>>(null);
@@ -102,7 +67,7 @@ export default function FollowListScreen() {
   const handleAccept = async (userId: number) => {
     try {
       await acceptMutation.mutateAsync(userId);
-      setRData(prev => prev.filter(x => x.id !== userId));
+      await refetch();
     } catch (e) {
       console.log('[accept-follow] error', e);
     }
@@ -111,7 +76,7 @@ export default function FollowListScreen() {
   const handleDecline = async (userId: number) => {
     try {
       await declineMutation.mutateAsync(userId);
-      setRData(prev => prev.filter(x => x.id !== userId));
+      await refetch();
     } catch (e) {
       console.log('[decline-follow] error', e);
     }
@@ -123,18 +88,27 @@ export default function FollowListScreen() {
         <BackBtn onPress={() => router.back()}>
           <AntDesign name="left" size={20} color="#fff" />
         </BackBtn>
+
         <HeaderCenter>
           <Title>Friends List</Title>
         </HeaderCenter>
+
         <RightSlot />
       </Header>
 
       <TabsWrap>
         <TabsRow>
-          <TabItem active={tab === 'received'} onPress={() => setTab('received')}>
+          <TabItem
+            active={tab === 'received'}
+            onPress={() => setTab('received')}
+          >
             <TabText active={tab === 'received'}>Received</TabText>
           </TabItem>
-          <TabItem active={tab === 'sent'} onPress={() => setTab('sent')}>
+
+          <TabItem
+            active={tab === 'sent'}
+            onPress={() => setTab('sent')}
+          >
             <TabText active={tab === 'sent'}>Sent</TabText>
           </TabItem>
         </TabsRow>
@@ -145,7 +119,7 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={rRef}
-            data={rData}
+            data={receivedList}
             keyExtractor={(i) => String(i.id)}
             horizontal
             pagingEnabled
@@ -159,7 +133,9 @@ export default function FollowListScreen() {
               index: i,
             })}
             onScroll={(e) =>
-              setRPage(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1)
+              setRPage(
+                Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1
+              )
             }
             scrollEventThrottle={16}
             renderItem={({ item }) => (
@@ -186,23 +162,31 @@ export default function FollowListScreen() {
             )}
             ListEmptyComponent={
               <Empty>
-                <EmptyText>No received requests.</EmptyText>
+                <EmptyText>
+                  {isLoading
+                    ? 'Loading...'
+                    : isError
+                      ? 'Failed to load.'
+                      : 'No received requests.'}
+                </EmptyText>
               </Empty>
             }
           />
 
-          {rData.length > 1 && (
+          {receivedList.length > 1 && (
             <Pager>
               <PagerBtn
                 disabled={rPage <= 1}
-                onPress={() => goToIndex(rRef, rData.length, rPage - 2)}
+                onPress={() => goToIndex(rRef, receivedList.length, rPage - 2)}
               >
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
-              <PagerText>{` ${rPage} / ${rData.length} `}</PagerText>
+
+              <PagerText>{` ${rPage} / ${receivedList.length} `}</PagerText>
+
               <PagerBtn
-                disabled={rPage >= rData.length}
-                onPress={() => goToIndex(rRef, rData.length, rPage)}
+                disabled={rPage >= receivedList.length}
+                onPress={() => goToIndex(rRef, receivedList.length, rPage)}
               >
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
@@ -213,7 +197,7 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={sRef}
-            data={sData}
+            data={sentList}
             keyExtractor={(i) => String(i.id)}
             horizontal
             pagingEnabled
@@ -227,7 +211,9 @@ export default function FollowListScreen() {
               index: i,
             })}
             onScroll={(e) =>
-              setSPage(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1)
+              setSPage(
+                Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1
+              )
             }
             scrollEventThrottle={16}
             renderItem={({ item }) => (
@@ -259,18 +245,20 @@ export default function FollowListScreen() {
             }
           />
 
-          {sData.length > 1 && (
+          {sentList.length > 1 && (
             <Pager>
               <PagerBtn
                 disabled={sPage <= 1}
-                onPress={() => goToIndex(sRef, sData.length, sPage - 2)}
+                onPress={() => goToIndex(sRef, sentList.length, sPage - 2)}
               >
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
-              <PagerText>{` ${sPage} / ${sData.length} `}</PagerText>
+
+              <PagerText>{` ${sPage} / ${sentList.length} `}</PagerText>
+
               <PagerBtn
-                disabled={sPage >= sData.length}
-                onPress={() => goToIndex(sRef, sData.length, sPage)}
+                disabled={sPage >= sentList.length}
+                onPress={() => goToIndex(sRef, sentList.length, sPage)}
               >
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
@@ -329,7 +317,8 @@ const TabItem = styled.Pressable<{ active: boolean }>`
   align-items: center;
   padding: 12px 6px;
   border-bottom-width: 2px;
-  border-bottom-color: ${({ active }) => (active ? '#30F59B' : 'transparent')};
+  border-bottom-color: ${({ active }) =>
+    active ? '#30F59B' : 'transparent'};
 `;
 
 const TabText = styled.Text<{ active: boolean }>`
