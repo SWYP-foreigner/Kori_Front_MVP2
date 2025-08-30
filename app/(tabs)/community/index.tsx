@@ -3,6 +3,7 @@ import PostCard, { Post } from '@/components/PostCard';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { FlatList, ListRenderItem, type FlatListProps } from 'react-native';
@@ -97,9 +98,19 @@ export default function CommunityScreen() {
                     <Title>Community</Title>
                     <IconImage source={ICON} />
                 </Left>
+
                 <Right>
-                    <AntDesign name="search1" size={18} color="#cfd4da" />
-                    <AntDesign name="bells" size={18} color="#cfd4da" style={{ marginLeft: 14 }} />
+                    <IconBtn onPress={() => router.push('/community/search')}>
+                        <AntDesign name="search1" size={18} color="#cfd4da" />
+                    </IconBtn>
+
+                    <IconBtn onPress={() => router.push('/community/bookmarks')}>
+                        <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
+                    </IconBtn>
+
+                    <IconBtn onPress={() => router.push('/mypage')}>
+                        <AntDesign name="user" size={18} color="#cfd4da" />
+                    </IconBtn>
                 </Right>
             </Header>
 
@@ -159,6 +170,11 @@ const IconImage = styled.Image`
 const Right = styled.View`
   flex-direction: row;
   align-items: center;
+`;
+
+const IconBtn = styled.Pressable`
+  padding: 6px;
+  margin-left: 8px;
 `;
 
 const ChipsWrap = styled.View`
