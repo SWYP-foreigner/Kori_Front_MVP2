@@ -108,7 +108,7 @@ export default function CommunityScreen() {
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
                     </IconBtn>
 
-                    <IconBtn onPress={() => router.push('/mypage')}>
+                    <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>
                 </Right>

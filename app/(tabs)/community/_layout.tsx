@@ -31,6 +31,13 @@ export default function CommunityLayout() {
                     title: "북마크",
                 }}
             />
+            <Stack.Screen
+                name="my-history"
+                options={{
+                    headerShown: false,
+                    title: "히스토리",
+                }}
+            />
         </Stack>
     )
 }
