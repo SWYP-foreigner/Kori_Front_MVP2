@@ -1,13 +1,21 @@
-import React from "react";
+import React,{useState} from "react";
 import styled from "styled-components/native";
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,TouchableOpacity} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import MembersBox from "@/components/MembersBox";
-
+import { Modal } from "react-native";
 
 const ChatInsideMember=()=>{
     const router = useRouter();
+        // BottomSheet 상태
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [selectedMember, setSelectedMember] = useState<string | null>(null);
+
+    const toggleModal = (memberName?: string) => {
+        if (memberName) setSelectedMember(memberName);
+        setModalVisible(!isModalVisible);
+    };
 
     return(
           <SafeArea>
@@ -32,25 +40,29 @@ const ChatInsideMember=()=>{
                 {/* FlatList로 변경예정 */}
                 <ScrollView>
                 <MembersScreen>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
+                    <MembersBox
+                        name="Kori"
+                        onPressMore={() => {
+                            setSelectedMember("Kori");
+                            setModalVisible(true);
+                        }}
+                    />
+                    <MembersBox
+                        name="Shinhyo"
+                        onPressMore={() => {
+                            setSelectedMember("Shinhyo");
+                            setModalVisible(true);
+                        }}
+                    />
+                    
                 </MembersScreen>
                 </ScrollView>
                 <LeaveChatButton>
                     <LeaveChatButtonText>Leave Chat</LeaveChatButtonText>
                 </LeaveChatButton>
                 <BottomSpacer/>
+
+               
                 </Container>
                 </SafeArea>
         

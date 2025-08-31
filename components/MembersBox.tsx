@@ -4,7 +4,8 @@ import {TouchableOpacity} from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
-const MembersBox=()=>{
+
+const MembersBox=({ name, onPressMore })=>{
     const router = useRouter();
     return(<MemberContainer>   
                     <ProfileBox>
@@ -12,12 +13,12 @@ const MembersBox=()=>{
                     </ProfileBox>
                     <Memberbox>
                         <MemberisHostBox>
-                            <MemberNameText>shotaro(me)</MemberNameText>
+                            <MemberNameText>{name}</MemberNameText>
                             <HostBox>
                                 <HostText>Host</HostText>
                             </HostBox>
                         </MemberisHostBox>
-                        <TouchableOpacity onPress={() => console.log("신고기능")}>
+                        <TouchableOpacity onPress={onPressMore}>
                         <AntDesign name="ellipsis1" size={24} color="#848687" />
                         </TouchableOpacity>
                     </Memberbox>
