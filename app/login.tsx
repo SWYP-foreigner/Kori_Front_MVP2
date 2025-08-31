@@ -40,8 +40,8 @@ const LoginScreen = () => {
         { code }
       );
 
-      const { accessToken, refreshToken,userId} = res.data.data;
-
+      const { accessToken, refreshToken,userId,isNewUser} = res.data.data;
+      
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken); // (선택)
       await SecureStore.setItemAsync('MyuserId', userId.toString());
@@ -49,8 +49,13 @@ const LoginScreen = () => {
       console.log("userId",userId);
       
       await new Promise((r) => setTimeout(r, 0));
-
-      router.replace('/(tabs)');
+      // if(isNewUser)
+      // {
+      //   router.replace('./screens/makeprofile/NameStepScreen');
+      // }else{
+      //    router.replace('/(tabs)');
+      // }
+        router.replace('/(tabs)');
     } catch (error) {
       console.error('서버 요청 실패', error);
     }

@@ -147,7 +147,15 @@ const ChattingRoomScreen=()=>{
 
     setInputText(""); // 입력창 비우기
   };
-
+    const onhandleNext = () => {
+  router.push({
+    pathname: './ChatInsideMember',  
+    params: {
+      roomId: roomId,
+      roomName: roomName
+    },
+  });
+};
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
@@ -169,7 +177,7 @@ const ChattingRoomScreen=()=>{
                             <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="search" size={26} color="#CCCFD0" />
                             </TouchableOpacity>
-                             <TouchableOpacity onPress={() => router.back()}>
+                             <TouchableOpacity onPress={onhandleNext}>
                             <SimpleLineIcons name="menu" size={26} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
                             </TouchableOpacity>
                         </Right>

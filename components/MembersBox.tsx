@@ -5,18 +5,19 @@ import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 
-const MembersBox=({ name, onPressMore })=>{
+const MembersBox=({ name, onPressMore,isHost,imageUrl })=>{
     const router = useRouter();
     return(<MemberContainer>   
                     <ProfileBox>
-                        <ProfileImage source={require("@/assets/images/character2.png")}/>
+                        <ProfileImage source={{uri:imageUrl}}/>
                     </ProfileBox>
                     <Memberbox>
                         <MemberisHostBox>
                             <MemberNameText>{name}</MemberNameText>
+                            {isHost&&
                             <HostBox>
                                 <HostText>Host</HostText>
-                            </HostBox>
+                            </HostBox>}
                         </MemberisHostBox>
                         <TouchableOpacity onPress={onPressMore}>
                         <AntDesign name="ellipsis1" size={24} color="#848687" />

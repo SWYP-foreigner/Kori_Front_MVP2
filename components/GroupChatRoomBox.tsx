@@ -25,21 +25,7 @@ const GroupChatRoomBox = () => {
   const [allSpaces,setAllSpaces]=useState<AllSpaceData[]>([]);
    // Buzzing Spaces -> api 요청 api/v1/chat/group/popular
   // All Spaces -> api 요청  api/v1/chat/group/latest
-  const Buzzing_DATA = [
-    { id: "1", title: "Hiking Club", content: "Hi nice to meet you", member: 10 },
-    { id: "2", title: "Soccer Club", content: "Hi nice to meet you", member: 100 },
-    { id: "3", title: "Baseball Club", content: "Hi nice to meet you", member: 90 },
-    { id: "4", title: "Game Club", content: "Hi nice to meet you", member: 5 },
-    { id: "5", title: "Cooking Club", content: "Hi nice to meet you", member: 1 },
-  ];
-
-  const AllSpace_DATA = [
-    { id: "1", title: "Hiking Club", content: "Hi nice to meet you", member: 10 },
-    { id: "2", title: "Soccer Club", content: "Hi nice to meet you", member: 100 },
-    { id: "3", title: "Baseball Club", content: "Hi nice to meet you", member: 90 },
-    { id: "4", title: "Game Club", content: "Hi nice to meet you", member: 5 },
-    { id: "5", title: "Cooking Club", content: "Hi nice to meet you", member: 1 },
-  ];
+  
 
   const getBuzzingData=async()=>{
     const res=await api.get("https://dev.ko-ri.cloud/api/v1/chat/group/popular");

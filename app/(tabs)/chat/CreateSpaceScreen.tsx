@@ -1,25 +1,18 @@
 import React, { useState } from "react";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
-import {StatusBar,TouchableOpacity} from 'react-native';
+import {StatusBar,TouchableOpacity, Alert, Image as RNImage, ImageSourcePropType, Modal} from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import CustomButton from '@/components/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  Alert,
-  Image as RNImage,
-  ImageSourcePropType,
-  Modal
-} from 'react-native';
+import { Asset } from "expo-asset";
 
 const MOCK_ME = {
   name: 'Alice Kori, Kim',
   email: 'Kori@gmail.com',
   avatarUrl: undefined as string | undefined,
-  receivedCount: 2,
-  sentCount: 3,
 };
 
 const AVATARS: ImageSourcePropType[] = [
@@ -28,229 +21,230 @@ const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character3.png'),
 ];
 
-const CreateSpaceScreen=()=>{
-    const [text,onChangeText]=useState('');
-    const router = useRouter();
-    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
-    const [showAvatarSheet, setShowAvatarSheet] = useState(false);
-    const [tempIdx, setTempIdx] = useState<number>(0);
-    const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
+const CreateSpaceScreen = () => {
+  const [text, onChangeText] = useState('');
+  const [explainText, onChangeExplainText] = useState('');
+  const router = useRouter();
 
-    const openAvatarSheet = () => {
-        const cur = AVATARS.findIndex(
-          img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? ''),
-        );
-        if (cur >= 0) {
-          setTempIdx(cur);
-          setCustomPhotoUri(undefined);
-        } else if (avatarUrl) {
-          setTempIdx(-1);
-          setCustomPhotoUri(avatarUrl);
-        } else {
-          setTempIdx(0);
-          setCustomPhotoUri(undefined);
-        }
-        setShowAvatarSheet(true);
-      };
-    
-      const saveAvatar = () => {
-        if (tempIdx === -1 && customPhotoUri) {
-          setAvatarUrl(customPhotoUri);
-        } else {
-          const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
-          if (src?.uri) setAvatarUrl(src.uri);
-        }
-        setShowAvatarSheet(false);
-      };
-    
-      const requestPermissions = async () => {
-        const cam = await ImagePicker.requestCameraPermissionsAsync();
-        const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        const granted = cam.status === 'granted' && lib.status === 'granted';
-        if (!granted) {
-          Alert.alert('Permission required', 'Camera and photo library access is needed.');
-        }
-        return granted;
-      };
-    
-      const openCamera = async () => {
-        const ok = await requestPermissions();
-        if (!ok) return;
-    
-        const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 1,
-        });
-    
-        if (!result.canceled) {
-          const uri = result.assets[0].uri;
-          setCustomPhotoUri(uri);
-          setTempIdx(-1);
-        }
-      };
-    
-      const openGallery = async () => {
-        const ok = await requestPermissions();
-        if (!ok) return;
-    
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 1,
-        });
-    
-        if (!result.canceled) {
-          const uri = result.assets[0].uri;
-          setCustomPhotoUri(uri);
-          setTempIdx(-1);
-        }
-      };
-    
-      const pickFromCameraOrGallery = () => {
-        Alert.alert(
-          'Pick photo',
-          'How to pick your profile photo?',
-          [
-            { text: 'Camera', onPress: openCamera },
-            { text: 'Gallery', onPress: openGallery },
-            { text: 'Cancel', style: 'cancel' },
-          ],
-        );
-      };
+  // 상태 분리
+  const [selectedAvatarIdx, setSelectedAvatarIdx] = useState<number>(0); // AVATARS 선택
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined); // 카메라/갤러리
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(MOCK_ME.avatarUrl);
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
 
+  const openAvatarSheet = () => {
+    if (avatarUrl) {
+      const cur = AVATARS.findIndex(
+        img => (RNImage.resolveAssetSource(img)?.uri ?? '') === avatarUrl
+      );
+      if (cur >= 0) {
+        setSelectedAvatarIdx(cur);
+        setCustomPhotoUri(undefined);
+      } else {
+        setSelectedAvatarIdx(-1);
+        setCustomPhotoUri(avatarUrl);
+      }
+    } else {
+      setSelectedAvatarIdx(0);
+      setCustomPhotoUri(undefined);
+    }
+    setShowAvatarSheet(true);
+  };
 
-    return(
-        <SafeArea>
-            <StatusBar barStyle="light-content" />
-            <Container>
-                <HeaderContainer>
-                    <TouchableOpacity onPress={() => router.back()}>
-                    <Feather name="arrow-left" size={23} color="#CCCFD0" />
-                      </TouchableOpacity>
-                    <HeaderTitleText>Create Space</HeaderTitleText>
-                    <TouchableOpacity onPress={() => console.log("Space 생성")}>
-                    <SaveText>Save</SaveText>
-                    </TouchableOpacity>
-                </HeaderContainer>
-                <ProfileContainer>
-                    <ProfileBox onPress={openAvatarSheet}>
-                        <ProfileImage source={
-                                avatarUrl
-                                ? { uri: avatarUrl } 
-                                : AVATARS[0]         
-                            }/>
-                        <CameraContainer>
-                            <FontAwesome name="camera" size={17} color="black" />
-                        </CameraContainer>
-                    </ProfileBox>
-                </ProfileContainer>
-                <SpaceNameContainer>
-                    <SpaceNameText>Space Name</SpaceNameText>
-                    <SpaceNamelengthText>0/20</SpaceNamelengthText>
-                </SpaceNameContainer>
-                <EnterSpaceNameContainer
-                    value={text}
-                    onChangeText={onChangeText}
-                    maxLength={20}
-                    placeholder="Enter Space name"
-                    placeholderTextColor="#848687"/>
-                    <SpaceDecContainer>
-                        <SpaceDecText>Space Description</SpaceDecText>
-                    </SpaceDecContainer>
-                    <EnterDecContainer>
-                        <EnterDecInput
-                            placeholder="Describe space here"
-                            placeholderTextColor="#848687"
-                            maxLength={70}
-                        />
-                        <LimitWrapper>
-                            <LimitCount>0/200 limit</LimitCount>
-                        </LimitWrapper>
-                    </EnterDecContainer>
+  const saveAvatar = async () => {
+    if (customPhotoUri) {
+      setAvatarUrl(customPhotoUri);
+    } else if (selectedAvatarIdx >= 0) {
+      const asset = Asset.fromModule(AVATARS[selectedAvatarIdx]);
+      await asset.downloadAsync();
+      if (asset.localUri) setAvatarUrl(asset.localUri);
+    }
+    setShowAvatarSheet(false);
+  };
 
-               <Modal
-                    visible={showAvatarSheet}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setShowAvatarSheet(false)}
-                  >
-                    <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
-                      <Sheet onStartShouldSetResponder={() => true}>
-                        <Handle />
-                        <SheetTitle>Select Space Image</SheetTitle>
-            
-                        <AvatarRow>
-                          {AVATARS.map((img, idx) => {
-                            const selected = idx === tempIdx;
-                            return (
-                              <AvatarItem
-                                key={idx}
-                                onPress={() => {
-                                  setTempIdx(idx);
-                                  setCustomPhotoUri(undefined);
-                                }}
-                              >
-                                <AvatarCircle selected={selected}>
-                                  <AvatarImg source={img} />
-                                  {selected && (
-                                    <CheckBadge>
-                                      <Ionicons name="checkmark" size={14} color="#0f1011" />
-                                    </CheckBadge>
-                                  )}
-                                </AvatarCircle>
-                              </AvatarItem>
-                            );
-                          })}
-            
-                          <AvatarItem onPress={pickFromCameraOrGallery}>
-                            <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
-                              {customPhotoUri ? (
-                                <AvatarImg source={{ uri: customPhotoUri }} />
-                              ) : (
-                                <CameraCircleInner>
-                                  <Ionicons name="camera" size={22} color="#cfd4da" />
-                                </CameraCircleInner>
-                              )}
-                              {tempIdx === -1 && !!customPhotoUri && (
-                                <CheckBadge>
-                                  <Ionicons name="checkmark" size={14} color="#0f1011" />
-                                </CheckBadge>
-                              )}
-                            </AvatarCircle>
-                          </AvatarItem>
-                        </AvatarRow>
-            
-                        <ButtonRow>
-                          <CustomButton
-                            label="Cancel"
-                            filled={false}
-                            onPress={() => setShowAvatarSheet(false)}
-                          />
-                          <Gap />
-                          <CustomButton
-                            label="Save"
-                            tone="mint"
-                            filled
-                            onPress={saveAvatar}
-                          />
-                        </ButtonRow>
-                      </Sheet>
-                    </SheetOverlay>
-                  </Modal>
-            </Container>
-            
-        </SafeArea>
+  const requestPermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const granted = cam.status === 'granted' && lib.status === 'granted';
+    if (!granted) {
+      Alert.alert('Permission required', 'Camera and photo library access is needed.');
+    }
+    return granted;
+  };
 
+  const openCamera = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setSelectedAvatarIdx(-1);
+    }
+  };
+
+  const openGallery = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setSelectedAvatarIdx(-1);
+    }
+  };
+
+  const pickFromCameraOrGallery = () => {
+    Alert.alert(
+      'Pick photo',
+      'How to pick your profile photo?',
+      [
+        { text: 'Camera', onPress: openCamera },
+        { text: 'Gallery', onPress: openGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ],
     );
+  };
 
+  const handleSave =() => {
+    router.push({
+      pathname: '../../screens/chatscreen/NewSpaceCreated',
+      params: { 
+        spaceName: text,
+        spaceDescription: explainText,
+        spaceImageUrl: avatarUrl,
+        index:selectedAvatarIdx.toString()
+      },
+    });
+  };
+
+  return (
+    <SafeArea>
+      <StatusBar barStyle="light-content" />
+      <Container>
+        <HeaderContainer>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Feather name="arrow-left" size={23} color="#CCCFD0" />
+          </TouchableOpacity>
+          <HeaderTitleText>Create Space</HeaderTitleText>
+          <TouchableOpacity onPress={handleSave}>
+            <SaveText>Save</SaveText>
+          </TouchableOpacity>
+        </HeaderContainer>
+
+        <ProfileContainer>
+          <ProfileBox onPress={openAvatarSheet}>
+            <ProfileImage source={
+              avatarUrl ? { uri: avatarUrl } : AVATARS[0]
+            }/>
+            <CameraContainer>
+              <FontAwesome name="camera" size={17} color="black" />
+            </CameraContainer>
+          </ProfileBox>
+        </ProfileContainer>
+
+        <SpaceNameContainer>
+          <SpaceNameText>Space Name</SpaceNameText>
+          <SpaceNamelengthText>0/20</SpaceNamelengthText>
+        </SpaceNameContainer>
+
+        <EnterSpaceNameContainer
+          value={text}
+          onChangeText={onChangeText}
+          maxLength={20}
+          placeholder="Enter Space name"
+          placeholderTextColor="#848687"
+        />
+
+        <SpaceDecContainer>
+          <SpaceDecText>Space Description</SpaceDecText>
+        </SpaceDecContainer>
+
+        <EnterDecContainer>
+          <EnterDecInput
+            value={explainText}
+            onChangeText={onChangeExplainText}
+            placeholder="Describe space here"
+            placeholderTextColor="#848687"
+            maxLength={200}
+          />
+          <LimitWrapper>
+            <LimitCount>0/200 limit</LimitCount>
+          </LimitWrapper>
+        </EnterDecContainer>
+
+        {/* Avatar Modal */}
+        <Modal
+          visible={showAvatarSheet}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowAvatarSheet(false)}
+        >
+          <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
+            <Sheet onStartShouldSetResponder={() => true}>
+              <Handle />
+              <SheetTitle>Select Space Image</SheetTitle>
+
+              <AvatarRow>
+                  {/* AVATARS 선택 */}
+                    {AVATARS.map((img, idx) => {
+                      const selected = idx === selectedAvatarIdx && !customPhotoUri; // 🔹 customPhotoUri 있으면 선택 해제
+                      return (
+                        <AvatarItem key={idx} onPress={() => { setSelectedAvatarIdx(idx); setCustomPhotoUri(undefined); }}>
+                          <AvatarCircle selected={selected}>
+                            <AvatarImg source={img} />
+                            {selected && (
+                              <CheckBadge>
+                                <Ionicons name="checkmark" size={14} color="#0f1011" />
+                              </CheckBadge>
+                            )}
+                          </AvatarCircle>
+                        </AvatarItem>
+                      );
+                    })}
+
+                    {/* 카메라/갤러리 선택 */}
+                    <AvatarItem onPress={pickFromCameraOrGallery}>
+                      <AvatarCircle selected={!!customPhotoUri}>
+                        {customPhotoUri ? (
+                          <AvatarImg source={{ uri: customPhotoUri }} />
+                        ) : (
+                          <CameraCircleInner>
+                            <Ionicons name="camera" size={22} color="#cfd4da" />
+                          </CameraCircleInner>
+                        )}
+                        {!!customPhotoUri && (
+                          <CheckBadge>
+                            <Ionicons name="checkmark" size={14} color="#0f1011" />
+                          </CheckBadge>
+                        )}
+                      </AvatarCircle>
+                    </AvatarItem>
+              </AvatarRow>
+
+              <ButtonRow>
+                <CustomButton label="Cancel" filled={false} onPress={() => setShowAvatarSheet(false)} />
+                <Gap />
+                <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
+              </ButtonRow>
+            </Sheet>
+          </SheetOverlay>
+        </Modal>
+      </Container>
+    </SafeArea>
+  );
 };
 
+export default CreateSpaceScreen;
 
-
-export default CreateSpaceScreen
 
 
 const SafeArea=styled.SafeAreaView`
