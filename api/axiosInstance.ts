@@ -5,7 +5,9 @@ import axios, {
 } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = 'https://dev.ko-ri.cloud';
+const ENV_BASE =
+    process.env.EXPO_PUBLIC_SERVER_URL?.replace(/\/+$/, '') ?? 'http://localhost:3000';
+const BASE_URL = ENV_BASE;
 
 function maskToken(t?: string | null) {
     if (!t) return 'no';
@@ -23,14 +25,15 @@ function shortUrl(base: string, url?: string) {
 }
 
 const REAL_ID_POOL = Array.from({ length: 19 }, (_, i) => i + 2);
-
 const ID_MAP_PATTERNS = [
     /^\/api\/v1\/follow\/(\d+)(\?.*)?$/,
     /^\/api\/v1\/home\/chat\/(\d+)(\?.*)?$/,
     /^\/api\/v1\/chat\/direct\/(\d+)(\?.*)?$/,
 ];
 
-function mapDummyIdInUrl(url: string | undefined): { url: string; mapped?: { from: number; to: number; endpoint: string } } {
+function mapDummyIdInUrl(
+    url: string | undefined
+): { url: string; mapped?: { from: number; to: number; endpoint: string } } {
     if (!url || !__DEV__) return { url: url || '' };
 
     for (const re of ID_MAP_PATTERNS) {
@@ -77,7 +80,8 @@ api.interceptors.request.use(
         (config as any).meta = { start: Date.now(), token };
 
         const method = (config.method || 'GET').toUpperCase();
-        const fullUrl = new URL(config.url || '', config.baseURL || BASE_URL).toString();
+        const base = config.baseURL || BASE_URL;
+        const fullUrl = new URL(config.url || '', base).toString();
         console.log(`[axios:req] ${method} ${fullUrl} auth=${maskToken(token)}`);
 
         if (config.params) console.log('[axios:req] params', config.params);
@@ -86,7 +90,8 @@ api.interceptors.request.use(
                 const s = JSON.stringify(config.data);
                 if (s.length <= 400) console.log('[axios:req] body', JSON.parse(s));
                 else console.log('[axios:req] body(len)', s.length);
-            } catch { /* noop */ }
+            } catch {
+            }
         }
 
         return config;
@@ -98,7 +103,7 @@ api.interceptors.response.use(
     (res) => {
         const cfg: any = res.config || {};
         const ms = cfg.meta?.start ? Date.now() - cfg.meta.start : undefined;
-        const path = shortUrl(BASE_URL, res.config.url);
+        const path = shortUrl(cfg.baseURL || BASE_URL, res.config.url);
         console.log(`[axios:res] ${res.status} ${path}${ms ? ` (${ms}ms)` : ''}`);
         return res;
     },
@@ -106,7 +111,7 @@ api.interceptors.response.use(
         const cfg: any = error.config || {};
         const ms = cfg.meta?.start ? Date.now() - cfg.meta.start : undefined;
         const status = error.response?.status ?? 'ERR';
-        const path = cfg?.url ? shortUrl(BASE_URL, cfg.url) : '';
+        const path = cfg?.url ? shortUrl(cfg.baseURL || BASE_URL, cfg.url) : '';
         console.log(
             `[axios:err] ${status} ${path}${ms ? ` (${ms}ms)` : ''}`,
             error.response?.data || error.message
