@@ -2,30 +2,28 @@ import Avatar from '@/components/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
 import CountryPicker, {
-    CountryDropdownButton,
-    CountryDropdownText
+  CountryDropdownButton,
+  CountryDropdownText
 } from '@/components/CountryPicker';
 
 import LanguagePicker, {
-    LanguageDropdownButton,
-    LanguageDropdownText,
-    MAX_LANGUAGES
+  LanguageDropdownButton,
+  LanguageDropdownText,
+  MAX_LANGUAGES
 } from '@/components/LanguagePicker';
 
 import PurposePicker, {
-    PurposeDropdownButton,
-    PurposeDropdownText
+  PurposeDropdownButton,
+  PurposeDropdownText
 } from '@/components/PurposePicker';
 
-const INTERESTS = [
-    'Music', 'Movies', 'Reading', 'Anime', 'Gaming', 'Drinking', 'Exploring Cafés', 'Traveling', 'Board Games', 'Shopping',
-    'Beauty', 'Doing Nothing', 'Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking', 'Exhibition', 'Singing', 'Cooking',
-    'Pets', 'Career', 'Photography', 'K-Pop Lover', 'K-Drama Lover', 'K-Food Lover',
-];
+import useProfileEdit from '@/hooks/mutations/useProfileEdit';
+import useMyProfile from '@/hooks/queries/useMyProfile';
+import { useQueryClient } from '@tanstack/react-query';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
@@ -33,173 +31,230 @@ const INPUT_BG = '#353637';
 const INPUT_BORDER = '#FFFFFF';
 
 export default function EditProfileScreen() {
-    const [name, setName] = useState('Alice Kori, Kim');
-    const [email] = useState('Kori@gmail.com');
+  const queryClient = useQueryClient();
+  const { data: me, isLoading } = useMyProfile();
+  const editMutation = useProfileEdit();
 
-    const [country, setCountry] = useState('United States');
-    const [showCountry, setShowCountry] = useState(false);
+  const [name, setName] = useState('');
+  const [email] = useState(''); // 서버에서 이메일 안 주면 숨김 처리 유지
+  const [country, setCountry] = useState('');
+  const [showCountry, setShowCountry] = useState(false);
 
-    const [langs, setLangs] = useState<string[]>(['Korean (KO)', 'English (EN)', 'French (FR)']);
-    const [showLang, setShowLang] = useState(false);
+  const [langs, setLangs] = useState<string[]>([]);
+  const [showLang, setShowLang] = useState(false);
 
-    const [birth, setBirth] = useState('08/16/2025');
+  const [birth, setBirth] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [showPurpose, setShowPurpose] = useState(false);
 
-    const [purpose, setPurpose] = useState('Study'); // 기본값 자유롭게 변경
-    const [showPurpose, setShowPurpose] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [aboutMe, setAboutMe] = useState('');
 
-    const [showInterest, setShowInterest] = useState(false);
-    const [selectedInterests] = useState<string[]>([
-        'Gaming', 'Yoga', 'Anime', 'Exploring Cafés', 'Doing Nothing',
-    ]);
+  useEffect(() => {
+    if (!me) return;
+    const full = [me.firstname, me.lastname].filter(Boolean).join(' ');
+    setName(full);
+    setCountry(me.country ?? '');
+    setBirth(me.birthday ?? '');
+    setPurpose(me.purpose ?? '');
+    setLangs(me.language ?? []);
+    setSelectedInterests(me.hobby ?? []);
+    setAboutMe(me.introduction ?? '');
+  }, [me]);
 
-    const languagesDisplay = useMemo(() => {
-        if (!langs.length) return 'Select your language';
-        const codes = langs.map((l) => {
-            const m = l.match(/\(([^)]+)\)/);
-            return m ? m[1] : l;
-        });
-        return codes.join(' / ');
-    }, [langs]);
+  const languagesDisplay = useMemo(() => {
+    if (!langs.length) return 'Select your language';
+    const codes = langs.map((l) => {
+      const m = l.match(/\(([^)]+)\)/);
+      return m ? m[1] : l;
+    });
+    return codes.join(' / ');
+  }, [langs]);
 
-    return (
-        <Safe>
-            <Header>
-                <Side onPress={() => router.back()} hitSlop={12} style={{ left: -4 }}>
-                    <Ionicons name="chevron-back" size={22} color="#cfd4da" />
-                </Side>
-                <Title>My Profile</Title>
-                <Side onPress={() => { /* 저장 */ }} hitSlop={12} style={{ right: -4 }}>
-                    <SaveText>Save</SaveText>
-                </Side>
-            </Header>
+  const splitName = (full: string) => {
+    const trimmed = (full || '').trim().replace(/\s+/g, ' ');
+    if (!trimmed) return { firstname: '', lastname: '' };
+    const parts = trimmed.split(' ');
+    if (parts.length === 1) return { firstname: parts[0], lastname: '' };
+    return { firstname: parts[0], lastname: parts.slice(1).join(' ') };
+  };
 
-            <Scroll showsVerticalScrollIndicator={false}>
-                <Center>
-                    <Avatar />
-                    <Name>{name}</Name>
-                    <Email>{email}</Email>
-                </Center>
+  const formatBirth = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
 
-                {/* Name */}
-                <Field>
-                    <LabelRow>
-                        <LabelText>Name</LabelText>
-                        <Count>{name.length}/20</Count>
-                    </LabelRow>
-                    <NameInput
-                        value={name}
-                        onChangeText={(t: string) => t.length <= 20 && setName(t)}
-                        placeholder="Your name"
-                        placeholderTextColor="#EDEDED99"
-                    />
-                </Field>
+  const onSave = async () => {
+    const { firstname, lastname } = splitName(name);
+    const language = langs.map((l) => {
+      const m = l.match(/\(([^)]+)\)/);
+      return (m ? m[1] : l).trim();
+    });
 
-                {/* Country */}
-                <Field>
-                    <LabelText>Country</LabelText>
-                    <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
-                        <CountryDropdownText selected={!!country}>
-                            {country || 'Select your country'}
-                        </CountryDropdownText>
-                        <AntDesign name="down" size={16} color="#949899" />
-                    </CountryDropdownButton>
-                </Field>
+    const body = {
+      firstname,
+      lastname,
+      gender: 'unspecified',
+      birthday: birth || '',
+      country: country || '',
+      introduction: aboutMe || '',
+      purpose: purpose || '',
+      language,
+      hobby: selectedInterests ?? [],
+      imageKey: undefined,
+    };
 
-                {/* Birth */}
-                <Field>
-                    <LabelText>Birth</LabelText>
-                    <SelectBox onPress={() => { /* DatePicker 예정 */ }}>
-                        <SelectText>{birth || 'Select your birth'}</SelectText>
-                        <AntDesign name="down" size={16} color="#949899" />
-                    </SelectBox>
-                </Field>
+    try {
+      await editMutation.mutateAsync(body);
+      await queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
+      router.back();
+    } catch (e) {
+      console.log('[Profile Save Error]', e);
+    }
+  };
 
-                {/* Purpose (방문 목적) */}
-                <Field>
-                    <LabelText>Purpose</LabelText>
-                    <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
-                        <PurposeDropdownText selected={!!purpose}>
-                            {purpose || 'Select purpose'}
-                        </PurposeDropdownText>
-                        <AntDesign name="down" size={16} color="#949899" />
-                    </PurposeDropdownButton>
-                </Field>
+  return (
+    <Safe>
+      <Header>
+        <Side onPress={() => router.back()} hitSlop={12} style={{ left: -4 }}>
+          <Ionicons name="chevron-back" size={22} color="#cfd4da" />
+        </Side>
+        <Title>My Profile</Title>
+        <Side onPress={onSave} hitSlop={12} style={{ right: -4 }}>
+          <SaveText>Save</SaveText>
+        </Side>
+      </Header>
 
-                {/* Language */}
-                <Field>
-                    <LabelRow>
-                        <LabelText>Language</LabelText>
-                        {!!langs.length && <SmallMuted>{langs.length}/{MAX_LANGUAGES} selected</SmallMuted>}
-                    </LabelRow>
-                    <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
-                        <LanguageDropdownText selected={langs.length > 0}>
-                            {languagesDisplay}
-                        </LanguageDropdownText>
-                        <AntDesign name="down" size={16} color="#949899" />
-                    </LanguageDropdownButton>
-                </Field>
+      <Scroll showsVerticalScrollIndicator={false}>
+        <Center>
+          <Avatar />
+          <NameText numberOfLines={1} ellipsizeMode="tail">
+            {name || (isLoading ? 'Loading...' : '—')}
+          </NameText>
+          {!!email && <EmailText>{email}</EmailText>}
+        </Center>
 
-                {/* Personality preview */}
-                <Field>
-                    <TopRow>
-                        <LabelText>Personality</LabelText>
-                        <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
-                    </TopRow>
-                    <TagsWrap>
-                        {selectedInterests.map((t) => (
-                            <PreviewTag key={t}>
-                                <PreviewTagText>{t}</PreviewTagText>
-                            </PreviewTag>
-                        ))}
-                    </TagsWrap>
-                    <SmallEditBtn onPress={() => setShowInterest(true)}>
-                        <SmallEditText>+ Edit</SmallEditText>
-                    </SmallEditBtn>
-                </Field>
+        <Field>
+          <LabelRow>
+            <LabelText>Name</LabelText>
+            <Count>{name.length}/20</Count>
+          </LabelRow>
+          <NameInput
+            value={name}
+            onChangeText={(t: string) => t.length <= 20 && setName(t)}
+            placeholder="Your name"
+            placeholderTextColor="#EDEDED99"
+          />
+        </Field>
 
-                {/* About Me */}
-                <Field>
-                    <LabelText>About Me</LabelText>
-                    <TextArea
-                        value={''}
-                        onChangeText={() => { }}
-                        placeholder="Introduce yourself"
-                        placeholderTextColor="#EDEDED99"
-                        multiline
-                    />
-                </Field>
+        <Field>
+          <LabelText>Country</LabelText>
+          <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
+            <CountryDropdownText selected={!!country}>
+              {country || 'Select your country'}
+            </CountryDropdownText>
+            <AntDesign name="down" size={16} color="#949899" />
+          </CountryDropdownButton>
+        </Field>
 
-                <BottomPad />
-            </Scroll>
+        <Field>
+          <LabelText>Birth</LabelText>
+          <BirthInput
+            value={birth}
+            onChangeText={(t: string) => setBirth(formatBirth(t))}
+            placeholder="MM/DD/YY"
+            placeholderTextColor="#EDEDED99"
+            keyboardType="number-pad"
+            maxLength={10}
+            returnKeyType="done"
+          />
+        </Field>
 
-            {/* 모달들 */}
-            <CountryPicker
-                visible={showCountry}
-                value={country}
-                onClose={() => setShowCountry(false)}
-                onSelect={(c) => {
-                    setCountry(c);
-                    setShowCountry(false);
-                }}
-            />
-            <LanguagePicker
-                visible={showLang}
-                value={langs}
-                onClose={() => setShowLang(false)}
-                onChange={(next) => setLangs(next)}
-            />
-            <PurposePicker
-                visible={showPurpose}
-                value={purpose}
-                onClose={() => setShowPurpose(false)}
-                onSelect={(p) => {
-                    setPurpose(p);
-                    setShowPurpose(false);
-                }}
-            />
-        </Safe>
-    );
+        <Field>
+          <LabelText>Purpose</LabelText>
+          <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
+            <PurposeDropdownText selected={!!purpose}>
+              {purpose || 'Select purpose'}
+            </PurposeDropdownText>
+            <AntDesign name="down" size={16} color="#949899" />
+          </PurposeDropdownButton>
+        </Field>
+
+        <Field>
+          <LabelRow>
+            <LabelText>Language</LabelText>
+            {!!langs.length && (
+              <SmallMuted>
+                {langs.length}/{MAX_LANGUAGES} selected
+              </SmallMuted>
+            )}
+          </LabelRow>
+          <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
+            <LanguageDropdownText selected={langs.length > 0}>
+              {languagesDisplay}
+            </LanguageDropdownText>
+            <AntDesign name="down" size={16} color="#949899" />
+          </LanguageDropdownButton>
+        </Field>
+
+        <Field>
+          <TopRow>
+            <LabelText>Personality</LabelText>
+            <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
+          </TopRow>
+          <TagsWrap>
+            {selectedInterests.map((t) => (
+              <PreviewTag key={t}>
+                <PreviewTagText>{t}</PreviewTagText>
+              </PreviewTag>
+            ))}
+          </TagsWrap>
+        </Field>
+
+        <Field>
+          <LabelText>About Me</LabelText>
+          <TextArea
+            value={aboutMe}
+            onChangeText={setAboutMe}
+            placeholder="Introduce yourself"
+            placeholderTextColor="#EDEDED99"
+            multiline
+          />
+        </Field>
+
+        <BottomPad />
+      </Scroll>
+
+      <CountryPicker
+        visible={showCountry}
+        value={country}
+        onClose={() => setShowCountry(false)}
+        onSelect={(c) => {
+          setCountry(c);
+          setShowCountry(false);
+        }}
+      />
+      <LanguagePicker
+        visible={showLang}
+        value={langs}
+        onClose={() => setShowLang(false)}
+        onChange={(next) => setLangs(next)}
+      />
+      <PurposePicker
+        visible={showPurpose}
+        value={purpose}
+        onClose={() => setShowPurpose(false)}
+        onSelect={(p) => {
+          setPurpose(p);
+          setShowPurpose(false);
+        }}
+      />
+    </Safe>
+  );
 }
+
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -228,7 +283,7 @@ const Side = styled.Pressable`
   padding: 0 12px;
 `;
 const SaveText = styled.Text`
-  color: #30F59B;
+  color: #30f59b;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
@@ -236,13 +291,15 @@ const Center = styled.View`
   align-items: center;
   padding: 8px 0 16px 0;
 `;
-const Name = styled.Text`
+const NameText = styled.Text`
   margin-top: 8px;
   color: #fff;
   font-size: 16px;
   font-family: 'PlusJakartaSans_700Bold';
+  max-width: 82%;
+  text-align: center;
 `;
-const Email = styled.Text`
+const EmailText = styled.Text`
   margin-top: 2px;
   color: #b7babd;
   font-size: 12px;
@@ -280,19 +337,14 @@ const NameInput = styled.TextInput`
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
-const SelectBox = styled.Pressable`
+const BirthInput = styled.TextInput`
   height: ${INPUT_HEIGHT}px;
   border-radius: ${INPUT_RADIUS}px;
   background: ${INPUT_BG};
   padding: 0 16px;
+  color: #fff;
   border-width: 0.48px;
   border-color: ${INPUT_BORDER};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-const SelectText = styled.Text`
-  color: #ededed;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 
@@ -321,19 +373,6 @@ const PreviewTag = styled.View`
 `;
 const PreviewTagText = styled.Text`
   color: #fff;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-const SmallEditBtn = styled.Pressable`
-  margin-top: 10px;
-  align-self: flex-start;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid #2a2b2c;
-  background: #121314;
-`;
-const SmallEditText = styled.Text`
-  color: #cfd4da;
   font-size: 12px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;

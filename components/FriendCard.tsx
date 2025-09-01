@@ -210,7 +210,10 @@ export default function FriendCard({
                 tone="danger"
                 filled
                 leftIcon="close"
-                onPress={() => { }}
+                onPress={() => {
+                  console.log('[FriendCard] decline pressed', userId);
+                  onCancel?.(userId);
+                }}
               />
             </>
           ) : mode === 'sent' ? (
@@ -232,13 +235,26 @@ export default function FriendCard({
             </>
           ) : (
             <>
-              <CustomButton
-                label={isFollowed ? 'Following' : 'Follow'}
-                tone={isFollowed ? 'black' : 'mint'}
-                filled={!isFollowed}
-                leftIcon={isFollowed ? 'check' : 'add'}
-                onPress={handlePrimaryPress}
-              />
+              {isFollowed ? (
+                <CustomButton
+                  label="Following"
+                  tone="black"
+                  filled={false}
+                  leftIcon="check"
+                  onPress={() => {
+                    console.log('[FriendCard] unfollow pressed', userId);
+                    onUnfollow?.(userId);
+                  }}
+                />
+              ) : (
+                <CustomButton
+                  label="Follow"
+                  tone="mint"
+                  filled
+                  leftIcon="add"
+                  onPress={() => onFollow?.(userId)}
+                />
+              )}
               <CustomButton
                 label="Chat"
                 tone="black"
@@ -249,6 +265,8 @@ export default function FriendCard({
             </>
           )}
         </Actions>
+
+
 
         {footerSlot}
       </CardInner>
