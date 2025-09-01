@@ -143,7 +143,7 @@ const LoginScreen = () => {
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
 
-      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/LinkedSpaceDetail')}>
+      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/ChattingRoomScreen')}>
         <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>

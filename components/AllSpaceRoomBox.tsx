@@ -21,7 +21,7 @@ const AllSpaceRoomBox=({data})=>{
             <AllSpaceTitleContent>{data.description}</AllSpaceTitleContent>
             <AllSpaceMemberContainer>
              <MaterialIcons name="person-outline" size={16} color='#949899' />
-            <AllSpaceMemberCount>{data.userCount} members</AllSpaceMemberCount>
+            <AllSpaceMemberCount>{data.userCount ?? data.participantCount} members</AllSpaceMemberCount>
         </AllSpaceMemberContainer>
         </AllSpaceTitleContainer>
         <AllSpaceImageContainer>
@@ -38,14 +38,16 @@ const AllSpaceRoomBox=({data})=>{
 export default AllSpaceRoomBox;
 
 
-const AllSpacesBox=styled.TouchableOpacity`
-    
-    height:120px;
-    flex-direction:row;
-    border-bottom-width: 1px;
-    border-bottom-color: #353637;
-
+const AllSpacesBox = styled.TouchableOpacity.attrs({
+  activeOpacity: 0.3, // 눌렀을 때 살짝만 투명
+  delayPressIn: 50,    // 눌림 감지 지연 → 깜빡임 완화
+})`
+  height: 120px;
+  flex-direction: row;
+  border-bottom-width: 1px;
+  border-bottom-color: #353637;
 `;
+
 
 const AllSpaceTitleContainer=styled.View`
     width:65%;

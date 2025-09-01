@@ -1,4 +1,4 @@
-import React ,{useEffect,useState}from "react";
+import React, { useEffect, useState, memo } from "react";
 import styled from "styled-components/native";
 import BuzzingRoomBox from "@/components/BuzzingRoomBox";
 import AllSpaceRoomBox from "@/components/AllSpaceRoomBox";
@@ -6,83 +6,95 @@ import { FlatList, View } from "react-native";
 import api from "@/api/axiosInstance";
 import { useRouter } from 'expo-router';
 
-type BuzzingData={
-  roomId:number,
-  roomImageUrl:string,
-  roomName:string,
-  description: string,
-  userCount:string
+// 🔹 데이터 타입
+type BuzzingData = {
+  roomId: number;
+  roomImageUrl: string;
+  roomName: string;
+  description: string;
+  userCount: string;
 };
 
-type AllSpaceData={
-  roomId:number,
-  roomImageUrl:string,
-  roomName:string,
-  description: string,
-  userCount:string
-};
+type AllSpaceData = BuzzingData;
+
+// 🔹 memo 적용
+const MemoizedBuzzingRoomBox = memo(({ data }: { data: BuzzingData }) => (
+  <BuzzingRoomBox data={data} />
+));
+
+const MemoizedAllSpaceRoomBox = memo(({ data }: { data: AllSpaceData }) => (
+  <AllSpaceRoomBox data={data} />
+));
+
 const GroupChatRoomBox = () => {
-  const [buzzingSpaces,setBuzzingSpaces]=useState<BuzzingData[]>([]);
-  const [allSpaces,setAllSpaces]=useState<AllSpaceData[]>([]);
-   const router = useRouter();
-   // Buzzing Spaces -> api 요청 api/v1/chat/group/popular
-  // All Spaces -> api 요청  api/v1/chat/group/latest
-  
+  const [buzzingSpaces, setBuzzingSpaces] = useState<BuzzingData[]>([]);
+  const [allSpaces, setAllSpaces] = useState<AllSpaceData[]>([]);
+  const router = useRouter();
 
-  const getBuzzingData=async()=>{
-    const res=await api.get('/api/v1/chat/group/popular');
-    return res.data.data
+  const getBuzzingData = async () => {
+    const res = await api.get('/api/v1/chat/group/popular');
+    return res.data.data;
   };
-  const getAllSpaceData=async()=>{
-    const res=await api.get('/api/v1/chat/group/latest');
-    return res.data.data
-  }
 
-     // ================== 1️⃣ 초기 채팅방 불러오기 ==================
-  // 컴포넌트가 화면에 나타날 때 한 번만 서버에서 채팅방 리스트를 가져옴
+  const getAllSpaceData = async () => {
+    const res = await api.get('/api/v1/chat/group/latest');
+    return res.data.data;
+  };
+
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const Buzzing_Data=await getBuzzingData();
-        const AllSpace_Data=await getAllSpaceData();
+        const [Buzzing_Data, AllSpace_Data] = await Promise.all([
+          getBuzzingData(),
+          getAllSpaceData(),
+        ]);
         setBuzzingSpaces(Buzzing_Data);
         setAllSpaces(AllSpace_Data);
-
       } catch (err) {
         console.error('Linked Space 불러오기 실패:', err);
       }
     };
     fetchRooms();
-  }, []); // 빈 배열 → 마운트 시 한 번만 실행
+  }, []);
 
+  // 🔹 ListHeaderComponent를 분리
+  const ListHeader = () => (
+    <View>
+      <GroupTitleContainer>
+        <GroupTitleText>Buzzing Spaces</GroupTitleText>
+      </GroupTitleContainer>
+
+      <BuzzingContainer>
+        <FlatList
+          data={buzzingSpaces}
+          renderItem={({ item }) => <MemoizedBuzzingRoomBox data={item} />}
+          keyExtractor={(item) => item.roomId.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={5}       // 초기 렌더링 아이템 수
+          maxToRenderPerBatch={5}      // 배치당 렌더링 아이템 수
+          windowSize={5}               // 렌더링 범위
+        />
+      </BuzzingContainer>
+
+      <GroupTitleContainer>
+        <GroupTitleText>All Spaces</GroupTitleText>
+      </GroupTitleContainer>
+    </View>
+  );
 
   return (
     <Container>
       <FlatList
         data={allSpaces}
-        renderItem={({ item }) => <AllSpaceRoomBox data={item} />}
+        renderItem={({ item }) => <MemoizedAllSpaceRoomBox data={item} />}
         keyExtractor={(item) => item.roomId.toString()}
-        showsVerticalScrollIndicator={false}   
-        ListHeaderComponent={
-          <View>
-            <GroupTitleContainer>
-              <GroupTitleText>Buzzing Spaces</GroupTitleText>
-            </GroupTitleContainer>
-            <BuzzingContainer>
-              <FlatList
-                data={buzzingSpaces}
-                renderItem={({ item }) => <BuzzingRoomBox data={item} />}
-                keyExtractor={(item) => item.roomId.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              />
-            </BuzzingContainer>
-
-            <GroupTitleContainer>
-              <GroupTitleText>All Spaces</GroupTitleText>
-            </GroupTitleContainer>
-          </View>
-        }
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={<ListHeader />}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={true}  // 화면 밖 요소 메모리 해제
       />
     </Container>
   );
@@ -90,6 +102,7 @@ const GroupChatRoomBox = () => {
 
 export default GroupChatRoomBox;
 
+// 🔹 스타일
 const Container = styled.View`
   flex: 1;
 `;
