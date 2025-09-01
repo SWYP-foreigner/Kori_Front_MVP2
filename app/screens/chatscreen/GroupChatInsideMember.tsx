@@ -4,8 +4,6 @@ import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,Tou
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import Octicons from '@expo/vector-icons/Octicons';
-import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import MembersBox from "@/components/MembersBox";
 
 

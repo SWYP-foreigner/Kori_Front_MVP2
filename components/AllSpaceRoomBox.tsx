@@ -6,15 +6,15 @@ const AllSpaceRoomBox=({data})=>{
     return(
         <AllSpacesBox>
         <AllSpaceTitleContainer>
-            <AllSpaceTitle>{data.title}</AllSpaceTitle>
-            <AllSpaceTitleContent>{data.content}</AllSpaceTitleContent>
+            <AllSpaceTitle>{data.roomName}</AllSpaceTitle>
+            <AllSpaceTitleContent>{data.description}</AllSpaceTitleContent>
             <AllSpaceMemberContainer>
              <MaterialIcons name="person-outline" size={16} color='#949899' />
-            <AllSpaceMemberCount>{data.member} members</AllSpaceMemberCount>
+            <AllSpaceMemberCount>{data.userCount} members</AllSpaceMemberCount>
         </AllSpaceMemberContainer>
         </AllSpaceTitleContainer>
         <AllSpaceImageContainer>
-            <AllSpaceImage source={require("../assets/images/character2.png")}/>
+            <AllSpaceImage source={{ uri: data.roomImageUrl }}/>
         </AllSpaceImageContainer>
         </AllSpacesBox>
     );
@@ -64,12 +64,16 @@ const AllSpaceMemberCount=styled.Text`
     font-size:12px;
 `;
 const AllSpaceImageContainer=styled.View`
-    width:30%;
-    justify-content:center;
+    width:80px;
+    height:80px;
+    border-radius:100px;
+    margin:20px 0px 10px 15px;
     align-items:center;
+    justify-content:center;
+    overflow: hidden;
 `;
 const AllSpaceImage=styled.Image`
-    width:75%;
-    height:75%;
+    width:100%;
+    height:100%;
     resize-mode: contain;
 `;

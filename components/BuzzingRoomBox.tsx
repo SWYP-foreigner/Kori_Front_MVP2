@@ -8,15 +8,15 @@ const BuzzingRoomBox=({data})=>{
     return(
     <BuzzingBox>
                 <BuzzingImageContainer>
-                    <BuzzingImage source={require("../assets/images/character2.png")}/>
+                    <BuzzingImage source={{ uri: data.roomImageUrl }}/>
                 </BuzzingImageContainer>
                 <BuzzingTitleContainer>
-                    <BuzzingTitle>{data.title}</BuzzingTitle>
-                    <BuzzingTitleContent>{data.content}</BuzzingTitleContent>
+                    <BuzzingTitle>{data.roomName}</BuzzingTitle>
+                    <BuzzingTitleContent>{data.description}</BuzzingTitleContent>
                 </BuzzingTitleContainer>
                 <BuzzingMemberContainer>
                     <MaterialIcons name="person-outline" size={18} color='#ffffff' />
-                    <BuzzingMemberCount>{data.member} members in</BuzzingMemberCount>
+                    <BuzzingMemberCount>{data.userCount} members in</BuzzingMemberCount>
                 </BuzzingMemberContainer>
     </BuzzingBox>);
 
@@ -34,15 +34,19 @@ const BuzzingBox=styled.TouchableOpacity`
     margin-right:7px;
 `;
 const BuzzingImageContainer=styled.View`
-    width:35%;
-    height:35%;
-    margin:20px 0px 5px 20px;
+    width:70px;
+    height:70px;
+    border-radius:100px;
+    margin:20px 0px 10px 15px;
+    align-items:center;
+    justify-content:center;
+     overflow: hidden;
     
 `;
 const BuzzingImage=styled.Image`
   width:100%;
   height:100%;
-  resize-mode: contain;
+  resize-mode:contain;
 `;
 
 const BuzzingTitleContainer=styled.View`
