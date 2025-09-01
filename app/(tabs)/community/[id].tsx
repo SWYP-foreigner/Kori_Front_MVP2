@@ -1,11 +1,12 @@
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
+import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   FlatList,
@@ -22,14 +23,11 @@ const AV = require('@/assets/images/character1.png');
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
   let s = String(v).trim();
-
   if (/^\d+(\.\d+)?$/.test(s)) {
     const num = parseFloat(s);
     return new Date(num * 1000);
   }
-
   if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
-
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
@@ -66,6 +64,9 @@ export default function PostDetailScreen() {
 
   const [bookmarked, setBookmarked] = useState(false);
   const [likesOverride, setLikesOverride] = useState<number | null>(null);
+  const [likedByMe, setLikedByMe] = useState(false);
+
+  const likeMutation = useToggleLike();
 
   const [sort, setSort] = useState<SortKey>('new');
   const [value, setValue] = useState('');
@@ -73,6 +74,16 @@ export default function PostDetailScreen() {
 
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
+
+  useEffect(() => {
+    if (!data) return;
+    const liked =
+      (data as any).likedByMe ??
+      (data as any).isLike ??
+      (data as any).isLiked ??
+      false;
+    setLikedByMe(Boolean(liked));
+  }, [data]);
 
   const comments = useMemo(() => {
     const arr = MOCK_COMMENTS.slice();
@@ -137,11 +148,7 @@ export default function PostDetailScreen() {
   }
 
   const post = data;
-  const author =
-    (post as any).userName ??
-    (post as any).authorName ??
-    'Unknown';
-
+  const author = (post as any).userName ?? (post as any).authorName ?? 'Unknown';
   const avatarSrc = post.userImageUrl ? { uri: post.userImageUrl } : AV;
 
   const createdRaw =
@@ -152,10 +159,29 @@ export default function PostDetailScreen() {
   const createdLabel = formatCreatedYMD(createdRaw);
 
   const firstImage = post.contentImageUrls?.[0];
-  const likeCount = likesOverride ?? post.likeCount ?? 0;
+  const serverLikeCount = post.likeCount ?? 0;
+  const likeCount = likesOverride ?? serverLikeCount;
   const commentCount = post.commentCount ?? 0;
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
+
+  const handleToggleLike = async () => {
+    if (!Number.isFinite(postId)) return;
+    if (likeMutation.isPending) return;
+    if (likedByMe) return;
+
+    const prev = likesOverride ?? serverLikeCount;
+    setLikesOverride(prev + 1);
+    setLikedByMe(true);
+
+    try {
+      await likeMutation.mutateAsync(postId);
+    } catch (e) {
+      setLikesOverride(prev);
+      setLikedByMe(false);
+      console.log('[like error]', e);
+    }
+  };
 
   return (
     <Safe>
@@ -204,21 +230,23 @@ export default function PostDetailScreen() {
                   </SmallFlag>
                 </Row>
 
-                {!!firstImage && (
-                  <Img source={{ uri: firstImage }} resizeMode="cover" />
-                )}
+                {!!firstImage && <Img source={{ uri: firstImage }} resizeMode="cover" />}
 
                 <Body>{body}</Body>
 
                 <Footer>
                   <Act
-                    onPress={() =>
-                      setLikesOverride((v) => (v ?? post.likeCount ?? 0) + 1)
-                    }
+                    onPress={handleToggleLike}
+                    disabled={likeMutation.isPending || likedByMe}
                   >
-                    <AntDesign name="like2" size={16} color="#30F59B" />
+                    <AntDesign
+                      name={likedByMe ? 'like1' : 'like2'}
+                      size={16}
+                      color={likedByMe ? '#30F59B' : '#cfd4da'}
+                    />
                     <ActText>{likeCount}</ActText>
                   </Act>
+
                   <Act>
                     <AntDesign name="message1" size={16} color="#cfd4da" />
                     <ActText>{commentCount}</ActText>
@@ -248,9 +276,7 @@ export default function PostDetailScreen() {
             <AnonToggle onPress={() => setAnonymous((v) => !v)}>
               <AnonLabel>Anonymous</AnonLabel>
               <Check $active={anonymous}>
-                {anonymous && (
-                  <AntDesign name="check" size={14} color="#ffffff" />
-                )}
+                {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
               </Check>
             </AnonToggle>
           </Composer>
@@ -374,10 +400,11 @@ const Footer = styled.View`
   align-items: center;
 `;
 
-const Act = styled.Pressable`
+const Act = styled.Pressable<{ disabled?: boolean }>`
   flex-direction: row;
   align-items: center;
   margin-right: 16px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 
 const ActText = styled.Text`
@@ -420,11 +447,7 @@ const StyledRNInput = styled(RNTextInput)`
 
 const Input = React.forwardRef<RNTextInput, TextInputProps>(
   ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
-    <StyledRNInput
-      ref={ref}
-      placeholderTextColor={placeholderTextColor}
-      {...rest}
-    />
+    <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
   )
 );
 Input.displayName = 'Input';
