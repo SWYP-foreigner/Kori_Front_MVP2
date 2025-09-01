@@ -28,11 +28,11 @@ const GroupChatRoomBox = () => {
   
 
   const getBuzzingData=async()=>{
-    const res=await api.get("https://dev.ko-ri.cloud/api/v1/chat/group/popular");
+    const res=await api.get('/api/v1/chat/group/popular');
     return res.data.data
   };
   const getAllSpaceData=async()=>{
-    const res=await api.get("https://dev.ko-ri.cloud/api/v1/chat/group/latest");
+    const res=await api.get('/api/v1/chat/group/latest');
     return res.data.data
   }
 

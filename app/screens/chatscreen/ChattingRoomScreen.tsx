@@ -67,7 +67,7 @@ const ChattingRoomScreen=()=>{
     const fetchHistory = async () => {
       try {
         // 채팅 메세지 기록 받기
-        const res =await api.get(`https://dev.ko-ri.cloud/api/v1/chat/rooms/${roomId}/first_messages`);
+        const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
         console.log("채팅 메시지 기록",res.data.data);
         // 메시지 담기
         // setMessages(res);

@@ -7,6 +7,7 @@ import MembersBox from "@/components/MembersBox";
 import { useLocalSearchParams } from "expo-router";
 import { FlatList } from 'react-native';
 import api from "@/api/axiosInstance";
+import { Config } from "@/src/lib/config";
 
 type ChatMembers={
     userId:number,
@@ -31,7 +32,7 @@ const ChatInsideMember=()=>{
         const getMembers = async () => {
         try {
             // 멤버 데이터 받기
-            const res =await api.get(`https://dev.ko-ri.cloud/api/v1/chat/rooms/${roomId}/participants`);
+            const res =await api.get(`/api/v1/chat/rooms/${roomId}/participants`);
             console.log("멤버들",res.data);
             const data:ChatMembers[]=res.data.data;
             setMembers(data);

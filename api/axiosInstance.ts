@@ -4,8 +4,9 @@ import axios, {
     AxiosInstance,
     InternalAxiosRequestConfig
 } from 'axios';
+import { Config } from "@/src/lib/config";
 
-const BASE_URL = (`https://dev.ko-ri.cloud`);
+const BASE_URL = Config.SERVER_URL;
 
 
 const api: AxiosInstance = axios.create({

@@ -51,7 +51,7 @@ export default function ChatScreen() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await api.get('https://dev.ko-ri.cloud/api/v1/chat/rooms');
+        const res = await api.get('/api/v1/chat/rooms');
         const data: ChatRoom[] = res.data.data; // data 배열만 추출
         console.log("data",data);
         setChatRooms(data);

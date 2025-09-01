@@ -12,10 +12,11 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
 import api from '@/api/axiosInstance';
+import { Config } from '@/src/lib/config';
 
 GoogleSignin.configure({
-  webClientId: '86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com',
-  iosClientId: '86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com',
+  webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
+  iosClientId: `${Config.GOOGLE_IOS_CLIENT_ID}`,
   offlineAccess: true,
 });
 
@@ -36,7 +37,7 @@ const LoginScreen = () => {
   const sendTokenToServer = async (code: string) => {
     try {
       const res = await axios.post<AppLoginResponse>(
-        'https://dev.ko-ri.cloud/api/v1/member/google/app-login',
+        `${Config.SERVER_URL}/api/v1/member/google/app-login`,
         { code }
       );
 
