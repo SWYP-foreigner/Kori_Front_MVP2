@@ -1,8 +1,11 @@
 import FriendCard from '@/components/FriendCard';
+import useAcceptFollow from '@/hooks/mutations/useAcceptFollow';
+import useDeclineFollow from '@/hooks/mutations/useDeclineFollow';
+import { usePendingFollowing } from '@/hooks/queries/useFollowing';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
-import { Dimensions } from 'react-native';
+import { Dimensions, FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
 type Tab = 'received' | 'sent';
@@ -20,88 +23,63 @@ type FriendItem = {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const MOCK_RECEIVED: FriendItem[] = [
-  {
-    id: 101,
-    name: 'Jenny',
-    country: 'United States',
-    birth: 2025,
-    purpose: 'Business',
-    languages: ['EN', 'KO'],
-    personalities: [
-      'Exploring Cafés',
-      'Board Games',
-      'Doing Nothing',
-      'K-Food Lover',
-      'K-Drama Lover',
-    ],
-    bio: 'Hi there!',
-  },
-  {
-    id: 102,
-    name: 'Alex',
-    country: 'Canada',
-    birth: 2025,
-    purpose: 'Travel',
-    languages: ['EN'],
-    personalities: ['Hiking', 'Reading'],
-    bio: 'Hey!',
-  },
-];
-
-const MOCK_SENT: FriendItem[] = [
-  {
-    id: 201,
-    name: 'Tom',
-    country: 'France',
-    birth: 2025,
-    purpose: 'Travel',
-    languages: ['EN'],
-    personalities: ['Board Games', 'K-Food Lover'],
-    bio: 'Bonjour!',
-  },
-  {
-    id: 202,
-    name: 'Mina',
-    country: 'Korea',
-    birth: 2025,
-    purpose: 'Education',
-    languages: ['KO', 'EN'],
-    personalities: ['Exploring Cafés', 'K-Drama Lover'],
-    bio: 'Nice to meet you!',
-  },
-];
+const toFriendItem = (row: any): FriendItem => ({
+  id: Number(row?.id),
+  name: row?.username ?? 'Unknown',
+  country: row?.nationality ?? '',
+  birth: undefined,
+  purpose: '',
+  languages: [],
+  personalities: [],
+  bio: '',
+});
 
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
 
-  // received
-  const rRef = useRef<import('react-native').FlatList>(null);
-  const rList = useMemo(() => MOCK_RECEIVED, []);
-  const rTotal = rList.length;
-  const [rPage, setRPage] = useState(1);
+  const { data, isLoading, isError, refetch } = usePendingFollowing();
+  const receivedList = useMemo<FriendItem[]>(
+    () => (data ?? []).map(toFriendItem),
+    [data]
+  );
 
-  const sRef = useRef<import('react-native').FlatList>(null);
-  const sList = useMemo(() => MOCK_SENT, []);
-  const sTotal = sList.length;
+  const sentList: FriendItem[] = [];
+
+  const rRef = useRef<FlatList<FriendItem>>(null);
+  const sRef = useRef<FlatList<FriendItem>>(null);
+  const [rPage, setRPage] = useState(1);
   const [sPage, setSPage] = useState(1);
 
-  const goToIndex = (
-    ref: any,
+  const acceptMutation = useAcceptFollow();
+  const declineMutation = useDeclineFollow();
+
+  const goToIndex = <T,>(
+    ref: React.RefObject<FlatList<T>>,
     total: number,
     idx0: number
   ) => {
-    if (!ref?.current) return;
+    const node = ref.current;
+    if (!node) return;
     const safe = Math.max(0, Math.min(total - 1, idx0));
-    ref.current.scrollToIndex({ index: safe, animated: true });
+    node.scrollToIndex({ index: safe, animated: true });
   };
 
-  const handleAccept = (userId: number) => {
-    console.log('accept', userId);
+  const handleAccept = async (userId: number) => {
+    try {
+      await acceptMutation.mutateAsync(userId);
+      await refetch();
+    } catch (e) {
+      console.log('[accept-follow] error', e);
+    }
   };
 
-  const handleCancelRequest = (userId: number) => {
-    console.log('cancel request', userId);
+  const handleDecline = async (userId: number) => {
+    try {
+      await declineMutation.mutateAsync(userId);
+      await refetch();
+    } catch (e) {
+      console.log('[decline-follow] error', e);
+    }
   };
 
   return (
@@ -134,7 +112,6 @@ export default function FollowListScreen() {
             <TabText active={tab === 'sent'}>Sent</TabText>
           </TabItem>
         </TabsRow>
-
         <TabsBottomLine />
       </TabsWrap>
 
@@ -142,7 +119,7 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={rRef}
-            data={rList}
+            data={receivedList}
             keyExtractor={(i) => String(i.id)}
             horizontal
             pagingEnabled
@@ -155,10 +132,11 @@ export default function FollowListScreen() {
               offset: SCREEN_WIDTH * i,
               index: i,
             })}
-            onScroll={(e) => {
-              const x = e.nativeEvent.contentOffset.x;
-              setRPage(Math.round(x / SCREEN_WIDTH) + 1);
-            }}
+            onScroll={(e) =>
+              setRPage(
+                Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1
+              )
+            }
             scrollEventThrottle={16}
             renderItem={({ item }) => (
               <Page style={{ width: SCREEN_WIDTH }}>
@@ -175,29 +153,40 @@ export default function FollowListScreen() {
                     collapsible={false}
                     mode="received"
                     onAccept={handleAccept}
-                    onCancel={handleCancelRequest}
+                    onCancel={handleDecline}
                     onChat={() => { }}
                     isFollowed={false}
                   />
                 </Inner>
               </Page>
             )}
+            ListEmptyComponent={
+              <Empty>
+                <EmptyText>
+                  {isLoading
+                    ? 'Loading...'
+                    : isError
+                      ? 'Failed to load.'
+                      : 'No received requests.'}
+                </EmptyText>
+              </Empty>
+            }
           />
 
-          {rTotal > 1 && (
+          {receivedList.length > 1 && (
             <Pager>
               <PagerBtn
                 disabled={rPage <= 1}
-                onPress={() => goToIndex(rRef, rTotal, rPage - 2)}
+                onPress={() => goToIndex(rRef, receivedList.length, rPage - 2)}
               >
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
 
-              <PagerText>{` ${rPage} / ${rTotal} `}</PagerText>
+              <PagerText>{` ${rPage} / ${receivedList.length} `}</PagerText>
 
               <PagerBtn
-                disabled={rPage >= rTotal}
-                onPress={() => goToIndex(rRef, rTotal, rPage)}
+                disabled={rPage >= receivedList.length}
+                onPress={() => goToIndex(rRef, receivedList.length, rPage)}
               >
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
@@ -208,7 +197,7 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={sRef}
-            data={sList}
+            data={sentList}
             keyExtractor={(i) => String(i.id)}
             horizontal
             pagingEnabled
@@ -221,10 +210,11 @@ export default function FollowListScreen() {
               offset: SCREEN_WIDTH * i,
               index: i,
             })}
-            onScroll={(e) => {
-              const x = e.nativeEvent.contentOffset.x;
-              setSPage(Math.round(x / SCREEN_WIDTH) + 1);
-            }}
+            onScroll={(e) =>
+              setSPage(
+                Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1
+              )
+            }
             scrollEventThrottle={16}
             renderItem={({ item }) => (
               <Page style={{ width: SCREEN_WIDTH }}>
@@ -240,30 +230,35 @@ export default function FollowListScreen() {
                     bio={item.bio}
                     collapsible={false}
                     mode="sent"
-                    onAccept={handleAccept}
-                    onCancel={handleCancelRequest}
+                    onAccept={() => { }}
+                    onCancel={() => { }}
                     onChat={() => { }}
                     isFollowed={false}
                   />
                 </Inner>
               </Page>
             )}
+            ListEmptyComponent={
+              <Empty>
+                <EmptyText>No sent requests.</EmptyText>
+              </Empty>
+            }
           />
 
-          {sTotal > 1 && (
+          {sentList.length > 1 && (
             <Pager>
               <PagerBtn
                 disabled={sPage <= 1}
-                onPress={() => goToIndex(sRef, sTotal, sPage - 2)}
+                onPress={() => goToIndex(sRef, sentList.length, sPage - 2)}
               >
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
 
-              <PagerText>{` ${sPage} / ${sTotal} `}</PagerText>
+              <PagerText>{` ${sPage} / ${sentList.length} `}</PagerText>
 
               <PagerBtn
-                disabled={sPage >= sTotal}
-                onPress={() => goToIndex(sRef, sTotal, sPage)}
+                disabled={sPage >= sentList.length}
+                onPress={() => goToIndex(sRef, sentList.length, sPage)}
               >
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
@@ -277,7 +272,7 @@ export default function FollowListScreen() {
 
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #1D1E1F;
+  background: #1d1e1f;
 `;
 
 const Header = styled.View`
@@ -377,4 +372,13 @@ const PagerText = styled.Text`
   color: #b7babd;
   font-size: 12px;
   font-family: 'PlusJakartaSans_400Regular';
+`;
+
+const Empty = styled.View`
+  padding: 40px 16px;
+  align-items: center;
+`;
+
+const EmptyText = styled.Text`
+  color: #cfcfcf;
 `;

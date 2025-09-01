@@ -24,6 +24,20 @@ export default function CommunityLayout() {
                     title: "글쓰기",
                 }}
             />
+            <Stack.Screen
+                name="bookmarks"
+                options={{
+                    headerShown: false,
+                    title: "북마크",
+                }}
+            />
+            <Stack.Screen
+                name="my-history"
+                options={{
+                    headerShown: false,
+                    title: "히스토리",
+                }}
+            />
         </Stack>
     )
 }

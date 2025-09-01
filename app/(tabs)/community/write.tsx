@@ -1,13 +1,16 @@
+import { createPost } from '@/api/community/posts';
 import { Category } from '@/components/CategoryChips';
+import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView, Modal, Platform, Pressable, TextInput as RNTextInput,
+  Alert, KeyboardAvoidingView, Modal, Platform, Pressable, TextInput as RNTextInput,
   TextInputProps, View
 } from 'react-native';
 import styled from 'styled-components/native';
+
 
 const CATS: Category[] = ['News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'];
 const GREEN = '#30F59B';
@@ -21,7 +24,6 @@ export default function WriteScreen() {
   const [image, setImage] = useState<string | null>(null);
 
   const inputRef = useRef<RNTextInput>(null);
-
   const canSave = useMemo(() => body.trim().length > 0, [body]);
 
   const pickImage = async () => {
@@ -36,10 +38,21 @@ export default function WriteScreen() {
     if (!res.canceled) setImage(res.assets[0].uri);
   };
 
-  const onSave = () => {
-    // TODO: API 연동 자리
-    console.log({ category, body, anonymous, image });
-    router.back();
+  const onSave = async () => {
+    if (!canSave) return;
+    try {
+      const boardId = CATEGORY_TO_BOARD_ID[category];
+      await createPost(boardId, {
+        content: body,
+        isAnonymous: anonymous,
+        imageUrls: image ? [image] : [],
+      });
+      Alert.alert('Success', 'Post created successfully!');
+      router.back();
+    } catch (e) {
+      console.log('[createPost error]', e);
+      Alert.alert('Error', 'Failed to create post.');
+    }
   };
 
   return (
@@ -49,11 +62,7 @@ export default function WriteScreen() {
           <AntDesign name="left" size={20} color="#fff" />
         </IconBtn>
         <HeaderTitle>Write</HeaderTitle>
-        <SaveBtn
-          onPress={onSave}
-          disabled={!canSave}
-          accessibilityLabel="save-post"
-        >
+        <SaveBtn onPress={onSave} disabled={!canSave} accessibilityLabel="save-post">
           <SaveText $enabled={canSave}>Save</SaveText>
         </SaveBtn>
       </Header>
@@ -146,7 +155,6 @@ const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
 `;
-
 const Header = styled.View`
   height: 48px;
   padding: 0 12px;
@@ -154,167 +162,64 @@ const Header = styled.View`
   align-items: center;
   justify-content: space-between;
 `;
-const IconBtn = styled.Pressable`
-  padding: 6px;
-`;
+const IconBtn = styled.Pressable` padding: 6px; `;
 const HeaderTitle = styled.Text`
-  color: #fff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
+  color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold';
 `;
 const SaveBtn = styled.Pressable<{ disabled?: boolean }>`
-  padding: 6px;
-  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  padding: 6px; opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
 `;
 const SaveText = styled.Text<{ $enabled: boolean }>`
-  color: ${({ $enabled }) => ($enabled ? GREEN : '#9aa0a6')};
-  font-size: 16px;
-  font-family: 'PlusJakartaSans_700Bold';
+  color: ${({ $enabled }) => ($enabled ? '#30F59B' : '#9aa0a6')};
+  font-size: 16px; font-family: 'PlusJakartaSans_700Bold';
 `;
 
-const CatRow = styled.Pressable`
-  padding: 10px 12px 8px 12px;
-  flex-direction: row;
-  align-items: center;
-`;
-const CatLabel = styled.Text`
-  color: #9aa0a6;
-  font-size: 12px;
-  margin-right: 10px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
+const CatRow = styled.Pressable` padding: 10px 12px 8px 12px; flex-direction: row; align-items: center; `;
+const CatLabel = styled.Text` color: #9aa0a6; font-size: 12px; margin-right: 10px; font-family: 'PlusJakartaSans_400Regular'; `;
 const CatChip = styled.View`
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 6px;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
+  height: 24px; padding: 0 10px; border-radius: 6px; background: #1a1b1c; border: 1px solid #2a2b2c;
+  flex-direction: row; align-items: center; gap: 6px;
 `;
-const CatText = styled.Text`
-  color: #cfd4da;
-  font-size: 12px;
-`;
-
-const Divider = styled.View`
-  height: 1px;
-  background: #222426;
-`;
-
-const BodyWrap = styled.Pressable`
-  flex: 1;
-  padding: 10px 12px 0 12px;
-`;
-const StyledRNInput = styled(RNTextInput)`
-  flex: 1;
-  min-height: 150px;
-  color: #e6e9ec;
-  font-size: 14px;
-  line-height: 20px;
-  padding: 0;
-`;
-const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => {
-  return <StyledRNInput ref={ref} {...props} />;
-});
+const CatText = styled.Text` color: #cfd4da; font-size: 12px; `;
+const Divider = styled.View` height: 1px; background: #222426; `;
+const BodyWrap = styled.Pressable` flex: 1; padding: 10px 12px 0 12px; `;
+const StyledRNInput = styled(RNTextInput)` flex: 1; min-height: 150px; color: #e6e9ec; font-size: 14px; line-height: 20px; padding: 0; `;
+const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => <StyledRNInput ref={ref} {...props} />);
 Input.displayName = 'Input';
-
-const PreviewWrap = styled.View`
-  padding: 8px 12px 0 12px;
-`;
-const Preview = styled.Image`
-  width: 100%;
-  height: 180px;
-  border-radius: 12px;
-  background: #111213;
-`;
+const PreviewWrap = styled.View` padding: 8px 12px 0 12px; `;
+const Preview = styled.Image` width: 100%; height: 180px; border-radius: 12px; background: #111213; `;
 
 const BottomBar = styled.View`
-  padding: 8px 10px 12px 10px;
-  border-top-width: 1px;
-  border-top-color: #222426;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  padding: 8px 10px 12px 10px; border-top-width: 1px; border-top-color: #222426;
+  flex-direction: row; align-items: center; justify-content: space-between;
 `;
-const BarLeft = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-`;
-const BarRight = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-`;
+const BarLeft = styled.View` flex-direction: row; align-items: center; gap: 12px; `;
+const BarRight = styled.View` flex-direction: row; align-items: center; gap: 10px; `;
 const BarIcon = styled.Pressable`
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  align-items: center;
-  justify-content: center;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
+  width: 32px; height: 32px; border-radius: 6px; align-items: center; justify-content: center;
+  background: #1a1b1c; border: 1px solid #2a2b2c;
 `;
-
 const Anon = styled.Pressable<{ $active?: boolean }>`
-  height: 32px;
-  border-radius: 8px;
-  padding: 0 10px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
+  height: 32px; border-radius: 8px; padding: 0 10px; flex-direction: row; align-items: center; justify-content: center;
   background: ${({ $active }) => ($active ? '#2d3f38' : '#1a1b1c')};
-  border: 1px solid ${({ $active }) => ($active ? GREEN : '#2a2b2c')};
+  border: 1px solid ${({ $active }) => ($active ? '#30F59B' : '#2a2b2c')};
 `;
 const AnonText = styled.Text<{ $active?: boolean }>`
-  color: ${({ $active }) => ($active ? GREEN : '#cfd4da')};
-  font-family: 'PlusJakartaSans_600SemiBold';
-  font-size: 12px;
+  color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
+  font-family: 'PlusJakartaSans_600SemiBold'; font-size: 12px;
 `;
 
-const SheetBackdrop = styled(Pressable)`
-  flex: 1;
-  background: rgba(0,0,0,0.35);
-`;
+const SheetBackdrop = styled(Pressable)` flex: 1; background: rgba(0,0,0,0.35); `;
 const SheetBase = styled.View`
-  background: #111213;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  padding: 8px 10px 20px 10px;
+  background: #111213; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 8px 10px 20px 10px;
 `;
-const Sheet = styled(SheetBase)`
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-`;
+const Sheet = styled(SheetBase)` position: absolute; left: 0; right: 0; bottom: 0; `;
 const SheetBtn = styled.Pressable`
-  height: 52px;
-  border-radius: 12px;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
-  align-items: center;
-  justify-content: center;
-  margin: 6px 12px 0 12px;
+  height: 52px; border-radius: 12px; background: #1a1b1c; border: 1px solid #2a2b2c;
+  align-items: center; justify-content: center; margin: 6px 12px 0 12px;
 `;
-const SheetBtnText = styled.Text`
-  color: #cfd4da;
-  font-size: 15px;
-`;
+const SheetBtnText = styled.Text` color: #cfd4da; font-size: 15px; `;
 
-const CatSheet = styled(SheetBase)`
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding-top: 12px;
-`;
-const CatItem = styled.Pressable`
-  height: 48px;
-  padding: 0 16px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-const CatItemText = styled.Text<{ $active?: boolean }>`
-  color: ${({ $active }) => ($active ? '#e6e9ec' : '#cfd4da')};
-  font-size: 15px;
-`;
+const CatSheet = styled(SheetBase)` position: absolute; left: 0; right: 0; bottom: 0; padding-top: 12px; `;
+const CatItem = styled.Pressable` height: 48px; padding: 0 16px; flex-direction: row; align-items: center; justify-content: space-between; `;
+const CatItemText = styled.Text<{ $active?: boolean }>` color: ${({ $active }) => ($active ? '#e6e9ec' : '#cfd4da')}; font-size: 15px; `;
