@@ -1,4 +1,4 @@
-import { useMyPosts } from '@/hooks/queries/useMyPosts';
+import { useDeletePost, useMyPosts } from '@/hooks/queries/useMyPosts';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -66,6 +66,8 @@ export default function MyHistoryScreen() {
         isFetchingNextPage,
     } = useMyPosts(20);
 
+    const deleteMutation = useDeletePost();
+
     const posts: PostRow[] = useMemo(
         () =>
             (myPostItems ?? []).map((row: any) => ({
@@ -128,9 +130,20 @@ export default function MyHistoryScreen() {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-                        // 실제 삭제 API 붙일 때 여기에서 호출
-                        showToast(isPost ? '1 Posts Deleted' : '1 Comments Deleted');
-                        refetch();
+                        try {
+                            if (isPost) {
+                                await deleteMutation.mutateAsync(Number(sheetTarget.id));
+                                showToast('1 Posts Deleted');
+                            } else {
+                                // 댓글 삭제 API 연결 시 여기서 호출
+                                showToast('1 Comments Deleted');
+                            }
+                        } catch (e) {
+                            console.log('[delete-post] error', e);
+                            showToast('Delete failed');
+                        } finally {
+                            refetch();
+                        }
                     },
                 },
             ],
@@ -228,7 +241,11 @@ export default function MyHistoryScreen() {
                 onEndReachedThreshold={0.4}
                 onEndReached={onEndReached}
                 refreshControl={
-                    <RefreshControl refreshing={isLoading || isRefetching} onRefresh={refetch} tintColor="#fff" />
+                    <RefreshControl
+                        refreshing={isLoading || isRefetching || deleteMutation.isPending}
+                        onRefresh={refetch}
+                        tintColor="#fff"
+                    />
                 }
                 ListEmptyComponent={
                     <Empty>
@@ -247,14 +264,16 @@ export default function MyHistoryScreen() {
                         <SheetText>Edit</SheetText>
                     </SheetBtn>
 
-                    <SheetBtn onPress={onDelete}>
+                    <SheetBtn onPress={onDelete} disabled={deleteMutation.isPending}>
                         <SheetIcon>
                             <MaterialIcons name="delete-outline" size={18} color="#ff6b6b" />
                         </SheetIcon>
-                        <SheetText style={{ color: '#ff6b6b' }}>Delete</SheetText>
+                        <SheetText style={{ color: '#ff6b6b' }}>
+                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </SheetText>
                     </SheetBtn>
 
-                    <SheetBtn onPress={closeSheet}>
+                    <SheetBtn onPress={closeSheet} disabled={deleteMutation.isPending}>
                         <SheetIcon>
                             <AntDesign name="close" size={18} color="#cfd4da" />
                         </SheetIcon>
@@ -274,7 +293,6 @@ export default function MyHistoryScreen() {
         </Safe>
     );
 }
-
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -375,17 +393,10 @@ const Body = styled.Text`
   font-size: 14px;
 `;
 
-const Divider = styled.View`
-  height: 1px;
-  background: #222426;
-  margin-top: 10px;
-`;
-
 const ActionRow = styled.View`
   margin-top: 8px;
   flex-direction: row;
   align-items: center;
-  margin-top: 20;
 `;
 const Act = styled.Pressable`
   flex-direction: row;
@@ -440,7 +451,7 @@ const Sheet = styled.View`
     android: { elevation: 8 },
 })}
 `;
-const SheetBtn = styled.Pressable`
+const SheetBtn = styled.Pressable<{ disabled?: boolean }>`
   height: 52px;
   border-radius: 12px;
   background: #1a1b1c;
@@ -449,6 +460,7 @@ const SheetBtn = styled.Pressable`
   padding: 0 12px;
   flex-direction: row;
   align-items: center;
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
 `;
 const SheetIcon = styled.View`
   width: 24px;
