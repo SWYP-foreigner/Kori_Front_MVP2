@@ -3,6 +3,7 @@ import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
+import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -41,27 +42,17 @@ type PostsListResp = {
 function pad2(n: number) {
     return n < 10 ? `0${n}` : String(n);
 }
-
 function parseDateFlexible(v?: unknown): Date | null {
     if (v == null) return null;
     let s = String(v).trim();
-
-    if (/^\d+(\.\d+)?$/.test(s)) {
-        const num = parseFloat(s);
-        return new Date(num * 1000);
-    }
-
+    if (/^\d+(\.\d+)?$/.test(s)) return new Date(parseFloat(s) * 1000);
     if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
-
     const d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
 }
-
 function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     let d = parseDateFlexible(raw);
-    if ((!d || isNaN(d.getTime())) && fallbackIso) {
-        d = parseDateFlexible(fallbackIso);
-    }
+    if ((!d || isNaN(d.getTime())) && fallbackIso) d = parseDateFlexible(fallbackIso);
     if (!d) return '';
     try {
         const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -76,11 +67,15 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     }
 }
 
-
-type PostEx = Post & { hotScore?: number; minutesAgo?: number; bookmarked?: boolean };
+type PostEx = Post & {
+    hotScore?: number;
+    minutesAgo?: number;
+    bookmarked?: boolean;
+    likedByMe?: boolean;
+};
 
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
-    const createdRaw = row.createdAt ?? row.createdTime; // 작성 시각 우선
+    const createdRaw = row.createdAt ?? row.createdTime;
     return {
         id: String(row.postId),
         author: row.authorName || 'Unknown',
@@ -92,6 +87,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         comments: Number(row.commentCount ?? 0),
         images: undefined,
         hotScore: row.score,
+        likedByMe: false,
     };
 };
 
@@ -108,6 +104,8 @@ export default function CommunityScreen() {
     const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
     const boardId = CATEGORY_TO_BOARD_ID[cat];
 
+    const likeMutation = useToggleLike();
+
     useEffect(() => {
         refresh();
     }, [boardId, sortParam]);
@@ -117,16 +115,10 @@ export default function CommunityScreen() {
         setLoading(true);
         try {
             const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, {
-                params: {
-                    sort: sortParam,
-                    size: 20,
-                    ...(after ? { cursor: after } : null),
-                },
+                params: { sort: sortParam, size: 20, ...(after ? { cursor: after } : null) },
             });
-
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
-
             setItems(prev => (after ? [...prev, ...list] : list));
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor);
@@ -152,8 +144,26 @@ export default function CommunityScreen() {
 
     const visible = useMemo(() => items, [items]);
 
-    const toggleLike = (id: string) =>
-        setItems(prev => prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p)));
+    const handleToggleLike = async (id: string) => {
+        const nid = Number(id);
+        const already = items.find(p => p.id === id)?.likedByMe;
+        if (already) return;
+
+        setItems(prev =>
+            prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1, likedByMe: true } : p))
+        );
+
+        try {
+            await likeMutation.mutateAsync(nid);
+        } catch (e) {
+            setItems(prev =>
+                prev.map(p =>
+                    p.id === id ? { ...p, likes: Math.max(0, p.likes - 1), likedByMe: false } : p
+                )
+            );
+            console.log('[like:list] error', e);
+        }
+    };
 
     const toggleBookmark = (id: string) =>
         setItems(prev => prev.map(p => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)));
@@ -162,7 +172,7 @@ export default function CommunityScreen() {
         <PostCard
             data={{ ...item, category: cat }}
             onPress={() => router.push({ pathname: '/community/[id]', params: { id: String(item.id) } })}
-            onToggleLike={() => toggleLike(String(item.id))}
+            onToggleLike={() => handleToggleLike(String(item.id))}
             onToggleBookmark={() => toggleBookmark(String(item.id))}
         />
     );
@@ -179,11 +189,9 @@ export default function CommunityScreen() {
                     <IconBtn onPress={() => router.push('/community/search')}>
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
-
                     <IconBtn onPress={() => router.push('/community/bookmarks')}>
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
                     </IconBtn>
-
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>
@@ -223,58 +231,48 @@ export default function CommunityScreen() {
 }
 
 const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1d1e1f;
+    flex: 1; 
+    background: #1d1e1f;
 `;
-
 const Header = styled.View`
-  padding: 0 12px;
-  margin-top: 12px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+    padding: 0 12px;
+    margin-top: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 `;
-
 const Left = styled.View`
-  flex-direction: row;
-  align-items: center;
+    flex-direction: row;
+    align-items: center;
 `;
-
 const Title = styled.Text`
-  color: #ffffff;
-  font-size: 32px;
-  font-family: 'InstrumentSerif_400Regular';
-  letter-spacing: -0.2px;
-`;
-
+    color: #ffffff;
+    font-size: 32px;
+    font-family: 'InstrumentSerif_400Regular';
+    letter-spacing: -0.2px;
+   `;
 const IconImage = styled.Image`
-  margin-left: 4px;
-  width: 20px;
-  height: 20px;
-  resize-mode: contain;
+    margin-left: 4px;
+    width: 20px;
+    height: 20px;
+    resize-mode: contain;
 `;
-
 const Right = styled.View`
-  flex-direction: row;
-  align-items: center;
+    flex-direction: row;
+    align-items: center;
 `;
-
 const IconBtn = styled.Pressable`
-  padding: 6px;
-  margin-left: 8px;
+    padding: 6px;
+    margin-left: 8px;
 `;
-
 const ChipsWrap = styled.View`
-  margin-top: 12px;
+    margin-top: 12px;
 `;
-
 const SortWrap = styled.View`
-  margin-top: 20px;
-  margin-bottom: 14px;
+    margin-top: 20px;
+    margin-bottom: 14px;
 `;
-
 const List = styled(FlatList as React.ComponentType<FlatListProps<PostEx>>)``;
-
 const FooterLoading = styled.View`
-  padding: 16px 0;
+    padding: 16px 0;
 `;
