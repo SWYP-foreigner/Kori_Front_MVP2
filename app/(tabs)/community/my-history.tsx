@@ -4,13 +4,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    ListRenderItem,
-    Modal,
-    Platform,
-    Pressable,
-    RefreshControl
+    Alert, FlatList, ListRenderItem, Modal, Platform, Pressable, RefreshControl
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -86,9 +80,7 @@ export default function MyHistoryScreen() {
     const comments: CommentRow[] = [];
 
     const [sheetOpen, setSheetOpen] = useState(false);
-    const [sheetTarget, setSheetTarget] = useState<{ type: 'post' | 'comment'; id: string } | null>(
-        null
-    );
+    const [sheetTarget, setSheetTarget] = useState<{ type: 'post' | 'comment'; id: string } | null>(null);
 
     const [toast, setToast] = useState<string | null>(null);
     const showToast = (msg: string) => {
@@ -100,16 +92,24 @@ export default function MyHistoryScreen() {
         setSheetTarget(target);
         setSheetOpen(true);
     };
-
     const closeSheet = () => {
         setSheetOpen(false);
         setTimeout(() => setSheetTarget(null), 150);
     };
 
     const onEdit = () => {
-        if (!sheetTarget) return;
+        if (!sheetTarget || sheetTarget.type !== 'post') return;
+        const target = posts.find(p => p.id === sheetTarget.id);
         closeSheet();
-        router.push('/community/write');
+
+        router.push({
+            pathname: '/community/write',
+            params: {
+                mode: 'edit',
+                postId: sheetTarget.id,
+                initial: target?.body ?? '',
+            },
+        });
     };
 
     const onDelete = () => {
@@ -135,7 +135,6 @@ export default function MyHistoryScreen() {
                                 await deleteMutation.mutateAsync(Number(sheetTarget.id));
                                 showToast('1 Posts Deleted');
                             } else {
-                                // 댓글 삭제 API 연결 시 여기서 호출
                                 showToast('1 Comments Deleted');
                             }
                         } catch (e) {
@@ -350,7 +349,6 @@ const RowWrap = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
-
 const TopRow = styled.View`
   flex-direction: row;
   align-items: center;
@@ -442,12 +440,7 @@ const Sheet = styled.View`
   border-top-right-radius: 16px;
   padding: 8px 10px 20px 10px;
   ${Platform.select({
-    ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: -6 },
-    },
+    ios: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: -6 } },
     android: { elevation: 8 },
 })}
 `;
