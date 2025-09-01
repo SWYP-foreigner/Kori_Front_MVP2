@@ -1,3 +1,4 @@
+import { useMyPosts } from '@/hooks/queries/useMyPosts';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -8,7 +9,8 @@ import {
     ListRenderItem,
     Modal,
     Platform,
-    Pressable
+    Pressable,
+    RefreshControl
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -34,60 +36,52 @@ type CommentRow = {
 
 const AV = require('@/assets/images/character1.png');
 
-const MOCK_POSTS: PostRow[] = [
-    {
-        id: 'p1',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        body: 'Hi! I came to Korea on a working holiday...',
-        views: 999,
-        likes: 999,
-        comments: 999,
-    },
-    {
-        id: 'p2',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        body: 'Hi! I came to Korea on a working holiday...',
-        views: 999,
-        likes: 999,
-        comments: 999,
-    },
-    {
-        id: 'p3',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        body: 'Hi! I came to Korea on a working holiday...',
-        views: 999,
-        likes: 999,
-        comments: 999,
-    },
-];
+function toDateLabel(v?: unknown): string {
+    if (v == null) return '';
+    const d = new Date(v as any);
+    if (!isNaN(d.getTime())) {
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${mm}/${dd}`;
+    }
+    const s = String(v);
+    return s.length >= 10 ? s.slice(5, 10).replace('-', '/') : s;
+}
 
-const MOCK_COMMENTS: CommentRow[] = [
-    {
-        id: 'c1',
-        myText: 'My comment ...',
-        parentSnippet: "Someone else’s writing",
-        createdAt: '2025-08-14',
-    },
-    {
-        id: 'c2',
-        myText: 'My comment ...',
-        parentSnippet: "Someone else’s writing",
-        createdAt: '2025-08-14',
-    },
-];
-
+function pickBody(row: any) {
+    const raw = row?.contentPreview ?? row?.content ?? row?.title ?? '';
+    return String(raw).replace(/\s+/g, ' ').trim();
+}
 
 export default function MyHistoryScreen() {
     const [tab, setTab] = useState<Tab>('post');
 
-    const [posts, setPosts] = useState<PostRow[]>(MOCK_POSTS);
-    const [comments, setComments] = useState<CommentRow[]>(MOCK_COMMENTS);
+    const {
+        items: myPostItems,
+        isLoading,
+        isRefetching,
+        refetch,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useMyPosts(20);
+
+    const posts: PostRow[] = useMemo(
+        () =>
+            (myPostItems ?? []).map((row: any) => ({
+                id: String(row.postId),
+                author: row.authorName || 'Unknown',
+                avatar: AV,
+                createdAt: toDateLabel(row.createdAt),
+                body: pickBody(row),
+                views: Number(row.viewCount ?? 0),
+                likes: Number(row.likeCount ?? 0),
+                comments: Number(row.commentCount ?? 0),
+            })),
+        [myPostItems]
+    );
+
+    const comments: CommentRow[] = [];
 
     const [sheetOpen, setSheetOpen] = useState(false);
     const [sheetTarget, setSheetTarget] = useState<{ type: 'post' | 'comment'; id: string } | null>(
@@ -109,7 +103,6 @@ export default function MyHistoryScreen() {
         setSheetOpen(false);
         setTimeout(() => setSheetTarget(null), 150);
     };
-
 
     const onEdit = () => {
         if (!sheetTarget) return;
@@ -135,21 +128,15 @@ export default function MyHistoryScreen() {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-
-                        if (isPost) {
-                            setPosts((prev) => prev.filter((p) => p.id !== sheetTarget.id));
-                            showToast('1 Posts Deleted');
-                        } else {
-                            setComments((prev) => prev.filter((c) => c.id !== sheetTarget.id));
-                            showToast('1 Comments Deleted');
-                        }
+                        // 실제 삭제 API 붙일 때 여기에서 호출
+                        showToast(isPost ? '1 Posts Deleted' : '1 Comments Deleted');
+                        refetch();
                     },
                 },
             ],
             { cancelable: true }
         );
     };
-
 
     const renderPost: ListRenderItem<PostRow> = ({ item }) => (
         <RowWrap>
@@ -169,9 +156,7 @@ export default function MyHistoryScreen() {
                 </MoreBtn>
             </TopRow>
 
-            <Body numberOfLines={1}>{item.body}</Body>
-
-            <Divider />
+            {item.body ? <Body numberOfLines={1}>{item.body}</Body> : null}
 
             <ActionRow>
                 <Act>
@@ -208,9 +193,13 @@ export default function MyHistoryScreen() {
 
     const data = useMemo(() => (tab === 'post' ? posts : comments), [tab, posts, comments]);
 
+    const onEndReached = () => {
+        if (tab !== 'post') return;
+        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+    };
+
     return (
         <Safe>
-            {/* Header */}
             <Header>
                 <Back onPress={() => router.back()}>
                     <AntDesign name="left" size={20} color="#fff" />
@@ -219,7 +208,6 @@ export default function MyHistoryScreen() {
                 <RightPlaceholder />
             </Header>
 
-            {/* Tabs */}
             <TabsBar>
                 <TabBtn $active={tab === 'post'} onPress={() => setTab('post')}>
                     <TabText $active={tab === 'post'}>My Post</TabText>
@@ -231,26 +219,25 @@ export default function MyHistoryScreen() {
                 </TabBtn>
             </TabsBar>
 
-            {/* List */}
-            <FlatList
-                data={data as any[]}
+            <List
+                data={data}
                 keyExtractor={(it) => (it as any).id}
                 renderItem={tab === 'post' ? (renderPost as any) : (renderComment as any)}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 24 }}
+                onEndReachedThreshold={0.4}
+                onEndReached={onEndReached}
+                refreshControl={
+                    <RefreshControl refreshing={isLoading || isRefetching} onRefresh={refetch} tintColor="#fff" />
+                }
                 ListEmptyComponent={
                     <Empty>
-                        <EmptyText>No items.</EmptyText>
+                        <EmptyText>{isLoading ? 'Loading...' : 'No items.'}</EmptyText>
                     </Empty>
                 }
             />
 
-            <Modal
-                visible={sheetOpen}
-                transparent
-                animationType="fade"
-                onRequestClose={closeSheet}
-            >
+            <Modal visible={sheetOpen} transparent animationType="fade" onRequestClose={closeSheet}>
                 <SheetBackdrop onPress={closeSheet} />
                 <Sheet>
                     <SheetBtn onPress={onEdit}>
@@ -287,6 +274,7 @@ export default function MyHistoryScreen() {
         </Safe>
     );
 }
+
 
 const Safe = styled.SafeAreaView`
   flex: 1;
@@ -334,7 +322,7 @@ const TabText = styled.Text<{ $active?: boolean }>`
 const TabUnderline = styled.View`
   height: 2px;
   width: 62px;
-  background: #30F59B;
+  background: #30f59b;
   border-radius: 2px;
   margin-top: 6px;
 `;
@@ -397,6 +385,7 @@ const ActionRow = styled.View`
   margin-top: 8px;
   flex-direction: row;
   align-items: center;
+  margin-top: 20;
 `;
 const Act = styled.Pressable`
   flex-direction: row;
@@ -428,7 +417,6 @@ const EmptyText = styled.Text`
   color: #cfd4da;
 `;
 
-/* bottom sheet */
 const SheetBackdrop = styled(Pressable)`
   flex: 1;
   background: rgba(0, 0, 0, 0.35);
@@ -443,7 +431,12 @@ const Sheet = styled.View`
   border-top-right-radius: 16px;
   padding: 8px 10px 20px 10px;
   ${Platform.select({
-    ios: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: -6 } },
+    ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: -6 },
+    },
     android: { elevation: 8 },
 })}
 `;
@@ -467,7 +460,6 @@ const SheetText = styled.Text`
   margin-left: 4px;
 `;
 
-/* toast */
 const ToastWrap = styled.View`
   position: absolute;
   left: 0;
@@ -486,3 +478,5 @@ const ToastText = styled.Text`
   color: #cfd4da;
   font-size: 12px;
 `;
+
+const List = styled(FlatList as new () => FlatList<PostRow>)``;
