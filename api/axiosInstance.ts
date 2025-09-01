@@ -4,6 +4,7 @@ import axios, {
     InternalAxiosRequestConfig
 } from 'axios';
 import { Config } from "@/src/lib/config";
+import * as SecureStore from 'expo-secure-store';
 
 const BASE_URL = Config.SERVER_URL;
 
