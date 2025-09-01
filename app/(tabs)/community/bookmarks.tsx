@@ -6,7 +6,7 @@ import {
     FlatList,
     ListRenderItem,
     TouchableOpacity,
-    View
+    View, type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -24,39 +24,9 @@ type BookmarkPost = {
 };
 
 const MOCK: BookmarkPost[] = [
-    {
-        id: 'b1',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        views: 999,
-        body:
-            "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.",
-        likes: 999,
-        comments: 999,
-    },
-    {
-        id: 'b2',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        views: 999,
-        body:
-            "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.",
-        likes: 999,
-        comments: 999,
-    },
-    {
-        id: 'b3',
-        author: 'Shotaro',
-        avatar: AV,
-        createdAt: '2025-08-14',
-        views: 999,
-        body:
-            "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.",
-        likes: 999,
-        comments: 999,
-    },
+    { id: 'b1', author: 'Shotaro', avatar: AV, createdAt: '2025-08-14', views: 999, body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.", likes: 999, comments: 999 },
+    { id: 'b2', author: 'Shotaro', avatar: AV, createdAt: '2025-08-14', views: 999, body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.", likes: 999, comments: 999 },
+    { id: 'b3', author: 'Shotaro', avatar: AV, createdAt: '2025-08-14', views: 999, body: "Hi! I came to Korea on a working holiday and I'm currently learning Korean at the Korean Language Institute at Yonsei Univ.", likes: 999, comments: 999 },
 ];
 
 export default function BookmarksScreen() {
@@ -133,7 +103,7 @@ export default function BookmarksScreen() {
 
             <List
                 data={items}
-                keyExtractor={(it) => it.id}
+                keyExtractor={(it: BookmarkPost) => it.id}
                 renderItem={renderItem}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={listEmpty}
@@ -178,7 +148,9 @@ const RightSpace = styled.View`
   width: 40px;
 `;
 
-const List = styled(FlatList as new () => FlatList<BookmarkPost>)``;
+const List = styled(
+    FlatList as React.ComponentType<FlatListProps<BookmarkPost>>
+)``;
 
 const Cell = styled(TouchableOpacity)`
   padding: 12px 16px 8px 16px;
