@@ -4,6 +4,7 @@ import BuzzingRoomBox from "@/components/BuzzingRoomBox";
 import AllSpaceRoomBox from "@/components/AllSpaceRoomBox";
 import { FlatList, View } from "react-native";
 import api from "@/api/axiosInstance";
+import { useRouter } from 'expo-router';
 
 type BuzzingData={
   roomId:number,
@@ -23,6 +24,7 @@ type AllSpaceData={
 const GroupChatRoomBox = () => {
   const [buzzingSpaces,setBuzzingSpaces]=useState<BuzzingData[]>([]);
   const [allSpaces,setAllSpaces]=useState<AllSpaceData[]>([]);
+   const router = useRouter();
    // Buzzing Spaces -> api 요청 api/v1/chat/group/popular
   // All Spaces -> api 요청  api/v1/chat/group/latest
   

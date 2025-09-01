@@ -1,34 +1,82 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import styled from "styled-components/native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { ScrollView ,FlatList } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import api from "@/api/axiosInstance";
+import { useRouter } from 'expo-router';
 
+type RoomDetail = {
+  chatRoomId: number;
+  roomName: string;
+  description: string;
+  ownerId: number;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerImageUrl: string;
+  roomImageUrl: string;
+  participantCount: number;
+  participantsImageUrls: string[];
+};
 
 const LinkedSpaceDetail=()=>{
+    const { roomId }= useLocalSearchParams<{ roomId : string }>();
+    const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
+    const router = useRouter();
+    
+  const getChatRoomDetail=async()=>{
+    const res=await api.get(`/api/v1/chat/rooms/group/${roomId}`);
+    console.log("Detail",res.data);
+    return res.data.data
+  };
+
+  const JoinRoom=async()=>{
+    const res=await api.post(`/api/v1/chat/rooms/group/${roomId}/join`)
+    console.log("방 가입 여부",res);
+    router.back();
+
+  };
+
+   // 컴포넌트가 화면에 나타날 때 한 번만 서버에서 채팅방 리스트를 가져옴
+      useEffect(() => {
+        const fetchDetail = async () => {
+          try {
+            const detailData=await getChatRoomDetail();
+            setRoomDetail(detailData);
+    
+          } catch (err) {
+            console.error('Linked Space 불러오기 실패:', err);
+          }
+        };
+        fetchDetail();
+      }, []); // 빈 배열 → 마운트 시 한 번만 실행
+
 
     return(
         <Container>
+            
             <BackgroundContainer>
                 <Background
                     source={require("@/assets/images/background1.png")}
                     resizeMode="contain"> 
-                    <ProfileBox>
-                        <ProfileImage source={require("@/assets/images/character3.png")} />
+                    <ProfileBox>    
+                        <ProfileImage source={{ uri: roomDetail?.roomImageUrl }} />
                     </ProfileBox>
                 </Background>  
             </BackgroundContainer>
             <DetailContainer>
                 <DetailTopContainer>
                     <TitleContainer>
-                        <TitleText>Hiking Club</TitleText>
+                        <TitleText>{roomDetail?.roomName}</TitleText>
                     </TitleContainer>
                     <MembersTextContainer>
                         <MembersText>Members</MembersText>
                     </MembersTextContainer>
                     <HostContainer>
                        <HostImageBox>
-                        <HostImage  source={require("@/assets/images/character3.png")}/>
+                        <HostImage  source={{ uri: roomDetail?.ownerImageUrl }}/>
                        </HostImageBox>
-                       <HostNameText>Kim Kori</HostNameText>
+                       <HostNameText>{roomDetail?.ownerFirstName}</HostNameText>
                        <HostBox>
                         <HostText>Host</HostText>
                        </HostBox>
@@ -36,25 +84,24 @@ const LinkedSpaceDetail=()=>{
                     <MembersContainer>
                         <InMemberContainer>
                             <MaterialIcons name="person-outline" size={15} color="#949899" />
-                            <InMemberText>4 members in</InMemberText>
+                            <InMemberText>{roomDetail?.participantCount} members in</InMemberText>
                             <Divider/>
                         </InMemberContainer>
                         <MemberImageContainer>
                             <MembersBox>
-                            <MemberImageBox>
-                                 <MemberImage source={require("@/assets/images/character3.png")}/>
-                            </MemberImageBox>
-                            <MemberImageBox>
-                                 <MemberImage source={require("@/assets/images/character3.png")}/>
-                            </MemberImageBox>
-                            <MemberImageBox>
-                                 <MemberImage source={require("@/assets/images/character3.png")}/>
-                            </MemberImageBox>
-                            <MemberImageBox>
-                                 <MemberImage source={require("@/assets/images/character3.png")}/>
-                            </MemberImageBox>
+                                <FlatList
+                                    data={roomDetail?.participantsImageUrls.slice(0, 5)} // 최대 5개
+                                    keyExtractor={(item, index) => index.toString()}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    renderItem={({ item }) => (
+                                    <MemberImageBox>
+                                        <MemberImage source={{ uri: item }} />
+                                    </MemberImageBox>
+                                    )}
+                                />
                             </MembersBox>
-                            <MemberCountText>+4</MemberCountText>
+                            <MemberCountText>+{roomDetail ? roomDetail.participantCount + 1 : 0}</MemberCountText>
                         </MemberImageContainer>
                     </MembersContainer>
                 </DetailTopContainer>
@@ -65,13 +112,13 @@ const LinkedSpaceDetail=()=>{
                     </BottomTitleContainer>
                     <BottomContentContainer>
                         <BottomContent>
-                            Hello~anyone that loves to hike can join this chat! We regulary do an
-                            offline meeting every two weeks and go to any random mountains near Seoul.
+                            {roomDetail?.description}
                         </BottomContent>
                     </BottomContentContainer>
                 </DetailBottomContainer>
-                    <NextButton>
-                    <ButtonText>Next</ButtonText>
+               
+                    <NextButton onPress={JoinRoom}>
+                    <ButtonText>Join</ButtonText>
                     </NextButton>
 
                 <BottomSpacer/>
@@ -100,16 +147,18 @@ const Background = styled.ImageBackground`
 `;
 
 const ProfileBox=styled.View`
-    width:50%;
-    height:50%;
+    width:150px;
+    height:150px;
+    border-radius:100px;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
 
 `;
 const ProfileImage=styled.Image`
     width:100%;
     height:100%;
-    resize-mode:contain;
+    resize-mode:cover;
 `;
 const DetailContainer=styled.View`
     flex:2;
@@ -149,11 +198,12 @@ const HostContainer=styled.View`
 `;
 const HostImageBox=styled.View`
     width:20%;
+    overflow:hidden;
 `;
 const HostImage=styled.Image`
     width:100%;
     height:100%;
-    resize-mode: contain;
+    resize-mode: cover;
 `;
 const HostNameText=styled.Text`
     font-size:15px;
