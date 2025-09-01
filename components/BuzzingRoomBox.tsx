@@ -1,12 +1,23 @@
 import React from "react";
 import styled from "styled-components/native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useRouter } from 'expo-router';
 
 
 const BuzzingRoomBox=({data})=>{
+    const router = useRouter();
+    const onhandleNext=()=>{
+      router.push({
+      pathname: '../screens/chatscreen/LinkedSpaceDetail',
+      params: { 
+        roomId: data.roomId,       // props에서 바로 가져옴
+      },
+    });
+    };
 
+   
     return(
-    <BuzzingBox>
+    <BuzzingBox onPress={onhandleNext}>
                 <BuzzingImageContainer>
                     <BuzzingImage source={{ uri: data.roomImageUrl }}/>
                 </BuzzingImageContainer>

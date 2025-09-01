@@ -53,7 +53,6 @@ export default function ChatScreen() {
       try {
         const res = await api.get('/api/v1/chat/rooms');
         const data: ChatRoom[] = res.data.data; // data 배열만 추출
-        console.log("data",data);
         setChatRooms(data);
       } catch (err) {
         console.error('채팅방 불러오기 실패:', err);
