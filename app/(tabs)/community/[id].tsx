@@ -4,23 +4,30 @@ import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
+  Alert,
   Animated,
-  Easing, FlatList,
+  Easing,
+  FlatList,
   Keyboard,
-  KeyboardAvoidingView, Modal, Platform, Pressable, TextInput as RNTextInput,
-  TextInputProps, View
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  TextInput as RNTextInput,
+  TextInputProps,
+  View
 } from 'react-native';
 import styled from 'styled-components/native';
 
 const AV = require('@/assets/images/character1.png');
 const DANGER = '#FF4D4F';
 
-/* ---------- utils ---------- */
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
   let s = String(v).trim();
@@ -39,7 +46,6 @@ function formatCreatedYMD(v?: unknown): string {
   } catch { return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`; }
 }
 
-/* ---------- screen ---------- */
 const MOCK_COMMENTS: Comment[] = [];
 
 export default function PostDetailScreen() {
@@ -52,9 +58,11 @@ export default function PostDetailScreen() {
   const [likesOverride, setLikesOverride] = useState<number | null>(null);
   const [likedByMe, setLikedByMe] = useState(false);
 
-  // 액션시트 상태 + 애니메이션
   const [menuVisible, setMenuVisible] = useState(false);
   const slideY = useRef(new Animated.Value(300)).current;
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState('');
 
   const likeMutation = useToggleLike();
 
@@ -97,16 +105,24 @@ export default function PostDetailScreen() {
     requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }));
   };
 
-  // ---- 액션시트 열기/닫기 ----
   const openMenu = () => {
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   };
-  const closeMenu = () => {
-    Animated.timing(slideY, { toValue: 300, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true })
-      .start(() => setMenuVisible(false));
-  };
+
+  const closeMenu = () =>
+    new Promise<void>((resolve) => {
+      Animated.timing(slideY, {
+        toValue: 300,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true
+      }).start(() => {
+        setMenuVisible(false);
+        resolve();
+      });
+    });
 
   if (isLoading) {
     return (
@@ -165,11 +181,53 @@ export default function PostDetailScreen() {
     }
   };
 
-  const onReportPost = () => { closeMenu(); console.log('[action] report post', postId); };
-  const onReportUser = () => {
-    closeMenu();
+  const confirmReportPost = (text: string) => {
+    Alert.alert(
+      'Report',
+      'Are you sure\nreport this post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report',
+          style: 'destructive',
+          onPress: () => {
+            // 실제 신고 처리 (API 연동 위치)
+            console.log('[report post]', { postId, text });
+            setReportOpen(false);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const onSubmitReport = () => {
+    const text = reportText.trim();
+    if (!text) {
+      Alert.alert('Report', 'Please enter details.');
+      return;
+    }
+    confirmReportPost(text);
+  };
+
+  const onReportPost = async () => {
+    await closeMenu();
+    setReportText('');
+    setReportOpen(true);
+  };
+
+  const onReportUser = async () => {
+    await closeMenu();
     const userId = (post as any).userId ?? (post as any).authorId;
-    console.log('[action] report user', userId);
+    Alert.alert(
+      'Report',
+      'Are you sure\nreport this user?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -271,11 +329,9 @@ export default function PostDetailScreen() {
         </InputBar>
       </KeyboardAvoidingView>
 
-      {/* ---------- Action Sheet (Slide-up) ---------- */}
-      <Modal transparent visible={menuVisible} onRequestClose={closeMenu} animationType="none">
+      <Modal transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)} animationType="none">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          {/* 배경 터치 닫기 - 텍스트 없이 순수 View/Pressable만 둬서 RN 텍스트 오류 방지 */}
-          <Pressable style={{ flex: 1 }} onPress={closeMenu} />
+          <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
           <Animated.View
             style={{
               transform: [{ translateY: slideY }],
@@ -299,58 +355,259 @@ export default function PostDetailScreen() {
 
             <SheetDivider />
 
-            <SheetItem onPress={closeMenu}>
+            <SheetItem onPress={() => setMenuVisible(false)}>
               <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
               <SheetLabel>Cancel</SheetLabel>
             </SheetItem>
           </Animated.View>
         </View>
       </Modal>
+
+      <Modal
+        visible={reportOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setReportOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Pressable
+            onPress={() => setReportOpen(false)}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
+          <Dialog>
+            <DialogHeader>
+              <DialogTitle>
+                <MaterialCommunityIcons name="flag-variant" size={18} color={DANGER} />
+                <DialogTitleText $danger>  Report This Post</DialogTitleText>
+              </DialogTitle>
+              <CloseBtn onPress={() => setReportOpen(false)}>
+                <AntDesign name="close" size={18} color="#cfd4da" />
+              </CloseBtn>
+            </DialogHeader>
+
+            <DialogTextarea
+              value={reportText}
+              onChangeText={setReportText}
+              placeholder="Tell us what’s wrong with this post…"
+              placeholderTextColor="#858b90"
+              multiline
+              textAlignVertical="top"
+            />
+
+            <SubmitBtn onPress={onSubmitReport}>
+              <SubmitText>Submit</SubmitText>
+            </SubmitBtn>
+          </Dialog>
+        </View>
+      </Modal>
     </Safe>
   );
 }
 
-/* ---------- styled ---------- */
-const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
-const Header = styled.View`height: 48px; padding: 0 12px; flex-direction: row; align-items: center; justify-content: space-between;`;
-const Back = styled.Pressable`width: 40px; align-items: flex-start;`;
-const HeaderTitle = styled.Text`color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold'; text-align: center; flex: 1;`;
-const RightPlaceholder = styled.View`width: 40px;`;
-const Center = styled.View`flex: 1; align-items: center; justify-content: center;`;
-const Dim = styled.Text`color: #cfd4da;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
 
-const Card = styled.View`background: #1d1e1f; padding: 12px 16px 10px 16px; border-bottom-width: 1px; border-bottom-color: #222426;`;
-const Row = styled.View`flex-direction: row; align-items: center;`;
-const Avatar = styled.Image`width: 34px; height: 34px; border-radius: 17px; background: #2a2b2c;`;
-const Meta = styled.View`margin-left: 10px; flex: 1;`;
-const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
-const MetaRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center;`;
-const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
-const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
-const SmallFlag = styled.Pressable`padding: 6px;`;
-const Img = styled.Image`width: 100%; height: 200px; border-radius: 12px; margin-top: 10px;`;
-const Body = styled.Text`color: #d9dcdf; font-size: 14px; line-height: 20px; margin-top: 10px;`;
+const Header = styled.View`
+  height: 48px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
 
-const Footer = styled.View`margin-top: 8px; flex-direction: row; align-items: center;`;
-const Act = styled.Pressable<{ disabled?: boolean }>`flex-direction: row; align-items: center; margin-right: 16px; opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};`;
-const ActText = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
-const Grow = styled.View`flex: 1;`;
-const MoreBtn = styled.Pressable`padding: 6px;`;
+const Back = styled.Pressable`
+  width: 40px;
+  align-items: flex-start;
+`;
 
-const SortWrap = styled.View`background: #171818; padding: 10px 16px 0 16px;`;
-const InputBar = styled.View`padding: 10px 12px 14px 12px; background: #1d1e1f; border-top-width: 1px; border-top-color: #222426; flex-direction: row; align-items: flex-end; gap: 10px;`;
-const Composer = styled.View`flex: 1; background: #414142; border-radius: 8px; padding: 10px 12px; flex-direction: row; align-items: center;`;
-const StyledRNInput = styled(RNTextInput)`flex: 1; color: #ffffff; font-size: 14px; padding: 0; background: transparent;`;
-const Input = React.forwardRef<RNTextInput, TextInputProps>(({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
-  <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
-));
+const HeaderTitle = styled.Text`
+  color: #fff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_700Bold';
+  text-align: center;
+  flex: 1;
+`;
+
+const RightPlaceholder = styled.View`
+  width: 40px;
+`;
+
+const Center = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Dim = styled.Text`
+  color: #cfd4da;
+`;
+
+const Card = styled.View`
+  background: #1d1e1f;
+  padding: 12px 16px 10px 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #222426;
+`;
+
+const Row = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const Avatar = styled.Image`
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  background: #2a2b2c;
+`;
+
+const Meta = styled.View`
+  margin-left: 10px;
+  flex: 1;
+`;
+
+const Author = styled.Text`
+  color: #fff;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+
+const MetaRow = styled.View`
+  margin-top: 2px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const Sub = styled.Text`
+  color: #9aa0a6;
+  font-size: 11px;
+`;
+
+const Dot = styled.Text`
+  color: #9aa0a6;
+  margin: 0 6px;
+`;
+
+const SmallFlag = styled.Pressable`
+  padding: 6px;
+`;
+
+const Img = styled.Image`
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  margin-top: 10px;
+`;
+
+const Body = styled.Text`
+  color: #d9dcdf;
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 10px;
+`;
+
+const Footer = styled.View`
+  margin-top: 8px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const Act = styled.Pressable<{ disabled?: boolean }>`
+  flex-direction: row;
+  align-items: center;
+  margin-right: 16px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
+
+const ActText = styled.Text`
+  color: #cfd4da;
+  margin-left: 6px;
+  font-size: 12px;
+`;
+
+const Grow = styled.View`
+  flex: 1;
+`;
+
+const MoreBtn = styled.Pressable`
+  padding: 6px;
+`;
+
+const SortWrap = styled.View`
+  background: #171818;
+  padding: 10px 16px 0 16px;
+`;
+
+const InputBar = styled.View`
+  padding: 10px 12px 14px 12px;
+  background: #1d1e1f;
+  border-top-width: 1px;
+  border-top-color: #222426;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+`;
+
+const Composer = styled.View`
+  flex: 1;
+  background: #414142;
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const StyledRNInput = styled(RNTextInput)`
+  flex: 1;
+  color: #ffffff;
+  font-size: 14px;
+  padding: 0;
+  background: transparent;
+`;
+
+const Input = React.forwardRef<RNTextInput, TextInputProps>(
+  ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
+    <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
+  )
+);
 Input.displayName = 'Input';
-const AnonToggle = styled.Pressable`flex-direction: row; align-items: center; margin-left: 10px;`;
-const AnonLabel = styled.Text`color: #CCCFD5; font-size: 14px; margin-right: 8px; font-family: 'PlusJakartaSans_Light';`;
-const Check = styled.View<{ $active?: boolean }>`width: 16px; height: 16px; border-radius: 2px; border-width: 1.1px; border-color: #CCCFD5; background: ${({ $active }) => ($active ? '#30F59B' : 'transparent')}; align-items: center; justify-content: center;`;
-const SendBtn = styled.Pressable`width: 36px; height: 36px; align-items: center; justify-content: center;`;
 
-/* ---------- Action Sheet styled bits ---------- */
+const AnonToggle = styled.Pressable`
+  flex-direction: row;
+  align-items: center;
+  margin-left: 10px;
+`;
+
+const AnonLabel = styled.Text`
+  color: #CCCFD5;
+  font-size: 14px;
+  margin-right: 8px;
+  font-family: 'PlusJakartaSans_Light';
+`;
+
+const Check = styled.View<{ $active?: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border-width: 1.1px;
+  border-color: #CCCFD5;
+  background: ${({ $active }) => ($active ? '#30F59B' : 'transparent')};
+  align-items: center;
+  justify-content: center;
+`;
+
+const SendBtn = styled.Pressable`
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+`;
+
+/* ---------- Action Sheet styled ---------- */
 const SheetHandle = styled.View`
   align-self: center;
   width: 44px;
@@ -359,7 +616,83 @@ const SheetHandle = styled.View`
   background: #44484d;
   margin-bottom: 8px;
 `;
-const SheetItem = styled.Pressable`flex-direction: row; align-items: center; padding: 14px 20px;`;
-const SheetIcon = styled.View`width: 28px; align-items: center; margin-right: 8px;`;
-const SheetLabel = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? DANGER : '#e6e9ed')}; font-size: 16px;`;
-const SheetDivider = styled.View`height: 1px; background: #2c2f33; margin: 4px 0;`;
+
+const SheetItem = styled.Pressable`
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 20px;
+`;
+
+const SheetIcon = styled.View`
+  width: 28px;
+  align-items: center;
+  margin-right: 8px;
+`;
+
+const SheetLabel = styled.Text<{ $danger?: boolean }>`
+  color: ${({ $danger }) => ($danger ? DANGER : '#e6e9ed')};
+  font-size: 16px;
+`;
+
+const SheetDivider = styled.View`
+  height: 1px;
+  background: #2c2f33;
+  margin: 4px 0;
+`;
+
+/* ---------- Report Dialog styled ---------- */
+const Dialog = styled.View`
+  width: 100%;
+  max-width: 360px;
+  background: #2A2B2C;
+  border-radius: 12px;
+  padding: 12px 12px 16px 12px;
+`;
+
+const DialogHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+
+const DialogTitle = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const DialogTitleText = styled.Text<{ $danger?: boolean }>`
+  color: ${({ $danger }) => ($danger ? DANGER : '#E7EAED')};
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+const CloseBtn = styled.Pressable`
+  padding: 4px;
+`;
+
+/* ✅ 높이 증가 */
+const DialogTextarea = styled.TextInput`
+  min-height: 220px;
+  border-radius: 8px;
+  padding: 12px;
+  background: #1f2021;
+  color: #E7EAED;
+  font-size: 14px;
+  border-width: 1px;
+  border-color: #3a3d40;
+`;
+
+const SubmitBtn = styled.Pressable`
+  background: ${DANGER};
+  padding: 12px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+`;
+
+const SubmitText = styled.Text`
+  color: #ffffff;
+  font-weight: 700;
+`;
