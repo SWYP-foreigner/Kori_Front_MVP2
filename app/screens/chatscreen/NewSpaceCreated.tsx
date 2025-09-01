@@ -1,19 +1,126 @@
 import React from "react";
 import styled from "styled-components/native";
+import { useLocalSearchParams } from "expo-router";
+import api from "@/api/axiosInstance";
+import * as Crypto from "expo-crypto";
+import { Buffer } from "buffer";
+import * as FileSystem from 'expo-file-system';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
 
 const NewSpaceCreated=()=>{
+
+    const { spaceName, spaceDescription,spaceImageUrl } = useLocalSearchParams<{ spaceName: string; spaceDescription: string;spaceImageUrl:string }>();
+    const {index}=useLocalSearchParams<{index:string}>();
+    const router = useRouter();
+    console.log("spaceName",spaceName);
+    console.log("spaceDescription",spaceDescription);
+    console.log("spaceIamgeUrl",spaceImageUrl);
+    console.log("index",index);
+
+    const doneCreateSpace=async()=>{
+        const isIcon=Number(index);
+        if(isIcon===-1)
+        {
+            const uploadSessionId = Crypto.randomUUID();
+            const requestBody={
+            "imageType": "POST",
+            "uploadSessionId":uploadSessionId,
+            "files": [
+                {
+                "filename": "SpacePhoto.jpg",
+                "contentType": "image/jpeg",
+                }
+            ]
+            }
+                 // presigned url 발급 받음
+                try{
+                const res= await api.post('/api/v1/images/presign',requestBody);
+                const presignedInfo = res.data.data[0]; // 첫 번째 파일 정보
+
+                // ncp에 이미지 전송
+                await SendImage(presignedInfo,spaceImageUrl);
+                // 프로필 등록 완료 
+                await CompleteCreateNewSpace(presignedInfo.key);
+                }catch (err) {
+                    console.error('API 요청 실패:', err);
+                }
+        }
+        else{
+            // 기본 아이콘 선택시 
+            let url;
+            if(isIcon===0)
+            {
+                url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png"
+            }
+            else if(isIcon===1)
+            {
+                url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png"
+            }
+            else{
+                url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png"
+            }
+             await CompleteCreateNewSpace(url);
+        }
+    }
+
+    const SendImage = async (presignedInfo, spaceImageUrl) => {
+        try {
+            // 1️⃣ Base64 인코딩된 파일 읽기
+            const fileData = await FileSystem.readAsStringAsync(spaceImageUrl, {
+            encoding: FileSystem.EncodingType.Base64,
+            });
+
+            // 2️⃣ Base64 → Buffer 변환
+            const buffer = Buffer.from(fileData, "base64");
+
+            // 3️⃣ PUT 요청
+            await axios.put(presignedInfo.putUrl, buffer, {
+            headers: {
+                ...presignedInfo.headers,
+                "Content-Type": "image/jpeg",
+            },
+            });
+
+            console.log("✅ 업로드 성공");
+        } catch (err) {
+            console.error("❌ 업로드 실패:", err);
+        }
+    };
+ 
+
+    // CreateSpace 완전 등록
+    const CompleteCreateNewSpace = async (imageKey: string) => {
+    try {
+      // imageKey 추가
+      const payload = {
+        roomName:spaceName,
+        description:spaceDescription,
+        roomImageUrl:imageKey,
+      };
+
+      // 서버로 전송
+      const res = await api.post('/api/v1/chat/rooms/group', payload);
+      console.log('New Spaces Created', res);
+      router.replace('../../(tabs)/chat');
+    } catch (err) {
+      console.error('Fail New Spaces Created', err);
+      throw err;
+    }
+  };
+
     return(
             <Background  source={require("@/assets/images/background2.png")}
                     resizeMode="cover">
                 <ProfileBox>
-                    <ProfileImage source={require("@/assets/images/character2.png")}/>
+                    <ProfileImage source={{uri:spaceImageUrl}}/>
                 </ProfileBox>
                 <TextBox>
                     <BigText>New Spaces Created</BigText>
                     <SmallText>Bring people together and share your interests</SmallText>
                 </TextBox>
-                 <NextButton>
+                 <NextButton onPress={doneCreateSpace}>
                     <ButtonText>Done</ButtonText>
                     </NextButton>
 
@@ -35,6 +142,7 @@ const Background = styled.ImageBackground`
 const ProfileBox=styled.View`
     width:150px;
     height:150px;
+    overflow: hidden;
 `;
 const ProfileImage=styled.Image`
     width:100%;

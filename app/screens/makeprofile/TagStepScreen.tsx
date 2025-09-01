@@ -63,41 +63,10 @@ export default function TagStepScreen() {
     }
   };
   const handleNext=()=>{
+    updateProfile('hobby',selectedTags);
     router.push('./AddPhotoStepScreen');
   };
-  const handleDone=async()=>{
-    try {
-    const formData = new FormData();
-
-    // 1. 텍스트 데이터(JSON으로 묶어서 보내기)
-    const { photo, ...textData } = profileData;
-    formData.append('data', JSON.stringify(textData));
-
-    // 2. 파일 데이터
-    if (photo && photo.uri) {
-      formData.append('photo', {
-        uri: Platform.OS === 'android' ? photo.uri : photo.uri.replace('file://', ''),
-        name: photo.name || 'profile.jpg',
-        type: photo.typeMime || 'image/jpeg',
-      });
-    }
-    console.log("formData",formData);
-    // 3. Axios POST
-    // const response = await axios.post(
-    //   'http://YOUR_SERVER_IP:8080/api/profile', // 서버 API
-    //   formData,
-    //   {
-    //     headers: {
-    //       'Content-Type': 'multipart/form-data',
-    //     },
-    //   }
-    // );
-
-    // console.log('서버 응답:', response.data);
-  } catch (error) {
-    console.error('전송 실패:', error);
-  }
-  };
+ 
 
   return (
     <SafeArea>

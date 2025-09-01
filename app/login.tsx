@@ -11,10 +11,12 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
+import api from '@/api/axiosInstance';
+import { Config } from '@/src/lib/config';
 
 GoogleSignin.configure({
-  webClientId: '86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com',
-  iosClientId: '86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com',
+  webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
+  iosClientId: `${Config.GOOGLE_IOS_CLIENT_ID}`,
   offlineAccess: true,
 });
 
@@ -22,7 +24,7 @@ type AppLoginResponse = {
   data: {
     accessToken: string;
     refreshToken: string;
-    id: number;
+    userId: number;
   };
   message: string;
   timestamp: string;
@@ -35,18 +37,26 @@ const LoginScreen = () => {
   const sendTokenToServer = async (code: string) => {
     try {
       const res = await axios.post<AppLoginResponse>(
-        'https://dev.ko-ri.cloud/api/v1/member/google/app-login',
+        `${Config.SERVER_URL}/api/v1/member/google/app-login`,
         { code }
       );
 
-      const { accessToken, refreshToken } = res.data.data;
-
+      const { accessToken, refreshToken,userId,isNewUser} = res.data.data;
+      
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken); // (선택)
-
+      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      console.log("로그인 성공");
+      console.log("userId",userId);
+      
       await new Promise((r) => setTimeout(r, 0));
-
-      router.replace('/(tabs)');
+      // if(isNewUser)
+      // {
+      //   router.replace('./screens/makeprofile/NameStepScreen');
+      // }else{
+      //    router.replace('/(tabs)');
+      // }
+        router.replace('/(tabs)');
     } catch (error) {
       console.error('서버 요청 실패', error);
     }
@@ -89,19 +99,37 @@ const LoginScreen = () => {
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
+      const res=await api.post("/api/v1/member/logout");
       await SecureStore.deleteItemAsync('jwt');
       await SecureStore.deleteItemAsync('refresh');
+      await SecureStore.deleteItemAsync('MyuserId');
       setUserInfo(null);
-      console.log('로그아웃 완료');
+      console.log('로그아웃 완료',res);
+      
     } catch (error) {
       console.error(error);
     }
   };
+  
+  const temp = async () => {
+  console.log("Temp 들어옴");
+  try {
+    const res = await api.post("/api/v1/member/refresh");
+    console.log(res);
+  } catch (error) {
+    // 여기에 에러 응답 본문을 출력하는 코드를 추가합니다.
+    console.error("Axios Error:", error.response ? error.response.data : error.message);
+  }
+};
 
   return (
     <Container>
       <GoogleSignInButton onPress={signIn} />
-      <AppleSignInButton />
+      <AppleSignInButton/>
+
+      <TabsMoveButton onPress={temp}>
+        <TabsMoveText>Refresh Token 테스트</TabsMoveText>
+      </TabsMoveButton>
 
       <TabsMoveButton onPress={signOut}>
         <TabsMoveText>구글 Sign out</TabsMoveText>
@@ -115,7 +143,7 @@ const LoginScreen = () => {
         <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
 
-      <ProfileMoveButton onPress={() => router.push('./screens/makeprofile/TagStepScreen')}>
+      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/ChatInsideMember')}>
         <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
       </ProfileMoveButton>
     </Container>

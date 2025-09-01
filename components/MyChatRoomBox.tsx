@@ -2,116 +2,136 @@ import React, { useRef } from "react";
 import { Animated, PanResponder, Text,Alert } from "react-native";
 import styled from "styled-components/native";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useRouter } from 'expo-router';
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
 const MyChatRoomBox = ({data}) => {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const isOpen = useRef(false);
-  const onDelete=()=>
-  {
-    console.log('삭제 버튼 눌림');
-    // Alert
-    Alert.alert('Delete Chatting?', 'After deleting it , you cannot restore it.', [
-      {text: 'Delete', onPress: () => console.log('삭제 후 화면 갱신')},
-       {
-        text: 'cancel',
-        onPress: () => console.log('삭제 취소됨'),
+  // const translateX = useRef(new Animated.Value(0)).current;
+  // const isOpen = useRef(false);
+   const router = useRouter();
+
+
+  // const onDelete=()=>
+  // {
+  //   console.log('삭제 버튼 눌림');
+  //   // Alert
+  //   Alert.alert('Delete Chatting?', 'After deleting it , you cannot restore it.', [
+  //     {text: 'Delete', onPress: () => console.log('삭제 후 화면 갱신')},
+  //      {
+  //       text: 'cancel',
+  //       onPress: () => console.log('삭제 취소됨'),
        
-       }
-    ]);
+  //      }
+  //   ]);
+  // };
+  
+  //채팅방 진입
+  const enterChattingRoom=()=>{
+    router.push({
+      pathname: '../screens/chatscreen/ChattingRoomScreen',
+      params: { 
+        roomId: data.roomId,       // props에서 바로 가져옴
+        roomName: data.roomName,  // props에서 바로 가져옴
+      },
+    });
   };
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // 좌우로 드래그할 때만 PanResponder 발동
-        return Math.abs(gestureState.dx) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // 왼쪽으로 드래그 중일 때만 움직임 적용 (0 이상으로 못 가게 제한)
-        if (gestureState.dx < 0 || (isOpen.current && gestureState.dx > 0)) {
-          translateX.setValue(gestureState.dx + (isOpen.current ? -100 : 0));
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (!isOpen.current) {
-          // 아직 닫혀 있는 상태 → 왼쪽으로 스와이프하면 열기
-          if (gestureState.dx < -SWIPE_THRESHOLD) {
-            Animated.timing(translateX, {
-              toValue: -100, // 삭제 버튼 만큼 열림
-              duration: 200,
-              useNativeDriver: true,
-            }).start(() => {
-              isOpen.current = true;
-            });
-          } else {
-            // 원래 위치로 복귀
-            Animated.spring(translateX, {
-              toValue: 0,
-              useNativeDriver: true,
-            }).start();
-          }
-        } else {
-          // 이미 열려 있는 상태 → 오른쪽으로 스와이프하면 닫기
-          if (gestureState.dx > SWIPE_THRESHOLD) {
-            Animated.timing(translateX, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }).start(() => {
-              isOpen.current = false;
-            });
-          } else {
-            // 다시 열려있도록 유지
-            Animated.spring(translateX, {
-              toValue: -100,
-              useNativeDriver: true,
-            }).start();
-          }
-        }
-      },
-    })
-  ).current;
+
+  // const panResponder = useRef(
+  //   PanResponder.create({
+  //     onMoveShouldSetPanResponder: (_, gestureState) => {
+  //       // 좌우로 드래그할 때만 PanResponder 발동
+  //       return Math.abs(gestureState.dx) > 5;
+  //     },
+  //     onPanResponderMove: (_, gestureState) => {
+  //       // 왼쪽으로 드래그 중일 때만 움직임 적용 (0 이상으로 못 가게 제한)
+  //       if (gestureState.dx < 0 || (isOpen.current && gestureState.dx > 0)) {
+  //         translateX.setValue(gestureState.dx + (isOpen.current ? -100 : 0));
+  //       }
+  //     },
+  //     onPanResponderRelease: (_, gestureState) => {
+  //       if (!isOpen.current) {
+  //         // 아직 닫혀 있는 상태 → 왼쪽으로 스와이프하면 열기
+  //         if (gestureState.dx < -SWIPE_THRESHOLD) {
+  //           Animated.timing(translateX, {
+  //             toValue: -100, // 삭제 버튼 만큼 열림
+  //             duration: 200,
+  //             useNativeDriver: true,
+  //           }).start(() => {
+  //             isOpen.current = true;
+  //           });
+  //         } else {
+  //           // 원래 위치로 복귀
+  //           Animated.spring(translateX, {
+  //             toValue: 0,
+  //             useNativeDriver: true,
+  //           }).start();
+  //         }
+  //       } else {
+  //         // 이미 열려 있는 상태 → 오른쪽으로 스와이프하면 닫기
+  //         if (gestureState.dx > SWIPE_THRESHOLD) {
+  //           Animated.timing(translateX, {
+  //             toValue: 0,
+  //             duration: 200,
+  //             useNativeDriver: true,
+  //           }).start(() => {
+  //             isOpen.current = false;
+  //           });
+  //         } else {
+  //           // 다시 열려있도록 유지
+  //           Animated.spring(translateX, {
+  //             toValue: -100,
+  //             useNativeDriver: true,
+  //           }).start();
+  //         }
+  //       }
+  //     },
+  //   })
+  // ).current;
 
   return (
     <ChatRoom>
       {/* 삭제 버튼 (배경에 깔림) */}
 
       
-        <DeleteButton activeOpacity={0.8} onPress={onDelete}>
+        {/* <DeleteButton activeOpacity={0.8} onPress={onDelete}>
           <FontAwesome name="trash-o" size={24} color="#ffffff" />
         </DeleteButton>
+       */}
       
-
       {/* 채팅방 박스 (앞에서 움직이는 뷰) */}
-      <Animated.View
+      {/* <Animated.View
         style={{
           transform: [{ translateX }],
           width: "100%",
         }}
         {...panResponder.panHandlers}
-      >
-        <RoomBox activeOpacity={0.8}>
+      > */}
+   
+        <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
-            <RoomImage source={require("../assets/images/character2.png")} />
+            
+            <RoomImage source={{ uri: "https://kr.object.ncloudstorage.com/foreigner-bucket/tempsss/계족산_1.jpg" }}/>
+    
           </RoomImageContainer>
           <RoomWrapper>
             <RoomTop>
               <ChatPeopleContainer>
-                <ChatPerson>{data.name}</ChatPerson>
-                <ChatPeople>{data.count}</ChatPeople>
+                <ChatPerson>{data.roomName}</ChatPerson>
+                <ChatPeople>{data.participantCount}</ChatPeople>
               </ChatPeopleContainer>
-              <ChatTime>{data.time}</ChatTime>
+              <ChatTime>{data.lastMessageTime}</ChatTime>
             </RoomTop>
             <RoomBottom>
-              <ChatContent>{data.message}</ChatContent>
+              <ChatContent>{data.lastMessageContent}</ChatContent>
+              {data.unreadCount>0&&
               <ChatCountBox>
-                <ChatCount>{data.mcount}</ChatCount>
-              </ChatCountBox>
+                <ChatCount>{data.unreadCount}</ChatCount>
+              </ChatCountBox>}
             </RoomBottom>
           </RoomWrapper>
         </RoomBox>
-      </Animated.View>
+      {/* </Animated.View> */}
     </ChatRoom>
   );
 };
@@ -121,21 +141,20 @@ export default MyChatRoomBox;
 // 스타일 정의
 const ChatRoom = styled.View`
   background-color: #1d1e1f;
-  align-items: center;
   height: 80px;
   justify-content: center;
   
 `;
 
-const DeleteButton = styled.TouchableOpacity`
-  position: absolute;
-  right: 0;
-  width: 25%;
-  height: 100%;
-  background-color: #FF4F4F;
-  align-items: center;
-  justify-content: center;
-`;
+// const DeleteButton = styled.TouchableOpacity`
+//   position: absolute;
+//   right: 0;
+//   width: 25%;
+//   height: 100%;
+//   background-color: #FF4F4F;
+//   align-items: center;
+//   justify-content: center;
+// `;
 
 
 const RoomBox = styled.TouchableOpacity`
@@ -150,14 +169,18 @@ const RoomBox = styled.TouchableOpacity`
 `;
 
 const RoomImageContainer = styled.View`
+
   width: 20%;
-  height: 60px;
+  height: 100%;
+  align-items:center;
+  justify-content:center;
+  
 `;
 
 const RoomImage = styled.Image`
-  width: 100%;
-  height: 85%;
-  resize-mode: contain;
+  width: 85%;
+  height: 80%;
+  border-radius:30px;  
 `;
 
 const RoomWrapper = styled.View`

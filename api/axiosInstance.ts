@@ -3,11 +3,9 @@ import axios, {
     AxiosInstance,
     InternalAxiosRequestConfig
 } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { Config } from "@/src/lib/config";
 
-const ENV_BASE =
-    process.env.EXPO_PUBLIC_SERVER_URL?.replace(/\/+$/, '') ?? 'http://localhost:3000';
-const BASE_URL = ENV_BASE;
+const BASE_URL = Config.SERVER_URL;
 
 function maskToken(t?: string | null) {
     if (!t) return 'no';
