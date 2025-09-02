@@ -3,6 +3,7 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
 import { useLikeComment } from '@/hooks/mutations/useLikeComment';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
+import { useUpdateComment } from '@/hooks/mutations/useUpdateComment';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -52,7 +53,6 @@ function formatCreatedYMD(v?: unknown): string {
   }
 }
 
-/* ---------- forwardRef EditInput ---------- */
 const StyledEditInput = styled(RNTextInput)`
   min-height: 220px;
   border-radius: 8px;
@@ -107,6 +107,8 @@ export default function PostDetailScreen() {
   const [editVisible, setEditVisible] = useState(false);
   const [editText, setEditText] = useState('');
   const editInputRef = useRef<RNTextInput>(null);
+
+  const { mutateAsync: updateCommentMut } = useUpdateComment();
 
   useEffect(() => {
     if (intent === 'edit' && focusCommentId) {
@@ -226,10 +228,18 @@ export default function PostDetailScreen() {
     ]);
   };
 
-  const onSaveEdit = () => {
+  const onSaveEdit = async () => {
     const text = editText.trim();
     if (!text) { Alert.alert('Edit', 'Please enter your comment.'); return; }
-    setEditVisible(false);
+    if (!focusCommentId) { Alert.alert('Edit', 'Comment id missing.'); return; }
+
+    try {
+      await updateCommentMut({ commentId: Number(focusCommentId), content: text });
+      setEditVisible(false);
+    } catch (e) {
+      console.log('[update comment] error', e);
+      Alert.alert('Edit', 'Failed to save changes.');
+    }
   };
 
   return (
@@ -297,11 +307,7 @@ export default function PostDetailScreen() {
                     <ActText>{commentCount}</ActText>
                   </Act>
                   <Grow />
-                  <MoreBtn onPress={() => {
-                    setMenuVisible(true);
-                    slideY.setValue(300);
-                    Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-                  }} hitSlop={8}>
+                  <MoreBtn onPress={openMenu} hitSlop={8}>
                     <Feather name="more-horizontal" size={22} color="#8a8a8a" />
                   </MoreBtn>
                 </Footer>
