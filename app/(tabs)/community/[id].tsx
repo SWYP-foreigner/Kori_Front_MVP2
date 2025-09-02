@@ -110,7 +110,6 @@ export default function PostDetailScreen() {
     slideY.setValue(300);
     Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   };
-
   const closeMenu = () =>
     new Promise<void>((resolve) => {
       Animated.timing(slideY, {
@@ -167,16 +166,19 @@ export default function PostDetailScreen() {
   const handleToggleLike = async () => {
     if (!Number.isFinite(postId)) return;
     if (likeMutation.isPending) return;
-    if (likedByMe) return;
 
-    const prev = likesOverride ?? serverLikeCount;
-    setLikesOverride(prev + 1);
-    setLikedByMe(true);
+    const prevLiked = likedByMe;
+    const delta = prevLiked ? -1 : +1;
 
-    try { await likeMutation.mutateAsync(postId); }
-    catch (e) {
-      setLikesOverride(prev);
-      setLikedByMe(false);
+    const prevCount = likesOverride ?? serverLikeCount;
+    setLikesOverride(Math.max(0, prevCount + delta));
+    setLikedByMe(!prevLiked);
+
+    try {
+      await likeMutation.mutateAsync({ postId, liked: prevLiked });
+    } catch (e) {
+      setLikesOverride(prevCount);
+      setLikedByMe(prevLiked);
       console.log('[like error]', e);
     }
   };
@@ -191,7 +193,6 @@ export default function PostDetailScreen() {
           text: 'Report',
           style: 'destructive',
           onPress: () => {
-            // 실제 신고 처리 (API 연동 위치)
             console.log('[report post]', { postId, text });
             setReportOpen(false);
           },
@@ -279,9 +280,8 @@ export default function PostDetailScreen() {
 
                 <Body>{body}</Body>
 
-                {/* 하단 액션 */}
                 <Footer>
-                  <Act onPress={handleToggleLike} disabled={likeMutation.isPending || likedByMe}>
+                  <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
                     <AntDesign name={likedByMe ? 'like1' : 'like2'} size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
                     <ActText>{likeCount}</ActText>
                   </Act>
@@ -347,14 +347,11 @@ export default function PostDetailScreen() {
               <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This Post</SheetLabel>
             </SheetItem>
-
             <SheetItem onPress={onReportUser}>
               <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This User</SheetLabel>
             </SheetItem>
-
             <SheetDivider />
-
             <SheetItem onPress={() => setMenuVisible(false)}>
               <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
               <SheetLabel>Cancel</SheetLabel>
@@ -372,10 +369,7 @@ export default function PostDetailScreen() {
         onRequestClose={() => setReportOpen(false)}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Pressable
-            onPress={() => setReportOpen(false)}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-          />
+          <Pressable onPress={() => setReportOpen(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <Dialog>
             <DialogHeader>
               <DialogTitle>
@@ -607,7 +601,6 @@ const SendBtn = styled.Pressable`
   justify-content: center;
 `;
 
-/* ---------- Action Sheet styled ---------- */
 const SheetHandle = styled.View`
   align-self: center;
   width: 44px;
@@ -640,7 +633,6 @@ const SheetDivider = styled.View`
   margin: 4px 0;
 `;
 
-/* ---------- Report Dialog styled ---------- */
 const Dialog = styled.View`
   width: 100%;
   max-width: 360px;
@@ -671,7 +663,6 @@ const CloseBtn = styled.Pressable`
   padding: 4px;
 `;
 
-/* ✅ 높이 증가 */
 const DialogTextarea = styled.TextInput`
   min-height: 220px;
   border-radius: 8px;

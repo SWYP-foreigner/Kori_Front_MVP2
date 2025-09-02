@@ -27,6 +27,9 @@ type PostsListItem = {
     commentCount?: number;
     viewCount?: number;
     score?: number;
+    likedByMe?: boolean;
+    isLike?: boolean;
+    isLiked?: boolean;
 };
 
 type PostsListResp = {
@@ -39,9 +42,7 @@ type PostsListResp = {
     timestamp?: string;
 };
 
-function pad2(n: number) {
-    return n < 10 ? `0${n}` : String(n);
-}
+function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
 function parseDateFlexible(v?: unknown): Date | null {
     if (v == null) return null;
     let s = String(v).trim();
@@ -56,10 +57,7 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     if (!d) return '';
     try {
         const fmt = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+            timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
         });
         return fmt.format(d).replace(/-/g, '/');
     } catch {
@@ -68,6 +66,7 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
 }
 
 type PostEx = Post & {
+    postId: number;
     hotScore?: number;
     minutesAgo?: number;
     bookmarked?: boolean;
@@ -76,8 +75,14 @@ type PostEx = Post & {
 
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     const createdRaw = row.createdAt ?? row.createdTime;
+    const liked =
+        (row as any).likedByMe ??
+        (row as any).isLike ??
+        (row as any).isLiked ?? false;
+
     return {
         id: String(row.postId),
+        postId: row.postId,
         author: row.authorName || 'Unknown',
         avatar: AV,
         category: 'Free talk',
@@ -87,7 +92,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         comments: Number(row.commentCount ?? 0),
         images: undefined,
         hotScore: row.score,
-        likedByMe: false,
+        likedByMe: Boolean(liked),
     };
 };
 
@@ -106,9 +111,7 @@ export default function CommunityScreen() {
 
     const likeMutation = useToggleLike();
 
-    useEffect(() => {
-        refresh();
-    }, [boardId, sortParam]);
+    useEffect(() => { refresh(); }, [boardId, sortParam]);
 
     const fetchPage = async (after?: string) => {
         if (loading) return;
@@ -144,36 +147,47 @@ export default function CommunityScreen() {
 
     const visible = useMemo(() => items, [items]);
 
-    const handleToggleLike = async (id: string) => {
-        const nid = Number(id);
-        const already = items.find(p => p.id === id)?.likedByMe;
-        if (already) return;
+    const handleToggleLike = async (postId: number) => {
+        const target = items.find(p => p.postId === postId);
+        const prevLiked = Boolean(target?.likedByMe);        // 현재 상태
+        const delta = prevLiked ? -1 : +1;
 
         setItems(prev =>
-            prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1, likedByMe: true } : p))
+            prev.map(p =>
+                p.postId === postId
+                    ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta), likedByMe: !prevLiked }
+                    : p
+            )
         );
 
         try {
-            await likeMutation.mutateAsync(nid);
+            await likeMutation.mutateAsync({ postId, liked: prevLiked });
         } catch (e) {
+            // 롤백
             setItems(prev =>
                 prev.map(p =>
-                    p.id === id ? { ...p, likes: Math.max(0, p.likes - 1), likedByMe: false } : p
+                    p.postId === postId
+                        ? { ...p, likes: Math.max(0, (p.likes ?? 0) - delta), likedByMe: prevLiked }
+                        : p
                 )
             );
             console.log('[like:list] error', e);
         }
     };
 
-    const toggleBookmark = (id: string) =>
-        setItems(prev => prev.map(p => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)));
+    const toggleBookmark = (postId: number) =>
+        setItems(prev =>
+            prev.map(p => (p.postId === postId ? { ...p, bookmarked: !p.bookmarked } : p))
+        );
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
             data={{ ...item, category: cat }}
-            onPress={() => router.push({ pathname: '/community/[id]', params: { id: String(item.id) } })}
-            onToggleLike={() => handleToggleLike(String(item.id))}
-            onToggleBookmark={() => toggleBookmark(String(item.id))}
+            onPress={() =>
+                router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
+            }
+            onToggleLike={() => handleToggleLike(item.postId)}
+            onToggleBookmark={() => toggleBookmark(item.postId)}
         />
     );
 
@@ -208,7 +222,7 @@ export default function CommunityScreen() {
 
             <List
                 data={visible}
-                keyExtractor={(it: PostEx) => String(it.id)}
+                keyExtractor={(it: PostEx) => String(it.postId)}
                 renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
                 onEndReachedThreshold={0.4}
@@ -231,7 +245,7 @@ export default function CommunityScreen() {
 }
 
 const Safe = styled.SafeAreaView`
-    flex: 1; 
+    flex: 1;
     background: #1d1e1f;
 `;
 const Header = styled.View`
@@ -250,7 +264,7 @@ const Title = styled.Text`
     font-size: 32px;
     font-family: 'InstrumentSerif_400Regular';
     letter-spacing: -0.2px;
-   `;
+`;
 const IconImage = styled.Image`
     margin-left: 4px;
     width: 20px;
@@ -260,19 +274,17 @@ const IconImage = styled.Image`
 const Right = styled.View`
     flex-direction: row;
     align-items: center;
-`;
+ `;
 const IconBtn = styled.Pressable`
     padding: 6px;
     margin-left: 8px;
-`;
+ `;
 const ChipsWrap = styled.View`
     margin-top: 12px;
 `;
 const SortWrap = styled.View`
     margin-top: 20px;
     margin-bottom: 14px;
-`;
+ `;
 const List = styled(FlatList as React.ComponentType<FlatListProps<PostEx>>)``;
-const FooterLoading = styled.View`
-    padding: 16px 0;
-`;
+const FooterLoading = styled.View`padding: 16px 0;`;
