@@ -1,5 +1,8 @@
-import AppleSignInButton from '@/components/AppleSignInButton';
-import GoogleSignInButton from '@/components/GoogleSignInButton';
+import React, { useState, useRef } from "react";
+import { Dimensions, FlatList, ImageBackground, Animated, useWindowDimensions } from "react-native";
+import styled from "styled-components/native";
+import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -7,10 +10,10 @@ import {
   statusCodes
 } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
+import { PageIndicator } from 'react-native-page-indicator';
+
+import EmailSignButton from "@/components/EmailSignButton";
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 import api from '@/api/axiosInstance';
 import { Config } from '@/src/lib/config';
 
@@ -30,10 +33,30 @@ type AppLoginResponse = {
   timestamp: string;
 };
 
+type OnBoardingItem = {
+  id: string;             // id는 문자열
+  image: any;             // require()로 불러오기 때문에 any 사용
+  TitleText: string;      // 제목 텍스트
+  SubTitleText: string;   // 부제목 텍스트
+};
+
+const { width } = Dimensions.get("window");
+
 const LoginScreen = () => {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<any>(null);
 
+  const onBoardingData: OnBoardingItem[] = [
+    { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText:"Connect with people abroad in Korea for\nstudy, work, travel, or more."},
+    { id: "2", image: require("@/assets/images/onboarding2.png"), TitleText: "Chat Without Barriers", SubTitleText:"Chat in your own language.\nJust hit the translate button to read theirs."},
+    { id: "3", image: require("@/assets/images/onboarding3.png"), TitleText: "Connect in our community", SubTitleText:"Have questions or stories to tell?\nJoin in and talk freely with everyone."},
+  ];
+
+  const { width, height } = useWindowDimensions();
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const animatedCurrent = useRef(Animated.divide(scrollX, width)).current;
+
+  // 서버로 구글 로그인 토큰 전송
   const sendTokenToServer = async (code: string) => {
     try {
       const res = await axios.post<AppLoginResponse>(
@@ -41,27 +64,19 @@ const LoginScreen = () => {
         { code }
       );
 
-      const { accessToken, refreshToken,userId,isNewUser} = res.data.data;
-      
+      const { accessToken, refreshToken, userId } = res.data.data;
+
       await SecureStore.setItemAsync('jwt', accessToken);
-      await SecureStore.setItemAsync('refresh', refreshToken); // (선택)
+      await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
-      console.log("로그인 성공");
-      console.log("userId",userId);
-      
-      await new Promise((r) => setTimeout(r, 0));
-      // if(isNewUser)
-      // {
-      //   router.replace('./screens/makeprofile/NameStepScreen');
-      // }else{
-      //    router.replace('/(tabs)');
-      // }
-        router.replace('/(tabs)');
+
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('서버 요청 실패', error);
     }
   };
 
+  // 구글 로그인
   const signIn = async () => {
     try {
       await GoogleSignin.hasPlayServices();
@@ -95,93 +110,124 @@ const LoginScreen = () => {
       }
     }
   };
-
-  const signOut = async () => {
-    try {
-      await GoogleSignin.signOut();
-      const res=await api.post("/api/v1/member/logout");
-      await SecureStore.deleteItemAsync('jwt');
-      await SecureStore.deleteItemAsync('refresh');
-      await SecureStore.deleteItemAsync('MyuserId');
-      setUserInfo(null);
-      console.log('로그아웃 완료',res);
-      
-    } catch (error) {
-      console.error(error);
-    }
-  };
   
-  const temp = async () => {
-  console.log("Temp 들어옴");
-  try {
-    const res = await api.post("/api/v1/member/refresh");
-    console.log(res);
-  } catch (error) {
-    // 여기에 에러 응답 본문을 출력하는 코드를 추가합니다.
-    console.error("Axios Error:", error.response ? error.response.data : error.message);
-  }
-};
-
+  const goEmailLoginScreen=()=>{
+    router.push("./screens/login/GeneralLoginScreen");
+  };
   return (
     <Container>
-      <GoogleSignInButton onPress={signIn} />
-      <AppleSignInButton/>
+      {/* 온보딩 이미지 영역 */}
+      <OnBoardingContainer>
+        <AnimatedFlatList
+          data={onBoardingData}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true }
+          )}
+          renderItem={({ item }) => (
+            <Slide source={item.image} resizeMode="cover" style={{ width, height:height*0.55 }}>
+              <Overlay>
+                <OnBoardingText>{item.TitleText}</OnBoardingText>
+                <OnBoardingSubText>{item.SubTitleText}</OnBoardingSubText>
+              </Overlay>
+            </Slide>
+          )}
+        />
+        
+        {/* 페이지 인디케이터 */}
+        <PageIndicatorWrapper>
+          <PageIndicator 
+            count={onBoardingData.length} 
+            current={animatedCurrent} 
+            dashSize={14}  // 바 길이를 12px로 줄임
+          />
+        </PageIndicatorWrapper>
+      </OnBoardingContainer>
 
-      <TabsMoveButton onPress={temp}>
-        <TabsMoveText>Refresh Token 테스트</TabsMoveText>
-      </TabsMoveButton>
-
-      <TabsMoveButton onPress={signOut}>
-        <TabsMoveText>구글 Sign out</TabsMoveText>
-      </TabsMoveButton>
-
-      <TabsMoveButton onPress={() => router.push('./(tabs)')}>
-        <TabsMoveText>Tabs 화면으로 이동</TabsMoveText>
-      </TabsMoveButton>
-
-      <ProfileMoveButton onPress={() => router.push('./screens/makeprofile/NameStepScreen')}>
-        <ProfileMoveText>프로필 등록 화면으로 이동</ProfileMoveText>
-      </ProfileMoveButton>
-
-      <ProfileMoveButton onPress={() => router.push('./screens/chatscreen/ChattingRoomScreen')}>
-        <ProfileMoveText>현재 개발 화면으로 이동</ProfileMoveText>
-      </ProfileMoveButton>
+      {/* 로그인 버튼 영역 */}
+      <ButtonContainer>
+        <GoogleSignInButton onPress={signIn} />
+        <EmailSignButton onPress={goEmailLoginScreen}/>
+        <SmallText>By singing up, you agree to our Terms.{'\n'} 
+          See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
+      </ButtonContainer>
     </Container>
   );
 };
 
 export default LoginScreen;
 
+// ---------------- Styled Components ----------------
+
 const Container = styled.View`
+  flex: 1;
+  background-color: #1D1E1F;
+`;
+
+const OnBoardingContainer = styled.View`
+  flex: 2;
+`;
+
+const AnimatedFlatList = styled(Animated.FlatList)``;
+
+const Slide = styled(ImageBackground)`
+  flex: 1;
+  align-items: center;
+`;
+
+const Overlay = styled.View`
+  position: absolute;
+  bottom: -45;
+  padding: 16px 24px;
+  border-radius: 12px;
+  align-items: center;
+`;
+
+const OnBoardingText = styled.Text`
+  color: #FFFFFF;
+  font-size: 24px;
+  font-family: PlusJakartaSans_600SemiBold;
+`;
+
+const OnBoardingSubText = styled.Text`
+  color: #949899;
+  font-size: 13px;
+  text-align: center;
+  font-family: PlusJakartaSans_400Regular;
+  margin-top:10px;
+`;
+
+const PageIndicatorWrapper = styled.View`
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  align-items: center;
+  
+`;
+
+const ButtonContainer = styled.View`
   flex: 1;
   justify-content: center;
   align-items: center;
   padding: 20px;
-  background-color: #0f0f10;
 `;
-const TabsMoveButton = styled.TouchableOpacity`
-  padding: 12px 24px;
-  background-color: gray;
-  border-radius: 8px;
-  width: 250px;
-  align-items: center;
-  margin-top: 20px;
+
+const SmallText=styled.Text`
+  color:#848687;
+  font-family:PlusJakartaSans_300Light;
+  font-size:11px;
+  text-align:center;
+  margin-top:10px;
+
 `;
-const TabsMoveText = styled.Text`
-  color: white;
-  font-weight: bold;
-  font-size: 17px;
-`;
-const ProfileMoveButton = styled.TouchableOpacity`
-  padding: 12px 24px;
-  background-color: yellow;
-  border-radius: 8px;
-  width: 250px;
-  align-items: center;
-  margin-top: 20px;
-`;
-const ProfileMoveText = styled.Text`
-  color: black;
-  font-weight: bold;
-  font-size: 17px;
+
+const HighlightText = styled.Text`
+  color: #FFFFFF;       /* 원하는 색상 */
+  font-size: 12px;      /* 원하는 크기 */
+  font-family: PlusJakartaSans_600SemiBold;
 `;

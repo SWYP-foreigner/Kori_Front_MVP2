@@ -27,18 +27,9 @@ type ChatHistory = {
   "sentAt": string, //"2025-09-01T15:17:19.523Z"  
 };
 
-type OtherChatMessage={
-    // 보낸 사람 아이디
-    // 보낸 내용
-    // 보낸 시간? 
-};
 
-type MyChatMessage={
-    // roomId ?
-    // 내 userId ?
-    // 메세지 내용
-    // 시간 ? 서버 or 프론트 ?
-};
+
+
 
 const ChattingRoomScreen=()=>{
 
@@ -48,6 +39,9 @@ const ChattingRoomScreen=()=>{
     const [messages, setMessages] = useState<any[]>([]);
     const [inputText, setInputText] = useState("");
     const [myUserId,setMyUserId]=useState('');
+    const [isTranslate,setIsTranslate]=useState(false);
+    // STOMP 연결 상태 플래그
+    const [stompConnected, setStompConnected] = useState(false);    
     
 
     const stompClient = useRef<Client | null>(null);
@@ -68,7 +62,7 @@ const ChattingRoomScreen=()=>{
         const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
         const chatHistory:ChatHistory[]=res.data.data;
         // 메시지 담기
-        setMessages(chatHistory);
+       setMessages([...chatHistory].reverse())
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
@@ -76,74 +70,109 @@ const ChattingRoomScreen=()=>{
     fetchHistory();
   }, []);
 
+useEffect(() => {
+    const connectStomp = async () => {
+        // 1. SecureStore에서 토큰과 유저 ID를 비동기로 가져옵니다.
+        const token = await SecureStore.getItemAsync("jwt");
+        const myId = await SecureStore.getItemAsync('MyuserId');
+        
+        // 2. 토큰과 ID가 유효한지 반드시 확인합니다.
+        console.log("[AUTH] 토큰:", token ? "존재함" : "없음");
+        console.log("[AUTH] 유저ID:", myId);
+        
+        if (!myId || !token) {
+            console.error("[AUTH] 토큰 또는 유저ID가 없어 연결을 시작할 수 없습니다.");
+            return;
+        }
+        
+        setMyUserId(myId);
 
-  useEffect(() => {
-      // 1️⃣ STOMP 연결을 위한 async 함수 정의
-      const connectStomp = async () => {
+        // 3. 연결 헤더를 미리 만듭니다.
+        const connectHeaders = {
+            Authorization: `Bearer ${token}`,
+        };
+        console.log("[STOMP] 연결 헤더:", connectHeaders); // 헤더가 올바른지 최종 확인
 
-        // 2️⃣ SecureStore에서 JWT 토큰과 유저 ID 불러오기
-        const token = await SecureStore.getItemAsync("jwt");       // 로그인 시 저장한 accessToken
-
-        // 3️⃣ STOMP Client 생성
         stompClient.current = new Client({
-          webSocketFactory: () => new WebSocket('wss://dev.ko-ri.cloud/ws'), // HTTPS 서버 → wss 프로토콜 사용
-          connectHeaders: {
-            Authorization: `Bearer ${token}`, // JWT 토큰을 Authorization 헤더에 추가
-          },
-          reconnectDelay: 5000, // 연결이 끊겼을 때 자동 재연결 간격(ms)
-          debug: (str) => console.log('[STOMP]', str), // 디버그 로그
+            webSocketFactory: () => new global.WebSocket('wss://dev.ko-ri.cloud/ws'),
+            connectHeaders: connectHeaders, // 미리 만든 헤더 사용
+            reconnectDelay: 10000,
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+            debug: (str) => console.log('[STOMP DEBUG]', str),
         });
-  
-        // 4️⃣ 연결 성공 시 콜백
-        stompClient.current.onConnect = () => {
-          console.log('STOMP connected');
-  
-          // 5️⃣ 채팅방 상태 변경 구독
-          // /topic/user/{userId}/rooms 경로로 메시지 구독 → 새 채팅방, 메시지, 읽음 등 실시간 반영
-          stompClient.current?.subscribe(`/topic/rooms/${roomId}`, (message) => {
-            const chatHistory: ChatHistory= JSON.parse(message.body); // 메시지 JSON 파싱
-            const body = JSON.parse(message.body);
-            setMessages((prev) => [...prev, body]);
-            });
+        
+        // --- 모든 콜백 설정 ---
+        stompClient.current.onConnect = (frame) => {
+            console.log('✅ [STOMP] onConnect: 연결 성공!', frame);
+            setStompConnected(true);
+            
+            // ★★★★★ 수정된 부분 ★★★★★
+            // 구독 경로를 정규식(/.../)이 아닌 템플릿 리터럴( `...` )로 수정합니다.
+            const subscription = stompClient.current?.subscribe(
+                `/topic/user/${myId}/messages`, 
+                (message) => {
+                    console.log("📩 [STOMP] 메시지 수신:", message.body);
+                    const body = JSON.parse(message.body);
+                    setMessages((prev) => [...prev, body]);
+                }
+            );
+            console.log("📢 [STOMP] 채널 구독 완료:", subscription);
         };
-  
-        // 7️⃣ STOMP 에러 처리
+
         stompClient.current.onStompError = (frame) => {
-          console.error('STOMP ERROR', frame);
+            console.error('❌ [STOMP] onStompError: STOMP 프로토콜 오류', frame.headers['message']);
         };
-  
-        // 8️⃣ WebSocket 연결 활성화
+        
+        stompClient.current.onWebSocketError = (evt) => {
+            console.error('❌ [STOMP] onWebSocketError: WebSocket 연결 오류', evt);
+        };
+        
+        stompClient.current.onWebSocketClose = (evt) => {
+            console.log('🔌 [STOMP] onWebSocketClose: 연결이 종료되었습니다.', evt);
+        };
+
+        // --- 연결 활성화 ---
+        console.log("🚀 [STOMP] 연결을 시도합니다...");
         stompClient.current.activate();
-      };
-  
-      // 9️⃣ STOMP 연결 함수 호출
-      connectStomp();
-  
-      // 10️⃣ 언마운트 시 cleanup
-      // 컴포넌트가 사라질 때 WebSocket 연결 종료 → 메모리 누수 방지
-      return () => {
-        stompClient.current?.deactivate();
-      };
-      }, [roomId]); // 빈 배열 → 컴포넌트 마운트 시 한 번만 실행
+    };
+
+    connectStomp();
+
+    // --- 컴포넌트 언마운트 시 정리 ---
+    return () => {
+        if (stompClient.current?.connected) {
+            console.log("🧹 [STOMP] 연결을 해제합니다...");
+            stompClient.current.deactivate();
+        }
+        setStompConnected(false);
+    };
+}, []);
 
     // ✅ 메시지 전송
-  const sendMessage = () => {
+  // 메시지 전송
+    const sendMessage = () => {
+        console.log("connect",myUserId);
+
     if (!inputText.trim()) return;
+    if (!stompConnected) {
+        console.warn('STOMP not connected yet');
+        return;
+    }
 
     const msg = {
-      roomId,
-      senderId: userId,
-      message: inputText,
-      createdAt: new Date().toISOString(),
+        roomId: roomId,
+        senderId: myUserId,
+        content: inputText,
     };
 
     stompClient.current?.publish({
-      destination: "/pub/chat/message",
-      body: JSON.stringify(msg),
+        destination: "/app/chat.sendMessage",
+        body: JSON.stringify(msg),
     });
 
-    setInputText(""); // 입력창 비우기
-  };
+    setInputText("");
+    };
 
   const onhandleNext = () => {
   router.push({
@@ -195,13 +224,14 @@ const formatTime = (timestamp: number) => {
                      <FlatList
                         data={messages}
                         keyExtractor={item => item.id.toString()}
-                        inverted={true}
+                        // inverted={true}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
 
                             // 이전 메시지와 비교해서 같은 사람인지 확인
                             const showProfile =
                             index === 0 || messages[index - 1].senderFirstName !== item.senderFirstName;
+                            
                             
                                 
                             if (isMyMessage) {
@@ -223,36 +253,38 @@ const formatTime = (timestamp: number) => {
                             );
                             } else {
                             return (
-                                <ChattingLeftContainer>
-                                {showProfile && (
-                                    <ProfileContainer>
-                                    <ProfileBox>
-                                        <ProfileImage source={{ uri: item.senderImageUrl }} />
-                                    </ProfileBox>
-                                    </ProfileContainer>
-                                )}
-                                <OtherContainer>
-                                    {showProfile && (
-                                    <>
-                                        <OtherNameText>{item.senderFirstName}</OtherNameText>
-                                        <LeftMessageBox>
-                                        <OtherFirstTextBox>
-                                            <OtherText>{item.content}</OtherText>
-                                        </OtherFirstTextBox>
-                                        <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
-                                        </LeftMessageBox>
-                                    </>
-                                    )}
-                                    {!showProfile && (
-                                    <LeftMessageBox>
-                                        <OtherNotFirstTextBox>
-                                        <OtherText>{item.content}</OtherText>
-                                        </OtherNotFirstTextBox>
-                                        <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
-                                    </LeftMessageBox>
-                                    )}
-                                </OtherContainer>
-                                </ChattingLeftContainer>
+                                    <ChattingLeftContainer>
+                        {/* 항상 공간 확보 */}
+                        <ProfileContainer>
+                            {showProfile ? (
+                            <ProfileBox>
+                                <ProfileImage source={{ uri: item.senderImageUrl }} />
+                            </ProfileBox>
+                            ) : null}
+                        </ProfileContainer>
+
+                        <OtherContainer>
+                            {showProfile ? (
+                            <>
+                                <OtherNameText>{item.senderFirstName}</OtherNameText>
+                                <LeftMessageBox>
+                                <OtherFirstTextBox>
+                                    <OtherText>{item.content}</OtherText>
+                                </OtherFirstTextBox>
+                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                </LeftMessageBox>
+                            </>
+                            ) : (
+                            <LeftMessageBox>
+                                <OtherNotFirstTextBox>
+                                <OtherText>{item.content}</OtherText>
+                                </OtherNotFirstTextBox>
+                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                            </LeftMessageBox>
+                            )}
+                        </OtherContainer>
+                        </ChattingLeftContainer>
+
                             );
                             }
                         }}
@@ -286,7 +318,7 @@ const formatTime = (timestamp: number) => {
                         <SendImage source={require("@/assets/images/Send.png")}/>
                     </SendImageBox>
                 </BottomContainer>
-                 <TranslateButtonBox>
+                 <TranslateButtonBox onPress={()=>{setIsTranslate(!isTranslate)}}>
                         <TranslateImage source={require("@/assets/images/translate.png")}/>
                     </TranslateButtonBox>
             </Container>
@@ -358,16 +390,29 @@ const TimeText=styled.Text`
 `;
 
 const ChattingLeftContainer = styled.View`
+  background-color:red;
   align-self: flex-start; /* 왼쪽 끝 */
   max-width:280px;   /* 최대 너비 */
   flex-direction: row;
   margin:20px 0px;
 `;
 
-const ProfileContainer=styled.View`
+// const ProfileContainer=styled.View`
    
-    width:38px; 
+//     width:38px; 
 
+// `;
+const ProfileContainer = styled.View`
+  width: 38px;   /* 항상 공간 확보 */
+  margin-right: 7px;
+`;
+
+const LeftMessageBox = styled.View`
+  max-width: 250px;
+  margin-top: 5px;
+  flex-direction: row;
+  align-items: flex-end; /* 세로 끝 정렬 */
+  justify-content: flex-start; /* 왼쪽 정렬 고정 */
 `;
 const ProfileBox=styled.View`
     width:38px;
@@ -384,6 +429,7 @@ const ProfileImage=styled.Image`
 
 
 const OtherContainer=styled.View`
+    background-color:yellow;
     max-width:242px;
     padding-left:7px;
 `;
@@ -393,14 +439,14 @@ const OtherNameText=styled.Text`
     font-size:13px;
 `;
 
-const LeftMessageBox=styled.View`
-    max-width:250px;
-    align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
-    margin-top:5px;
-    flex-direction:row;
-    justify-content: flex-end;   /* 가로 방향 끝 */
-    align-items: flex-end;       /* 세로 방향 끝 */
-`;
+// const LeftMessageBox=styled.View`
+//     max-width:250px;
+//     align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
+//     margin-top:5px;
+//     flex-direction:row;
+//     justify-content: flex-end;   /* 가로 방향 끝 */
+//     align-items: flex-end;       /* 세로 방향 끝 */
+// `;
 const OtherFirstTextBox=styled.View`
   background-color: #414142;
   padding: 8px 12px;

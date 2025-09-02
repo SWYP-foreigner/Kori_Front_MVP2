@@ -60,7 +60,7 @@ export default function GoogleSignInButton({ onPress, loading, disabled }: Props
       {loading ? (
         <StyledActivityIndicator size="small" color="#000" />
       ) : (
-        <ButtonText>Sign in with Google</ButtonText>
+        <ButtonText>Continue with Google</ButtonText>
       )}
     </GoogleLoginButton>
   );
@@ -70,28 +70,23 @@ export default function GoogleSignInButton({ onPress, loading, disabled }: Props
 const GoogleLoginButton = styled.Pressable`
   flex-direction: row;
   align-items: center;
-  width : 251px;
+  justify-content:center;
+  width : 100%;
   height: 50px;
-  background-color: #000000;
   border-radius: 8px;
   border-width: 1px;
-  border-color: #dadce0;
-  padding-horizontal: 12px;
-  shadow-color: #000;
-  shadow-opacity: 0.05;
-  shadow-radius: 2px;
-  shadow-offset: 0px 1px;
+  border-color: #616262;
   margin-bottom: 12px;
 `;
 
 const IconWrapper = styled.View`
-  margin-right: 30px;
+  margin-right: 10px;
 `;
 
 const ButtonText = styled.Text`
-  font-size: 17px;
+  font-size: 15px;
   color: #ffffff;
-  font-weight: 500;
+  font-family: PlusJakartaSans_500Medium;
 `;
 
 const StyledActivityIndicator = styled.ActivityIndicator``;
