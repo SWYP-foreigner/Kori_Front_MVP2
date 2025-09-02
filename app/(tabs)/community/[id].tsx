@@ -1,6 +1,7 @@
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
+import { useLikeComment } from '@/hooks/mutations/useLikeComment';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
@@ -41,18 +42,13 @@ function parseDateFlexible(v?: unknown): Date | null {
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : String(n);
-}
+function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
 function formatCreatedYMD(v?: unknown): string {
   const d = parseDateFlexible(v);
   if (!d) return '';
   try {
     const fmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Seoul',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+      timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
     });
     return fmt.format(d).replace(/-/g, '/');
   } catch {
@@ -80,6 +76,7 @@ export default function PostDetailScreen() {
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
+  const likeComment = useLikeComment(postId);
 
   const [sort, setSort] = useState<SortKey>('new');
   const [value, setValue] = useState('');
@@ -98,8 +95,7 @@ export default function PostDetailScreen() {
     const liked =
       (data as any).likedByMe ??
       (data as any).isLike ??
-      (data as any).isLiked ??
-      false;
+      (data as any).isLiked ?? false;
     setLikedByMe(Boolean(liked));
   }, [data]);
 
@@ -108,11 +104,18 @@ export default function PostDetailScreen() {
     if (!text) return;
     if (!Number.isFinite(postId)) return;
 
-    createCmt.mutate({ anonymous, comment: text });
-    setValue('');
-    Keyboard.dismiss();
-    requestAnimationFrame(() =>
-      listRef.current?.scrollToOffset({ offset: 0, animated: true }),
+    createCmt.mutate(
+      { anonymous, comment: text },
+      {
+        onSuccess: () => {
+          setValue('');
+          Keyboard.dismiss();
+          requestAnimationFrame(() =>
+            listRef.current?.scrollToOffset({ offset: 0, animated: true }),
+          );
+        },
+        onError: () => Alert.alert('Comment', 'Failed to post comment.'),
+      },
     );
   };
 
@@ -120,38 +123,25 @@ export default function PostDetailScreen() {
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, {
-      toValue: 0,
-      duration: 220,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
     }).start();
   };
   const closeMenu = () =>
     new Promise<void>((resolve) => {
       Animated.timing(slideY, {
-        toValue: 300,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start(() => {
-        setMenuVisible(false);
-        resolve();
-      });
+        toValue: 300, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true,
+      }).start(() => { setMenuVisible(false); resolve(); });
     });
 
   if (isLoading) {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}>
-            <AntDesign name="left" size={20} color="#fff" />
-          </Back>
+          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
           <HeaderTitle>Post</HeaderTitle>
           <RightPlaceholder />
         </Header>
-        <Center>
-          <Dim>Loading…</Dim>
-        </Center>
+        <Center><Dim>Loading…</Dim></Center>
       </Safe>
     );
   }
@@ -160,15 +150,11 @@ export default function PostDetailScreen() {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}>
-            <AntDesign name="left" size={20} color="#fff" />
-          </Back>
+          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
           <HeaderTitle>Post</HeaderTitle>
           <RightPlaceholder />
         </Header>
-        <Center>
-          <Dim>Post not found.</Dim>
-        </Center>
+        <Center><Dim>Post not found.</Dim></Center>
       </Safe>
     );
   }
@@ -178,9 +164,7 @@ export default function PostDetailScreen() {
   const avatarSrc = post.userImageUrl ? { uri: post.userImageUrl } : AV;
 
   const createdRaw =
-    (post as any).createdTime ??
-    (post as any).createdAt ??
-    (post as any).timestamp;
+    (post as any).createdTime ?? (post as any).createdAt ?? (post as any).timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
 
   const firstImage = post.contentImageUrls?.[0];
@@ -196,8 +180,8 @@ export default function PostDetailScreen() {
 
     const prevLiked = likedByMe;
     const delta = prevLiked ? -1 : +1;
-
     const prevCount = likesOverride ?? serverLikeCount;
+
     setLikesOverride(Math.max(0, prevCount + delta));
     setLikedByMe(!prevLiked);
 
@@ -210,36 +194,18 @@ export default function PostDetailScreen() {
     }
   };
 
-  // 신고 관련
   const confirmReportPost = (text: string) => {
     Alert.alert('Report', 'Are you sure\nreport this post?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Report',
-        style: 'destructive',
-        onPress: () => {
-          console.log('[report post]', { postId, text });
-          setReportOpen(false);
-        },
-      },
+      { text: 'Report', style: 'destructive', onPress: () => { console.log('[report post]', { postId, text }); setReportOpen(false); } },
     ]);
   };
-
   const onSubmitReport = () => {
     const text = reportText.trim();
-    if (!text) {
-      Alert.alert('Report', 'Please enter details.');
-      return;
-    }
+    if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
     confirmReportPost(text);
   };
-
-  const onReportPost = async () => {
-    await closeMenu();
-    setReportText('');
-    setReportOpen(true);
-  };
-
+  const onReportPost = async () => { await closeMenu(); setReportText(''); setReportOpen(true); };
   const onReportUser = async () => {
     await closeMenu();
     const userId = (post as any).userId ?? (post as any).authorId;
@@ -252,9 +218,7 @@ export default function PostDetailScreen() {
   return (
     <Safe>
       <Header>
-        <Back onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
-        </Back>
+        <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
         <HeaderTitle>Post</HeaderTitle>
         <RightPlaceholder />
       </Header>
@@ -267,8 +231,19 @@ export default function PostDetailScreen() {
         <FlatList<Comment>
           ref={listRef}
           data={comments}
-          keyExtractor={(it) => it.id}
-          renderItem={({ item }) => <CommentItem data={item} />}
+          keyExtractor={(it) => String(it.id)}
+          renderItem={({ item }) => (
+            <CommentItem
+              data={item}
+              onPressLike={() => {
+                if (likeComment.isPending) return;
+                likeComment.mutate({
+                  commentId: Number(item.id),
+                  liked: !!item.likedByMe,
+                });
+              }}
+            />
+          )}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           style={{ backgroundColor: '#171818' }}
@@ -287,29 +262,18 @@ export default function PostDetailScreen() {
                       <Sub style={{ marginLeft: 6 }}>{views}</Sub>
                     </MetaRow>
                   </Meta>
-                  <SmallFlag onPress={() => setBookmarked((v) => !v)} hitSlop={8}>
-                    <MaterialIcons
-                      name={bookmarked ? 'bookmark' : 'bookmark-border'}
-                      size={20}
-                      color={bookmarked ? '#30F59B' : '#8a8a8a'}
-                    />
+                  <SmallFlag onPress={() => setBookmarked(v => !v)} hitSlop={8}>
+                    <MaterialIcons name={bookmarked ? 'bookmark' : 'bookmark-border'} size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
                   </SmallFlag>
                 </Row>
 
-                {!!firstImage && (
-                  <Img source={{ uri: firstImage }} resizeMode="cover" />
-                )}
+                {!!firstImage && <Img source={{ uri: firstImage }} resizeMode="cover" />}
 
                 <Body>{body}</Body>
 
-                {/* 하단 액션 */}
                 <Footer>
                   <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
-                    <AntDesign
-                      name={likedByMe ? 'like1' : 'like2'}
-                      size={16}
-                      color={likedByMe ? '#30F59B' : '#cfd4da'}
-                    />
+                    <AntDesign name={likedByMe ? 'like1' : 'like2'} size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
                     <ActText>{likeCount}</ActText>
                   </Act>
 
@@ -344,11 +308,9 @@ export default function PostDetailScreen() {
               blurOnSubmit
               onSubmitEditing={submit}
             />
-            <AnonToggle onPress={() => setAnonymous((v) => !v)}>
+            <AnonToggle onPress={() => setAnonymous(v => !v)}>
               <AnonLabel>Anonymous</AnonLabel>
-              <Check $active={anonymous}>
-                {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
-              </Check>
+              <Check $active={anonymous}>{anonymous && <AntDesign name="check" size={14} color="#ffffff" />}</Check>
             </AnonToggle>
           </Composer>
 
@@ -358,20 +320,8 @@ export default function PostDetailScreen() {
         </InputBar>
       </KeyboardAvoidingView>
 
-      {/* Action Sheet */}
-      <Modal
-        transparent
-        visible={menuVisible}
-        onRequestClose={() => setMenuVisible(false)}
-        animationType="none"
-      >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-end',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-          }}
-        >
+      <Modal transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)} animationType="none">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
           <Animated.View
             style={{
@@ -385,50 +335,25 @@ export default function PostDetailScreen() {
           >
             <SheetHandle />
             <SheetItem onPress={onReportPost}>
-              <SheetIcon>
-                <MaterialIcons name="outlined-flag" size={18} color={DANGER} />
-              </SheetIcon>
+              <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This Post</SheetLabel>
             </SheetItem>
             <SheetItem onPress={onReportUser}>
-              <SheetIcon>
-                <MaterialIcons name="person-outline" size={18} color={DANGER} />
-              </SheetIcon>
+              <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This User</SheetLabel>
             </SheetItem>
             <SheetDivider />
             <SheetItem onPress={() => setMenuVisible(false)}>
-              <SheetIcon>
-                <AntDesign name="close" size={18} color="#cfd4da" />
-              </SheetIcon>
+              <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
               <SheetLabel>Cancel</SheetLabel>
             </SheetItem>
           </Animated.View>
         </View>
       </Modal>
 
-      {/* Report Dialog */}
-      <Modal
-        visible={reportOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        presentationStyle="overFullScreen"
-        onRequestClose={() => setReportOpen(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.55)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 24,
-          }}
-        >
-          <Pressable
-            onPress={() => setReportOpen(false)}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-          />
+      <Modal visible={reportOpen} transparent animationType="fade" statusBarTranslucent presentationStyle="overFullScreen" onRequestClose={() => setReportOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Pressable onPress={() => setReportOpen(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
           <Dialog>
             <DialogHeader>
               <DialogTitle>
@@ -626,7 +551,7 @@ const StyledRNInput = styled(RNTextInput)`
 const Input = React.forwardRef<RNTextInput, TextInputProps>(
   ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
     <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
-  ),
+  )
 );
 Input.displayName = 'Input';
 
@@ -637,7 +562,7 @@ const AnonToggle = styled.Pressable`
 `;
 
 const AnonLabel = styled.Text`
-  color: #CCCFD5;
+  color: #cccfd5;
   font-size: 14px;
   margin-right: 8px;
   font-family: 'PlusJakartaSans_Light';
@@ -648,8 +573,8 @@ const Check = styled.View<{ $active?: boolean }>`
   height: 16px;
   border-radius: 2px;
   border-width: 1.1px;
-  border-color: #CCCFD5;
-  background: ${({ $active }) => ($active ? '#30F59B' : 'transparent')};
+  border-color: #cccfd5;
+  background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')};
   align-items: center;
   justify-content: center;
 `;
@@ -683,7 +608,7 @@ const SheetIcon = styled.View`
 `;
 
 const SheetLabel = styled.Text<{ $danger?: boolean }>`
-  color: ${({ $danger }) => ($danger ? DANGER : '#e6e9ed')};
+  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e6e9ed')};
   font-size: 16px;
 `;
 
@@ -696,7 +621,7 @@ const SheetDivider = styled.View`
 const Dialog = styled.View`
   width: 100%;
   max-width: 360px;
-  background: #2A2B2C;
+  background: #2a2b2c;
   border-radius: 12px;
   padding: 12px 12px 16px 12px;
 `;
@@ -714,7 +639,7 @@ const DialogTitle = styled.View`
 `;
 
 const DialogTitleText = styled.Text<{ $danger?: boolean }>`
-  color: ${({ $danger }) => ($danger ? DANGER : '#E7EAED')};
+  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')};
   font-size: 14px;
   font-weight: 700;
 `;
@@ -728,14 +653,14 @@ const DialogTextarea = styled.TextInput`
   border-radius: 8px;
   padding: 12px;
   background: #1f2021;
-  color: #E7EAED;
+  color: #e7eaed;
   font-size: 14px;
   border-width: 1px;
   border-color: #3a3d40;
 `;
 
 const SubmitBtn = styled.Pressable`
-  background: ${DANGER};
+  background: #ff4d4f;
   padding: 12px;
   border-radius: 8px;
   align-items: center;

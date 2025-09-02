@@ -1,23 +1,28 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import React from 'react';
+import type { ImageSourcePropType } from 'react-native';
 import styled from 'styled-components/native';
 
 export type Comment = {
-  id: string;
+  id: string | number;
   author: string;
-  avatar: any;
+  avatar: ImageSourcePropType;
   createdAt: string;
   body: string;
   likes: number;
+  likedByMe?: boolean;
   isChild?: boolean;
   hotScore: number;
   anonymous?: boolean;
 };
 
-type Props = { data: Comment };
+type Props = {
+  data: Comment;
+  onPressLike?: () => void;
+};
 
-export default function CommentItem({ data }: Props) {
+export default function CommentItem({ data, onPressLike }: Props) {
   const isChild = !!data.isChild;
 
   return (
@@ -39,11 +44,21 @@ export default function CommentItem({ data }: Props) {
       <Body>{data.body}</Body>
 
       <Footer>
-        <Act>
-          <AntDesign name="like2" size={14} color="#30F59B" />
-          <Count>{data.likes}</Count>
+        <Act
+          onPress={onPressLike}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Like this comment"
+        >
+          <AntDesign
+            name={data.likedByMe ? 'like1' : 'like2'}
+            size={14}
+            color={data.likedByMe ? '#30F59B' : '#cfd4da'}
+          />
+          <Count $active={!!data.likedByMe}>{data.likes}</Count>
         </Act>
-        <Act>
+
+        <Act disabled>
           <AntDesign name="message1" size={14} color="#cfd4da" />
           <Count>999</Count>
         </Act>
@@ -122,8 +137,8 @@ const Act = styled.Pressable`
   margin-right: 16px;
 `;
 
-const Count = styled.Text`
-  color: #cfd4da;
+const Count = styled.Text<{ $active?: boolean }>`
+  color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
   margin-left: 6px;
   font-size: 12px;
 `;
