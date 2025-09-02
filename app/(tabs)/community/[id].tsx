@@ -10,7 +10,7 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   Alert,
@@ -34,10 +34,7 @@ const DANGER = '#FF4D4F';
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
   let s = String(v).trim();
-  if (/^\d+(\.\d+)?$/.test(s)) {
-    const num = parseFloat(s);
-    return new Date(num * 1000);
-  }
+  if (/^\d+(\.\d+)?$/.test(s)) return new Date(parseFloat(s) * 1000);
   if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
@@ -47,17 +44,34 @@ function formatCreatedYMD(v?: unknown): string {
   const d = parseDateFlexible(v);
   if (!d) return '';
   try {
-    const fmt = new Intl.DateTimeFormat('en-CA', {
+    return new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
-    });
-    return fmt.format(d).replace(/-/g, '/');
+    }).format(d).replace(/-/g, '/');
   } catch {
     return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
   }
 }
 
+/* ---------- forwardRef EditInput ---------- */
+const StyledEditInput = styled(RNTextInput)`
+  min-height: 220px;
+  border-radius: 8px;
+  padding: 12px;
+  background: #1f2021;
+  color: #e7eaed;
+  font-size: 14px;
+  border-width: 1px;
+  border-color: #3a3d40;
+`;
+const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => (
+  <StyledEditInput ref={ref} {...props} />
+));
+EditInput.displayName = 'EditInput';
+
 export default function PostDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, focusCommentId, intent } = useLocalSearchParams<{
+    id: string; focusCommentId?: string; intent?: string;
+  }>();
   const postId = Number(id);
 
   const { data, isLoading, isError } = usePostDetail(
@@ -90,6 +104,26 @@ export default function PostDetailScreen() {
     sort,
   );
 
+  const [editVisible, setEditVisible] = useState(false);
+  const [editText, setEditText] = useState('');
+  const editInputRef = useRef<RNTextInput>(null);
+
+  useEffect(() => {
+    if (intent === 'edit' && focusCommentId) {
+      const target = comments.find(c => String((c as any).id) === String(focusCommentId));
+      if (target) {
+        const body =
+          (target as any).content ??
+          (target as any).comment ??
+          (target as any).text ?? '';
+        setEditText(String(body));
+        setEditVisible(true);
+        const t = setTimeout(() => editInputRef.current?.focus(), 350);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [intent, focusCommentId, comments]);
+
   useEffect(() => {
     if (!data) return;
     const liked =
@@ -101,9 +135,7 @@ export default function PostDetailScreen() {
 
   const submit = () => {
     const text = value.trim();
-    if (!text) return;
-    if (!Number.isFinite(postId)) return;
-
+    if (!text || !Number.isFinite(postId)) return;
     createCmt.mutate(
       { anonymous, comment: text },
       {
@@ -138,21 +170,18 @@ export default function PostDetailScreen() {
       <Safe>
         <Header>
           <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-          <HeaderTitle>Post</HeaderTitle>
-          <RightPlaceholder />
+          <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
         </Header>
         <Center><Dim>Loading…</Dim></Center>
       </Safe>
     );
   }
-
   if (isError || !data) {
     return (
       <Safe>
         <Header>
           <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-          <HeaderTitle>Post</HeaderTitle>
-          <RightPlaceholder />
+          <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
         </Header>
         <Center><Dim>Post not found.</Dim></Center>
       </Safe>
@@ -162,11 +191,9 @@ export default function PostDetailScreen() {
   const post = data;
   const author = (post as any).userName ?? (post as any).authorName ?? 'Unknown';
   const avatarSrc = post.userImageUrl ? { uri: post.userImageUrl } : AV;
-
   const createdRaw =
     (post as any).createdTime ?? (post as any).createdAt ?? (post as any).timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
-
   const firstImage = post.contentImageUrls?.[0];
   const serverLikeCount = post.likeCount ?? 0;
   const likeCount = likesOverride ?? serverLikeCount;
@@ -175,16 +202,12 @@ export default function PostDetailScreen() {
   const body = post.content ?? '';
 
   const handleToggleLike = async () => {
-    if (!Number.isFinite(postId)) return;
-    if (likeMutation.isPending) return;
-
+    if (!Number.isFinite(postId) || likeMutation.isPending) return;
     const prevLiked = likedByMe;
     const delta = prevLiked ? -1 : +1;
     const prevCount = likesOverride ?? serverLikeCount;
-
     setLikesOverride(Math.max(0, prevCount + delta));
     setLikedByMe(!prevLiked);
-
     try {
       await likeMutation.mutateAsync({ postId, liked: prevLiked });
     } catch (e) {
@@ -194,33 +217,26 @@ export default function PostDetailScreen() {
     }
   };
 
-  const confirmReportPost = (text: string) => {
+  const onSubmitReport = () => {
+    const text = reportText.trim();
+    if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
     Alert.alert('Report', 'Are you sure\nreport this post?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Report', style: 'destructive', onPress: () => { console.log('[report post]', { postId, text }); setReportOpen(false); } },
     ]);
   };
-  const onSubmitReport = () => {
-    const text = reportText.trim();
-    if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
-    confirmReportPost(text);
-  };
-  const onReportPost = async () => { await closeMenu(); setReportText(''); setReportOpen(true); };
-  const onReportUser = async () => {
-    await closeMenu();
-    const userId = (post as any).userId ?? (post as any).authorId;
-    Alert.alert('Report', 'Are you sure\nreport this user?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
-    ]);
+
+  const onSaveEdit = () => {
+    const text = editText.trim();
+    if (!text) { Alert.alert('Edit', 'Please enter your comment.'); return; }
+    setEditVisible(false);
   };
 
   return (
     <Safe>
       <Header>
         <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-        <HeaderTitle>Post</HeaderTitle>
-        <RightPlaceholder />
+        <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
       </Header>
 
       <KeyboardAvoidingView
@@ -231,15 +247,15 @@ export default function PostDetailScreen() {
         <FlatList<Comment>
           ref={listRef}
           data={comments}
-          keyExtractor={(it) => String(it.id)}
+          keyExtractor={(it) => String((it as any).id)}
           renderItem={({ item }) => (
             <CommentItem
               data={item}
               onPressLike={() => {
                 if (likeComment.isPending) return;
                 likeComment.mutate({
-                  commentId: Number(item.id),
-                  liked: !!item.likedByMe,
+                  commentId: Number((item as any).id),
+                  liked: !!(item as any).likedByMe,
                 });
               }}
             />
@@ -276,14 +292,16 @@ export default function PostDetailScreen() {
                     <AntDesign name={likedByMe ? 'like1' : 'like2'} size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
                     <ActText>{likeCount}</ActText>
                   </Act>
-
                   <Act>
                     <AntDesign name="message1" size={16} color="#cfd4da" />
                     <ActText>{commentCount}</ActText>
                   </Act>
-
                   <Grow />
-                  <MoreBtn onPress={openMenu} hitSlop={8}>
+                  <MoreBtn onPress={() => {
+                    setMenuVisible(true);
+                    slideY.setValue(300);
+                    Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+                  }} hitSlop={8}>
                     <Feather name="more-horizontal" size={22} color="#8a8a8a" />
                   </MoreBtn>
                 </Footer>
@@ -298,7 +316,7 @@ export default function PostDetailScreen() {
 
         <InputBar>
           <Composer>
-            <Input
+            <BottomInput
               ref={inputRef}
               value={value}
               onChangeText={setValue}
@@ -334,11 +352,18 @@ export default function PostDetailScreen() {
             }}
           >
             <SheetHandle />
-            <SheetItem onPress={onReportPost}>
+            <SheetItem onPress={async () => { setMenuVisible(false); setReportText(''); setReportOpen(true); }}>
               <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This Post</SheetLabel>
             </SheetItem>
-            <SheetItem onPress={onReportUser}>
+            <SheetItem onPress={async () => {
+              setMenuVisible(false);
+              const userId = (post as any).userId ?? (post as any).authorId;
+              Alert.alert('Report', 'Are you sure\nreport this user?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
+              ]);
+            }}>
               <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This User</SheetLabel>
             </SheetItem>
@@ -380,11 +405,47 @@ export default function PostDetailScreen() {
           </Dialog>
         </View>
       </Modal>
+
+      <Modal
+        visible={editVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setEditVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} onPress={() => setEditVisible(false)} />
+          <EditBox>
+            <EditHeader>
+              <EditTitle>
+                <AntDesign name="edit" size={16} color="#cfd4da" />
+                <EditTitleText>  Edit My Comments</EditTitleText>
+              </EditTitle>
+              <CloseBtn onPress={() => setEditVisible(false)}>
+                <AntDesign name="close" size={18} color="#cfd4da" />
+              </CloseBtn>
+            </EditHeader>
+
+            <EditInput
+              ref={editInputRef}
+              value={editText}
+              onChangeText={setEditText}
+              placeholder=""
+              placeholderTextColor="#858b90"
+              multiline
+              textAlignVertical="top"
+            />
+
+            <SaveBtn onPress={onSaveEdit}>
+              <SaveText>Save Edit</SaveText>
+            </SaveBtn>
+          </EditBox>
+        </View>
+      </Modal>
     </Safe>
   );
 }
 
-/* ---------- styled ---------- */
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
@@ -540,20 +601,13 @@ const Composer = styled.View`
   align-items: center;
 `;
 
-const StyledRNInput = styled(RNTextInput)`
+const BottomInput = styled(RNTextInput)`
   flex: 1;
   color: #ffffff;
   font-size: 14px;
   padding: 0;
   background: transparent;
 `;
-
-const Input = React.forwardRef<RNTextInput, TextInputProps>(
-  ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
-    <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
-  )
-);
-Input.displayName = 'Input';
 
 const AnonToggle = styled.Pressable`
   flex-direction: row;
@@ -670,5 +724,45 @@ const SubmitBtn = styled.Pressable`
 
 const SubmitText = styled.Text`
   color: #ffffff;
+  font-weight: 700;
+`;
+
+const EditBox = styled.View`
+  width: 100%;
+  max-width: 360px;
+  background: #2a2b2c;
+  border-radius: 12px;
+  padding: 12px 12px 16px 12px;
+`;
+
+const EditHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+
+const EditTitle = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const EditTitleText = styled.Text`
+  color: #cfd4da;
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+const SaveBtn = styled.Pressable`
+  background: #30f59b;
+  padding: 12px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+`;
+
+const SaveText = styled.Text`
+  color: #000;
   font-weight: 700;
 `;
