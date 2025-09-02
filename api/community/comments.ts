@@ -40,3 +40,10 @@ export async function deleteComment(commentId: number) {
     await api.delete(`/api/v1/comments/${commentId}`);
     return commentId;
 }
+
+export type UpdateCommentReq = { content: string };
+
+export async function updateComment(commentId: number, body: UpdateCommentReq) {
+    await api.patch(`/api/v1/comments/${commentId}`, body);
+    return commentId;
+}
