@@ -1,23 +1,34 @@
 import { createPost } from '@/api/community/posts';
 import { Category } from '@/components/CategoryChips';
+import { useUpdatePost } from '@/hooks/mutations/useUpdatePost';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { router, useLocalSearchParams } from 'expo-router';
+
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
-  Alert, KeyboardAvoidingView, Modal, Platform, Pressable, TextInput as RNTextInput,
-  TextInputProps, View
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  TextInput as RNTextInput,
+  TextInputProps,
+  View
 } from 'react-native';
 import styled from 'styled-components/native';
-
 
 const CATS: Category[] = ['News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'];
 const GREEN = '#30F59B';
 
 export default function WriteScreen() {
+  const params = useLocalSearchParams<{ mode?: string; postId?: string; initial?: string }>();
+  const isEdit = params.mode === 'edit';
+  const postIdNum = params.postId ? Number(params.postId) : undefined;
+
   const [category, setCategory] = useState<Category>('Activity');
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState<string>(params.initial ?? '');
   const [anonymous, setAnonymous] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
@@ -38,20 +49,36 @@ export default function WriteScreen() {
     if (!res.canceled) setImage(res.assets[0].uri);
   };
 
+  const updateMutation = useUpdatePost();
+
   const onSave = async () => {
     if (!canSave) return;
+    const content = body.trim();
+
     try {
-      const boardId = CATEGORY_TO_BOARD_ID[category];
-      await createPost(boardId, {
-        content: body,
-        isAnonymous: anonymous,
-        imageUrls: image ? [image] : [],
-      });
-      Alert.alert('Success', 'Post created successfully!');
+      if (isEdit && postIdNum) {
+        await updateMutation.mutateAsync({
+          postId: postIdNum,
+          body: {
+            content,
+            images: image ? [image] : [],
+            removedImages: [],
+          },
+        });
+        Alert.alert('Saved', 'Post updated successfully.');
+      } else {
+        const boardId = CATEGORY_TO_BOARD_ID[category];
+        await createPost(boardId, {
+          content,
+          isAnonymous: anonymous,
+          imageUrls: image ? [image] : [],
+        });
+        Alert.alert('Success', 'Post created successfully!');
+      }
       router.back();
-    } catch (e) {
-      console.log('[createPost error]', e);
-      Alert.alert('Error', 'Failed to create post.');
+    } catch (e: any) {
+      console.log('[write:save] error', e?.response?.data || e?.message || e);
+      Alert.alert('Error', isEdit ? 'Failed to update post.' : 'Failed to create post.');
     }
   };
 
@@ -61,9 +88,15 @@ export default function WriteScreen() {
         <IconBtn onPress={() => router.back()}>
           <AntDesign name="left" size={20} color="#fff" />
         </IconBtn>
-        <HeaderTitle>Write</HeaderTitle>
-        <SaveBtn onPress={onSave} disabled={!canSave} accessibilityLabel="save-post">
-          <SaveText $enabled={canSave}>Save</SaveText>
+        <HeaderTitle>{isEdit ? 'Edit Post' : 'Write'}</HeaderTitle>
+        <SaveBtn
+          onPress={onSave}
+          disabled={!canSave || updateMutation.isPending}
+          accessibilityLabel="save-post"
+        >
+          <SaveText $enabled={canSave && !updateMutation.isPending}>
+            {isEdit ? (updateMutation.isPending ? 'Saving...' : 'Save') : 'Save'}
+          </SaveText>
         </SaveBtn>
       </Header>
 
@@ -72,9 +105,9 @@ export default function WriteScreen() {
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-        <CatRow onPress={() => setCatOpen(true)}>
+        <CatRow onPress={() => !isEdit && setCatOpen(true)} disabled={isEdit}>
           <CatLabel>Category</CatLabel>
-          <CatChip>
+          <CatChip style={isEdit ? { opacity: 0.5 } : undefined}>
             <CatText>{category}</CatText>
             <AntDesign name="down" size={10} color="#9aa0a6" />
           </CatChip>
@@ -108,7 +141,7 @@ export default function WriteScreen() {
             </BarIcon>
           </BarLeft>
           <BarRight>
-            <Anon onPress={() => setAnonymous(v => !v)} $active={anonymous}>
+            <Anon onPress={() => setAnonymous(v => !v)} $active={anonymous} disabled={isEdit}>
               <AnonText $active={anonymous}>Anonymous</AnonText>
               <AntDesign
                 name={anonymous ? 'checksquare' : 'checksquareo'}
@@ -121,7 +154,12 @@ export default function WriteScreen() {
         </BottomBar>
       </KeyboardAvoidingView>
 
-      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
+      <Modal
+        visible={pickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPickerOpen(false)}
+      >
         <SheetBackdrop onPress={() => setPickerOpen(false)} />
         <Sheet>
           <SheetBtn onPress={pickImage}>
@@ -133,15 +171,30 @@ export default function WriteScreen() {
         </Sheet>
       </Modal>
 
-      <Modal visible={catOpen} transparent animationType="fade" onRequestClose={() => setCatOpen(false)}>
+      <Modal
+        visible={catOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCatOpen(false)}
+      >
         <SheetBackdrop onPress={() => setCatOpen(false)} />
         <CatSheet>
           {CATS.map(c => {
             const active = c === category;
             return (
-              <CatItem key={c} onPress={() => { setCategory(c); setCatOpen(false); }}>
+              <CatItem
+                key={c}
+                onPress={() => {
+                  setCategory(c);
+                  setCatOpen(false);
+                }}
+              >
                 <CatItemText $active={active}>{c}</CatItemText>
-                {active ? <AntDesign name="check" size={16} color="#9aa0a6" /> : <View style={{ width: 16 }} />}
+                {active ? (
+                  <AntDesign name="check" size={16} color="#9aa0a6" />
+                ) : (
+                  <View style={{ width: 16 }} />
+                )}
               </CatItem>
             );
           })}
@@ -151,6 +204,7 @@ export default function WriteScreen() {
   );
 }
 
+/* ===== styled ===== */
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
@@ -162,64 +216,169 @@ const Header = styled.View`
   align-items: center;
   justify-content: space-between;
 `;
-const IconBtn = styled.Pressable` padding: 6px; `;
+const IconBtn = styled.Pressable`
+  padding: 6px;
+`;
 const HeaderTitle = styled.Text`
-  color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold';
+  color: #fff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_700Bold';
 `;
 const SaveBtn = styled.Pressable<{ disabled?: boolean }>`
-  padding: 6px; opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  padding: 6px;
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
 `;
 const SaveText = styled.Text<{ $enabled: boolean }>`
   color: ${({ $enabled }) => ($enabled ? '#30F59B' : '#9aa0a6')};
-  font-size: 16px; font-family: 'PlusJakartaSans_700Bold';
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
 `;
 
-const CatRow = styled.Pressable` padding: 10px 12px 8px 12px; flex-direction: row; align-items: center; `;
-const CatLabel = styled.Text` color: #9aa0a6; font-size: 12px; margin-right: 10px; font-family: 'PlusJakartaSans_400Regular'; `;
-const CatChip = styled.View`
-  height: 24px; padding: 0 10px; border-radius: 6px; background: #1a1b1c; border: 1px solid #2a2b2c;
-  flex-direction: row; align-items: center; gap: 6px;
+const CatRow = styled.Pressable<{ disabled?: boolean }>`
+  padding: 10px 12px 8px 12px;
+  flex-direction: row;
+  align-items: center;
+  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 `;
-const CatText = styled.Text` color: #cfd4da; font-size: 12px; `;
-const Divider = styled.View` height: 1px; background: #222426; `;
-const BodyWrap = styled.Pressable` flex: 1; padding: 10px 12px 0 12px; `;
-const StyledRNInput = styled(RNTextInput)` flex: 1; min-height: 150px; color: #e6e9ec; font-size: 14px; line-height: 20px; padding: 0; `;
-const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => <StyledRNInput ref={ref} {...props} />);
+const CatLabel = styled.Text`
+  color: #9aa0a6;
+  font-size: 12px;
+  margin-right: 10px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const CatChip = styled.View`
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: #1a1b1c;
+  border: 1px solid #2a2b2c;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`;
+const CatText = styled.Text`
+  color: #cfd4da;
+  font-size: 12px;
+`;
+const Divider = styled.View`
+  height: 1px;
+  background: #222426;
+`;
+const BodyWrap = styled.Pressable`
+  flex: 1;
+  padding: 10px 12px 0 12px;
+`;
+const StyledRNInput = styled(RNTextInput)`
+  flex: 1;
+  min-height: 150px;
+  color: #e6e9ec;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0;
+`;
+const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => (
+  <StyledRNInput ref={ref} {...props} />
+));
 Input.displayName = 'Input';
-const PreviewWrap = styled.View` padding: 8px 12px 0 12px; `;
-const Preview = styled.Image` width: 100%; height: 180px; border-radius: 12px; background: #111213; `;
+const PreviewWrap = styled.View`
+  padding: 8px 12px 0 12px;
+`;
+const Preview = styled.Image`
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+  background: #111213;
+`;
 
 const BottomBar = styled.View`
-  padding: 8px 10px 12px 10px; border-top-width: 1px; border-top-color: #222426;
-  flex-direction: row; align-items: center; justify-content: space-between;
+  padding: 8px 10px 12px 10px;
+  border-top-width: 1px;
+  border-top-color: #222426;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 `;
-const BarLeft = styled.View` flex-direction: row; align-items: center; gap: 12px; `;
-const BarRight = styled.View` flex-direction: row; align-items: center; gap: 10px; `;
+const BarLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+`;
+const BarRight = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+`;
 const BarIcon = styled.Pressable`
-  width: 32px; height: 32px; border-radius: 6px; align-items: center; justify-content: center;
-  background: #1a1b1c; border: 1px solid #2a2b2c;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  background: #1a1b1c;
+  border: 1px solid #2a2b2c;
 `;
-const Anon = styled.Pressable<{ $active?: boolean }>`
-  height: 32px; border-radius: 8px; padding: 0 10px; flex-direction: row; align-items: center; justify-content: center;
+const Anon = styled.Pressable<{ $active?: boolean; disabled?: boolean }>`
+  height: 32px;
+  border-radius: 8px;
+  padding: 0 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
   background: ${({ $active }) => ($active ? '#2d3f38' : '#1a1b1c')};
   border: 1px solid ${({ $active }) => ($active ? '#30F59B' : '#2a2b2c')};
+  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 `;
 const AnonText = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
-  font-family: 'PlusJakartaSans_600SemiBold'; font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+  font-size: 12px;
 `;
 
-const SheetBackdrop = styled(Pressable)` flex: 1; background: rgba(0,0,0,0.35); `;
+const SheetBackdrop = styled(Pressable)`
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+`;
 const SheetBase = styled.View`
-  background: #111213; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 8px 10px 20px 10px;
+  background: #111213;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 8px 10px 20px 10px;
 `;
-const Sheet = styled(SheetBase)` position: absolute; left: 0; right: 0; bottom: 0; `;
+const Sheet = styled(SheetBase)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+`;
 const SheetBtn = styled.Pressable`
-  height: 52px; border-radius: 12px; background: #1a1b1c; border: 1px solid #2a2b2c;
-  align-items: center; justify-content: center; margin: 6px 12px 0 12px;
+  height: 52px;
+  border-radius: 12px;
+  background: #1a1b1c;
+  border: 1px solid #2a2b2c;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 12px 0 12px;
 `;
-const SheetBtnText = styled.Text` color: #cfd4da; font-size: 15px; `;
+const SheetBtnText = styled.Text`
+  color: #cfd4da;
+  font-size: 15px;
+`;
 
-const CatSheet = styled(SheetBase)` position: absolute; left: 0; right: 0; bottom: 0; padding-top: 12px; `;
-const CatItem = styled.Pressable` height: 48px; padding: 0 16px; flex-direction: row; align-items: center; justify-content: space-between; `;
-const CatItemText = styled.Text<{ $active?: boolean }>` color: ${({ $active }) => ($active ? '#e6e9ec' : '#cfd4da')}; font-size: 15px; `;
+const CatSheet = styled(SheetBase)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-top: 12px;
+`;
+const CatItem = styled.Pressable`
+  height: 48px;
+  padding: 0 16px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const CatItemText = styled.Text<{ $active?: boolean }>`
+  color: ${({ $active }) => ($active ? '#e6e9ec' : '#cfd4da')};
+  font-size: 15px;
+`;
