@@ -3,6 +3,7 @@ import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
+import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -26,6 +27,9 @@ type PostsListItem = {
     commentCount?: number;
     viewCount?: number;
     score?: number;
+    likedByMe?: boolean;
+    isLike?: boolean;
+    isLiked?: boolean;
 };
 
 type PostsListResp = {
@@ -38,37 +42,22 @@ type PostsListResp = {
     timestamp?: string;
 };
 
-function pad2(n: number) {
-    return n < 10 ? `0${n}` : String(n);
-}
-
+function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
 function parseDateFlexible(v?: unknown): Date | null {
     if (v == null) return null;
     let s = String(v).trim();
-
-    if (/^\d+(\.\d+)?$/.test(s)) {
-        const num = parseFloat(s);
-        return new Date(num * 1000);
-    }
-
+    if (/^\d+(\.\d+)?$/.test(s)) return new Date(parseFloat(s) * 1000);
     if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
-
     const d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
 }
-
 function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     let d = parseDateFlexible(raw);
-    if ((!d || isNaN(d.getTime())) && fallbackIso) {
-        d = parseDateFlexible(fallbackIso);
-    }
+    if ((!d || isNaN(d.getTime())) && fallbackIso) d = parseDateFlexible(fallbackIso);
     if (!d) return '';
     try {
         const fmt = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+            timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
         });
         return fmt.format(d).replace(/-/g, '/');
     } catch {
@@ -76,13 +65,24 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     }
 }
 
-
-type PostEx = Post & { hotScore?: number; minutesAgo?: number; bookmarked?: boolean };
+type PostEx = Post & {
+    postId: number;
+    hotScore?: number;
+    minutesAgo?: number;
+    bookmarked?: boolean;
+    likedByMe?: boolean;
+};
 
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
-    const createdRaw = row.createdAt ?? row.createdTime; // 작성 시각 우선
+    const createdRaw = row.createdAt ?? row.createdTime;
+    const liked =
+        (row as any).likedByMe ??
+        (row as any).isLike ??
+        (row as any).isLiked ?? false;
+
     return {
         id: String(row.postId),
+        postId: row.postId,
         author: row.authorName || 'Unknown',
         avatar: AV,
         category: 'Free talk',
@@ -92,6 +92,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         comments: Number(row.commentCount ?? 0),
         images: undefined,
         hotScore: row.score,
+        likedByMe: Boolean(liked),
     };
 };
 
@@ -108,25 +109,19 @@ export default function CommunityScreen() {
     const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
     const boardId = CATEGORY_TO_BOARD_ID[cat];
 
-    useEffect(() => {
-        refresh();
-    }, [boardId, sortParam]);
+    const likeMutation = useToggleLike();
+
+    useEffect(() => { refresh(); }, [boardId, sortParam]);
 
     const fetchPage = async (after?: string) => {
         if (loading) return;
         setLoading(true);
         try {
             const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, {
-                params: {
-                    sort: sortParam,
-                    size: 20,
-                    ...(after ? { cursor: after } : null),
-                },
+                params: { sort: sortParam, size: 20, ...(after ? { cursor: after } : null) },
             });
-
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
-
             setItems(prev => (after ? [...prev, ...list] : list));
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor);
@@ -152,18 +147,47 @@ export default function CommunityScreen() {
 
     const visible = useMemo(() => items, [items]);
 
-    const toggleLike = (id: string) =>
-        setItems(prev => prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p)));
+    const handleToggleLike = async (postId: number) => {
+        const target = items.find(p => p.postId === postId);
+        const prevLiked = Boolean(target?.likedByMe);        // 현재 상태
+        const delta = prevLiked ? -1 : +1;
 
-    const toggleBookmark = (id: string) =>
-        setItems(prev => prev.map(p => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)));
+        setItems(prev =>
+            prev.map(p =>
+                p.postId === postId
+                    ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta), likedByMe: !prevLiked }
+                    : p
+            )
+        );
+
+        try {
+            await likeMutation.mutateAsync({ postId, liked: prevLiked });
+        } catch (e) {
+            // 롤백
+            setItems(prev =>
+                prev.map(p =>
+                    p.postId === postId
+                        ? { ...p, likes: Math.max(0, (p.likes ?? 0) - delta), likedByMe: prevLiked }
+                        : p
+                )
+            );
+            console.log('[like:list] error', e);
+        }
+    };
+
+    const toggleBookmark = (postId: number) =>
+        setItems(prev =>
+            prev.map(p => (p.postId === postId ? { ...p, bookmarked: !p.bookmarked } : p))
+        );
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
             data={{ ...item, category: cat }}
-            onPress={() => router.push({ pathname: '/community/[id]', params: { id: String(item.id) } })}
-            onToggleLike={() => toggleLike(String(item.id))}
-            onToggleBookmark={() => toggleBookmark(String(item.id))}
+            onPress={() =>
+                router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
+            }
+            onToggleLike={() => handleToggleLike(item.postId)}
+            onToggleBookmark={() => toggleBookmark(item.postId)}
         />
     );
 
@@ -179,11 +203,9 @@ export default function CommunityScreen() {
                     <IconBtn onPress={() => router.push('/community/search')}>
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
-
                     <IconBtn onPress={() => router.push('/community/bookmarks')}>
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
                     </IconBtn>
-
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>
@@ -200,7 +222,7 @@ export default function CommunityScreen() {
 
             <List
                 data={visible}
-                keyExtractor={(it: PostEx) => String(it.id)}
+                keyExtractor={(it: PostEx) => String(it.postId)}
                 renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
                 onEndReachedThreshold={0.4}
@@ -223,58 +245,46 @@ export default function CommunityScreen() {
 }
 
 const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1d1e1f;
+    flex: 1;
+    background: #1d1e1f;
 `;
-
 const Header = styled.View`
-  padding: 0 12px;
-  margin-top: 12px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+    padding: 0 12px;
+    margin-top: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 `;
-
 const Left = styled.View`
-  flex-direction: row;
-  align-items: center;
+    flex-direction: row;
+    align-items: center;
 `;
-
 const Title = styled.Text`
-  color: #ffffff;
-  font-size: 32px;
-  font-family: 'InstrumentSerif_400Regular';
-  letter-spacing: -0.2px;
+    color: #ffffff;
+    font-size: 32px;
+    font-family: 'InstrumentSerif_400Regular';
+    letter-spacing: -0.2px;
 `;
-
 const IconImage = styled.Image`
-  margin-left: 4px;
-  width: 20px;
-  height: 20px;
-  resize-mode: contain;
+    margin-left: 4px;
+    width: 20px;
+    height: 20px;
+    resize-mode: contain;
 `;
-
 const Right = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
+    flex-direction: row;
+    align-items: center;
+ `;
 const IconBtn = styled.Pressable`
-  padding: 6px;
-  margin-left: 8px;
-`;
-
+    padding: 6px;
+    margin-left: 8px;
+ `;
 const ChipsWrap = styled.View`
-  margin-top: 12px;
+    margin-top: 12px;
 `;
-
 const SortWrap = styled.View`
-  margin-top: 20px;
-  margin-bottom: 14px;
-`;
-
+    margin-top: 20px;
+    margin-bottom: 14px;
+ `;
 const List = styled(FlatList as React.ComponentType<FlatListProps<PostEx>>)``;
-
-const FooterLoading = styled.View`
-  padding: 16px 0;
-`;
+const FooterLoading = styled.View`padding: 16px 0;`;
