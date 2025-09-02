@@ -29,10 +29,14 @@ export async function createComment(
     postId: number,
     body: { comment: string; anonymous?: boolean; parentId?: number }
 ) {
-    // 201 string 반환(문서 기준)
     const { data } = await api.post<string>(
         `/api/v1/posts/${postId}/comments`,
         body
     );
     return data;
+}
+
+export async function deleteComment(commentId: number) {
+    await api.delete(`/api/v1/comments/${commentId}`);
+    return commentId;
 }

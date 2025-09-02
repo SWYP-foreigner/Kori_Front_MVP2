@@ -1,10 +1,18 @@
+import { useDeleteComment } from '@/hooks/mutations/useDeleteComment';
+import { useMyComments } from '@/hooks/queries/useMyComments';
 import { useDeletePost, useMyPosts } from '@/hooks/queries/useMyPosts';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    Alert, FlatList, ListRenderItem, Modal, Platform, Pressable, RefreshControl
+    Alert,
+    FlatList,
+    ListRenderItem,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -36,10 +44,14 @@ function toDateLabel(v?: unknown): string {
     if (!isNaN(d.getTime())) {
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
-        return `${mm}/${dd}`;
+        const yyyy = d.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
     }
     const s = String(v);
-    return s.length >= 10 ? s.slice(5, 10).replace('-', '/') : s;
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        return `${s.slice(5, 7)}/${s.slice(8, 10)}/${s.slice(0, 4)}`;
+    }
+    return s;
 }
 
 function pickBody(row: any) {
@@ -52,15 +64,15 @@ export default function MyHistoryScreen() {
 
     const {
         items: myPostItems,
-        isLoading,
-        isRefetching,
-        refetch,
+        isLoading: isLoadingPosts,
+        isRefetching: isRefetchingPosts,
+        refetch: refetchPosts,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
     } = useMyPosts(20);
 
-    const deleteMutation = useDeletePost();
+    const deletePostMutation = useDeletePost();
 
     const posts: PostRow[] = useMemo(
         () =>
@@ -74,13 +86,35 @@ export default function MyHistoryScreen() {
                 likes: Number(row.likeCount ?? 0),
                 comments: Number(row.commentCount ?? 0),
             })),
-        [myPostItems]
+        [myPostItems],
     );
 
-    const comments: CommentRow[] = [];
+    const {
+        items: myCommentItems,
+        isLoading: isLoadingComments,
+        isRefetching: isRefetchingComments,
+        refetch: refetchComments,
+        fetchNextPage: fetchNextComments,
+        hasNextPage: hasNextComments,
+        isFetchingNextPage: isFetchingNextComments,
+    } = useMyComments(20);
+
+    const deleteCommentMutation = useDeleteComment();
+
+    const comments: CommentRow[] = useMemo(
+        () =>
+            (myCommentItems ?? []).map((row: any) => ({
+                id: String(row.commentId),
+                myText: String(row.commentContent ?? '').trim(),
+                parentSnippet: String(row.postContent ?? '').trim(),
+                createdAt: toDateLabel(row.createdAt),
+            })),
+        [myCommentItems],
+    );
 
     const [sheetOpen, setSheetOpen] = useState(false);
-    const [sheetTarget, setSheetTarget] = useState<{ type: 'post' | 'comment'; id: string } | null>(null);
+    const [sheetTarget, setSheetTarget] =
+        useState<{ type: 'post' | 'comment'; id: string } | null>(null);
 
     const [toast, setToast] = useState<string | null>(null);
     const showToast = (msg: string) => {
@@ -99,9 +133,8 @@ export default function MyHistoryScreen() {
 
     const onEdit = () => {
         if (!sheetTarget || sheetTarget.type !== 'post') return;
-        const target = posts.find(p => p.id === sheetTarget.id);
+        const target = posts.find((p) => p.id === sheetTarget.id);
         closeSheet();
-
         router.push({
             pathname: '/community/write',
             params: {
@@ -114,7 +147,6 @@ export default function MyHistoryScreen() {
 
     const onDelete = () => {
         if (!sheetTarget) return;
-
         const isPost = sheetTarget.type === 'post';
         const title = isPost
             ? 'Are you sure you want to delete that post?'
@@ -132,27 +164,28 @@ export default function MyHistoryScreen() {
                     onPress: async () => {
                         try {
                             if (isPost) {
-                                await deleteMutation.mutateAsync(Number(sheetTarget.id));
-                                showToast('1 Posts Deleted');
+                                await deletePostMutation.mutateAsync(Number(sheetTarget.id));
+                                showToast('1 Post deleted');
+                                refetchPosts();
                             } else {
-                                showToast('1 Comments Deleted');
+                                await deleteCommentMutation.mutateAsync(Number(sheetTarget.id));
+                                showToast('1 Comment deleted');
+                                refetchComments();
                             }
                         } catch (e) {
-                            console.log('[delete-post] error', e);
+                            console.log('[delete] error', e);
                             showToast('Delete failed');
-                        } finally {
-                            refetch();
                         }
                     },
                 },
             ],
-            { cancelable: true }
+            { cancelable: true },
         );
     };
 
     const renderPost: ListRenderItem<PostRow> = ({ item }) => (
         <RowWrap>
-            <TopRow>
+            <PostTopRow>
                 <Avatar source={item.avatar} />
                 <Meta>
                     <Author>{item.author}</Author>
@@ -166,7 +199,7 @@ export default function MyHistoryScreen() {
                 <MoreBtn onPress={() => openSheet({ type: 'post', id: item.id })}>
                     <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
                 </MoreBtn>
-            </TopRow>
+            </PostTopRow>
 
             {item.body ? <Body numberOfLines={1}>{item.body}</Body> : null}
 
@@ -186,29 +219,35 @@ export default function MyHistoryScreen() {
     const renderComment: ListRenderItem<CommentRow> = ({ item }) => (
         <RowWrap>
             <TopRow>
-                <Avatar source={AV} />
-                <Meta>
-                    <Author>{item.createdAt}</Author>
-                    <SubRow>
-                        <Sub>{item.myText}</Sub>
-                    </SubRow>
-                </Meta>
+                <DateText>{item.createdAt}</DateText>
                 <MoreBtn onPress={() => openSheet({ type: 'comment', id: item.id })}>
                     <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
                 </MoreBtn>
             </TopRow>
 
-            <ParentSnippet numberOfLines={1}>{item.parentSnippet}</ParentSnippet>
-            <Line />
+            {item.myText ? (
+                <CommentTitle numberOfLines={1}>{item.myText}</CommentTitle>
+            ) : null}
+
+            {item.parentSnippet ? (
+                <ParentSnippet numberOfLines={1}>{item.parentSnippet}</ParentSnippet>
+            ) : null}
         </RowWrap>
     );
 
     const data = useMemo(() => (tab === 'post' ? posts : comments), [tab, posts, comments]);
 
     const onEndReached = () => {
-        if (tab !== 'post') return;
-        if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+        if (tab === 'post') {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+        } else {
+            if (hasNextComments && !isFetchingNextComments) fetchNextComments();
+        }
     };
+
+    const isLoading = tab === 'post' ? isLoadingPosts : isLoadingComments;
+    const isRefetching = tab === 'post' ? isRefetchingPosts : isRefetchingComments;
+    const isDeleting = deletePostMutation.isPending || deleteCommentMutation.isPending;
 
     return (
         <Safe>
@@ -241,8 +280,8 @@ export default function MyHistoryScreen() {
                 onEndReached={onEndReached}
                 refreshControl={
                     <RefreshControl
-                        refreshing={isLoading || isRefetching || deleteMutation.isPending}
-                        onRefresh={refetch}
+                        refreshing={isLoading || isRefetching || isDeleting}
+                        onRefresh={tab === 'post' ? refetchPosts : refetchComments}
                         tintColor="#fff"
                     />
                 }
@@ -256,23 +295,23 @@ export default function MyHistoryScreen() {
             <Modal visible={sheetOpen} transparent animationType="fade" onRequestClose={closeSheet}>
                 <SheetBackdrop onPress={closeSheet} />
                 <Sheet>
-                    <SheetBtn onPress={onEdit}>
+                    <SheetBtn onPress={onEdit} disabled={deletePostMutation.isPending}>
                         <SheetIcon>
                             <MaterialIcons name="edit" size={18} color="#cfd4da" />
                         </SheetIcon>
                         <SheetText>Edit</SheetText>
                     </SheetBtn>
 
-                    <SheetBtn onPress={onDelete} disabled={deleteMutation.isPending}>
+                    <SheetBtn onPress={onDelete} disabled={isDeleting}>
                         <SheetIcon>
                             <MaterialIcons name="delete-outline" size={18} color="#ff6b6b" />
                         </SheetIcon>
                         <SheetText style={{ color: '#ff6b6b' }}>
-                            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                            {isDeleting ? 'Deleting...' : 'Delete'}
                         </SheetText>
                     </SheetBtn>
 
-                    <SheetBtn onPress={closeSheet} disabled={deleteMutation.isPending}>
+                    <SheetBtn onPress={closeSheet} disabled={isDeleting}>
                         <SheetIcon>
                             <AntDesign name="close" size={18} color="#cfd4da" />
                         </SheetIcon>
@@ -344,14 +383,18 @@ const TabUnderline = styled.View`
   margin-top: 6px;
 `;
 
+/* 공통 행 컨테이너 */
 const RowWrap = styled.View`
   padding: 14px 16px 12px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
-const TopRow = styled.View`
+
+/* Posts 전용 */
+const PostTopRow = styled.View`
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
 `;
 const Avatar = styled.Image`
   width: 34px;
@@ -384,13 +427,11 @@ const Dot = styled.Text`
 const MoreBtn = styled.Pressable`
   padding: 6px;
 `;
-
 const Body = styled.Text`
   color: #e6e9ec;
   margin-top: 10px;
   font-size: 14px;
 `;
-
 const ActionRow = styled.View`
   margin-top: 8px;
   flex-direction: row;
@@ -407,17 +448,30 @@ const ActText = styled.Text`
   font-size: 12px;
 `;
 
+/* Comments 전용 */
+const TopRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const DateText = styled.Text`
+  flex: 1;
+  color: #9aa0a6;
+  font-size: 11px;
+`;
+const CommentTitle = styled.Text`
+  margin-top: 8px;
+  color: #ffffff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
 const ParentSnippet = styled.Text`
   margin-top: 8px;
   color: #9aa0a6;
-  font-size: 12px;
-`;
-const Line = styled.View`
-  height: 1px;
-  background: #222426;
-  margin-top: 12px;
+  font-size: 13px;
 `;
 
+/* Empty/Toast/Sheet */
 const Empty = styled.View`
   padding: 32px 16px;
   align-items: center;
@@ -440,7 +494,12 @@ const Sheet = styled.View`
   border-top-right-radius: 16px;
   padding: 8px 10px 20px 10px;
   ${Platform.select({
-    ios: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: -6 } },
+    ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: -6 },
+    },
     android: { elevation: 8 },
 })}
 `;
@@ -484,4 +543,5 @@ const ToastText = styled.Text`
   font-size: 12px;
 `;
 
-const List = styled(FlatList as new () => FlatList<PostRow>)``;
+/* 두 탭 모두 호환되도록 any */
+const List = styled(FlatList as new () => FlatList<any>)``;
