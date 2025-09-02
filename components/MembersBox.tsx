@@ -40,9 +40,10 @@ const MemberContainer=styled.View`
     align-items:center;
 `;
 const ProfileBox=styled.View`
-    width:20%;
-    height:80%;
-    
+    width:55px;
+    height:55px;
+    overflow:hidden;
+    border-radius:30px;
 
 `;
 const ProfileImage=styled.Image`

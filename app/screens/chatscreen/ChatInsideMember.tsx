@@ -45,7 +45,7 @@ const ChatInsideMember=()=>{
     
     const onLeaveChat = async () => {
         try {
-            const res = await api.delete(`https://dev.ko-ri.cloud/api/v1/chat/rooms/${roomId}/leave`);
+            const res = await api.delete(`/api/v1/chat/rooms/${roomId}/leave`);
             console.log("퇴장 성공", res.data);
             // 퇴장 후 화면 이동 등 처리
             router.replace("/(tabs)/chat");

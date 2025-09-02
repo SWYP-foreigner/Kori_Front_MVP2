@@ -62,13 +62,28 @@ const ChattingRoomScreen=()=>{
         const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
         const chatHistory:ChatHistory[]=res.data.data;
         // 메시지 담기
-       setMessages([...chatHistory].reverse())
+       setMessages([...chatHistory.reverse()])
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
     };
     fetchHistory();
   }, []);
+
+  useEffect(() => {
+    const fetchTranslateScreen= async () => {
+      try {
+        // 채팅 메세지 기록 받기
+        const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
+        const chatHistory:ChatHistory[]=res.data.data;
+        // 메시지 담기
+       setMessages([...chatHistory.reverse()])
+      } catch (err) {
+        console.log("채팅 기록 불러오기 실패", err);
+      }
+    };
+    fetchTranslateScreen();
+  }, [isTranslate]);
 
 useEffect(() => {
     const connectStomp = async () => {
@@ -96,9 +111,10 @@ useEffect(() => {
         stompClient.current = new Client({
             webSocketFactory: () => new global.WebSocket('wss://dev.ko-ri.cloud/ws'),
             connectHeaders: connectHeaders, // 미리 만든 헤더 사용
-            reconnectDelay: 10000,
-            heartbeatIncoming: 10000,
-            heartbeatOutgoing: 10000,
+            forceBinaryWSFrames: true,
+           reconnectDelay: 30000,       // 재연결 간격 30초
+           heartbeatIncoming: 60000,    // 서버 ping 1분
+           heartbeatOutgoing: 60000,    // 클라이언트 ping 1분
             debug: (str) => console.log('[STOMP DEBUG]', str),
         });
         
@@ -189,6 +205,22 @@ const formatTime = (timestamp: number) => {
   const minutes = date.getUTCMinutes().toString().padStart(2, "0");
   return `${hours}:${minutes}`;
 };
+
+const updateTranslateScreen=async()=>{
+   try {
+     const res= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
+      translateEnabled: true,
+    });
+    if(res)
+    {
+        setIsTranslate(true);
+    }
+    console.log(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
@@ -227,12 +259,14 @@ const formatTime = (timestamp: number) => {
                         // inverted={true}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
-
+                            
                             // 이전 메시지와 비교해서 같은 사람인지 확인
                             const showProfile =
-                            index === 0 || messages[index - 1].senderFirstName !== item.senderFirstName;
-                            
-                            
+                            index === 0 || messages[index -1].senderFirstName !== item.senderFirstName;
+                            console.log("index",index);
+                            console.log("item",item);
+                            console.log("__________________")
+
                                 
                             if (isMyMessage) {
                                 
@@ -253,7 +287,7 @@ const formatTime = (timestamp: number) => {
                             );
                             } else {
                             return (
-                                    <ChattingLeftContainer>
+                                 <ChattingLeftContainer>
                         {/* 항상 공간 확보 */}
                         <ProfileContainer>
                             {showProfile ? (
@@ -262,7 +296,6 @@ const formatTime = (timestamp: number) => {
                             </ProfileBox>
                             ) : null}
                         </ProfileContainer>
-
                         <OtherContainer>
                             {showProfile ? (
                             <>
@@ -284,6 +317,37 @@ const formatTime = (timestamp: number) => {
                             )}
                         </OtherContainer>
                         </ChattingLeftContainer>
+                        // <ChattingLeftContainer>
+                        // {/* 항상 공간 확보 */}
+                        // <ProfileContainer>
+                        //     {showProfile ? (
+                        //     <ProfileBox>
+                        //         <ProfileImage source={{ uri: item.senderImageUrl }} />
+                        //     </ProfileBox>
+                        //     ) : null}
+                        // </ProfileContainer>
+
+                        // <OtherContainer>
+                        //     {showProfile ? (
+                        //     <>
+                        //         <OtherNameText>{item.senderFirstName}</OtherNameText>
+                        //         <LeftMessageBox>
+                        //         <OtherFirstTextBox>
+                        //             <OtherText>{item.content}</OtherText>
+                        //         </OtherFirstTextBox>
+                        //         <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                        //         </LeftMessageBox>
+                        //     </>
+                        //     ) : (
+                        //     <LeftMessageBox>
+                        //         <OtherNotFirstTextBox>
+                        //         <OtherText>{item.content}</OtherText>
+                        //         </OtherNotFirstTextBox>
+                        //         <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                        //     </LeftMessageBox>
+                        //     )}
+                        // </OtherContainer>
+                        // </ChattingLeftContainer>
 
                             );
                             }
@@ -318,7 +382,7 @@ const formatTime = (timestamp: number) => {
                         <SendImage source={require("@/assets/images/Send.png")}/>
                     </SendImageBox>
                 </BottomContainer>
-                 <TranslateButtonBox onPress={()=>{setIsTranslate(!isTranslate)}}>
+                 <TranslateButtonBox onPress={updateTranslateScreen}>
                         <TranslateImage source={require("@/assets/images/translate.png")}/>
                     </TranslateButtonBox>
             </Container>
@@ -429,7 +493,7 @@ const ProfileImage=styled.Image`
 
 
 const OtherContainer=styled.View`
-    background-color:yellow;
+    background-color:blue;
     max-width:242px;
     padding-left:7px;
 `;
