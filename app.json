@@ -20,6 +20,8 @@
     },
     "android": {
       "package": "com.SWYP.kori",
+      "permissions": ["INTERNET"],
+      "usesCleartextTraffic": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

@@ -36,13 +36,16 @@ const BuzzingRoomBox=({data})=>{
 export default BuzzingRoomBox;
 
 
-const BuzzingBox=styled.TouchableOpacity`
-    background-color:#353637;
-    width:200px;
-    border-radius:8px;
-    height:236px;
-    flex-direction:column;
-    margin-right:7px;
+const BuzzingBox = styled.TouchableOpacity.attrs({
+  activeOpacity: 0.5, // 눌렀을 때 살짝만 투명하게
+  delayPressIn: 60,    // 눌림 감지 지연 → 깜빡임 완화
+})`
+  background-color: #353637;
+  width: 200px;
+  border-radius: 8px;
+  height: 236px;
+  flex-direction: column;
+  margin-right: 7px;
 `;
 const BuzzingImageContainer=styled.View`
     width:70px;
@@ -61,6 +64,7 @@ const BuzzingImage=styled.Image`
 `;
 
 const BuzzingTitleContainer=styled.View`
+   
     width:75%;
     margin-left:20px;
     `;
@@ -73,13 +77,17 @@ const BuzzingTitle=styled.Text`
 const BuzzingTitleContent=styled.Text`
     color:#CCCFD0;
     font-family: PlusJakartaSans_300Light;
+    margin-top:5px;
     
 `;
 const BuzzingMemberContainer=styled.View`
-    
+    position:absolute;
+    bottom:20;
+    left:20;
     align-items:center;
     flex-direction:row;
-    margin:45px 0px 10px 20px`;
+
+`;
 
 const BuzzingMemberCount=styled.Text`
     font-size:12px;

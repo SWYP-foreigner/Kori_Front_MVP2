@@ -1,7 +1,7 @@
 import { SafeAreaView, Text,StatusBar ,FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
-import ChatRoomBox from '@/components/MyChatRoomBox';
+import MyChatRoomBox from '@/components/MyChatRoomBox';
 import GroupChatRoomBox from '@/components/GroupChatRoomBox';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useEffect, useState , useRef } from 'react';
@@ -113,7 +113,12 @@ export default function ChatScreen() {
     };
     }, []); // 빈 배열 → 컴포넌트 마운트 시 한 번만 실행
 
-   
+    const goSearch = () => {
+      router.push({
+        pathname: "../../screens/chatscreen/SearchChatRoom",
+        params: { isGroupChat: String(isGroupChat) }, 
+    });
+  }
     return (
         <Safe>
         <Container>
@@ -122,7 +127,7 @@ export default function ChatScreen() {
             <Title>Chat</Title>
             <IconImage source={require('../../../assets/images/IsolationMode.png')} />
         </TitleWrapper>
-        <SearchButton>
+        <SearchButton onPress={goSearch}>
             <Feather name="search" size={25} color="#CCCFD0" />
         </SearchButton>
       </Header>
@@ -141,7 +146,7 @@ export default function ChatScreen() {
       {!isGroupChat ? (
       <FlatList
       data={chatrooms}
-      renderItem={({ item }) => <ChatRoomBox data={item} />}
+      renderItem={({ item }) => <MyChatRoomBox data={item} />}
       keyExtractor={item => item.roomId}
       showsVerticalScrollIndicator={false} 
       />
@@ -237,6 +242,7 @@ const GroupChatText=styled.Text`
     font-family:'PlusJakartaSans_500Medium';
     font-size:16px;
 `;
+
 const CreateSpaceButton=styled.TouchableOpacity`
     position:absolute;
     bottom:20px;
