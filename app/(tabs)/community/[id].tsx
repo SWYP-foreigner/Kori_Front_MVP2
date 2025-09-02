@@ -1,13 +1,15 @@
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
+import { useCreateComment } from '@/hooks/mutations/useCreateComment';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
+import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   Alert,
@@ -31,28 +33,40 @@ const DANGER = '#FF4D4F';
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
   let s = String(v).trim();
-  if (/^\d+(\.\d+)?$/.test(s)) { const num = parseFloat(s); return new Date(num * 1000); }
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const num = parseFloat(s);
+    return new Date(num * 1000);
+  }
   if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
-function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : String(n);
+}
 function formatCreatedYMD(v?: unknown): string {
   const d = parseDateFlexible(v);
   if (!d) return '';
   try {
-    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
     return fmt.format(d).replace(/-/g, '/');
-  } catch { return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`; }
+  } catch {
+    return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
+  }
 }
-
-const MOCK_COMMENTS: Comment[] = [];
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const postId = Number(id);
 
-  const { data, isLoading, isError } = usePostDetail(Number.isFinite(postId) ? postId : undefined);
+  const { data, isLoading, isError } = usePostDetail(
+    Number.isFinite(postId) ? postId : undefined,
+  );
 
   const [bookmarked, setBookmarked] = useState(false);
   const [likesOverride, setLikesOverride] = useState<number | null>(null);
@@ -65,6 +79,7 @@ export default function PostDetailScreen() {
   const [reportText, setReportText] = useState('');
 
   const likeMutation = useToggleLike();
+  const createCmt = useCreateComment(postId);
 
   const [sort, setSort] = useState<SortKey>('new');
   const [value, setValue] = useState('');
@@ -73,42 +88,43 @@ export default function PostDetailScreen() {
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
 
+  const { data: comments = [] } = usePostComments(
+    Number.isFinite(postId) ? postId : undefined,
+    sort,
+  );
+
   useEffect(() => {
     if (!data) return;
-    const liked = (data as any).likedByMe ?? (data as any).isLike ?? (data as any).isLiked ?? false;
+    const liked =
+      (data as any).likedByMe ??
+      (data as any).isLike ??
+      (data as any).isLiked ??
+      false;
     setLikedByMe(Boolean(liked));
   }, [data]);
 
-  const comments = useMemo(() => {
-    const arr = MOCK_COMMENTS.slice();
-    if (sort === 'new') arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    else arr.sort((a, b) => (b.hotScore ?? 0) - (a.hotScore ?? 0));
-    return arr;
-  }, [sort]);
-
   const submit = () => {
-    if (!value.trim()) return;
-    const c: Comment = {
-      id: String(Date.now()),
-      author: anonymous ? 'Anonymous' : 'You',
-      avatar: AV,
-      createdAt: new Date().toISOString().slice(0, 10),
-      body: value.trim(),
-      likes: 0,
-      isChild: false,
-      hotScore: 0,
-      anonymous,
-    };
-    MOCK_COMMENTS.unshift(c);
+    const text = value.trim();
+    if (!text) return;
+    if (!Number.isFinite(postId)) return;
+
+    createCmt.mutate({ anonymous, comment: text });
     setValue('');
     Keyboard.dismiss();
-    requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }));
+    requestAnimationFrame(() =>
+      listRef.current?.scrollToOffset({ offset: 0, animated: true }),
+    );
   };
 
   const openMenu = () => {
     setMenuVisible(true);
     slideY.setValue(300);
-    Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.timing(slideY, {
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
   };
   const closeMenu = () =>
     new Promise<void>((resolve) => {
@@ -116,7 +132,7 @@ export default function PostDetailScreen() {
         toValue: 300,
         duration: 200,
         easing: Easing.in(Easing.cubic),
-        useNativeDriver: true
+        useNativeDriver: true,
       }).start(() => {
         setMenuVisible(false);
         resolve();
@@ -127,11 +143,15 @@ export default function PostDetailScreen() {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
+          <Back onPress={() => router.back()}>
+            <AntDesign name="left" size={20} color="#fff" />
+          </Back>
           <HeaderTitle>Post</HeaderTitle>
           <RightPlaceholder />
         </Header>
-        <Center><Dim>Loading…</Dim></Center>
+        <Center>
+          <Dim>Loading…</Dim>
+        </Center>
       </Safe>
     );
   }
@@ -140,11 +160,15 @@ export default function PostDetailScreen() {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
+          <Back onPress={() => router.back()}>
+            <AntDesign name="left" size={20} color="#fff" />
+          </Back>
           <HeaderTitle>Post</HeaderTitle>
           <RightPlaceholder />
         </Header>
-        <Center><Dim>Post not found.</Dim></Center>
+        <Center>
+          <Dim>Post not found.</Dim>
+        </Center>
       </Safe>
     );
   }
@@ -153,7 +177,10 @@ export default function PostDetailScreen() {
   const author = (post as any).userName ?? (post as any).authorName ?? 'Unknown';
   const avatarSrc = post.userImageUrl ? { uri: post.userImageUrl } : AV;
 
-  const createdRaw = (post as any).createdTime ?? (post as any).createdAt ?? (post as any).timestamp;
+  const createdRaw =
+    (post as any).createdTime ??
+    (post as any).createdAt ??
+    (post as any).timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
 
   const firstImage = post.contentImageUrls?.[0];
@@ -183,23 +210,19 @@ export default function PostDetailScreen() {
     }
   };
 
+  // 신고 관련
   const confirmReportPost = (text: string) => {
-    Alert.alert(
-      'Report',
-      'Are you sure\nreport this post?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Report',
-          style: 'destructive',
-          onPress: () => {
-            console.log('[report post]', { postId, text });
-            setReportOpen(false);
-          },
+    Alert.alert('Report', 'Are you sure\nreport this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: () => {
+          console.log('[report post]', { postId, text });
+          setReportOpen(false);
         },
-      ],
-      { cancelable: true }
-    );
+      },
+    ]);
   };
 
   const onSubmitReport = () => {
@@ -220,21 +243,18 @@ export default function PostDetailScreen() {
   const onReportUser = async () => {
     await closeMenu();
     const userId = (post as any).userId ?? (post as any).authorId;
-    Alert.alert(
-      'Report',
-      'Are you sure\nreport this user?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
-      ],
-      { cancelable: true }
-    );
+    Alert.alert('Report', 'Are you sure\nreport this user?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
+    ]);
   };
 
   return (
     <Safe>
       <Header>
-        <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
+        <Back onPress={() => router.back()}>
+          <AntDesign name="left" size={20} color="#fff" />
+        </Back>
         <HeaderTitle>Post</HeaderTitle>
         <RightPlaceholder />
       </Header>
@@ -267,7 +287,7 @@ export default function PostDetailScreen() {
                       <Sub style={{ marginLeft: 6 }}>{views}</Sub>
                     </MetaRow>
                   </Meta>
-                  <SmallFlag onPress={() => setBookmarked(v => !v)} hitSlop={8}>
+                  <SmallFlag onPress={() => setBookmarked((v) => !v)} hitSlop={8}>
                     <MaterialIcons
                       name={bookmarked ? 'bookmark' : 'bookmark-border'}
                       size={20}
@@ -276,13 +296,20 @@ export default function PostDetailScreen() {
                   </SmallFlag>
                 </Row>
 
-                {!!firstImage && <Img source={{ uri: firstImage }} resizeMode="cover" />}
+                {!!firstImage && (
+                  <Img source={{ uri: firstImage }} resizeMode="cover" />
+                )}
 
                 <Body>{body}</Body>
 
+                {/* 하단 액션 */}
                 <Footer>
                   <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
-                    <AntDesign name={likedByMe ? 'like1' : 'like2'} size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
+                    <AntDesign
+                      name={likedByMe ? 'like1' : 'like2'}
+                      size={16}
+                      color={likedByMe ? '#30F59B' : '#cfd4da'}
+                    />
                     <ActText>{likeCount}</ActText>
                   </Act>
 
@@ -317,9 +344,11 @@ export default function PostDetailScreen() {
               blurOnSubmit
               onSubmitEditing={submit}
             />
-            <AnonToggle onPress={() => setAnonymous(v => !v)}>
+            <AnonToggle onPress={() => setAnonymous((v) => !v)}>
               <AnonLabel>Anonymous</AnonLabel>
-              <Check $active={anonymous}>{anonymous && <AntDesign name="check" size={14} color="#ffffff" />}</Check>
+              <Check $active={anonymous}>
+                {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
+              </Check>
             </AnonToggle>
           </Composer>
 
@@ -329,8 +358,20 @@ export default function PostDetailScreen() {
         </InputBar>
       </KeyboardAvoidingView>
 
-      <Modal transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)} animationType="none">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      {/* Action Sheet */}
+      <Modal
+        transparent
+        visible={menuVisible}
+        onRequestClose={() => setMenuVisible(false)}
+        animationType="none"
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}
+        >
           <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
           <Animated.View
             style={{
@@ -344,22 +385,29 @@ export default function PostDetailScreen() {
           >
             <SheetHandle />
             <SheetItem onPress={onReportPost}>
-              <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
+              <SheetIcon>
+                <MaterialIcons name="outlined-flag" size={18} color={DANGER} />
+              </SheetIcon>
               <SheetLabel $danger>Report This Post</SheetLabel>
             </SheetItem>
             <SheetItem onPress={onReportUser}>
-              <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
+              <SheetIcon>
+                <MaterialIcons name="person-outline" size={18} color={DANGER} />
+              </SheetIcon>
               <SheetLabel $danger>Report This User</SheetLabel>
             </SheetItem>
             <SheetDivider />
             <SheetItem onPress={() => setMenuVisible(false)}>
-              <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
+              <SheetIcon>
+                <AntDesign name="close" size={18} color="#cfd4da" />
+              </SheetIcon>
               <SheetLabel>Cancel</SheetLabel>
             </SheetItem>
           </Animated.View>
         </View>
       </Modal>
 
+      {/* Report Dialog */}
       <Modal
         visible={reportOpen}
         transparent
@@ -368,8 +416,19 @@ export default function PostDetailScreen() {
         presentationStyle="overFullScreen"
         onRequestClose={() => setReportOpen(false)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Pressable onPress={() => setReportOpen(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+          }}
+        >
+          <Pressable
+            onPress={() => setReportOpen(false)}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
           <Dialog>
             <DialogHeader>
               <DialogTitle>
@@ -400,6 +459,7 @@ export default function PostDetailScreen() {
   );
 }
 
+/* ---------- styled ---------- */
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
@@ -566,7 +626,7 @@ const StyledRNInput = styled(RNTextInput)`
 const Input = React.forwardRef<RNTextInput, TextInputProps>(
   ({ placeholderTextColor = '#BFC3C5', ...rest }, ref) => (
     <StyledRNInput ref={ref} placeholderTextColor={placeholderTextColor} {...rest} />
-  )
+  ),
 );
 Input.displayName = 'Input';
 
