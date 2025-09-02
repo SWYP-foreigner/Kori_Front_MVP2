@@ -20,16 +20,6 @@ type ChatRoom = {
   participantCount?: number; // 채팅방 인원수 (옵션)
 };
 
-// ChatRoom 
-// {
-//   1. 채팅방 아이디
-//   2. 채팅방 이름 ( 1:1 채팅 -> 이름 , 그룹채팅 -> 그룹 채팅방 이름) 
-//   3. 마지막 채팅
-//   4. 마지막 채팅 시간
-//   5. 채팅방 사진 ( 1:1 채팅 -> 상대방 프로필 , 그룹채팅 -> 그룹채팅방 사진)
-//   6. 안 읽은 메시지
-//   7. 채팅방 인원수
-// }
 
 export default function ChatScreen() {
   const router=useRouter();

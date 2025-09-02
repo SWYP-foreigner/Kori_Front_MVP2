@@ -123,7 +123,11 @@ const MyChatRoomBox = ({data}) => {
               <ChatTime>{data.lastMessageTime}</ChatTime>
             </RoomTop>
             <RoomBottom>
-              <ChatContent>{data.lastMessageContent}</ChatContent>
+              <ChatContent>  {data.lastMessageContent
+                              ? data.lastMessageContent.length > 33
+                                ? data.lastMessageContent.slice(0, 33) + "..."
+                                : data.lastMessageContent
+                              : ""}</ChatContent>
               {data.unreadCount>0&&
               <ChatCountBox>
                 <ChatCount>{data.unreadCount}</ChatCount>

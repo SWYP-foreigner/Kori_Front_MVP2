@@ -77,6 +77,7 @@ const AllSpaceMemberCount=styled.Text`
     font-size:12px;
 `;
 const AllSpaceImageContainer=styled.View`
+    background-color:#353637;
     width:80px;
     height:80px;
     border-radius:100px;

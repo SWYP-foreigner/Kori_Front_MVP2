@@ -48,13 +48,14 @@ const BuzzingBox = styled.TouchableOpacity.attrs({
   margin-right: 7px;
 `;
 const BuzzingImageContainer=styled.View`
+    background-color:#1D1E1F;
     width:70px;
     height:70px;
     border-radius:100px;
     margin:20px 0px 10px 15px;
     align-items:center;
     justify-content:center;
-     overflow: hidden;
+    overflow: hidden;
     
 `;
 const BuzzingImage=styled.Image`
@@ -74,7 +75,10 @@ const BuzzingTitle=styled.Text`
     font-size:14px;
 `;
 
-const BuzzingTitleContent=styled.Text`
+const BuzzingTitleContent=styled.Text.attrs({
+  numberOfLines: 3,
+  ellipsizeMode: "tail",
+})`
     color:#CCCFD0;
     font-family: PlusJakartaSans_300Light;
     margin-top:5px;

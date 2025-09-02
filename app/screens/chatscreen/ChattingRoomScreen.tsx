@@ -59,10 +59,15 @@ const ChattingRoomScreen=()=>{
         setMyId();
       try {
         // 채팅 메세지 기록 받기
-        const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
-        const chatHistory:ChatHistory[]=res.data.data;
-        // 메시지 담기
-       setMessages([...chatHistory.reverse()])
+         const initTranslate= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
+                translateEnabled: false,
+            });
+        if(initTranslate){
+            const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
+            const chatHistory:ChatHistory[]=res.data.data;
+                // 메시지 담기
+            setMessages([...chatHistory.reverse()])
+        }
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
@@ -74,15 +79,21 @@ const ChattingRoomScreen=()=>{
     const fetchTranslateScreen= async () => {
       try {
         // 채팅 메세지 기록 받기
-        const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
-        const chatHistory:ChatHistory[]=res.data.data;
-        // 메시지 담기
-       setMessages([...chatHistory.reverse()])
+             const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
+             const chatHistory:ChatHistory[]=res.data.data;
+                // 메시지 담기
+            setMessages([...chatHistory.reverse()])
+    
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
     };
     fetchTranslateScreen();
+    // ⬇️ 컴포넌트가 unmount 될 때 실행됨
+  return () => {
+    console.log("채팅 화면 나감");
+    setIsTranslate(false); // 초기화
+  };
   }, [isTranslate]);
 
 useEffect(() => {
@@ -263,113 +274,70 @@ const updateTranslateScreen=async()=>{
                             // 이전 메시지와 비교해서 같은 사람인지 확인
                             const showProfile =
                             index === 0 || messages[index -1].senderFirstName !== item.senderFirstName;
+                            
+                            
+
                             console.log("index",index);
                             console.log("item",item);
                             console.log("__________________")
-
                                 
                             if (isMyMessage) {
                                 
-                            return (
-                                <ChattingRightContainer>
-                                <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
-                               {showProfile ? (
+                            return showProfile? (
+                           
+                                <ChattingRightContainer showProfile={showProfile}>
+                                    <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextFirstBox>
                                         <MyText>{item.content}</MyText>
                                     </MyTextFirstBox>
-                            
-                                ) : (
-                                   <MyTextNotFirstBox>
+                                </ChattingRightContainer>
+                            ) : (
+                                <ChattingRightContainer>
+                                    <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                    <MyTextNotFirstBox>
                                         <MyText>{item.content}</MyText>
                                     </MyTextNotFirstBox>
-                                )}
                                 </ChattingRightContainer>
                             );
+                      
                             } else {
-                            return (
-                                 <ChattingLeftContainer>
-                        {/* 항상 공간 확보 */}
-                        <ProfileContainer>
-                            {showProfile ? (
-                            <ProfileBox>
-                                <ProfileImage source={{ uri: item.senderImageUrl }} />
-                            </ProfileBox>
-                            ) : null}
-                        </ProfileContainer>
-                        <OtherContainer>
-                            {showProfile ? (
-                            <>
-                                <OtherNameText>{item.senderFirstName}</OtherNameText>
+                            return showProfile?(
+                            <ChattingLeftContainer showProfile={showProfile}>
+                                <ProfileContainer>
+                                    <ProfileBox>
+                                         <ProfileImage source={{ uri: item.senderImageUrl }} />
+                                    </ProfileBox>
+                                 </ProfileContainer>
+                                <OtherContainer>
+                                    <OtherNameText>{item.senderFirstName}</OtherNameText>
                                 <LeftMessageBox>
                                 <OtherFirstTextBox>
                                     <OtherText>{item.content}</OtherText>
                                 </OtherFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                                 </LeftMessageBox>
-                            </>
-                            ) : (
-                            <LeftMessageBox>
+                        </OtherContainer>
+                        </ChattingLeftContainer>):(
+                            <ChattingLeftContainer>
+                                 <ProfileContainer>
+                                    <ProfileBox>
+                                    </ProfileBox>
+                                 </ProfileContainer>
+                               <OtherContainer>
+                                 <LeftMessageBox>
                                 <OtherNotFirstTextBox>
                                 <OtherText>{item.content}</OtherText>
                                 </OtherNotFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                             </LeftMessageBox>
-                            )}
-                        </OtherContainer>
-                        </ChattingLeftContainer>
-                        // <ChattingLeftContainer>
-                        // {/* 항상 공간 확보 */}
-                        // <ProfileContainer>
-                        //     {showProfile ? (
-                        //     <ProfileBox>
-                        //         <ProfileImage source={{ uri: item.senderImageUrl }} />
-                        //     </ProfileBox>
-                        //     ) : null}
-                        // </ProfileContainer>
-
-                        // <OtherContainer>
-                        //     {showProfile ? (
-                        //     <>
-                        //         <OtherNameText>{item.senderFirstName}</OtherNameText>
-                        //         <LeftMessageBox>
-                        //         <OtherFirstTextBox>
-                        //             <OtherText>{item.content}</OtherText>
-                        //         </OtherFirstTextBox>
-                        //         <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
-                        //         </LeftMessageBox>
-                        //     </>
-                        //     ) : (
-                        //     <LeftMessageBox>
-                        //         <OtherNotFirstTextBox>
-                        //         <OtherText>{item.content}</OtherText>
-                        //         </OtherNotFirstTextBox>
-                        //         <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
-                        //     </LeftMessageBox>
-                        //     )}
-                        // </OtherContainer>
-                        // </ChattingLeftContainer>
-
-                            );
+                            </OtherContainer>
+                        </ChattingLeftContainer>);
+                      
                             }
                         }}
                         />
-                {/* 이 TimeView는 그 전 날짜랑 비교했을때 바뀌면 표시  */}
-                {/* <TimeView>
-                    <TimeText>2025.08.15(Fri)</TimeText>
-                </TimeView> */}
-                {/* 보낸사람 아이디랑 내 아이디랑 같으면 오른쪽 컨테이너 , 내 아이디랑 다르면 무조건 왼쪽 컨테이너
-                유저가 바뀔때 처음에만 프로필 표시 그 다음부터는 대화박스만
-                시간이 같은 대화들중 제일 마지막만 시간표시 */}
-                {/* 
-                    "나"가 아니면 <ChattingLeftContainer>
-                    "나"이면 <ChattingRightContainer>
-
-                    "날짜가" 바뀌면 <TimeView>
-                    "분이" 바뀌면 채팅 시간표시 남김
-                */}
-                
                 </ChattingScreen>
-            
+                        
                 
                 <BottomContainer>
                     <BottomInputBox
@@ -454,11 +422,10 @@ const TimeText=styled.Text`
 `;
 
 const ChattingLeftContainer = styled.View`
-  background-color:red;
+  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
   align-self: flex-start; /* 왼쪽 끝 */
   max-width:280px;   /* 최대 너비 */
   flex-direction: row;
-  margin:20px 0px;
 `;
 
 // const ProfileContainer=styled.View`
@@ -493,7 +460,6 @@ const ProfileImage=styled.Image`
 
 
 const OtherContainer=styled.View`
-    background-color:blue;
     max-width:242px;
     padding-left:7px;
 `;
@@ -547,10 +513,10 @@ const ChatTimeText=styled.Text`
 `;
 
 const ChattingRightContainer = styled.View`
+  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
   align-self: flex-end;  /* 부모 기준 왼쪽 정렬 */
   max-width:280px;   /* 최대 너비 */
   flex-direction: row;
-  margin:2px 0px;
   justify-content: flex-start;   /* 가로 방향 끝 */
   align-items: flex-end;       /* 세로 방향 끝 */
   margin-right:8px;
