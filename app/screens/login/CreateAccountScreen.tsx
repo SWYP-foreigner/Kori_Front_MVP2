@@ -11,6 +11,21 @@ import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import axios from "axios";
+import { Config } from "@/src/lib/config";
+
+
+enum isDuplicatedEmail {
+  Init = "Init",
+  Exist = "Exist",
+  NotExist = "NotExist",
+}
+
+enum isCorrectCode{
+  Init = "Init",
+  Fail = "Fail",
+  Success = "Success",
+}
 
 const CreateAccountScreen = () => {
   const router = useRouter();
@@ -19,8 +34,9 @@ const CreateAccountScreen = () => {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [lookPassword, setLookPassword] = useState(true);
   const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
-  const [verifyEmail, setVerifyEmail] = useState(false);
-
+  const [isExistEmail,setIsExistEmail]=useState<isDuplicatedEmail>(isDuplicatedEmail.Init);
+  const [isCorrect,setIsCorrect]=useState<isCorrectCode>(isCorrectCode.Init);
+  const [code,setCode]=useState('');
   const isSamePassword = repeatPassword === password;
 
   const [checks, setChecks] = useState({
@@ -33,11 +49,10 @@ const CreateAccountScreen = () => {
   const [EmailChecks, setEmailChecks] = useState({
     isnull: true,
     isEmail: false,
-    isVerified: false,
   });
-
+  
   const completeCondition =
-    verifyEmail && checks.length && checks.uppercase && checks.special && isSamePassword;
+    (isCorrect===isCorrectCode.Success) && checks.length && checks.uppercase && checks.special && isSamePassword;
 
   useEffect(() => {
     setChecks({
@@ -52,15 +67,63 @@ const CreateAccountScreen = () => {
     setEmailChecks({
       isnull: email.length === 0,
       isEmail: isEmail(),
-      isVerified: verifyEmail,
     });
   }, [email]);
 
-  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-  const VerifyEmail = () => {
-    console.log("이메일 검증 API 요청");
+  // 가입된 이메일 중복 체크 후 -> 이메일 인증 코드 발송
+  const VerifyEmail = async() => {
+      try {
+      const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/email/check`, { email:email });
+      const {exists}=res.data.data;
+      if(exists)
+      {
+        setIsExistEmail(isDuplicatedEmail.Exist);
+      }
+      else{
+        console.log("들어옴");
+        setIsExistEmail(isDuplicatedEmail.NotExist);
+        // 이메일 인증 시작
+        const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/send-verification-email`,{email:email,lang:"en"});
+        console.log("이메일 인증 코드 발송",res.data);
+       
+      }
+    } catch (err) {
+      console.error("이메일 확인 중 에러 발생", err);
+    }
   };
+
+  // 이메일 인증 코드 보내서 검증 받음 
+  const verifyCode=async()=>{
+      try{
+         const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/verify-code`,
+          {email:email,verificationCode:code});
+          console.log("이메일 인증 코드 검증",res.data);
+          const {data}=res.data.data
+          console.log("잘왔나?",data);
+          if(data)
+          {
+             setIsCorrect(isCorrectCode.Success);
+          }
+          else{
+            setIsCorrect(isCorrectCode.Fail);
+          }
+      }catch(err){
+         console.error("코드 확인 중 에러 발생", err);
+      }
+  }
+
+  //회원가입
+  const JoinMember=async()=>{
+    const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/signup`,{
+      email:email ,
+      password: password,
+      agreedToTerms: true
+    })
+
+    console.log("회원가입",res.data);
+  }
 
   return (
     <SafeArea>
@@ -89,7 +152,10 @@ const CreateAccountScreen = () => {
                 <EmailContainer>
                   <EmailInputBox
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                        setEmail(text);
+                        setIsExistEmail(isDuplicatedEmail.Init); // 입력값 바뀔 때마다 초기화
+                      }}
                     placeholder="Enter email address"
                     placeholderTextColor={"#616262"}
                   />
@@ -99,6 +165,7 @@ const CreateAccountScreen = () => {
                     )}
                   </CloseErrorBox>
                 </EmailContainer>
+                
                 <VerifyButton
                   onPress={VerifyEmail}
                   disabled={!EmailChecks.isEmail}
@@ -106,19 +173,69 @@ const CreateAccountScreen = () => {
                 >
                   <VerifyText>Verify</VerifyText>
                 </VerifyButton>
+               
               </VerifyContainer>
               <ErrorBox>
                 {!EmailChecks.isEmail && !EmailChecks.isnull && (
-                  <>
-                    <Ionicons
-                      name="information-circle-outline"
-                      size={18}
-                      color="#FF4F4F"
-                    />
-                    <ErrorText>Not the correct email format.</ErrorText>
-                  </>
-                )}
+                      <>
+                        <Ionicons
+                          name="information-circle-outline"
+                          size={18}
+                          color="#FF4F4F"
+                        />
+                        <ErrorText>Not the correct email format.</ErrorText>
+                      </>
+                    )}
+
+                    {EmailChecks.isEmail && (isExistEmail===isDuplicatedEmail.Exist) && (
+                      <>
+                        <Ionicons
+                          name="information-circle-outline"
+                          size={18}
+                          color="#FF4F4F"
+                        />
+                        <ErrorText>This email is already in use.</ErrorText>
+                      </>
+                    )}
               </ErrorBox>
+             {/* Code Verification Box */}
+              <TitleContainer>
+                <TitleText>Code Verification</TitleText>
+              </TitleContainer>
+              <VerifyContainer>
+                <CodeVerifyContainer>
+                  <CodeInputBox
+                    value={code}
+                    onChangeText={()=>{
+                      setCode(code);
+                      setIsCorrect(isCorrectCode.Init);
+                    }
+                    }
+                    placeholder="Enter Code"
+                    placeholderTextColor={"#616262"}
+                  />
+                  
+                </CodeVerifyContainer>
+                <VerifyButton
+                  onPress={verifyCode}
+                  disabled={!(isExistEmail===isDuplicatedEmail.Exist)}
+                  canVerify={isExistEmail===isDuplicatedEmail.Exist}
+                >
+                  <VerifyText>Verify</VerifyText>
+                </VerifyButton>
+              </VerifyContainer>
+              {(isCorrect===isCorrectCode.Fail)&&(
+                <>
+               <ErrorBox>
+                <Ionicons
+                          name="information-circle-outline"
+                          size={18}
+                          color="#FF4F4F"
+                        />
+                        <ErrorText>Fail Code Verification</ErrorText>
+              </ErrorBox>
+              </>
+                )}
 
               {/* Password */}
               <TitleContainer>
@@ -260,6 +377,7 @@ const CreateAccountScreen = () => {
           <NextButtonContainer
             disabled={!completeCondition}
             completeCondition={completeCondition}
+            onPress={JoinMember}
           >
             <NextText>Next</NextText>
           </NextButtonContainer>
@@ -385,6 +503,15 @@ const VerifyButton = styled.TouchableOpacity`
   margin-left: 5px;
   opacity: ${(props) => (props.canVerify ? 1 : 0.5)};
 `;
+const ShowVerifiedBox =styled.View`
+  width: 20%;
+  border-radius: 4px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+
+`;
 
 const VerifyText = styled.Text`
   color: #1d1e1f;
@@ -405,9 +532,31 @@ const ErrorText = styled.Text`
   margin-left: 5px;
 `;
 
+const CodeVerifyContainer=styled.View`
+  background-color: #353637;
+  width: 75%;
+  height: 50px;
+  border-radius: 4px;
+  flex-direction: row;
+  align-items: center;
+`;
+const CodeInputBox=styled.TextInput`
+  width: 80%;
+  color: #ffffff;
+  height: 50px;
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+  padding-left: 10px;
+`;
+
 const CheckPasswordContainer = styled.View`
   margin: 20px 0px;
   height: 70px;
+`;
+const CodeInput=styled.TextInput`
+  width: 80%;
+  height:50px;
+
 `;
 
 const CheckPasswordBox = styled.View`

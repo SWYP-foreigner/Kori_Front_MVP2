@@ -17,14 +17,14 @@ Api 호출  -> ( 보낸 사람아이디 , 보낸사람 이름 , 보낸사람 프
 채팅방 메시지 기록 불러오기 -> ( 보낸사람 아이디 , 보낸 내용 , 보낸 시간 )*/
 
 type ChatHistory = {
-    "id": number,
-  "roomId": number,
-  "senderId": number,
-  "senderFirstName": string,
-  "senderLastName": string,
-  "senderImageUrl": string,
-  "content": string,
-  "sentAt": string, //"2025-09-01T15:17:19.523Z"  
+    id: number,
+  roomId: number,
+  senderId: number,
+  senderFirstName: string,
+  senderLastName: string,
+  senderImageUrl: string,
+  content: string,
+  sentAt: string, //"2025-09-01T15:17:19.523Z"  
 };
 
 type TranslatedChatMessage={
@@ -85,26 +85,7 @@ const ChattingRoomScreen=()=>{
     fetchHistory();
   }, []);
 
-//   useEffect(() => {
-//     const fetchTranslateScreen= async () => {
-//       try {
-//         // 채팅 메세지 기록 받기
-//              const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
-//              const translatedChatMessage:TranslatedChatMessage[]=res.data.data;
-//                 // 메시지 담기
-//             setMessages([...translatedChatMessage.reverse()])
-    
-//       } catch (err) {
-//         console.log("번역된 채팅 기록 불러오기 실패", err);
-//       }
-//     };
-//     fetchTranslateScreen();
-//     // ⬇️ 컴포넌트가 unmount 될 때 실행됨
-//   return () => {
-//     console.log("채팅 화면 나감");
-//     setIsTranslate(false); // 초기화
-//   };
-//   }, [isTranslate]);
+
 
 useEffect(() => {
     const connectStomp = async () => {
@@ -228,6 +209,7 @@ const formatTime = (sentAt: string | number) => {
   return `${hours}:${minutes}`;
 };
 
+//번역된 대화 기록 가져오기
 const updateTranslateScreen=async()=>{
    try {
      const res= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
@@ -288,7 +270,7 @@ const updateTranslateScreen=async()=>{
                      <FlatList
                         data={messages}
                         keyExtractor={item => item.id.toString()}
-                        // inverted={true}
+                       
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
                             
@@ -301,6 +283,7 @@ const updateTranslateScreen=async()=>{
                             console.log("index",index);
                             console.log("item",item);
                             console.log("__________________")
+                            console.log("isTranslate",isTranslate);
                                 
                             if (isMyMessage) {
                                 
@@ -309,14 +292,14 @@ const updateTranslateScreen=async()=>{
                                 <ChattingRightContainer showProfile={showProfile}>
                                     <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextFirstBox>
-                                        <MyText>{isTranslate?(item.targetContent):(item.content)}</MyText>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</MyText>
                                     </MyTextFirstBox>
                                 </ChattingRightContainer>
                             ) : (
-                                <ChattingRightContainer>
+                                <ChattingRightContainer  >
                                     <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextNotFirstBox>
-                                        <MyText>{isTranslate?(item.targetContent):(item.content)}</MyText>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</MyText>
                                     </MyTextNotFirstBox>
                                 </ChattingRightContainer>
                             );
@@ -333,7 +316,7 @@ const updateTranslateScreen=async()=>{
                                     <OtherNameText>{item.senderFirstName}</OtherNameText>
                                 <LeftMessageBox>
                                 <OtherFirstTextBox>
-                                    <OtherText>{isTranslate?(item.targetContent):(item.content)}</OtherText>
+                                    <OtherText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</OtherText>
                                 </OtherFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                                 </LeftMessageBox>
@@ -347,7 +330,7 @@ const updateTranslateScreen=async()=>{
                                <OtherContainer>
                                  <LeftMessageBox>
                                 <OtherNotFirstTextBox>
-                                <OtherText>{isTranslate?(item.targetContent):(item.content)}</OtherText>
+                                <OtherText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</OtherText>
                                 </OtherNotFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                             </LeftMessageBox>

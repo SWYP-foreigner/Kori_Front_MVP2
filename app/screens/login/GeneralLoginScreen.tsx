@@ -20,6 +20,7 @@ const GeneralLoginScreen=()=>{
     const createAccount=()=>{
         router.push("./CreateAccountScreen")
     };
+    
 
     return(<SafeArea>
             <StatusBar barStyle="light-content" />
