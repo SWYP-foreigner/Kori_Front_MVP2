@@ -91,7 +91,6 @@ export default function PostDetailScreen() {
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
 
-  // 정렬 키 & 댓글 좋아요 훅(키 일치)
   const [sort, setSort] = useState<SortKey>('new');
   const likeComment = useLikeComment(postId, sort);
 
@@ -101,7 +100,6 @@ export default function PostDetailScreen() {
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
 
-  // 댓글 리스트 (항상 배열 보장)
   const { data: commentsRaw } = usePostComments(
     Number.isFinite(postId) ? postId : undefined,
     sort,
@@ -116,7 +114,6 @@ export default function PostDetailScreen() {
 
   const { mutateAsync: updateCommentMut } = useUpdateComment();
 
-  // 연타 방지
   const likeBusyRef = useRef<Record<number, boolean>>({});
 
   useEffect(() => {
@@ -144,7 +141,6 @@ export default function PostDetailScreen() {
     setLikedByMe(Boolean(liked));
   }, [data]);
 
-  // ✅ 화면에서는 낙관적 업데이트를 하지 않는다 (훅이 전담)
   const toggleCommentLike = (comment: Comment) => {
     const cmtId = Number((comment as any).id ?? (comment as any).commentId);
     if (!Number.isFinite(cmtId)) return;
