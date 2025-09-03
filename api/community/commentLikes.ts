@@ -1,13 +1,11 @@
-import api from '@/api/axiosInstance';
+import axiosInstance from '@/api/axiosInstance';
 
 const path = (id: number) => `/api/v1/comments/${id}/likes/me`;
 
-// 댓글 좋아요 추가
-export async function addCommentLike(commentId: number) {
-    await api.put(path(commentId));
+export async function addCommentLike(commentId: number): Promise<void> {
+    await axiosInstance.put<void>(path(commentId));
 }
 
-// 댓글 좋아요 취소
-export async function removeCommentLike(commentId: number) {
-    await api.delete(path(commentId));
+export async function removeCommentLike(commentId: number): Promise<void> {
+    await axiosInstance.delete<void>(path(commentId));
 }

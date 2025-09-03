@@ -90,19 +90,25 @@ export default function PostDetailScreen() {
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
-  const likeComment = useLikeComment(postId);
 
+  // 정렬 키 & 댓글 좋아요 훅(키 일치)
   const [sort, setSort] = useState<SortKey>('new');
+  const likeComment = useLikeComment(postId, sort);
+
   const [value, setValue] = useState('');
   const [anonymous, setAnonymous] = useState(false);
 
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
 
-  const { data: comments = [] } = usePostComments(
+  // 댓글 리스트 (항상 배열 보장)
+  const { data: commentsRaw } = usePostComments(
     Number.isFinite(postId) ? postId : undefined,
     sort,
   );
+  const commentList: Comment[] = Array.isArray(commentsRaw)
+    ? (commentsRaw as Comment[])
+    : ((commentsRaw as any)?.items ?? []);
 
   const [editVisible, setEditVisible] = useState(false);
   const [editText, setEditText] = useState('');
@@ -110,9 +116,12 @@ export default function PostDetailScreen() {
 
   const { mutateAsync: updateCommentMut } = useUpdateComment();
 
+  // 연타 방지
+  const likeBusyRef = useRef<Record<number, boolean>>({});
+
   useEffect(() => {
     if (intent === 'edit' && focusCommentId) {
-      const target = comments.find(c => String((c as any).id) === String(focusCommentId));
+      const target = commentList.find(c => String((c as any).id ?? (c as any).commentId) === String(focusCommentId));
       if (target) {
         const body =
           (target as any).content ??
@@ -124,7 +133,7 @@ export default function PostDetailScreen() {
         return () => clearTimeout(t);
       }
     }
-  }, [intent, focusCommentId, comments]);
+  }, [intent, focusCommentId, commentList]);
 
   useEffect(() => {
     if (!data) return;
@@ -134,6 +143,24 @@ export default function PostDetailScreen() {
       (data as any).isLiked ?? false;
     setLikedByMe(Boolean(liked));
   }, [data]);
+
+  // ✅ 화면에서는 낙관적 업데이트를 하지 않는다 (훅이 전담)
+  const toggleCommentLike = (comment: Comment) => {
+    const cmtId = Number((comment as any).id ?? (comment as any).commentId);
+    if (!Number.isFinite(cmtId)) return;
+
+    if (likeBusyRef.current[cmtId]) return;
+    likeBusyRef.current[cmtId] = true;
+
+    const prevLiked = Boolean(
+      (comment as any).likedByMe ?? (comment as any).isLiked ?? false
+    );
+
+    likeComment.mutate(
+      { commentId: cmtId, liked: prevLiked },
+      { onSettled: () => { likeBusyRef.current[cmtId] = false; } }
+    );
+  };
 
   const submit = () => {
     const text = value.trim();
@@ -256,18 +283,12 @@ export default function PostDetailScreen() {
       >
         <FlatList<Comment>
           ref={listRef}
-          data={comments}
-          keyExtractor={(it) => String((it as any).id)}
+          data={commentList}
+          keyExtractor={(it) => String((it as any).id ?? (it as any).commentId)}
           renderItem={({ item }) => (
             <CommentItem
               data={item}
-              onPressLike={() => {
-                if (likeComment.isPending) return;
-                likeComment.mutate({
-                  commentId: Number((item as any).id),
-                  liked: !!(item as any).likedByMe,
-                });
-              }}
+              onPressLike={() => toggleCommentLike(item)}
             />
           )}
           keyboardShouldPersistTaps="handled"
@@ -289,7 +310,7 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
                   <SmallFlag onPress={() => setBookmarked(v => !v)} hitSlop={8}>
-                    <MaterialIcons name={bookmarked ? 'bookmark' : 'bookmark-border'} size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
+                    <MaterialIcons name="bookmark" size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
                   </SmallFlag>
                 </Row>
 
@@ -451,6 +472,7 @@ export default function PostDetailScreen() {
     </Safe>
   );
 }
+
 
 const Safe = styled.SafeAreaView`
   flex: 1;
