@@ -27,7 +27,17 @@ type ChatHistory = {
   "sentAt": string, //"2025-09-01T15:17:19.523Z"  
 };
 
-
+type TranslatedChatMessage={
+    id :number,
+    roomId:number,
+    senderId:number,
+    originContent:string,
+    targetContent:string,
+    sentAt:string,
+    senderFirstName:string,
+    senderLastName:string,
+    senderImageUrl:string
+};
 
 
 
@@ -48,7 +58,7 @@ const ChattingRoomScreen=()=>{
     const scrollViewRef = useRef<ScrollView>(null);
 
     const setMyId=async()=>{
-     const myId: string | null = await SecureStore.getItemAsync('MyuserId');
+    const myId: string | null = await SecureStore.getItemAsync('MyuserId');
     if (myId) {
       setMyUserId(myId); // null이 아니면 상태 업데이트
     }
@@ -75,26 +85,26 @@ const ChattingRoomScreen=()=>{
     fetchHistory();
   }, []);
 
-  useEffect(() => {
-    const fetchTranslateScreen= async () => {
-      try {
-        // 채팅 메세지 기록 받기
-             const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
-             const chatHistory:ChatHistory[]=res.data.data;
-                // 메시지 담기
-            setMessages([...chatHistory.reverse()])
+//   useEffect(() => {
+//     const fetchTranslateScreen= async () => {
+//       try {
+//         // 채팅 메세지 기록 받기
+//              const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
+//              const translatedChatMessage:TranslatedChatMessage[]=res.data.data;
+//                 // 메시지 담기
+//             setMessages([...translatedChatMessage.reverse()])
     
-      } catch (err) {
-        console.log("채팅 기록 불러오기 실패", err);
-      }
-    };
-    fetchTranslateScreen();
-    // ⬇️ 컴포넌트가 unmount 될 때 실행됨
-  return () => {
-    console.log("채팅 화면 나감");
-    setIsTranslate(false); // 초기화
-  };
-  }, [isTranslate]);
+//       } catch (err) {
+//         console.log("번역된 채팅 기록 불러오기 실패", err);
+//       }
+//     };
+//     fetchTranslateScreen();
+//     // ⬇️ 컴포넌트가 unmount 될 때 실행됨
+//   return () => {
+//     console.log("채팅 화면 나감");
+//     setIsTranslate(false); // 초기화
+//   };
+//   }, [isTranslate]);
 
 useEffect(() => {
     const connectStomp = async () => {
@@ -210,10 +220,11 @@ useEffect(() => {
     },
   });
 };
-const formatTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000); // 초 → 밀리초
-  const hours = date.getUTCHours().toString().padStart(2, "0");
-  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+const formatTime = (sentAt: string | number) => {
+  const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
+  const date = new Date(ts);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
   return `${hours}:${minutes}`;
 };
 
@@ -222,10 +233,20 @@ const updateTranslateScreen=async()=>{
      const res= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
       translateEnabled: true,
     });
-    if(res)
-    {
-        setIsTranslate(true);
-    }
+        try {
+        // 채팅 메세지 기록 받기
+             const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
+             const translatedChatMessage:TranslatedChatMessage[]=res.data.data;
+                // 메시지 담기
+            setMessages([...translatedChatMessage.reverse()])
+            if(res)
+            {
+                setIsTranslate(true);
+            }
+        } catch (err) {
+            console.log("번역된 채팅 기록 불러오기 실패", err);
+        }
+    
     console.log(res.data);
   } catch (err) {
     console.error(err);
@@ -288,14 +309,14 @@ const updateTranslateScreen=async()=>{
                                 <ChattingRightContainer showProfile={showProfile}>
                                     <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextFirstBox>
-                                        <MyText>{item.content}</MyText>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content)}</MyText>
                                     </MyTextFirstBox>
                                 </ChattingRightContainer>
                             ) : (
                                 <ChattingRightContainer>
                                     <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextNotFirstBox>
-                                        <MyText>{item.content}</MyText>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content)}</MyText>
                                     </MyTextNotFirstBox>
                                 </ChattingRightContainer>
                             );
@@ -312,7 +333,7 @@ const updateTranslateScreen=async()=>{
                                     <OtherNameText>{item.senderFirstName}</OtherNameText>
                                 <LeftMessageBox>
                                 <OtherFirstTextBox>
-                                    <OtherText>{item.content}</OtherText>
+                                    <OtherText>{isTranslate?(item.targetContent):(item.content)}</OtherText>
                                 </OtherFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                                 </LeftMessageBox>
@@ -326,7 +347,7 @@ const updateTranslateScreen=async()=>{
                                <OtherContainer>
                                  <LeftMessageBox>
                                 <OtherNotFirstTextBox>
-                                <OtherText>{item.content}</OtherText>
+                                <OtherText>{isTranslate?(item.targetContent):(item.content)}</OtherText>
                                 </OtherNotFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                             </LeftMessageBox>
