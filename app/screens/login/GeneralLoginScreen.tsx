@@ -17,6 +17,10 @@ const GeneralLoginScreen=()=>{
         setError(true);
     };
     
+    const createAccount=()=>{
+        router.push("./CreateAccountScreen")
+    };
+    
 
     return(<SafeArea>
             <StatusBar barStyle="light-content" />
@@ -73,7 +77,7 @@ const GeneralLoginScreen=()=>{
                     <LoginText>Login</LoginText>
                 </LoginButtonContainer>
                 <CNAContainter>
-                    <TouchableOpacity onPress={() => console.log("Create new account")}>
+                    <TouchableOpacity onPress={createAccount}>
                     <CNAText>Create new account</CNAText>
                     </TouchableOpacity>
                 </CNAContainter>

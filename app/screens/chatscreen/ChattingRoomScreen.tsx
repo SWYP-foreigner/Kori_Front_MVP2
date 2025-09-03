@@ -17,17 +17,27 @@ Api 호출  -> ( 보낸 사람아이디 , 보낸사람 이름 , 보낸사람 프
 채팅방 메시지 기록 불러오기 -> ( 보낸사람 아이디 , 보낸 내용 , 보낸 시간 )*/
 
 type ChatHistory = {
-    "id": number,
-  "roomId": number,
-  "senderId": number,
-  "senderFirstName": string,
-  "senderLastName": string,
-  "senderImageUrl": string,
-  "content": string,
-  "sentAt": string, //"2025-09-01T15:17:19.523Z"  
+    id: number,
+  roomId: number,
+  senderId: number,
+  senderFirstName: string,
+  senderLastName: string,
+  senderImageUrl: string,
+  content: string,
+  sentAt: string, //"2025-09-01T15:17:19.523Z"  
 };
 
-
+type TranslatedChatMessage={
+    id :number,
+    roomId:number,
+    senderId:number,
+    originContent:string,
+    targetContent:string,
+    sentAt:string,
+    senderFirstName:string,
+    senderLastName:string,
+    senderImageUrl:string
+};
 
 
 
@@ -48,7 +58,7 @@ const ChattingRoomScreen=()=>{
     const scrollViewRef = useRef<ScrollView>(null);
 
     const setMyId=async()=>{
-     const myId: string | null = await SecureStore.getItemAsync('MyuserId');
+    const myId: string | null = await SecureStore.getItemAsync('MyuserId');
     if (myId) {
       setMyUserId(myId); // null이 아니면 상태 업데이트
     }
@@ -59,16 +69,23 @@ const ChattingRoomScreen=()=>{
         setMyId();
       try {
         // 채팅 메세지 기록 받기
-        const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
-        const chatHistory:ChatHistory[]=res.data.data;
-        // 메시지 담기
-       setMessages([...chatHistory].reverse())
+         const initTranslate= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
+                translateEnabled: false,
+            });
+        if(initTranslate){
+            const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
+            const chatHistory:ChatHistory[]=res.data.data;
+                // 메시지 담기
+            setMessages([...chatHistory.reverse()])
+        }
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
     };
     fetchHistory();
   }, []);
+
+
 
 useEffect(() => {
     const connectStomp = async () => {
@@ -96,9 +113,10 @@ useEffect(() => {
         stompClient.current = new Client({
             webSocketFactory: () => new global.WebSocket('wss://dev.ko-ri.cloud/ws'),
             connectHeaders: connectHeaders, // 미리 만든 헤더 사용
-            reconnectDelay: 10000,
-            heartbeatIncoming: 10000,
-            heartbeatOutgoing: 10000,
+            forceBinaryWSFrames: true,
+           reconnectDelay: 30000,       // 재연결 간격 30초
+           heartbeatIncoming: 60000,    // 서버 ping 1분
+           heartbeatOutgoing: 60000,    // 클라이언트 ping 1분
             debug: (str) => console.log('[STOMP DEBUG]', str),
         });
         
@@ -183,12 +201,40 @@ useEffect(() => {
     },
   });
 };
-const formatTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000); // 초 → 밀리초
-  const hours = date.getUTCHours().toString().padStart(2, "0");
-  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+const formatTime = (sentAt: string | number) => {
+  const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
+  const date = new Date(ts);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
   return `${hours}:${minutes}`;
 };
+
+//번역된 대화 기록 가져오기
+const updateTranslateScreen=async()=>{
+   try {
+     const res= await api.post(`api/v1/chat/rooms/${roomId}/translation`, {
+      translateEnabled: true,
+    });
+        try {
+        // 채팅 메세지 기록 받기
+             const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
+             const translatedChatMessage:TranslatedChatMessage[]=res.data.data;
+                // 메시지 담기
+            setMessages([...translatedChatMessage.reverse()])
+            if(res)
+            {
+                setIsTranslate(true);
+            }
+        } catch (err) {
+            console.log("번역된 채팅 기록 불러오기 실패", err);
+        }
+    
+    console.log(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
@@ -224,88 +270,78 @@ const formatTime = (timestamp: number) => {
                      <FlatList
                         data={messages}
                         keyExtractor={item => item.id.toString()}
-                        // inverted={true}
+                       
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
-
+                            
                             // 이전 메시지와 비교해서 같은 사람인지 확인
                             const showProfile =
-                            index === 0 || messages[index - 1].senderFirstName !== item.senderFirstName;
+                            index === 0 || messages[index -1].senderFirstName !== item.senderFirstName;
                             
                             
+
+                            console.log("index",index);
+                            console.log("item",item);
+                            console.log("__________________")
+                            console.log("isTranslate",isTranslate);
                                 
                             if (isMyMessage) {
                                 
-                            return (
-                                <ChattingRightContainer>
-                                <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
-                               {showProfile ? (
+                            return showProfile? (
+                           
+                                <ChattingRightContainer showProfile={showProfile}>
+                                    <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
                                     <MyTextFirstBox>
-                                        <MyText>{item.content}</MyText>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</MyText>
                                     </MyTextFirstBox>
-                            
-                                ) : (
-                                   <MyTextNotFirstBox>
-                                        <MyText>{item.content}</MyText>
+                                </ChattingRightContainer>
+                            ) : (
+                                <ChattingRightContainer  >
+                                    <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                    <MyTextNotFirstBox>
+                                        <MyText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</MyText>
                                     </MyTextNotFirstBox>
-                                )}
                                 </ChattingRightContainer>
                             );
+                      
                             } else {
-                            return (
-                                    <ChattingLeftContainer>
-                        {/* 항상 공간 확보 */}
-                        <ProfileContainer>
-                            {showProfile ? (
-                            <ProfileBox>
-                                <ProfileImage source={{ uri: item.senderImageUrl }} />
-                            </ProfileBox>
-                            ) : null}
-                        </ProfileContainer>
-
-                        <OtherContainer>
-                            {showProfile ? (
-                            <>
-                                <OtherNameText>{item.senderFirstName}</OtherNameText>
+                            return showProfile?(
+                            <ChattingLeftContainer showProfile={showProfile}>
+                                <ProfileContainer>
+                                    <ProfileBox>
+                                         <ProfileImage source={{ uri: item.senderImageUrl }} />
+                                    </ProfileBox>
+                                 </ProfileContainer>
+                                <OtherContainer>
+                                    <OtherNameText>{item.senderFirstName}</OtherNameText>
                                 <LeftMessageBox>
                                 <OtherFirstTextBox>
-                                    <OtherText>{item.content}</OtherText>
+                                    <OtherText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</OtherText>
                                 </OtherFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                                 </LeftMessageBox>
-                            </>
-                            ) : (
-                            <LeftMessageBox>
+                        </OtherContainer>
+                        </ChattingLeftContainer>):(
+                            <ChattingLeftContainer>
+                                 <ProfileContainer>
+                                    <ProfileBox>
+                                    </ProfileBox>
+                                 </ProfileContainer>
+                               <OtherContainer>
+                                 <LeftMessageBox>
                                 <OtherNotFirstTextBox>
-                                <OtherText>{item.content}</OtherText>
+                                <OtherText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</OtherText>
                                 </OtherNotFirstTextBox>
                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
                             </LeftMessageBox>
-                            )}
-                        </OtherContainer>
-                        </ChattingLeftContainer>
-
-                            );
+                            </OtherContainer>
+                        </ChattingLeftContainer>);
+                      
                             }
                         }}
                         />
-                {/* 이 TimeView는 그 전 날짜랑 비교했을때 바뀌면 표시  */}
-                {/* <TimeView>
-                    <TimeText>2025.08.15(Fri)</TimeText>
-                </TimeView> */}
-                {/* 보낸사람 아이디랑 내 아이디랑 같으면 오른쪽 컨테이너 , 내 아이디랑 다르면 무조건 왼쪽 컨테이너
-                유저가 바뀔때 처음에만 프로필 표시 그 다음부터는 대화박스만
-                시간이 같은 대화들중 제일 마지막만 시간표시 */}
-                {/* 
-                    "나"가 아니면 <ChattingLeftContainer>
-                    "나"이면 <ChattingRightContainer>
-
-                    "날짜가" 바뀌면 <TimeView>
-                    "분이" 바뀌면 채팅 시간표시 남김
-                */}
-                
                 </ChattingScreen>
-            
+                        
                 
                 <BottomContainer>
                     <BottomInputBox
@@ -318,7 +354,7 @@ const formatTime = (timestamp: number) => {
                         <SendImage source={require("@/assets/images/Send.png")}/>
                     </SendImageBox>
                 </BottomContainer>
-                 <TranslateButtonBox onPress={()=>{setIsTranslate(!isTranslate)}}>
+                 <TranslateButtonBox onPress={updateTranslateScreen}>
                         <TranslateImage source={require("@/assets/images/translate.png")}/>
                     </TranslateButtonBox>
             </Container>
@@ -390,11 +426,10 @@ const TimeText=styled.Text`
 `;
 
 const ChattingLeftContainer = styled.View`
-  background-color:red;
+  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
   align-self: flex-start; /* 왼쪽 끝 */
   max-width:280px;   /* 최대 너비 */
   flex-direction: row;
-  margin:20px 0px;
 `;
 
 // const ProfileContainer=styled.View`
@@ -429,7 +464,6 @@ const ProfileImage=styled.Image`
 
 
 const OtherContainer=styled.View`
-    background-color:yellow;
     max-width:242px;
     padding-left:7px;
 `;
@@ -483,10 +517,10 @@ const ChatTimeText=styled.Text`
 `;
 
 const ChattingRightContainer = styled.View`
+  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
   align-self: flex-end;  /* 부모 기준 왼쪽 정렬 */
   max-width:280px;   /* 최대 너비 */
   flex-direction: row;
-  margin:2px 0px;
   justify-content: flex-start;   /* 가로 방향 끝 */
   align-items: flex-end;       /* 세로 방향 끝 */
   margin-right:8px;
