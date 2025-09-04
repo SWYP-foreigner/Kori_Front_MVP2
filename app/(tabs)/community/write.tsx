@@ -1,19 +1,19 @@
 import { createPost } from '@/api/community/posts';
 import { Category } from '@/components/CategoryChips';
+import { usePresignedUpload } from '@/hooks/mutations/useImageUpload';
 import { useUpdatePost } from '@/hooks/mutations/useUpdatePost';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { uploadImageToPresignedUrl } from '@/utils/uploadImageToPresignedUrl';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
+  Alert, Image as RNImage, KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
-  TextInput as RNTextInput,
+  Pressable, ScrollView, TextInput as RNTextInput,
   TextInputProps,
   View
 } from 'react-native';
@@ -32,36 +32,74 @@ export default function WriteScreen() {
   const [anonymous, setAnonymous] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
-  const [image, setImage] = useState<string | null>(null);
+
+  const [images, setImages] = useState<string[]>([]);
 
   const inputRef = useRef<RNTextInput>(null);
   const canSave = useMemo(() => body.trim().length > 0, [body]);
+
+  const presignMutation = usePresignedUpload();
+  const updateMutation = useUpdatePost();
 
   const pickImage = async () => {
     setPickerOpen(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
+
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: false,
+      allowsMultipleSelection: true,
       quality: 0.9,
     });
-    if (!res.canceled) setImage(res.assets[0].uri);
+
+    if (!res.canceled) {
+      const uris = res.assets.map(a => a.uri);
+      setImages(prev => [...prev, ...uris]);
+    }
   };
 
-  const updateMutation = useUpdatePost();
+  const removeImage = (uri: string) => {
+    setImages(prev => prev.filter(u => u !== uri));
+  };
 
   const onSave = async () => {
     if (!canSave) return;
     const content = body.trim();
 
     try {
+      let uploadedKeys: string[] = [];
+
+      if (images.length > 0) {
+        const uploadSessionId = `sess_${Date.now()}`;
+        const files = images.map((uri, idx) => {
+          const filename = uri.split('/').pop() ?? `IMG_${Date.now()}_${idx}.jpg`;
+          return { filename, contentType: 'image/jpeg' as const };
+        });
+
+        const presignRes = await presignMutation.mutateAsync({
+          imageType: 'POST',
+          uploadSessionId,
+          files,
+        });
+
+        for (let i = 0; i < presignRes.length; i++) {
+          const { key, putUrl, headers } = presignRes[i];
+          const fileUri = images[i];
+
+          await uploadImageToPresignedUrl({ putUrl, headers, fileUri });
+
+          uploadedKeys.push(key);
+        }
+
+        await new Promise(res => setTimeout(res, 300));
+      }
+
       if (isEdit && postIdNum) {
         await updateMutation.mutateAsync({
           postId: postIdNum,
           body: {
             content,
-            images: image ? [image] : [],
+            images: uploadedKeys,
             removedImages: [],
           },
         });
@@ -71,10 +109,11 @@ export default function WriteScreen() {
         await createPost(boardId, {
           content,
           isAnonymous: anonymous,
-          imageUrls: image ? [image] : [],
+          imageUrls: uploadedKeys,
         });
         Alert.alert('Success', 'Post created successfully!');
       }
+
       router.back();
     } catch (e: any) {
       console.log('[write:save] error', e?.response?.data || e?.message || e);
@@ -128,11 +167,20 @@ export default function WriteScreen() {
           />
         </BodyWrap>
 
-        {image ? (
+        {images.length > 0 && (
           <PreviewWrap>
-            <Preview source={{ uri: image }} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {images.map(uri => (
+                <Thumb key={uri}>
+                  <ThumbImage source={{ uri }} />
+                  <RemoveBtn onPress={() => removeImage(uri)}>
+                    <AntDesign name="close" size={12} color="#fff" />
+                  </RemoveBtn>
+                </Thumb>
+              ))}
+            </ScrollView>
           </PreviewWrap>
-        ) : null}
+        )}
 
         <BottomBar>
           <BarLeft>
@@ -204,7 +252,6 @@ export default function WriteScreen() {
   );
 }
 
-/* ===== styled ===== */
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1d1e1f;
@@ -264,6 +311,7 @@ const Divider = styled.View`
   height: 1px;
   background: #222426;
 `;
+
 const BodyWrap = styled.Pressable`
   flex: 1;
   padding: 10px 12px 0 12px;
@@ -280,14 +328,34 @@ const Input = React.forwardRef<RNTextInput, TextInputProps>((props, ref) => (
   <StyledRNInput ref={ref} {...props} />
 ));
 Input.displayName = 'Input';
+
 const PreviewWrap = styled.View`
   padding: 8px 12px 0 12px;
 `;
-const Preview = styled.Image`
-  width: 100%;
-  height: 180px;
-  border-radius: 12px;
+
+// ✅ 썸네일 그리드/가로 스크롤용
+const Thumb = styled.View`
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
   background: #111213;
+  margin-right: 8px;
+`;
+const ThumbImage = styled(RNImage)`
+  width: 96px;
+  height: 96px;
+`;
+const RemoveBtn = styled.Pressable`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
 `;
 
 const BottomBar = styled.View`
