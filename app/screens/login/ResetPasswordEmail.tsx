@@ -7,15 +7,16 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import axios from "axios";
 import { Config } from "@/src/lib/config";
 import Entypo from '@expo/vector-icons/Entypo';
+import * as SecureStore from 'expo-secure-store';
 
-enum isDuplicatedEmail {
+enum isKoriEmail {
   Init = "Init",
   Exist = "Exist",
   NotExist = "NotExist",
@@ -30,18 +31,12 @@ enum isCorrectCode{
 const CreateAccountScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  
-  const [isExistEmail,setIsExistEmail]=useState<isDuplicatedEmail>(isDuplicatedEmail.Init);
+  const [isExistEmail,setIsExistEmail]=useState<isKoriEmail>(isKoriEmail.Init);
   const [isCorrect,setIsCorrect]=useState<isCorrectCode>(isCorrectCode.Init);
   const [code,setCode]=useState('');
-  const completeCondition=(isExistEmail===isDuplicatedEmail.NotExist)&&(isCorrect===isCorrectCode.Success);
+  const completeCondition=(isExistEmail===isKoriEmail.Exist)&&(isCorrect===isCorrectCode.Success);
 
-  const [checks, setChecks] = useState({
-    isnull: true,
-    uppercase: false,
-    length: false,
-    special: false,
-  });
+ 
 
   const [EmailChecks, setEmailChecks] = useState({
     isnull: true,
@@ -63,18 +58,19 @@ const CreateAccountScreen = () => {
   const VerifyEmail = async() => {
       try {
       const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/email/check`, { email:email });
+      console.log("테스트",res.data);
       const {exists}=res.data.data;
       if(exists)
       {
-        setIsExistEmail(isDuplicatedEmail.Exist);
+        console.log("들어옴12313");
+        const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/password/forgot`,{email:email,lang:"en"});
+        console.log("테스트2",res.data);
+        setIsExistEmail(isKoriEmail.Exist);
+        console.log("이메일 인증 코드 발송",res.data);
       }
       else{
         console.log("들어옴");
-        setIsExistEmail(isDuplicatedEmail.NotExist);
-        // 이메일 인증 시작
-        const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/send-verification-email`,{email:email,lang:"en"});
-        console.log("이메일 인증 코드 발송",res.data);
-       
+        setIsExistEmail(isKoriEmail.NotExist);
       }
     } catch (err) {
       console.error("이메일 확인 중 에러 발생", err);
@@ -87,14 +83,15 @@ const CreateAccountScreen = () => {
          const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/verify-code`,
           {email:email,verificationCode:code});
           console.log("이메일 인증 코드 검증",res.data);
-          const {data}=res.data.data
-          console.log("잘왔나?",data);
+          const {data}=res.data;
+          
           if(data)
           {
              setIsCorrect(isCorrectCode.Success);
           }
           else{
             setIsCorrect(isCorrectCode.Fail);
+            console.log("인증실패");
           }
       }catch(err){
          console.error("코드 확인 중 에러 발생", err);
@@ -102,7 +99,11 @@ const CreateAccountScreen = () => {
   }
 
   const goNextScreen=async()=>{
-    router.push("./ResetPasswordScreen");
+    await SecureStore.setItemAsync('emailCode',code);
+    router.replace({
+       pathname: "./ResetPasswordScreen",
+       params:{email: email},
+      });
   }
   
 
@@ -136,7 +137,7 @@ const CreateAccountScreen = () => {
                     value={email}
                     onChangeText={(text) => {
                         setEmail(text);
-                        setIsExistEmail(isDuplicatedEmail.Init); // 입력값 바뀔 때마다 초기화
+                        setIsExistEmail(isKoriEmail.Init); // 입력값 바뀔 때마다 초기화
                       }}
                     placeholder="Enter email address"
                     placeholderTextColor={"#616262"}
@@ -148,9 +149,9 @@ const CreateAccountScreen = () => {
                   </CloseErrorBox>
                 </EmailContainer>
                 
-                {isExistEmail===isDuplicatedEmail.NotExist?(
+                {isExistEmail===isKoriEmail.Exist?(
 
-                   <ShowVerifiedBox>
+                  <ShowVerifiedBox>
                     <Entypo name="check" size={24} color="#949899" />
                 </ShowVerifiedBox>
 
@@ -178,15 +179,25 @@ const CreateAccountScreen = () => {
                       </>
                     )}
 
-                    {EmailChecks.isEmail && (isExistEmail===isDuplicatedEmail.Exist) && (
+                    {EmailChecks.isEmail && (isExistEmail===isKoriEmail.NotExist) && (
                       <>
                         <Ionicons
                           name="information-circle-outline"
                           size={18}
                           color="#FF4F4F"
                         />
-                        <ErrorText>This email is already in use.</ErrorText>
+                        <ErrorText>This is not a registered account</ErrorText>
                       </>
+                      
+                    )}
+                     {EmailChecks.isEmail && (isExistEmail===isKoriEmail.Exist) && (
+                      <>
+                        <NotErrorBox>
+                        <AntDesign name="check" size={18} color="#02F59B" />
+                        <NotErrorText>Email verification code sent</NotErrorText>
+                      </NotErrorBox>
+                      </>
+                      
                     )}
               </ErrorBox>
              {/* Code Verification Box */}
@@ -197,8 +208,8 @@ const CreateAccountScreen = () => {
                 <CodeVerifyContainer>
                   <CodeInputBox
                     value={code}
-                    onChangeText={()=>{
-                      setCode(code);
+                    onChangeText={(text)=>{
+                      setCode(text);
                       setIsCorrect(isCorrectCode.Init);
                     }
                     }
@@ -214,8 +225,8 @@ const CreateAccountScreen = () => {
                 :(
                   <VerifyButton
                   onPress={verifyCode}
-                  disabled={!(isExistEmail===isDuplicatedEmail.Exist)}
-                  canVerify={isExistEmail===isDuplicatedEmail.Exist}
+                  disabled={!(isExistEmail===isKoriEmail.Exist)}
+                  canVerify={isExistEmail===isKoriEmail.Exist}
                 >
                   <VerifyText>Verify</VerifyText>
                 </VerifyButton>
@@ -233,6 +244,14 @@ const CreateAccountScreen = () => {
                         <ErrorText>Fail Code Verification</ErrorText>
               </ErrorBox>
               </>
+                )}
+                {(isCorrect===isCorrectCode.Success)&&(
+                  <>
+                  <NotErrorBox>
+                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <NotErrorText>Authentication successful</NotErrorText>
+                </NotErrorBox>
+                  </>
                 )}   
             </GeneralLoginContainer>
           </ScrollView>
@@ -348,7 +367,7 @@ const ShowVerifiedBox =styled.View`
   justify-content: center;
   margin-left: 5px;
   border-color:#949899;
-
+  border-width:2px;
 `;
 
 const VerifyText = styled.Text`
@@ -406,4 +425,17 @@ const NextText = styled.Text`
   color: #1d1e1f;
   font-size: 15px;
   font-family: PlusJakartaSans_500Medium;
+`;
+
+const NotErrorBox=styled.View`
+  height: 20px;
+  margin-top: 10px;
+  flex-direction: row;
+`;
+
+const NotErrorText=styled.Text`
+  color: #ffffff;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 11px;
+  margin-left: 5px;
 `;

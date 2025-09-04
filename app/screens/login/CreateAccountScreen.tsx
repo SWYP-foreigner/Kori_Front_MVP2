@@ -101,10 +101,9 @@ const CreateAccountScreen = () => {
         setIsExistEmail(isDuplicatedEmail.Exist);
       }
       else{
-        console.log("들어옴");
-        setIsExistEmail(isDuplicatedEmail.NotExist);
         // 이메일 인증 시작
         const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/send-verification-email`,{email:email,lang:"en"});
+        setIsExistEmail(isDuplicatedEmail.NotExist);
         console.log("이메일 인증 코드 발송",res.data);
        
       }
@@ -119,7 +118,7 @@ const CreateAccountScreen = () => {
          const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/verify-code`,
           {email:email,verificationCode:code});
           console.log("이메일 인증 코드 검증",res.data);
-          const {data}=res.data.data
+          const data=res.data.data
           console.log("잘왔나?",data);
           if(data)
           {
@@ -144,7 +143,7 @@ const CreateAccountScreen = () => {
     // 서버에서 성공 응답 코드 확인 (예: status 200)
     if (res.status === 200) {
       console.log("회원가입 성공", res.data);
-      router.push("./SignUpDoneScreen");
+      router.replace("./SignUpDoneScreen");
     } else {
       console.log("회원가입 실패", res.data);
       Alert.alert("Signup Failed","Please try again.");
@@ -257,8 +256,8 @@ const CreateAccountScreen = () => {
                 <CodeVerifyContainer>
                   <CodeInputBox
                     value={code}
-                    onChangeText={()=>{
-                      setCode(code);
+                    onChangeText={(text)=>{
+                      setCode(text);
                       setIsCorrect(isCorrectCode.Init);
                     }
                     }
@@ -274,8 +273,8 @@ const CreateAccountScreen = () => {
                 :(
                   <VerifyButton
                   onPress={verifyCode}
-                  disabled={!(isExistEmail===isDuplicatedEmail.Exist)}
-                  canVerify={isExistEmail===isDuplicatedEmail.Exist}
+                  disabled={(isExistEmail===isDuplicatedEmail.Exist)}
+                  canVerify={isExistEmail===isDuplicatedEmail.NotExist}
                 >
                   <VerifyText>Verify</VerifyText>
                 </VerifyButton>
@@ -293,6 +292,14 @@ const CreateAccountScreen = () => {
                         <ErrorText>Fail Code Verification</ErrorText>
               </ErrorBox>
               </>
+                )}
+                {(isCorrect===isCorrectCode.Success)&&(
+                  <>
+                  <NotErrorBox>
+                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <NotErrorText>Authentication successful</NotErrorText>
+                </NotErrorBox>
+                  </>
                 )}
 
               {/* Password */}
@@ -437,8 +444,8 @@ const CreateAccountScreen = () => {
             </GeneralLoginContainer>
             </KeyboardAwareScrollView>
           <NextButtonContainer
-            // disabled={!completeCondition}
-            // completeCondition={completeCondition}
+            disabled={!completeCondition}
+            completeCondition={completeCondition}
             onPress={showModal}
           >
             <NextText>Next</NextText>
@@ -639,7 +646,8 @@ const ShowVerifiedBox =styled.View`
   justify-content: center;
   margin-left: 5px;
   border-color:#949899;
-
+  border-width: 2px; 
+    
 `;
 
 const VerifyText = styled.Text`

@@ -10,18 +10,20 @@ import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
-
+import { useLocalSearchParams } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { Config } from "@/src/lib/config";
+import axios from "axios";
 
 
 const ResetPasswordScreen = () => {
   const router = useRouter();
-
+  const { email } = useLocalSearchParams<{ email: string }>();
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [lookPassword, setLookPassword] = useState(true);
   const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
- 
+  
   const isSamePassword = (repeatPassword === password);
 
   const [checks, setChecks] = useState({
@@ -31,7 +33,7 @@ const ResetPasswordScreen = () => {
     special: false,
   });
 
- 
+  
   
   const completeCondition = isSamePassword&&(password.length>0)&&(repeatPassword.length>0);
 
@@ -45,7 +47,21 @@ const ResetPasswordScreen = () => {
   }, [password]);
 
   const resetPassword=async()=>{
-    console.log("비밀번호 재설정");
+    const code = await SecureStore.getItemAsync("emailCode");
+
+    try{
+
+      const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/password/reset-by-code`,{
+          email:email,
+          newPassword:password
+    })
+      console.log("비밀번호 재설정 완료",res.data);
+      router.replace("./GeneralLoginScreen");
+  }
+  catch(error)
+  {
+    console.error("비밀번호 재설정 실패",error)
+  }
   };
  
 

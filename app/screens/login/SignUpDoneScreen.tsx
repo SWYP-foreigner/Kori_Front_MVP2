@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 const SignUpDoneScreen=()=>{
     const router=useRouter();
     const goLoginScreen=()=>{
-        router.push('./GeneralLoginScreen');
+        router.replace('./GeneralLoginScreen');
     };
 
     return( <SafeArea>

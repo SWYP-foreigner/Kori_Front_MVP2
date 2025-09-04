@@ -14,7 +14,6 @@ import { PageIndicator } from 'react-native-page-indicator';
 
 import EmailSignButton from "@/components/EmailSignButton";
 import GoogleSignInButton from '@/components/GoogleSignInButton';
-import api from '@/api/axiosInstance';
 import { Config } from '@/src/lib/config';
 
 GoogleSignin.configure({

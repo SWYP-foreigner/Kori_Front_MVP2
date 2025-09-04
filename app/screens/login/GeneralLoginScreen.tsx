@@ -10,13 +10,11 @@ import * as SecureStore from 'expo-secure-store';
 
 
 type AppLoginResponse = {
-  data: {
     accessToken: string;
     refreshToken: string;
     userId: number;
-  };
-  message: string;
-  timestamp: string;
+    message: string;
+    timestamp: string;
 };
 
 const GeneralLoginScreen=()=>{
@@ -24,6 +22,8 @@ const GeneralLoginScreen=()=>{
     const [email,setEmail]=useState('');
     const [password, setPassword]=useState('');
     const [error,setError]=useState(false);
+    const [lookPassword, setLookPassword] = useState(true);
+    const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
     const isFull=(email&&password);
 
     const goLogin=async()=>{
@@ -33,8 +33,9 @@ const GeneralLoginScreen=()=>{
                 email:email,
                 password:password
             });
-            const { accessToken, refreshToken, userId } = res.data.data;
             
+            const { accessToken, refreshToken, userId } = res.data;
+            console.log("로그인 여부2",res.data);
                   await SecureStore.setItemAsync('jwt', accessToken);
                   await SecureStore.setItemAsync('refresh', refreshToken);
                   await SecureStore.setItemAsync('MyuserId', userId.toString());
@@ -44,7 +45,7 @@ const GeneralLoginScreen=()=>{
         }
         catch(error)
         {
-            console.error('서버 요청 실패', error);
+            setError(true);
         }
       
     };
@@ -81,12 +82,24 @@ const GeneralLoginScreen=()=>{
                         <TitleContainer>
                         <TitleText>Password</TitleText>
                     </TitleContainer>
-                      <InputBox
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="Enter Password"
-                        placeholderTextColor={"#616262"}
+                        <PasswordContainer>
+                <PasswordInputBox
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter Password"
+                  placeholderTextColor={"#616262"}
+                  secureTextEntry={lookPassword}
+                />
+                <EyeIconBox>
+                  <TouchableOpacity onPress={() => setLookPassword(!lookPassword)}>
+                    <Ionicons
+                      name={lookPassword ? "eye-off-outline" : "eye-outline"}
+                      size={25}
+                      color="#616262"
                     />
+                  </TouchableOpacity>
+                </EyeIconBox>
+              </PasswordContainer>
                 <ForgotContainer>
                     <TouchableOpacity onPress={goResetScreen}>
                     <ForgotText>
@@ -237,3 +250,29 @@ const CNAText=styled(ForgotText)`
     color:#ffffff;
 `;
 
+const PasswordContainer = styled.View`
+  background-color: #353637;
+  height: 50px;
+  border-radius: 4px;
+  flex-direction: row;
+  margin-top: 5px;
+`;
+
+const PasswordInputBox = styled.TextInput`
+  color: #ffffff;
+  width: 85%;
+  height: 50px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+  padding-left: 10px;
+`;
+
+const EyeIconBox = styled.View`
+  background-color: #353637;
+  border-radius: 4px;
+  height: 50px;
+  width: 15%;
+  align-items: center;
+  justify-content: center;
+`;
