@@ -1,102 +1,159 @@
+import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import React from 'react';
-import { Image } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { FlatList, Image, LayoutChangeEvent, ViewabilityConfig, ViewToken } from 'react-native';
 import styled from 'styled-components/native';
 
+const MAX_IMAGES = 5;
+
 export type Post = {
-    id: string;
-    author: string;
-    avatar?: any;
-    category: string;
-    createdAt: string;
-    minutesAgo?: number;
-    title?: string;
-    body: string;
-    images?: any[];
-    likes: number;
-    comments: number;
-    bookmarked?: boolean;
-    hotScore: number;
+  id: string;
+  author: string;
+  avatar?: any;
+  category: string;
+  createdAt: string;
+  minutesAgo?: number;
+  title?: string;
+  body: string;
+  images?: any[];
+  likes: number;
+  comments: number;
+  bookmarked?: boolean;
+  hotScore: number;
 };
 
 type Props = {
-    data: Post;
-    onPress?: () => void;
-    onToggleLike?: () => void;
-    onToggleBookmark?: () => void;
+  data: Post;
+  onPress?: () => void;
+  onToggleLike?: () => void;
+  onToggleBookmark?: () => void;
 };
 
 export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark }: Props) {
-    const showUnit = typeof data.minutesAgo === 'number';
-    const timeLabel = showUnit
-        ? (data.minutesAgo! < 60
-            ? `${data.minutesAgo} min ago`
-            : `${Math.floor(data.minutesAgo! / 60)} hours ago`)
-        : data.createdAt.slice(5, 10).replace('-', '/');
+  const showUnit = typeof data.minutesAgo === 'number';
+  const timeLabel = showUnit
+    ? (data.minutesAgo! < 60 ? `${data.minutesAgo} min ago` : `${Math.floor(data.minutesAgo! / 60)} hours ago`)
+    : data.createdAt.slice(5, 10).replace('-', '/');
 
-    const viewCount = data.likes + data.comments;
+  const viewCount = (data.likes ?? 0) + (data.comments ?? 0);
 
-    return (
-        <Wrap onPress={onPress}>
-            <HeaderRow>
-                <Avatar source={data.avatar} />
+  const avatarUrl =
+    (data as any).avatarUrl ??
+    (data as any).userImageUrl ??
+    (typeof data.avatar === 'string' ? data.avatar : undefined);
 
-                <Meta>
-                    <Author>{data.author}</Author>
+  const avatarSource =
+    typeof avatarUrl === 'string' && avatarUrl
+      ? { uri: keyToUrl(avatarUrl) }
+      : (data.avatar as any);
 
-                    <SubRow>
-                        <TimeText>{timeLabel}</TimeText>
+  const rawImageKeysArr: string[] = Array.isArray(
+    (data as any).contentImageUrls ?? (data as any).imageUrls ?? data.images
+  )
+    ? ((data as any).contentImageUrls ?? (data as any).imageUrls ?? (data.images as any[]))
+    : [];
 
-                        <CatBadge>
-                            <CatText>{data.category}</CatText>
-                        </CatBadge>
+  const totalImages =
+    (data as any).imageCount != null
+      ? Number((data as any).imageCount)
+      : rawImageKeysArr.length;
 
-                        <Dot>•</Dot>
+  const imageUrls: string[] = useMemo(
+    () => keysToUrls(rawImageKeysArr).slice(0, MAX_IMAGES),
+    [rawImageKeysArr]
+  );
 
-                        <AntDesign name="eyeo" size={12} color="#9aa0a6" />
-                        <SmallCount>{viewCount}</SmallCount>
-                    </SubRow>
-                </Meta>
+  const [boxW, setBoxW] = useState(0);
+  const onBoxLayout = (e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    if (w && w !== boxW) setBoxW(w);
+  };
 
-                <BookBtn onPress={onToggleBookmark} hitSlop={8}>
-                    <MaterialIcons
-                        name={data.bookmarked ? 'bookmark' : 'bookmark-border'} // ✅ 변경
-                        size={20}
-                        color={data.bookmarked ? '#30F59B' : '#8a8a8a'}
-                    />
-                </BookBtn>
-            </HeaderRow>
+  const [imgIndex, setImgIndex] = useState(0);
+  const viewConfig = useRef<ViewabilityConfig>({ itemVisiblePercentThreshold: 60 }).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems?.length) {
+      const i = viewableItems[0].index ?? 0;
+      setImgIndex(i);
+    }
+  }).current;
 
-            {data.images?.length ? (
-                <ImageBox>
-                    <Image
-                        source={data.images[0]}
-                        style={{ width: '100%', height: 180, borderRadius: 12 }}
-                        resizeMode="cover"
-                    />
-                    {data.images.length > 1 && (
-                        <Counter>{` ${1}/${data.images.length} `}</Counter>
-                    )}
-                </ImageBox>
-            ) : null}
+  return (
+    <Wrap onPress={onPress}>
+      <HeaderRow>
+        <Avatar source={avatarSource} />
+        <Meta>
+          <Author>{data.author}</Author>
+          <SubRow>
+            <TimeText>{timeLabel}</TimeText>
+            <CatBadge><CatText>{data.category}</CatText></CatBadge>
+            <Dot>•</Dot>
+            <AntDesign name="eyeo" size={12} color="#9aa0a6" />
+            <SmallCount>{viewCount}</SmallCount>
+          </SubRow>
+        </Meta>
+        <BookBtn onPress={onToggleBookmark} hitSlop={8}>
+          <MaterialIcons
+            name={data.bookmarked ? 'bookmark' : 'bookmark-border'}
+            size={20}
+            color={data.bookmarked ? '#30F59B' : '#8a8a8a'}
+          />
+        </BookBtn>
+      </HeaderRow>
 
-            {!!data.title && <Title numberOfLines={1}>{data.title}</Title>}
-            <Body numberOfLines={3}>{data.body}</Body>
+      {imageUrls.length > 0 ? (
+        <CarouselBox onLayout={onBoxLayout}>
+          {boxW > 0 ? (
+            <FlatList
+              data={imageUrls}
+              keyExtractor={(u, i) => `${u}#${i}`}
+              renderItem={({ item }) => (
+                <Slide style={{ width: boxW }}>
+                  <Image
+                    source={{ uri: item }}
+                    style={{ width: '100%', height: 180, borderRadius: 12 }}
+                    resizeMode="cover"
+                    onError={(e) => console.log('[PostCard:image:error]', item, e.nativeEvent?.error)}
+                  />
+                </Slide>
+              )}
+              horizontal
+              pagingEnabled
+              decelerationRate="fast"
+              snapToInterval={boxW}
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={viewConfig}
+            />
+          ) : (
+            <Slide>
+              <Image
+                source={{ uri: imageUrls[0] }}
+                style={{ width: '100%', height: 180, borderRadius: 12 }}
+                resizeMode="cover"
+              />
+            </Slide>
+          )}
+        </CarouselBox>
+      ) : null}
 
-            <FooterRow>
-                <IconBtn onPress={onToggleLike} hitSlop={8}>
-                    <AntDesign name="like2" size={16} color="#30F59B" />
-                    <Count>{data.likes}</Count>
-                </IconBtn>
-                <IconBtn hitSlop={8}>
-                    <AntDesign name="message1" size={16} color="#cfd4da" />
-                    <Count>{data.comments}</Count>
-                </IconBtn>
-                <More>···</More>
-            </FooterRow>
-        </Wrap>
-    );
+      {!!data.title && <Title numberOfLines={1}>{data.title}</Title>}
+      <Body numberOfLines={3}>{data.body}</Body>
+
+      <FooterRow>
+        <IconBtn onPress={onToggleLike} hitSlop={8}>
+          <AntDesign name="like2" size={16} color="#30F59B" />
+          <Count>{data.likes}</Count>
+        </IconBtn>
+        <IconBtn hitSlop={8}>
+          <AntDesign name="message1" size={16} color="#cfd4da" />
+          <Count>{data.comments}</Count>
+        </IconBtn>
+        <More>···</More>
+      </FooterRow>
+    </Wrap>
+  );
 }
 
 const Wrap = styled.Pressable`
@@ -105,117 +162,41 @@ const Wrap = styled.Pressable`
   border-bottom-color: #222426;
   gap: 8px;
 `;
+const HeaderRow = styled.View`flex-direction: row; align-items: center;`;
+const Avatar = styled.Image`width: 34px; height: 34px; border-radius: 17px; background: #2a2b2c;`;
+const Meta = styled.View`margin-left: 10px; flex: 1;`;
+const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
+const SubRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center; gap: 5px;`;
+const TimeText = styled.Text`color: #9aa0a6; font-size: 11px;`;
+const CatBadge = styled.View`padding: 2px 8px; border-radius: 6px; background: #184b3f;`;
+const CatText = styled.Text`color: #E9E9E9; font-size: 11px; font-family: 'PlusJakartaSans_600SemiBold';`;
+const Dot = styled.Text`color: #9aa0a6; font-size: 12px;`;
+const SmallCount = styled.Text`color: #cfd4da; font-size: 11px; margin-left: 4px;`;
+const BookBtn = styled.Pressable`padding: 6px;`;
 
-const HeaderRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Avatar = styled.Image`
-  width: 34px;
-  height: 34px;
-  border-radius: 17px;
-  background: #2a2b2c;
-`;
-
-const Meta = styled.View`
-  margin-left: 10px;
-  flex: 1;
-`;
-
-const Author = styled.Text`
-  color: #fff;
-  font-size: 13px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const SubRow = styled.View`
-  margin-top: 2px;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-`;
-
-const TimeText = styled.Text`
-  color: #9aa0a6;
-  font-size: 11px;
-`;
-
-const CatBadge = styled.View`
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: #184b3f;
-`;
-const CatText = styled.Text`
-  color: #E9E9E9;
-  font-size: 11px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-
-const Dot = styled.Text`
-  color: #9aa0a6;
-  font-size: 12px;
-`;
-
-const SmallCount = styled.Text`
-  color: #cfd4da;
-  font-size: 11px;
-  margin-left: 4px;
-`;
-
-const BookBtn = styled.Pressable`
-  padding: 6px;
-`;
-
-const ImageBox = styled.View`
+const CarouselBox = styled.View`
   margin-top: 8px;
   position: relative;
+  border-radius: 12px;
+  overflow: hidden;
 `;
-
+const Slide = styled.View`
+  height: 180px;
+`;
 const Counter = styled.Text`
   position: absolute;
   right: 10px;
   bottom: 10px;
   color: #fff;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,0.4);
   padding: 2px 6px;
   border-radius: 8px;
   font-size: 11px;
 `;
 
-const Title = styled.Text`
-  color: #fff;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const Body = styled.Text`
-  color: #d9dcdf;
-  font-size: 13px;
-  line-height: 18px;
-`;
-
-const FooterRow = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const IconBtn = styled.Pressable`
-  flex-direction: row;
-  align-items: center;
-  margin-right: 16px;
-`;
-
-const Count = styled.Text`
-  color: #cfd4da;
-  margin-left: 6px;
-  font-size: 12px;
-`;
-
-const More = styled.Text`
-  margin-left: auto;
-  color: #9aa0a6;
-  font-size: 18px;
-  padding: 4px 6px;
-`;
+const Title = styled.Text`color: #fff; font-size: 15px; font-family: 'PlusJakartaSans_700Bold';`;
+const Body = styled.Text`color: #d9dcdf; font-size: 13px; line-height: 18px;`;
+const FooterRow = styled.View`margin-top: 6px; flex-direction: row; align-items: center;`;
+const IconBtn = styled.Pressable`flex-direction: row; align-items: center; margin-right: 16px;`;
+const Count = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
+const More = styled.Text`margin-left: auto; color: #9aa0a6; font-size: 18px; padding: 4px 6px;`;
