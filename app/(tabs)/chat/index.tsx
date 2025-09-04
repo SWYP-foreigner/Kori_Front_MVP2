@@ -60,10 +60,13 @@ export default function ChatScreen() {
       // 3️⃣ STOMP Client 생성
       stompClient.current = new Client({
         webSocketFactory: () => new WebSocket('wss://dev.ko-ri.cloud/ws'), // HTTPS 서버 → wss 프로토콜 사용
+        forceBinaryWSFrames: true,
         connectHeaders: {
           Authorization: `Bearer ${token}`, // JWT 토큰을 Authorization 헤더에 추가
         },
-        reconnectDelay: 5000, // 연결이 끊겼을 때 자동 재연결 간격(ms)
+        reconnectDelay: 30000,       // 재연결 간격 30초
+        heartbeatIncoming: 60000,    // 서버 ping 1분
+        heartbeatOutgoing: 60000,    // 클라이언트 ping 1분
         debug: (str) => console.log('[STOMP]', str), // 디버그 로그
       });
 

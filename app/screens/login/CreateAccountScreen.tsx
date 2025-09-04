@@ -3,17 +3,18 @@ import styled from "styled-components/native";
 import {
   StatusBar,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
+  Alert,
+  Modal
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from "axios";
 import { Config } from "@/src/lib/config";
-
+import Entypo from '@expo/vector-icons/Entypo';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 enum isDuplicatedEmail {
   Init = "Init",
@@ -27,6 +28,8 @@ enum isCorrectCode{
   Success = "Success",
 }
 
+
+
 const CreateAccountScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -37,7 +40,11 @@ const CreateAccountScreen = () => {
   const [isExistEmail,setIsExistEmail]=useState<isDuplicatedEmail>(isDuplicatedEmail.Init);
   const [isCorrect,setIsCorrect]=useState<isCorrectCode>(isCorrectCode.Init);
   const [code,setCode]=useState('');
-  const isSamePassword = repeatPassword === password;
+  const [modalVisible, setModalVisible] = useState(false);
+  const [allCheck,setAllCheck]=useState(false);
+  const [check1,setCheck1]=useState(false);
+  const [check2,setCheck2]=useState(false);
+  const [check3,setCheck3]=useState(false);
 
   const [checks, setChecks] = useState({
     isnull: true,
@@ -50,10 +57,15 @@ const CreateAccountScreen = () => {
     isnull: true,
     isEmail: false,
   });
+
+  const [isSamePassword,setIsSamePassword]=useState({
+      isnull:true,
+      isSame:false
+  });
   
   const completeCondition =
-    (isCorrect===isCorrectCode.Success) && checks.length && checks.uppercase && checks.special && isSamePassword;
-
+    (isCorrect===isCorrectCode.Success) && checks.length && checks.uppercase && checks.special && (isSamePassword.isSame===true);
+  
   useEffect(() => {
     setChecks({
       isnull: password.length === 0,
@@ -70,8 +82,15 @@ const CreateAccountScreen = () => {
     });
   }, [email]);
 
-  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  useEffect(()=>{
+    setIsSamePassword({
+      isnull:repeatPassword.length===0,
+      isSame:repeatPassword===password
+    });
+  },[repeatPassword]);
 
+  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+ 
   // 가입된 이메일 중복 체크 후 -> 이메일 인증 코드 발송
   const VerifyEmail = async() => {
       try {
@@ -114,16 +133,39 @@ const CreateAccountScreen = () => {
       }
   }
 
-  //회원가입
-  const JoinMember=async()=>{
-    const res=await axios.post(`${Config.SERVER_URL}/api/v1/member/signup`,{
-      email:email ,
+  const JoinMember = async () => {
+  try {
+    const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/signup`, {
+      email: email,
       password: password,
-      agreedToTerms: true
-    })
+      agreedToTerms: true,
+    });
 
-    console.log("회원가입",res.data);
+    // 서버에서 성공 응답 코드 확인 (예: status 200)
+    if (res.status === 200) {
+      console.log("회원가입 성공", res.data);
+      router.push("./SignUpDoneScreen");
+    } else {
+      console.log("회원가입 실패", res.data);
+      Alert.alert("Signup Failed","Please try again.");
+    }
+  } catch (err) {
+    console.error("회원가입 중 에러 발생", err);
+    // 에러 처리
   }
+};
+
+   const showModal = () => {
+    setModalVisible(true); // Next 버튼 클릭 시 모달 열기
+  };
+
+  const showTermsAndConditions=()=>{
+      router.push("./TermsAndConditionsScreen");
+  };
+  
+  const showPrivacyPolicy=()=>{
+    router.push("./PrivacyPolicyScreen");
+  };
 
   return (
     <SafeArea>
@@ -137,12 +179,12 @@ const CreateAccountScreen = () => {
               <HeaderTitleText>Create your account</HeaderTitleText>
             </HeaderBox>
           </HeaderContainer>
-        <KeyboardAvoidingView>
           {/* ScrollView 안에는 입력 폼만 */}
-          <ScrollView
-             contentContainerStyle={{ flexGrow: 1 }}
-             keyboardShouldPersistTaps="handled"
-          >
+            <KeyboardAwareScrollView
+              contentContainerStyle={{ flexGrow: 1 }}
+              extraScrollHeight={20} // 입력창 위로 조금만 올리기
+              enableOnAndroid={true}
+>
             <GeneralLoginContainer>
               {/* Email */}
               <TitleContainer>
@@ -165,14 +207,23 @@ const CreateAccountScreen = () => {
                     )}
                   </CloseErrorBox>
                 </EmailContainer>
-                
-                <VerifyButton
-                  onPress={VerifyEmail}
-                  disabled={!EmailChecks.isEmail}
-                  canVerify={EmailChecks.isEmail}
-                >
-                  <VerifyText>Verify</VerifyText>
-                </VerifyButton>
+
+                {isExistEmail===isDuplicatedEmail.NotExist?(
+
+                   <ShowVerifiedBox>
+                    <Entypo name="check" size={24} color="#949899" />
+                </ShowVerifiedBox>
+
+                ):(
+                      <VerifyButton
+                        onPress={VerifyEmail}
+                        disabled={!EmailChecks.isEmail}
+                        canVerify={EmailChecks.isEmail}
+                      >
+                        <VerifyText>Verify</VerifyText>
+                      </VerifyButton>
+                )}
+              
                
               </VerifyContainer>
               <ErrorBox>
@@ -216,13 +267,20 @@ const CreateAccountScreen = () => {
                   />
                   
                 </CodeVerifyContainer>
-                <VerifyButton
+                {isCorrect===isCorrectCode.Success ? (  
+                  <ShowVerifiedBox>
+                    <Entypo name="check" size={24} color="#949899" />
+                </ShowVerifiedBox>)
+                :(
+                  <VerifyButton
                   onPress={verifyCode}
                   disabled={!(isExistEmail===isDuplicatedEmail.Exist)}
                   canVerify={isExistEmail===isDuplicatedEmail.Exist}
                 >
                   <VerifyText>Verify</VerifyText>
                 </VerifyButton>
+                )}
+              
               </VerifyContainer>
               {(isCorrect===isCorrectCode.Fail)&&(
                 <>
@@ -365,23 +423,91 @@ const CreateAccountScreen = () => {
                   </TouchableOpacity>
                 </EyeIconBox>
               </PasswordContainer>
-              {!isSamePassword && (
-                <ErrorBox>
+              {!(isSamePassword.isnull)&&(isSamePassword.isSame) && 
+                <NotErrorBox>
+                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <NotErrorText>Your password match.</NotErrorText>
+                </NotErrorBox>}
+
+              {!(isSamePassword.isnull)&&!(isSamePassword.isSame)&&
+              <ErrorBox>
                   <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
                   <ErrorText>Your password do not match.</ErrorText>
-                </ErrorBox>
-              )}
+                </ErrorBox>}
             </GeneralLoginContainer>
-          </ScrollView>
-          </KeyboardAvoidingView>
+            </KeyboardAwareScrollView>
           <NextButtonContainer
-            disabled={!completeCondition}
-            completeCondition={completeCondition}
-            onPress={JoinMember}
+            // disabled={!completeCondition}
+            // completeCondition={completeCondition}
+            onPress={showModal}
           >
             <NextText>Next</NextText>
           </NextButtonContainer>
+          
+          
         </Container>
+         <Modal
+                  visible={modalVisible}
+                  transparent
+                  animationType="slide"
+                  onRequestClose={() => setModalVisible(false)}
+                >
+                  <ModalOverlay  activeOpacity={1}>
+                    <BottomSheetContent>
+                      <BottomSheetHeader>
+                        <BottomSheetHandle />
+                      </BottomSheetHeader>
+                       <BottomSheetTitle>Please agree to the terms to continue.</BottomSheetTitle>
+                        <AllCheckBoxContainer>
+                          <CheckBox
+                            onPress={() => {
+                              const newValue = !allCheck; // 토글 후 값
+                              setAllCheck(newValue);
+                              setCheck1(newValue);
+                              setCheck2(newValue);
+                              setCheck3(newValue);
+                              
+                            }}
+                            check={allCheck}
+                          >{allCheck&&<Entypo name="check" size={15} color="#02F59B" />}</CheckBox><AllCheckText>I agree to all.</AllCheckText>
+
+                        </AllCheckBoxContainer>
+                        <Divider/>
+                        <CheckBoxContainer>
+                          <CheckBox
+                             onPress={() =>setCheck1(!check1)}
+                            check={check1}
+                          >{check1&&<Entypo name="check" size={15} color="#02F59B" />}</CheckBox><CheckText>(Required) I am over 14 years old.</CheckText>
+
+                        </CheckBoxContainer>
+                        <CheckBoxContainer>
+                           <CheckBox onPress={() =>setCheck2(!check2)}
+                             check={check2}
+                            >
+                            {check2&&<Entypo name="check" size={15} color="#02F59B" />}
+                            </CheckBox><CheckText>(Required) Terms & Conditions</CheckText>
+                            <TouchableOpacity onPress={showTermsAndConditions}>
+                            <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+                        </CheckBoxContainer>
+                        <CheckBoxContainer>
+                           <CheckBox onPress={() =>setCheck3(!check3)}
+                            check={check3}
+                            >
+                            {check3&&<Entypo name="check" size={15} color="#02F59B" />}
+                            </CheckBox><CheckText>(Required) Privacy Policy</CheckText>
+                            <TouchableOpacity onPress={showPrivacyPolicy}>
+                            <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+                        </CheckBoxContainer>
+                     <ConfirmButton 
+                      disabled={!allCheck}
+                      allCheck={allCheck}
+                      onPress={JoinMember}
+                      >
+                      <ConfirmText>Confirm</ConfirmText>
+                     </ConfirmButton>
+                    </BottomSheetContent>
+                  </ModalOverlay>
+                </Modal>
     </SafeArea>
   );
 };
@@ -424,6 +550,7 @@ const GeneralLoginContainer = styled.View`
 `;
 
 const TitleContainer = styled.View`
+  
   justify-content: flex-end;
   height: 50px;
 `;
@@ -469,6 +596,7 @@ const VerifyContainer = styled.View`
 `;
 
 const EmailContainer = styled.View`
+  
   background-color: #353637;
   width: 75%;
   height: 50px;
@@ -510,6 +638,7 @@ const ShowVerifiedBox =styled.View`
   align-items: center;
   justify-content: center;
   margin-left: 5px;
+  border-color:#949899;
 
 `;
 
@@ -520,6 +649,7 @@ const VerifyText = styled.Text`
 `;
 
 const ErrorBox = styled.View`
+  
   height: 20px;
   margin-top: 10px;
   flex-direction: row;
@@ -532,6 +662,18 @@ const ErrorText = styled.Text`
   margin-left: 5px;
 `;
 
+const NotErrorBox=styled.View`
+  height: 20px;
+  margin-top: 10px;
+  flex-direction: row;
+`;
+
+const NotErrorText=styled.Text`
+  color: #ffffff;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 11px;
+  margin-left: 5px;
+`;
 const CodeVerifyContainer=styled.View`
   background-color: #353637;
   width: 75%;
@@ -550,7 +692,8 @@ const CodeInputBox=styled.TextInput`
 `;
 
 const CheckPasswordContainer = styled.View`
-  margin: 20px 0px;
+
+  margin: 10px 0px;
   height: 70px;
 `;
 const CodeInput=styled.TextInput`
@@ -590,4 +733,107 @@ const NextText = styled.Text`
   color: #1d1e1f;
   font-size: 15px;
   font-family: PlusJakartaSans_500Medium;
+`;
+
+const ModalOverlay = styled.TouchableOpacity`
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: flex-end;
+`;
+
+const BottomSheetContent = styled.View`
+  background-color: #353637;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  max-height: 60%;
+  padding-bottom: 40px;
+`;
+
+const BottomSheetHeader = styled.View`
+  align-items: center;
+  padding: 15px 20px 10px 20px;
+`;
+
+const BottomSheetHandle = styled.View`
+  width: 45px;
+  height: 6px;
+  background-color: #949899;
+  border-radius: 2px;
+  margin-bottom: 16px;
+`;
+
+const BottomSheetTitle = styled.Text`
+  color: #ffffff;
+  font-size: 15px;
+  font-family:PlusJakartaSans_600SemiBold;
+  margin-left:30px;
+`;
+
+  const AllCheckBoxContainer=styled.View`
+    height:60px;
+    margin:20px 5px 10px 5px;
+    flex-direction:row;
+    padding-left:20px;
+    align-items:center;
+
+  `;
+  const AllCheckText=styled.Text`
+    color: #FFFFFF;
+    font-size:15px;
+    font-family:PlusJakartaSans_600SemiBold;
+    margin-left:15px;
+    
+  `;
+
+  const Divider=styled.View`
+    width: 90%;
+    align-self:center;
+    height: 2px;
+    background-color: #616262;
+    margin-bottom:10px;
+  `;
+
+  const CheckBoxContainer=styled.View`
+   
+    height:50px;
+    margin:5px;
+    flex-direction:row;
+    align-items:center;
+    padding-left:20px;
+    padding-right: 15px;
+  `;
+
+const CheckBox=styled.TouchableOpacity`
+    border-color: ${(props) => (props.check ? "#02F59B" : "#CCCFD0")};
+    border-width:1.25px;
+    width:20px;
+    height:20px;
+    align-items:center;
+    justify-content:center;
+
+`;
+const CheckText=styled.Text`
+    color: #FFFFFF;
+    font-size:13px;
+    font-family:PlusJakartaSans_500Medium;
+    margin-left:15px;
+    flex:1;
+`;
+
+const ConfirmButton=styled.TouchableOpacity`
+    opacity:${(props)=>(props.allCheck? 1 : 0.5)};
+    background-color:#02F59B;
+    height:50px;
+    width:90%;
+    align-self:center;
+    border-radius:8px;
+    align-items:center;
+    justify-content:center;
+    margin:20px 0px;
+`;
+
+const ConfirmText=styled.Text`
+    color:#1D1E1F;
+    font-size:15px;
+    font-family:PlusJakartaSans_500Medium;
 `;

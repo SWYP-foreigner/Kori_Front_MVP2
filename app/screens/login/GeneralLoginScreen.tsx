@@ -4,6 +4,20 @@ import {StatusBar,TouchableOpacity} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import axios from "axios";
+import { Config } from "@/src/lib/config";
+import * as SecureStore from 'expo-secure-store';
+
+
+type AppLoginResponse = {
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    userId: number;
+  };
+  message: string;
+  timestamp: string;
+};
 
 const GeneralLoginScreen=()=>{
     const router = useRouter();
@@ -12,15 +26,36 @@ const GeneralLoginScreen=()=>{
     const [error,setError]=useState(false);
     const isFull=(email&&password);
 
-    const goLogin=()=>{
-        console.log("Login api");
-        setError(true);
+    const goLogin=async()=>{
+
+        try{
+            const res=await axios.post<AppLoginResponse>(`${Config.SERVER_URL}/api/v1/member/doLogin`,{
+                email:email,
+                password:password
+            });
+            const { accessToken, refreshToken, userId } = res.data.data;
+            
+                  await SecureStore.setItemAsync('jwt', accessToken);
+                  await SecureStore.setItemAsync('refresh', refreshToken);
+                  await SecureStore.setItemAsync('MyuserId', userId.toString());
+                  console.log("로그인 성공");
+                  router.replace('/(tabs)');
+
+        }
+        catch(error)
+        {
+            console.error('서버 요청 실패', error);
+        }
+      
     };
     
     const createAccount=()=>{
-        router.push("./CreateAccountScreen")
+        router.push("./CreateAccountScreen");
     };
     
+    const goResetScreen=()=>{
+        router.push("./ResetPasswordEmail")
+    };
 
     return(<SafeArea>
             <StatusBar barStyle="light-content" />
@@ -53,7 +88,7 @@ const GeneralLoginScreen=()=>{
                         placeholderTextColor={"#616262"}
                     />
                 <ForgotContainer>
-                    <TouchableOpacity onPress={() =>console.log("Forgot Password")}>
+                    <TouchableOpacity onPress={goResetScreen}>
                     <ForgotText>
                         Forgot Password?
                     </ForgotText>
