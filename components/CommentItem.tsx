@@ -20,13 +20,14 @@ export type Comment = {
 type Props = {
   data: Comment;
   onPressLike?: () => void;
+  isFirst?: boolean; // ✅ 첫 번째 댓글 여부
 };
 
-export default function CommentItem({ data, onPressLike }: Props) {
+export default function CommentItem({ data, onPressLike, isFirst }: Props) {
   const isChild = !!data.isChild;
 
   return (
-    <Wrap $child={isChild}>
+    <Wrap $child={isChild} $first={isFirst}>
       <Row>
         {isChild && (
           <ReplyIcon>
@@ -67,10 +68,10 @@ export default function CommentItem({ data, onPressLike }: Props) {
   );
 }
 
-const Wrap = styled.View<{ $child: boolean }>`
+const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
   background: #171818;
-  padding: 12px 16px 10px 16px;
-  border-top-width: ${({ $child }) => ($child ? 0 : 1)}px;
+  padding: 15px 17px 25px 20px;
+  border-top-width: ${({ $child, $first }) => ($first || $child ? 0 : 1)}px; /* ✅ 첫 댓글 or 대댓글은 top border 제거 */
   border-top-color: #222426;
   border-bottom-width: 1px;
   border-bottom-color: #222426;

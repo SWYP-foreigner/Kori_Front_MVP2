@@ -111,7 +111,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         likes: Number(row.likeCount ?? 0),
         comments: Number(row.commentCount ?? 0),
         images: imageKeys.slice(0, MAX_IMAGES),
-        hotScore: row.score,
+        hotScore: typeof row.score === 'number' ? row.score : 0,
         likedByMe: Boolean(liked),
         ...(row.userImageUrl ? { userImageUrl: row.userImageUrl } : {}),
     };

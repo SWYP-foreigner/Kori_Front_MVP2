@@ -3,6 +3,7 @@ import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useMemo, useState } from 'react';
 import {
   Alert,
@@ -13,6 +14,7 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 
+import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 
 const AVATARS: ImageSourcePropType[] = [
@@ -23,14 +25,13 @@ const AVATARS: ImageSourcePropType[] = [
 
 export default function MyPageScreen() {
   const { data: me, isLoading } = useMyProfile();
+  const deleteAccountMut = useDeleteAccount();
 
   const fullName = useMemo(() => {
     if (isLoading) return 'Loading...';
     const name = [me?.firstname, me?.lastname].filter(Boolean).join(' ');
     return name || '—';
   }, [me, isLoading]);
-
-  // imageKey -> URL 매핑 필요하면 여기에 구현
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
@@ -43,7 +44,34 @@ export default function MyPageScreen() {
       'After deleting it, you cannot restore it.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => { } },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // iOS Alert 콜백에서 비동기 바로 실행 이슈 회피
+            setTimeout(() => {
+              deleteAccountMut.mutate(undefined, {
+                onSuccess: async () => {
+                  try {
+                    await SecureStore.deleteItemAsync('jwt'); // 토큰 제거
+                  } catch (e) {
+                    console.log('[DeleteAccount] token clear error', e);
+                  }
+                  Alert.alert('Account deleted', 'Your account has been removed.', [
+                    { text: 'OK', onPress: () => router.replace('/login') },
+                  ]);
+                },
+                onError: (e: any) => {
+                  const msg =
+                    e?.response?.data?.message ??
+                    e?.message ??
+                    'Failed to delete account. Please try again.';
+                  Alert.alert('Error', msg);
+                },
+              });
+            }, 0);
+          },
+        },
       ],
     );
   };
@@ -121,24 +149,19 @@ export default function MyPageScreen() {
     }
   };
 
-  const pickFromCameraOrGallery = () => {
-    Alert.alert(
-      'Pick photo',
-      'How to pick your profile photo?',
-      [
-        { text: 'Camera', onPress: openCamera },
-        { text: 'Gallery', onPress: openGallery },
-        { text: 'Cancel', style: 'cancel' },
-      ],
-    );
-  };
+  const pickFromCameraOrGallery = () =>
+    Alert.alert('Pick photo', 'How to pick your profile photo?', [
+      { text: 'Camera', onPress: openCamera },
+      { text: 'Gallery', onPress: openGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
 
   return (
     <Safe>
       <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <Header>
           <Title>My page</Title>
-          <IconImage source={require('../../../assets/images/IsolationMode.png')} />
+          <IconImage source={require('@/assets/images/IsolationMode.png')} />
         </Header>
 
         <ProfileView>
@@ -146,7 +169,9 @@ export default function MyPageScreen() {
             <EditAvatar />
           </AvatarPress>
 
-          <Name numberOfLines={1} ellipsizeMode="tail">{fullName}</Name>
+          <Name numberOfLines={1} ellipsizeMode="tail">
+            {fullName}
+          </Name>
 
           <EditButtonWrap>
             <CustomButton
@@ -199,14 +224,19 @@ export default function MyPageScreen() {
           <SectionTitle>My Account</SectionTitle>
         </SectionTitleRow>
 
-        <RowLink onPress={() => { }}>
+        <RowLink onPress={() => { /* TODO: logout */ }}>
           <RowLeft>Account Logout</RowLeft>
           <Chevron>›</Chevron>
         </RowLink>
         <RowSeparator />
 
-        <DeletePressable onPress={confirmDelete}>
-          <DeleteText>Delete Account</DeleteText>
+        <DeletePressable
+          onPress={confirmDelete}
+          disabled={deleteAccountMut.isPending}
+        >
+          <DeleteText>
+            {deleteAccountMut.isPending ? 'Deleting...' : 'Delete Account'}
+          </DeleteText>
         </DeletePressable>
       </Scroll>
 
@@ -263,18 +293,9 @@ export default function MyPageScreen() {
             </AvatarRow>
 
             <ButtonRow>
-              <CustomButton
-                label="Cancel"
-                filled={false}
-                onPress={() => setShowAvatarSheet(false)}
-              />
+              <CustomButton label="Cancel" filled={false} onPress={() => setShowAvatarSheet(false)} />
               <Gap />
-              <CustomButton
-                label="Save"
-                tone="mint"
-                filled
-                onPress={saveAvatar}
-              />
+              <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
             </ButtonRow>
           </Sheet>
         </SheetOverlay>
@@ -283,11 +304,11 @@ export default function MyPageScreen() {
   );
 }
 
+
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1D1E1F;
 `;
-
 const Scroll = styled.ScrollView``;
 
 const Header = styled.View`
@@ -295,14 +316,12 @@ const Header = styled.View`
   flex-direction: row;
   align-items: center;
 `;
-
 const Title = styled.Text`
   font-family: 'InstrumentSerif_400Regular';
   font-size: 32px;
   color: #ffffff;
   margin-right: 8px;
 `;
-
 const IconImage = styled.Image`
   width: 22px;
   height: 22px;
@@ -314,11 +333,9 @@ const ProfileView = styled.View`
   align-items: center;
   padding: 8px 16px 12px 16px;
 `;
-
 const AvatarPress = styled.Pressable`
   position: relative;
 `;
-
 const Name = styled.Text`
   margin-top: 10px;
   color: #ffffff;
@@ -328,7 +345,6 @@ const Name = styled.Text`
   max-width: 80%;
   text-align: center;
 `;
-
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
@@ -341,7 +357,6 @@ const SectionTitle = styled.Text`
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
-
 const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
@@ -358,19 +373,12 @@ function SectionTitleIcon() {
     />
   );
 }
-
 function SectionTitleIconGlobe() {
   return (
     <Image
       source={require('@/assets/icons/global.png')}
       resizeMode="contain"
-      style={{
-        width: 12,
-        height: 12,
-        marginRight: 6,
-        tintColor: '#9aa0a6',
-        transform: [{ translateY: 1 }],
-      }}
+      style={{ width: 12, height: 12, marginRight: 6, tintColor: '#9aa0a6', transform: [{ translateY: 1 }] }}
     />
   );
 }
@@ -381,13 +389,11 @@ const RowLink = styled.Pressable`
   justify-content: space-between;
   align-items: center;
 `;
-
 const RowLeft = styled.Text`
   color: #e9ecef;
   font-size: 15px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
-
 const Chevron = styled.Text`
   color: #b8bdc2;
   font-size: 18px;
@@ -400,7 +406,6 @@ const RowHeader = styled.Text`
   font-size: 15px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
-
 const RowSeparator = styled.View`
   height: 1px;
   margin: 4px 16px 18px 16px;
@@ -416,26 +421,22 @@ const CountCard = styled.View`
   flex-direction: row;
   align-items: stretch;
 `;
-
 const Divider = styled.View`
   width: 1px;
   background: #454a4f;
   margin: 6px 4px;
 `;
-
 const CountItem = styled.Pressable`
   flex: 1;
   padding: 6px 8px;
   align-items: center;
   justify-content: center;
 `;
-
 const CountLabel = styled.Text`
   color: #c7cbcf;
   font-size: 15px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
-
 const CountNumber = styled.Text`
   margin-top: 2px;
   color: #ffffff;
@@ -443,11 +444,11 @@ const CountNumber = styled.Text`
   font-family: 'PlusJakartaSans_700Bold';
 `;
 
-const DeletePressable = styled.Pressable`
+const DeletePressable = styled.Pressable<{ disabled?: boolean }>`
   padding: 16px;
   margin-top: 8px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
-
 const DeleteText = styled.Text`
   color: #ff5a5a;
   font-size: 14px;
@@ -459,14 +460,12 @@ const SheetOverlay = styled.TouchableOpacity`
   background: rgba(0, 0, 0, 0.55);
   justify-content: flex-end;
 `;
-
 const Sheet = styled.View`
   background: #353637;
   border-top-left-radius: 22px;
   border-top-right-radius: 22px;
   padding: 16px 16px 20px 16px;
 `;
-
 const Handle = styled.View`
   align-self: center;
   width: 54px;
@@ -475,7 +474,6 @@ const Handle = styled.View`
   background: #9aa0a6;
   margin-bottom: 10px;
 `;
-
 const SheetTitle = styled.Text`
   color: #ffffff;
   font-size: 18px;
@@ -491,9 +489,7 @@ const AvatarRow = styled.View`
   padding: 0 8px;
   margin-bottom: 18px;
 `;
-
 const AvatarItem = styled.Pressable``;
-
 const AvatarCircle = styled.View<{ selected: boolean }>`
   width: 68px;
   height: 68px;
@@ -505,13 +501,11 @@ const AvatarCircle = styled.View<{ selected: boolean }>`
   border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
   position: relative;
 `;
-
 const AvatarImg = styled.Image`
   width: 64px;
   height: 64px;
   border-radius: 32px;
 `;
-
 const CheckBadge = styled.View`
   position: absolute;
   right: -2px;
@@ -541,7 +535,6 @@ const ButtonRow = styled.View`
   margin-top: 10px;
   padding-bottom: 28px;
 `;
-
 const Gap = styled.View`
   width: 12px;
 `;
