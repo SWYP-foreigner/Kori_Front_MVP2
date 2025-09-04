@@ -1,9 +1,9 @@
+import { Config } from "@/src/lib/config";
 import axios, {
     AxiosError,
     AxiosInstance,
     InternalAxiosRequestConfig
 } from 'axios';
-import { Config } from "@/src/lib/config";
 import * as SecureStore from 'expo-secure-store';
 
 const BASE_URL = Config.SERVER_URL;
@@ -21,31 +21,6 @@ function shortUrl(base: string, url?: string) {
     } catch {
         return url;
     }
-}
-
-const REAL_ID_POOL = Array.from({ length: 19 }, (_, i) => i + 2);
-const ID_MAP_PATTERNS = [
-    /^\/api\/v1\/follow\/(\d+)(\?.*)?$/,
-    /^\/api\/v1\/home\/chat\/(\d+)(\?.*)?$/,
-    /^\/api\/v1\/chat\/direct\/(\d+)(\?.*)?$/,
-];
-
-function mapDummyIdInUrl(
-    url: string | undefined
-): { url: string; mapped?: { from: number; to: number; endpoint: string } } {
-    if (!url || !__DEV__) return { url: url || '' };
-
-    for (const re of ID_MAP_PATTERNS) {
-        const m = url.match(re);
-        if (!m) continue;
-        const from = Number(m[1]);
-        if (!Number.isFinite(from) || from < 100000) return { url };
-        const to = REAL_ID_POOL[from % REAL_ID_POOL.length];
-        const endpoint = re.toString();
-        const newUrl = url.replace(/\/\d+(\?.*)?$/, `/${to}${m[2] || ''}`);
-        return { url: newUrl, mapped: { from, to, endpoint } };
-    }
-    return { url };
 }
 
 const api: AxiosInstance = axios.create({
@@ -67,15 +42,6 @@ api.interceptors.request.use(
             (config.headers as any).Authorization = `Bearer ${token}`;
         }
 
-        if (config.url) {
-            const { url: newUrl, mapped } = mapDummyIdInUrl(config.url);
-            if (mapped) {
-                config.url = newUrl;
-                (config.headers as any)['X-Dummy-Map'] = `${mapped.from}->${mapped.to}`;
-                console.log(`[dummy-map] ${mapped.endpoint} ${mapped.from} -> ${mapped.to}`);
-            }
-        }
-
         (config as any).meta = { start: Date.now(), token };
 
         const method = (config.method || 'GET').toUpperCase();
@@ -89,8 +55,7 @@ api.interceptors.request.use(
                 const s = JSON.stringify(config.data);
                 if (s.length <= 400) console.log('[axios:req] body', JSON.parse(s));
                 else console.log('[axios:req] body(len)', s.length);
-            } catch {
-            }
+            } catch { }
         }
 
         return config;
