@@ -21,22 +21,24 @@ export default function useRecommendedFriends(limit = 20) {
 
             const mapped = (rows ?? []).map((r: any, i: number) => toFriendCard(r, i));
 
-            return mapped.map((raw: any, i: number): FriendCardItem => {
-                const n = Number(raw?.id);
-                const id = Number.isFinite(n) && n > 0 ? n : 100000 + i;
+            return mapped
+                .map((raw: any): FriendCardItem | null => {
+                    const n = Number(raw?.id);
+                    if (!Number.isFinite(n) || n <= 0) return null;
 
-                return {
-                    id,
-                    name: raw?.name || 'Unknown',
-                    country: raw?.country ?? '-',
-                    birth: raw?.birth ?? raw?.birthday ?? undefined,
-                    gender: (raw?.gender as FriendCardItem['gender']) ?? 'unspecified',
-                    purpose: raw?.purpose ?? '-',
-                    languages: Array.isArray(raw?.languages) ? raw.languages : [],
-                    personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
-                    bio: raw?.bio ?? raw?.introduction ?? '',
-                };
-            });
+                    return {
+                        id: n,
+                        name: raw?.name || 'Unknown',
+                        country: raw?.country ?? '-',
+                        birth: raw?.birth ?? raw?.birthday ?? undefined,
+                        gender: (raw?.gender as FriendCardItem['gender']) ?? 'unspecified',
+                        purpose: raw?.purpose ?? '-',
+                        languages: Array.isArray(raw?.languages) ? raw.languages : [],
+                        personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
+                        bio: raw?.bio ?? raw?.introduction ?? '',
+                    };
+                })
+                .filter(Boolean) as FriendCardItem[]; // ❗️null 제거 후 타입 단언
         },
         staleTime: 60_000,
     });

@@ -6,7 +6,11 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    Alert, FlatList, ListRenderItem, Modal, Platform, Pressable, RefreshControl
+    Alert, ListRenderItem,
+    Modal,
+    Platform,
+    Pressable,
+    RefreshControl
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -84,7 +88,7 @@ export default function MyHistoryScreen() {
     const comments: CommentRow[] = useMemo(
         () => (myCommentItems ?? []).map((row: any) => ({
             id: String(row.commentId),
-            postId: String(row.postId ?? row.parentPostId ?? ''), // ✅ 백엔드 필드명에 맞춰 조정
+            postId: String(row.postId ?? row.parentPostId ?? ''),
             myText: String(row.commentContent ?? '').trim(),
             parentSnippet: String(row.postContent ?? '').trim(),
             createdAt: toDateLabel(row.createdAt),
@@ -256,7 +260,6 @@ export default function MyHistoryScreen() {
                 ListEmptyComponent={<Empty><EmptyText>{isLoading ? 'Loading...' : 'No items.'}</EmptyText></Empty>}
             />
 
-            {/* 액션 시트 */}
             <Modal visible={sheetOpen} transparent animationType="fade" onRequestClose={closeSheet}>
                 <SheetBackdrop onPress={closeSheet} />
                 <Sheet>
@@ -299,15 +302,18 @@ const Header = styled.View`
   align-items: center;
   justify-content: space-between;
 `;
+
 const Back = styled.Pressable`
   width: 40px;
   align-items: flex-start;
 `;
+
 const HeaderTitle = styled.Text`
   color: #fff;
   font-size: 18px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const RightPlaceholder = styled.View`
   width: 40px;
 `;
@@ -320,16 +326,19 @@ const TabsBar = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
+
 const TabBtn = styled.Pressable<{ $active?: boolean }>`
   flex: 1;
   height: 100%;
   align-items: center;
   justify-content: flex-end;
 `;
+
 const TabText = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#9aa0a6')};
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const TabUnderline = styled.View`
   height: 2px;
   width: 62px;
@@ -338,99 +347,110 @@ const TabUnderline = styled.View`
   margin-top: 6px;
 `;
 
-/* 공통 행 컨테이너 */
 const RowWrap = styled.View`
   padding: 14px 16px 12px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
 
-/* Posts 전용 */
 const PostTopRow = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
+
 const Avatar = styled.Image`
   width: 34px;
   height: 34px;
   border-radius: 17px;
   background: #2a2b2c;
 `;
+
 const Meta = styled.View`
   flex: 1;
   margin-left: 10px;
 `;
+
 const Author = styled.Text`
   color: #ffffff;
   font-size: 13px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const SubRow = styled.View`
   margin-top: 2px;
   flex-direction: row;
   align-items: center;
 `;
+
 const Sub = styled.Text`
   color: #9aa0a6;
   font-size: 11px;
 `;
+
 const Dot = styled.Text`
   color: #9aa0a6;
   margin: 0 6px;
 `;
+
 const MoreBtn = styled.Pressable`
   padding: 6px;
 `;
+
 const Body = styled.Text`
   color: #e6e9ec;
   margin-top: 10px;
   font-size: 14px;
 `;
+
 const ActionRow = styled.View`
   margin-top: 8px;
   flex-direction: row;
   align-items: center;
 `;
+
 const Act = styled.Pressable`
   flex-direction: row;
   align-items: center;
   margin-right: 16px;
 `;
+
 const ActText = styled.Text`
   color: #cfd4da;
   margin-left: 6px;
   font-size: 12px;
 `;
 
-/* Comments 전용 */
 const TopRow = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
+
 const DateText = styled.Text`
   flex: 1;
   color: #9aa0a6;
   font-size: 11px;
 `;
+
 const CommentTitle = styled.Text`
   margin-top: 8px;
   color: #ffffff;
   font-size: 16px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const ParentSnippet = styled.Text`
   margin-top: 8px;
   color: #9aa0a6;
   font-size: 13px;
 `;
 
-/* Empty/Toast/Sheet */
 const Empty = styled.View`
   padding: 32px 16px;
   align-items: center;
 `;
+
 const EmptyText = styled.Text`
   color: #cfd4da;
 `;
@@ -439,6 +459,7 @@ const SheetBackdrop = styled(Pressable)`
   flex: 1;
   background: rgba(0, 0, 0, 0.35);
 `;
+
 const Sheet = styled.View`
   position: absolute;
   left: 0;
@@ -458,6 +479,7 @@ const Sheet = styled.View`
     android: { elevation: 8 },
 })}
 `;
+
 const SheetBtn = styled.Pressable<{ disabled?: boolean }>`
   height: 52px;
   border-radius: 12px;
@@ -469,10 +491,12 @@ const SheetBtn = styled.Pressable<{ disabled?: boolean }>`
   align-items: center;
   opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
 `;
+
 const SheetIcon = styled.View`
   width: 24px;
   align-items: center;
 `;
+
 const SheetText = styled.Text`
   color: #cfd4da;
   font-size: 15px;
@@ -486,6 +510,7 @@ const ToastWrap = styled.View`
   bottom: 24px;
   align-items: center;
 `;
+
 const ToastInner = styled.View`
   background: #2a2b2c;
   border-radius: 8px;
@@ -493,10 +518,10 @@ const ToastInner = styled.View`
   flex-direction: row;
   align-items: center;
 `;
+
 const ToastText = styled.Text`
   color: #cfd4da;
   font-size: 12px;
 `;
 
-/* 두 탭 모두 호환되도록 any */
-const List = styled(FlatList as new () => FlatList<any>)``;
+const List = styled.FlatList<any>``;

@@ -3,14 +3,16 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
 import { useLikeComment } from '@/hooks/mutations/useLikeComment';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
+import { useUpdateComment } from '@/hooks/mutations/useUpdateComment';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
+import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   Alert,
@@ -24,12 +26,14 @@ import {
   Pressable,
   TextInput as RNTextInput,
   TextInputProps,
-  View
+  View,
+  ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
 
 const AV = require('@/assets/images/character1.png');
 const DANGER = '#FF4D4F';
+const MAX_IMAGES = 5;
 
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
@@ -52,7 +56,6 @@ function formatCreatedYMD(v?: unknown): string {
   }
 }
 
-/* ---------- forwardRef EditInput ---------- */
 const StyledEditInput = styled(RNTextInput)`
   min-height: 220px;
   border-radius: 8px;
@@ -90,27 +93,69 @@ export default function PostDetailScreen() {
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
-  const likeComment = useLikeComment(postId);
 
   const [sort, setSort] = useState<SortKey>('new');
+  const likeComment = useLikeComment(postId, sort);
+
   const [value, setValue] = useState('');
   const [anonymous, setAnonymous] = useState(false);
 
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
 
-  const { data: comments = [] } = usePostComments(
+  const { data: commentsRaw } = usePostComments(
     Number.isFinite(postId) ? postId : undefined,
     sort,
   );
+  const commentList: Comment[] = Array.isArray(commentsRaw)
+    ? (commentsRaw as Comment[])
+    : ((commentsRaw as any)?.items ?? []);
 
   const [editVisible, setEditVisible] = useState(false);
   const [editText, setEditText] = useState('');
   const editInputRef = useRef<RNTextInput>(null);
 
+  const { mutateAsync: updateCommentMut } = useUpdateComment();
+  const likeBusyRef = useRef<Record<number, boolean>>({});
+
+  const rawImageKeys: string[] = useMemo(() => {
+    const p: any = data ?? {};
+    return (
+      (p.contentImageUrls as string[] | undefined) ??
+      (p.imageUrls as string[] | undefined) ??
+      []
+    );
+  }, [data]);
+
+  const imageUrls: string[] = useMemo(
+    () => keysToUrls(rawImageKeys).slice(0, MAX_IMAGES),
+    [rawImageKeys]
+  );
+
+  const [imgIndex, setImgIndex] = useState(0);
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems?.length) {
+        const i = viewableItems[0].index ?? 0;
+        setImgIndex(i);
+      }
+    }
+  ).current;
+
+  useEffect(() => {
+    if (!data) return;
+    const liked =
+      (data as any).likedByMe ??
+      (data as any).isLike ??
+      (data as any).isLiked ?? false;
+    setLikedByMe(Boolean(liked));
+  }, [data]);
+
   useEffect(() => {
     if (intent === 'edit' && focusCommentId) {
-      const target = comments.find(c => String((c as any).id) === String(focusCommentId));
+      const target = commentList.find(
+        c => String((c as any).id ?? (c as any).commentId) === String(focusCommentId)
+      );
       if (target) {
         const body =
           (target as any).content ??
@@ -122,48 +167,7 @@ export default function PostDetailScreen() {
         return () => clearTimeout(t);
       }
     }
-  }, [intent, focusCommentId, comments]);
-
-  useEffect(() => {
-    if (!data) return;
-    const liked =
-      (data as any).likedByMe ??
-      (data as any).isLike ??
-      (data as any).isLiked ?? false;
-    setLikedByMe(Boolean(liked));
-  }, [data]);
-
-  const submit = () => {
-    const text = value.trim();
-    if (!text || !Number.isFinite(postId)) return;
-    createCmt.mutate(
-      { anonymous, comment: text },
-      {
-        onSuccess: () => {
-          setValue('');
-          Keyboard.dismiss();
-          requestAnimationFrame(() =>
-            listRef.current?.scrollToOffset({ offset: 0, animated: true }),
-          );
-        },
-        onError: () => Alert.alert('Comment', 'Failed to post comment.'),
-      },
-    );
-  };
-
-  const openMenu = () => {
-    setMenuVisible(true);
-    slideY.setValue(300);
-    Animated.timing(slideY, {
-      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
-    }).start();
-  };
-  const closeMenu = () =>
-    new Promise<void>((resolve) => {
-      Animated.timing(slideY, {
-        toValue: 300, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true,
-      }).start(() => { setMenuVisible(false); resolve(); });
-    });
+  }, [intent, focusCommentId, commentList]);
 
   if (isLoading) {
     return (
@@ -188,18 +192,53 @@ export default function PostDetailScreen() {
     );
   }
 
-  const post = data;
-  const author = (post as any).userName ?? (post as any).authorName ?? 'Unknown';
-  const avatarSrc = post.userImageUrl ? { uri: post.userImageUrl } : AV;
-  const createdRaw =
-    (post as any).createdTime ?? (post as any).createdAt ?? (post as any).timestamp;
+  const post = data as any;
+  const author = post.userName ?? post.authorName ?? 'Unknown';
+  const avatarUrl = post.userImageUrl ? keyToUrl(post.userImageUrl) : undefined;
+  const avatarSrc = avatarUrl ? { uri: avatarUrl } : AV;
+
+  const createdRaw = post.createdTime ?? post.createdAt ?? post.timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
-  const firstImage = post.contentImageUrls?.[0];
+
   const serverLikeCount = post.likeCount ?? 0;
   const likeCount = likesOverride ?? serverLikeCount;
   const commentCount = post.commentCount ?? 0;
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
+
+  const toggleCommentLike = (comment: Comment) => {
+    const cmtId = Number((comment as any).id ?? (comment as any).commentId);
+    if (!Number.isFinite(cmtId)) return;
+    if (likeBusyRef.current[cmtId]) return;
+    likeBusyRef.current[cmtId] = true;
+
+    const prevLiked = Boolean(
+      (comment as any).likedByMe ?? (comment as any).isLiked ?? false
+    );
+
+    likeComment.mutate(
+      { commentId: cmtId, liked: prevLiked },
+      { onSettled: () => { likeBusyRef.current[cmtId] = false; } }
+    );
+  };
+
+  const submit = () => {
+    const text = value.trim();
+    if (!text || !Number.isFinite(postId)) return;
+    createCmt.mutate(
+      { anonymous, comment: text },
+      {
+        onSuccess: () => {
+          setValue('');
+          Keyboard.dismiss();
+          requestAnimationFrame(() =>
+            listRef.current?.scrollToOffset({ offset: 0, animated: true }),
+          );
+        },
+        onError: () => Alert.alert('Comment', 'Failed to post comment.'),
+      },
+    );
+  };
 
   const handleToggleLike = async () => {
     if (!Number.isFinite(postId) || likeMutation.isPending) return;
@@ -217,6 +256,20 @@ export default function PostDetailScreen() {
     }
   };
 
+  const openMenu = () => {
+    setMenuVisible(true);
+    slideY.setValue(300);
+    Animated.timing(slideY, {
+      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+    }).start();
+  };
+  const closeMenu = () =>
+    new Promise<void>((resolve) => {
+      Animated.timing(slideY, {
+        toValue: 300, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true,
+      }).start(() => { setMenuVisible(false); resolve(); });
+    });
+
   const onSubmitReport = () => {
     const text = reportText.trim();
     if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
@@ -226,10 +279,18 @@ export default function PostDetailScreen() {
     ]);
   };
 
-  const onSaveEdit = () => {
+  const onSaveEdit = async () => {
     const text = editText.trim();
     if (!text) { Alert.alert('Edit', 'Please enter your comment.'); return; }
-    setEditVisible(false);
+    if (!focusCommentId) { Alert.alert('Edit', 'Comment id missing.'); return; }
+
+    try {
+      await updateCommentMut({ commentId: Number(focusCommentId), content: text });
+      setEditVisible(false);
+    } catch (e) {
+      console.log('[update comment] error', e);
+      Alert.alert('Edit', 'Failed to save changes.');
+    }
   };
 
   return (
@@ -246,18 +307,12 @@ export default function PostDetailScreen() {
       >
         <FlatList<Comment>
           ref={listRef}
-          data={comments}
-          keyExtractor={(it) => String((it as any).id)}
+          data={commentList}
+          keyExtractor={(it) => String((it as any).id ?? (it as any).commentId)}
           renderItem={({ item }) => (
             <CommentItem
               data={item}
-              onPressLike={() => {
-                if (likeComment.isPending) return;
-                likeComment.mutate({
-                  commentId: Number((item as any).id),
-                  liked: !!(item as any).likedByMe,
-                });
-              }}
+              onPressLike={() => toggleCommentLike(item)}
             />
           )}
           keyboardShouldPersistTaps="handled"
@@ -279,11 +334,30 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
                   <SmallFlag onPress={() => setBookmarked(v => !v)} hitSlop={8}>
-                    <MaterialIcons name={bookmarked ? 'bookmark' : 'bookmark-border'} size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
+                    <MaterialIcons name="bookmark" size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
                   </SmallFlag>
                 </Row>
 
-                {!!firstImage && <Img source={{ uri: firstImage }} resizeMode="cover" />}
+                {imageUrls.length > 0 && (
+                  <View style={{ marginTop: 10 }}>
+                    <FlatList
+                      data={imageUrls}
+                      keyExtractor={(u, i) => `${u}#${i}`}
+                      renderItem={({ item }) => (
+                        <Img source={{ uri: item }} resizeMode="cover"
+                          onError={(e) =>
+                            console.log('[detail:image:error]', item, e.nativeEvent?.error)
+                          }
+                        />
+                      )}
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onViewableItemsChanged={onViewableItemsChanged}
+                    />
+                    <Counter>{` ${imgIndex + 1}/${imageUrls.length} `}</Counter>
+                  </View>
+                )}
 
                 <Body>{body}</Body>
 
@@ -297,11 +371,7 @@ export default function PostDetailScreen() {
                     <ActText>{commentCount}</ActText>
                   </Act>
                   <Grow />
-                  <MoreBtn onPress={() => {
-                    setMenuVisible(true);
-                    slideY.setValue(300);
-                    Animated.timing(slideY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-                  }} hitSlop={8}>
+                  <MoreBtn onPress={openMenu} hitSlop={8}>
                     <Feather name="more-horizontal" size={22} color="#8a8a8a" />
                   </MoreBtn>
                 </Footer>
@@ -358,7 +428,7 @@ export default function PostDetailScreen() {
             </SheetItem>
             <SheetItem onPress={async () => {
               setMenuVisible(false);
-              const userId = (post as any).userId ?? (post as any).authorId;
+              const userId = post.userId ?? post.authorId;
               Alert.alert('Report', 'Are you sure\nreport this user?', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
@@ -446,323 +516,63 @@ export default function PostDetailScreen() {
   );
 }
 
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1d1e1f;
+const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
+const Header = styled.View`height: 48px; padding: 0 12px; flex-direction: row; align-items: center; justify-content: space-between;`;
+const Back = styled.Pressable`width: 40px; align-items: flex-start;`;
+const HeaderTitle = styled.Text`color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold'; text-align: center; flex: 1;`;
+const RightPlaceholder = styled.View`width: 40px;`;
+const Center = styled.View`flex: 1; align-items: center; justify-content: center;`;
+const Dim = styled.Text`color: #cfd4da;`;
+
+const Card = styled.View`background: #1d1e1f; padding: 12px 16px 10px 16px; border-bottom-width: 1px; border-bottom-color: #222426;`;
+const Row = styled.View`flex-direction: row; align-items: center;`;
+const Avatar = styled.Image`width: 34px; height: 34px; border-radius: 17px; background: #2a2b2c;`;
+const Meta = styled.View`margin-left: 10px; flex: 1;`;
+const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
+const MetaRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center;`;
+const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
+const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
+const SmallFlag = styled.Pressable`padding: 6px;`;
+
+const Img = styled.Image`width: 360px; height: 200px; border-radius: 12px; margin-right: 8px;`;
+const Counter = styled.Text`
+  position: absolute; right: 14px; bottom: 14px; color: #fff;
+  background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 10px; font-size: 12px;
 `;
 
-const Header = styled.View`
-  height: 48px;
-  padding: 0 12px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
+const Body = styled.Text`color: #d9dcdf; font-size: 14px; line-height: 20px; margin-top: 10px;`;
+const Footer = styled.View`margin-top: 8px; flex-direction: row; align-items: center;`;
+const Act = styled.Pressable<{ disabled?: boolean }>`flex-direction: row; align-items: center; margin-right: 16px; opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};`;
+const ActText = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
+const Grow = styled.View`flex: 1;`;
+const MoreBtn = styled.Pressable`padding: 6px;`;
 
-const Back = styled.Pressable`
-  width: 40px;
-  align-items: flex-start;
-`;
+const SortWrap = styled.View`background: #171818; padding: 10px 16px 0 16px;`;
+const InputBar = styled.View`padding: 10px 12px 14px 12px; background: #1d1e1f; border-top-width: 1px; border-top-color: #222426; flex-direction: row; align-items: flex-end; gap: 10px;`;
+const Composer = styled.View`flex: 1; background: #414142; border-radius: 8px; padding: 10px 12px; flex-direction: row; align-items: center;`;
+const BottomInput = styled(RNTextInput)`flex: 1; color: #ffffff; font-size: 14px; padding: 0; background: transparent;`;
+const AnonToggle = styled.Pressable`flex-direction: row; align-items: center; margin-left: 10px;`;
+const AnonLabel = styled.Text`color: #cccfd5; font-size: 14px; margin-right: 8px; font-family: 'PlusJakartaSans_Light';`;
+const Check = styled.View<{ $active?: boolean }>`width: 16px; height: 16px; border-radius: 2px; border-width: 1.1px; border-color: #cccfd5; background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')}; align-items: center; justify-content: center;`;
+const SendBtn = styled.Pressable`width: 36px; height: 36px; align-items: center; justify-content: center;`;
 
-const HeaderTitle = styled.Text`
-  color: #fff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
-  text-align: center;
-  flex: 1;
-`;
+const SheetHandle = styled.View`align-self: center; width: 44px; height: 4px; border-radius: 2px; background: #44484d; margin-bottom: 8px;`;
+const SheetItem = styled.Pressable`flex-direction: row; align-items: center; padding: 14px 20px;`;
+const SheetIcon = styled.View`width: 28px; align-items: center; margin-right: 8px;`;
+const SheetLabel = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e6e9ed')}; font-size: 16px;`;
+const SheetDivider = styled.View`height: 1px; background: #2c2f33; margin: 4px 0;`;
 
-const RightPlaceholder = styled.View`
-  width: 40px;
-`;
-
-const Center = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Dim = styled.Text`
-  color: #cfd4da;
-`;
-
-const Card = styled.View`
-  background: #1d1e1f;
-  padding: 12px 16px 10px 16px;
-  border-bottom-width: 1px;
-  border-bottom-color: #222426;
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Avatar = styled.Image`
-  width: 34px;
-  height: 34px;
-  border-radius: 17px;
-  background: #2a2b2c;
-`;
-
-const Meta = styled.View`
-  margin-left: 10px;
-  flex: 1;
-`;
-
-const Author = styled.Text`
-  color: #fff;
-  font-size: 13px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const MetaRow = styled.View`
-  margin-top: 2px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Sub = styled.Text`
-  color: #9aa0a6;
-  font-size: 11px;
-`;
-
-const Dot = styled.Text`
-  color: #9aa0a6;
-  margin: 0 6px;
-`;
-
-const SmallFlag = styled.Pressable`
-  padding: 6px;
-`;
-
-const Img = styled.Image`
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  margin-top: 10px;
-`;
-
-const Body = styled.Text`
-  color: #d9dcdf;
-  font-size: 14px;
-  line-height: 20px;
-  margin-top: 10px;
-`;
-
-const Footer = styled.View`
-  margin-top: 8px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Act = styled.Pressable<{ disabled?: boolean }>`
-  flex-direction: row;
-  align-items: center;
-  margin-right: 16px;
-  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
-`;
-
-const ActText = styled.Text`
-  color: #cfd4da;
-  margin-left: 6px;
-  font-size: 12px;
-`;
-
-const Grow = styled.View`
-  flex: 1;
-`;
-
-const MoreBtn = styled.Pressable`
-  padding: 6px;
-`;
-
-const SortWrap = styled.View`
-  background: #171818;
-  padding: 10px 16px 0 16px;
-`;
-
-const InputBar = styled.View`
-  padding: 10px 12px 14px 12px;
-  background: #1d1e1f;
-  border-top-width: 1px;
-  border-top-color: #222426;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 10px;
-`;
-
-const Composer = styled.View`
-  flex: 1;
-  background: #414142;
-  border-radius: 8px;
-  padding: 10px 12px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const BottomInput = styled(RNTextInput)`
-  flex: 1;
-  color: #ffffff;
-  font-size: 14px;
-  padding: 0;
-  background: transparent;
-`;
-
-const AnonToggle = styled.Pressable`
-  flex-direction: row;
-  align-items: center;
-  margin-left: 10px;
-`;
-
-const AnonLabel = styled.Text`
-  color: #cccfd5;
-  font-size: 14px;
-  margin-right: 8px;
-  font-family: 'PlusJakartaSans_Light';
-`;
-
-const Check = styled.View<{ $active?: boolean }>`
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border-width: 1.1px;
-  border-color: #cccfd5;
-  background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')};
-  align-items: center;
-  justify-content: center;
-`;
-
-const SendBtn = styled.Pressable`
-  width: 36px;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SheetHandle = styled.View`
-  align-self: center;
-  width: 44px;
-  height: 4px;
-  border-radius: 2px;
-  background: #44484d;
-  margin-bottom: 8px;
-`;
-
-const SheetItem = styled.Pressable`
-  flex-direction: row;
-  align-items: center;
-  padding: 14px 20px;
-`;
-
-const SheetIcon = styled.View`
-  width: 28px;
-  align-items: center;
-  margin-right: 8px;
-`;
-
-const SheetLabel = styled.Text<{ $danger?: boolean }>`
-  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e6e9ed')};
-  font-size: 16px;
-`;
-
-const SheetDivider = styled.View`
-  height: 1px;
-  background: #2c2f33;
-  margin: 4px 0;
-`;
-
-const Dialog = styled.View`
-  width: 100%;
-  max-width: 360px;
-  background: #2a2b2c;
-  border-radius: 12px;
-  padding: 12px 12px 16px 12px;
-`;
-
-const DialogHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-`;
-
-const DialogTitle = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const DialogTitleText = styled.Text<{ $danger?: boolean }>`
-  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')};
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const CloseBtn = styled.Pressable`
-  padding: 4px;
-`;
-
-const DialogTextarea = styled.TextInput`
-  min-height: 220px;
-  border-radius: 8px;
-  padding: 12px;
-  background: #1f2021;
-  color: #e7eaed;
-  font-size: 14px;
-  border-width: 1px;
-  border-color: #3a3d40;
-`;
-
-const SubmitBtn = styled.Pressable`
-  background: #ff4d4f;
-  padding: 12px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 12px;
-`;
-
-const SubmitText = styled.Text`
-  color: #ffffff;
-  font-weight: 700;
-`;
-
-const EditBox = styled.View`
-  width: 100%;
-  max-width: 360px;
-  background: #2a2b2c;
-  border-radius: 12px;
-  padding: 12px 12px 16px 12px;
-`;
-
-const EditHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-`;
-
-const EditTitle = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const EditTitleText = styled.Text`
-  color: #cfd4da;
-  font-size: 14px;
-  font-weight: 700;
-`;
-
-const SaveBtn = styled.Pressable`
-  background: #30f59b;
-  padding: 12px;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 12px;
-`;
-
-const SaveText = styled.Text`
-  color: #000;
-  font-weight: 700;
-`;
+const Dialog = styled.View`width: 100%; max-width: 360px; background: #2a2b2c; border-radius: 12px; padding: 12px 12px 16px 12px;`;
+const DialogHeader = styled.View`flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px;`;
+const DialogTitle = styled.View`flex-direction: row; align-items: center;`;
+const DialogTitleText = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')}; font-size: 14px; font-weight: 700;`;
+const CloseBtn = styled.Pressable`padding: 4px;`;
+const DialogTextarea = styled.TextInput`min-height: 220px; border-radius: 8px; padding: 12px; background: #1f2021; color: #e7eaed; font-size: 14px; border-width: 1px; border-color: #3a3d40;`;
+const SubmitBtn = styled.Pressable`background: #ff4d4f; padding: 12px; border-radius: 8px; align-items: center; justify-content: center; margin-top: 12px;`;
+const SubmitText = styled.Text`color: #ffffff; font-weight: 700;`;
+const EditBox = styled.View`width: 100%; max-width: 360px; background: #2a2b2c; border-radius: 12px; padding: 12px 12px 16px 12px;`;
+const EditHeader = styled.View`flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px;`;
+const EditTitle = styled.View`flex-direction: row; align-items: center;`;
+const EditTitleText = styled.Text`color: #cfd4da; font-size: 14px; font-weight: 700;`;
+const SaveBtn = styled.Pressable`background: #30f59b; padding: 12px; border-radius: 8px; align-items: center; justify-content: center; margin-top: 12px;`;
+const SaveText = styled.Text`color: #000; font-weight: 700;`;
