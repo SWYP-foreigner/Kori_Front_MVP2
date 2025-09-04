@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
 import { useRouter } from 'expo-router';
-
+import api from '@/api/axiosInstance';
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -105,6 +105,7 @@ export default function FriendCard({
   };
   
   const handleChat=()=>{
+
     router.push({
       pathname: '../screens/chatscreen/ChattingRoomScreen',
       params: { 

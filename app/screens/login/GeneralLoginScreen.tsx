@@ -4,23 +4,59 @@ import {StatusBar,TouchableOpacity} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import axios from "axios";
+import { Config } from "@/src/lib/config";
+import * as SecureStore from 'expo-secure-store';
+
+
+type AppLoginResponse = {
+    accessToken: string;
+    refreshToken: string;
+    userId: number;
+    message: string;
+    timestamp: string;
+};
 
 const GeneralLoginScreen=()=>{
     const router = useRouter();
     const [email,setEmail]=useState('');
     const [password, setPassword]=useState('');
     const [error,setError]=useState(false);
+    const [lookPassword, setLookPassword] = useState(true);
+    const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
     const isFull=(email&&password);
 
-    const goLogin=()=>{
-        console.log("Login api");
-        setError(true);
+    const goLogin=async()=>{
+
+        try{
+            const res=await axios.post<AppLoginResponse>(`${Config.SERVER_URL}/api/v1/member/doLogin`,{
+                email:email,
+                password:password
+            });
+            
+            const { accessToken, refreshToken, userId } = res.data;
+            console.log("로그인 여부2",res.data);
+                  await SecureStore.setItemAsync('jwt', accessToken);
+                  await SecureStore.setItemAsync('refresh', refreshToken);
+                  await SecureStore.setItemAsync('MyuserId', userId.toString());
+                  console.log("로그인 성공");
+                  router.replace('/(tabs)');
+
+        }
+        catch(error)
+        {
+            setError(true);
+        }
+      
     };
     
     const createAccount=()=>{
-        router.push("./CreateAccountScreen")
+        router.push("./CreateAccountScreen");
     };
     
+    const goResetScreen=()=>{
+        router.push("./ResetPasswordEmail")
+    };
 
     return(<SafeArea>
             <StatusBar barStyle="light-content" />
@@ -46,14 +82,26 @@ const GeneralLoginScreen=()=>{
                         <TitleContainer>
                         <TitleText>Password</TitleText>
                     </TitleContainer>
-                      <InputBox
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="Enter Password"
-                        placeholderTextColor={"#616262"}
+                        <PasswordContainer>
+                <PasswordInputBox
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter Password"
+                  placeholderTextColor={"#616262"}
+                  secureTextEntry={lookPassword}
+                />
+                <EyeIconBox>
+                  <TouchableOpacity onPress={() => setLookPassword(!lookPassword)}>
+                    <Ionicons
+                      name={lookPassword ? "eye-off-outline" : "eye-outline"}
+                      size={25}
+                      color="#616262"
                     />
+                  </TouchableOpacity>
+                </EyeIconBox>
+              </PasswordContainer>
                 <ForgotContainer>
-                    <TouchableOpacity onPress={() =>console.log("Forgot Password")}>
+                    <TouchableOpacity onPress={goResetScreen}>
                     <ForgotText>
                         Forgot Password?
                     </ForgotText>
@@ -202,3 +250,29 @@ const CNAText=styled(ForgotText)`
     color:#ffffff;
 `;
 
+const PasswordContainer = styled.View`
+  background-color: #353637;
+  height: 50px;
+  border-radius: 4px;
+  flex-direction: row;
+  margin-top: 5px;
+`;
+
+const PasswordInputBox = styled.TextInput`
+  color: #ffffff;
+  width: 85%;
+  height: 50px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: PlusJakartaSans_400Regular;
+  padding-left: 10px;
+`;
+
+const EyeIconBox = styled.View`
+  background-color: #353637;
+  border-radius: 4px;
+  height: 50px;
+  width: 15%;
+  align-items: center;
+  justify-content: center;
+`;
