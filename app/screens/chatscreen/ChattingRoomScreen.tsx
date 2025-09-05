@@ -8,6 +8,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 /*
 #방법
 
@@ -238,10 +239,6 @@ const updateTranslateScreen=async()=>{
     return(
         <SafeArea>
              <StatusBar barStyle="light-content" />
-             <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
             <Container>
                 <HeaderContainer>
                         <Left>
@@ -265,7 +262,10 @@ const updateTranslateScreen=async()=>{
                         contentContainerStyle={{ paddingBottom: 100 }} // 아래 여백 확보
                         showsVerticalScrollIndicator={false}
                     > */}
-
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    >
                 <ChattingScreen>
                      <FlatList
                         data={messages}
@@ -353,12 +353,15 @@ const updateTranslateScreen=async()=>{
                     <SendImageBox onPress={sendMessage}>
                         <SendImage source={require("@/assets/images/Send.png")}/>
                     </SendImageBox>
+                    
                 </BottomContainer>
+                </KeyboardAvoidingView>
                  <TranslateButtonBox onPress={updateTranslateScreen}>
                         <TranslateImage source={require("@/assets/images/translate.png")}/>
-                    </TranslateButtonBox>
+                </TranslateButtonBox>
+            
             </Container>
-            </KeyboardAvoidingView>
+            
         </SafeArea>
 
 

@@ -30,8 +30,8 @@ const GeneralLoginScreen=()=>{
 
         try{
             const res=await axios.post<AppLoginResponse>(`${Config.SERVER_URL}/api/v1/member/doLogin`,{
-                email:email,
-                password:password
+                email:email.trim(),
+                password:password.trim()
             });
             
             const { accessToken, refreshToken, userId } = res.data;

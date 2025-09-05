@@ -1,112 +1,46 @@
 import React, { useRef } from "react";
-import { Animated, PanResponder, Text,Alert } from "react-native";
 import styled from "styled-components/native";
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
+import { Config } from "@/src/lib/config";
+import api from "@/api/axiosInstance";
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
 const MyChatRoomBox = ({data}) => {
-  // const translateX = useRef(new Animated.Value(0)).current;
-  // const isOpen = useRef(false);
+ 
    const router = useRouter();
 
 
-  // const onDelete=()=>
-  // {
-  //   console.log('삭제 버튼 눌림');
-  //   // Alert
-  //   Alert.alert('Delete Chatting?', 'After deleting it , you cannot restore it.', [
-  //     {text: 'Delete', onPress: () => console.log('삭제 후 화면 갱신')},
-  //      {
-  //       text: 'cancel',
-  //       onPress: () => console.log('삭제 취소됨'),
-       
-  //      }
-  //   ]);
-  // };
+
   
   //채팅방 진입
-  const enterChattingRoom=()=>{
-    router.push({
-      pathname: '../screens/chatscreen/ChattingRoomScreen',
-      params: { 
-        roomId: data.roomId,       // props에서 바로 가져옴
-        roomName: data.roomName,  // props에서 바로 가져옴
-      },
-    });
+  const enterChattingRoom=async()=>{
+    try{
+      const res=await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${data.roomId}/read-all`);
+      if(res.status===200)
+      {
+            router.push({
+          pathname: '../screens/chatscreen/ChattingRoomScreen',
+          params: { 
+            roomId: data.roomId,       // props에서 바로 가져옴
+            roomName: data.roomName,  // props에서 바로 가져옴
+            },
+          });
+      }
+      else{
+        console.log("채팅방 리스트 읽음 표시 오류");
+      }
+    }
+    catch(error)
+    {
+      console.error("채팅방 리스트 읽음 처리 실패",error);
+    }
   };
 
-  // const panResponder = useRef(
-  //   PanResponder.create({
-  //     onMoveShouldSetPanResponder: (_, gestureState) => {
-  //       // 좌우로 드래그할 때만 PanResponder 발동
-  //       return Math.abs(gestureState.dx) > 5;
-  //     },
-  //     onPanResponderMove: (_, gestureState) => {
-  //       // 왼쪽으로 드래그 중일 때만 움직임 적용 (0 이상으로 못 가게 제한)
-  //       if (gestureState.dx < 0 || (isOpen.current && gestureState.dx > 0)) {
-  //         translateX.setValue(gestureState.dx + (isOpen.current ? -100 : 0));
-  //       }
-  //     },
-  //     onPanResponderRelease: (_, gestureState) => {
-  //       if (!isOpen.current) {
-  //         // 아직 닫혀 있는 상태 → 왼쪽으로 스와이프하면 열기
-  //         if (gestureState.dx < -SWIPE_THRESHOLD) {
-  //           Animated.timing(translateX, {
-  //             toValue: -100, // 삭제 버튼 만큼 열림
-  //             duration: 200,
-  //             useNativeDriver: true,
-  //           }).start(() => {
-  //             isOpen.current = true;
-  //           });
-  //         } else {
-  //           // 원래 위치로 복귀
-  //           Animated.spring(translateX, {
-  //             toValue: 0,
-  //             useNativeDriver: true,
-  //           }).start();
-  //         }
-  //       } else {
-  //         // 이미 열려 있는 상태 → 오른쪽으로 스와이프하면 닫기
-  //         if (gestureState.dx > SWIPE_THRESHOLD) {
-  //           Animated.timing(translateX, {
-  //             toValue: 0,
-  //             duration: 200,
-  //             useNativeDriver: true,
-  //           }).start(() => {
-  //             isOpen.current = false;
-  //           });
-  //         } else {
-  //           // 다시 열려있도록 유지
-  //           Animated.spring(translateX, {
-  //             toValue: -100,
-  //             useNativeDriver: true,
-  //           }).start();
-  //         }
-  //       }
-  //     },
-  //   })
-  // ).current;
+ 
 
   return (
     <ChatRoom>
-      {/* 삭제 버튼 (배경에 깔림) */}
-
-      
-        {/* <DeleteButton activeOpacity={0.8} onPress={onDelete}>
-          <FontAwesome name="trash-o" size={24} color="#ffffff" />
-        </DeleteButton>
-       */}
-      
-      {/* 채팅방 박스 (앞에서 움직이는 뷰) */}
-      {/* <Animated.View
-        style={{
-          transform: [{ translateX }],
-          width: "100%",
-        }}
-        {...panResponder.panHandlers}
-      > */}
    
         <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
@@ -117,7 +51,10 @@ const MyChatRoomBox = ({data}) => {
           <RoomWrapper>
             <RoomTop>
               <ChatPeopleContainer>
-                <ChatPerson>{data.roomName}</ChatPerson>
+                <ChatPerson>{data.roomName?data.roomName.length>22
+                              ?data.roomName.slice(0,22)+"..."
+                              :data.roomName:""
+                            }</ChatPerson>
                 <ChatPeople>{data.participantCount}</ChatPeople>
               </ChatPeopleContainer>
               <ChatTime>{data.lastMessageTime}</ChatTime>
@@ -135,7 +72,6 @@ const MyChatRoomBox = ({data}) => {
             </RoomBottom>
           </RoomWrapper>
         </RoomBox>
-      {/* </Animated.View> */}
     </ChatRoom>
   );
 };
