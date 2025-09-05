@@ -8,6 +8,8 @@ import { useLocalSearchParams } from "expo-router";
 import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Dimensions } from 'react-native';
 /*
 #방법
 
@@ -39,10 +41,11 @@ type TranslatedChatMessage={
     senderImageUrl:string
 };
 
-
+const { height } = Dimensions.get('window');
 
 const ChattingRoomScreen=()=>{
-
+    const insets = useSafeAreaInsets(); // 상하좌우 안전 영역
+   
     const router = useRouter();
     const { userId, roomName } = useLocalSearchParams<{ userId: string; roomName: string }>();
     const { roomId }= useLocalSearchParams<{ roomId : string }>();
@@ -50,6 +53,8 @@ const ChattingRoomScreen=()=>{
     const [inputText, setInputText] = useState("");
     const [myUserId,setMyUserId]=useState('');
     const [isTranslate,setIsTranslate]=useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true); // 더 불러올 메시지가 있는지
     // STOMP 연결 상태 플래그
     const [stompConnected, setStompConnected] = useState(false);    
     
@@ -64,8 +69,7 @@ const ChattingRoomScreen=()=>{
     }
     };
     // ✅ 기존 채팅 불러오기
-  useEffect(() => {
-    const fetchHistory = async () => {
+     const fetchHistory = async () => {
         setMyId();
       try {
         // 채팅 메세지 기록 받기
@@ -76,12 +80,15 @@ const ChattingRoomScreen=()=>{
             const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
             const chatHistory:ChatHistory[]=res.data.data;
                 // 메시지 담기
-            setMessages([...chatHistory.reverse()])
+            setMessages([...chatHistory])
         }
+        setIsTranslate(false);
       } catch (err) {
         console.log("채팅 기록 불러오기 실패", err);
       }
     };
+
+  useEffect(() => {
     fetchHistory();
   }, []);
 
@@ -125,19 +132,18 @@ useEffect(() => {
             console.log('✅ [STOMP] onConnect: 연결 성공!', frame);
             setStompConnected(true);
             
-            // ★★★★★ 수정된 부분 ★★★★★
-            // 구독 경로를 정규식(/.../)이 아닌 템플릿 리터럴( `...` )로 수정합니다.
+            // 메세지 수신
             const subscription = stompClient.current?.subscribe(
                 `/topic/user/${myId}/messages`, 
                 (message) => {
                     console.log("📩 [STOMP] 메시지 수신:", message.body);
                     const body = JSON.parse(message.body);
-                    setMessages((prev) => [...prev, body]);
+                    setMessages((prev) => [body,...prev]);
                 }
             );
             console.log("📢 [STOMP] 채널 구독 완료:", subscription);
         };
-
+      
         stompClient.current.onStompError = (frame) => {
             console.error('❌ [STOMP] onStompError: STOMP 프로토콜 오류', frame.headers['message']);
         };
@@ -167,8 +173,27 @@ useEffect(() => {
     };
 }, []);
 
+    // 읽음처리 실시간
+    useEffect(() => {
+    if (stompConnected && messages.length > 0) {
+        // 마지막 메시지 id 가져오기
+        const lastMessageId = messages[0].id;
+
+        stompClient.current?.publish({
+        destination: "/app/chat.markAsRead",
+        body: JSON.stringify({
+            roomId: roomId,
+            userId:myUserId,
+            lastReadMessageId: lastMessageId,
+        }),
+        });
+
+        console.log("읽음 처리 발행:", lastMessageId);
+    }
+    }, [stompConnected, messages]); // stomp 연결 완료, messages가 바뀔 때마다
+    
+
     // ✅ 메시지 전송
-  // 메시지 전송
     const sendMessage = () => {
         console.log("connect",myUserId);
 
@@ -209,6 +234,36 @@ const formatTime = (sentAt: string | number) => {
   return `${hours}:${minutes}`;
 };
 
+
+// const fetchOlderMessages = async () => {
+//   if (loadingMore || !hasMore) return;
+
+//   setLoadingMore(true);
+
+//   try {
+//     const lastMessageId = messages[0]?.id; // 맨 마지막 메시지 ID
+
+//     const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages`, {
+//       params: { roomId, lastMessageId },
+//     });
+
+//     const olderMessages = res.data.data;
+
+//     if (olderMessages.length > 0) {
+//       setMessages((prev) => [...prev,...olderMessages]); // 뒤쪽에 추가
+//     } else {
+//       setHasMore(false); // 더 이상 불러올 메시지 없음
+//     }
+//   } catch (err) {
+//     console.log("이전 메시지 불러오기 실패", err);
+//   } finally {
+//     setLoadingMore(false);
+//   }
+// };
+
+
+
+
 //번역된 대화 기록 가져오기
 const updateTranslateScreen=async()=>{
    try {
@@ -219,8 +274,9 @@ const updateTranslateScreen=async()=>{
         // 채팅 메세지 기록 받기
              const res =await api.get(`/api/v1/chat/rooms/${roomId}/messages`);
              const translatedChatMessage:TranslatedChatMessage[]=res.data.data;
+             console.log("번역된 채팅기록",translatedChatMessage);
                 // 메시지 담기
-            setMessages([...translatedChatMessage.reverse()])
+            setMessages([...translatedChatMessage])
             if(res)
             {
                 setIsTranslate(true);
@@ -236,12 +292,10 @@ const updateTranslateScreen=async()=>{
 };
 
     return(
+
+        
         <SafeArea>
              <StatusBar barStyle="light-content" />
-             <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
             <Container>
                 <HeaderContainer>
                         <Left>
@@ -261,22 +315,23 @@ const updateTranslateScreen=async()=>{
                             </TouchableOpacity>
                         </Right>
                 </HeaderContainer>
-                {/* <ScrollView
-                        contentContainerStyle={{ paddingBottom: 100 }} // 아래 여백 확보
-                        showsVerticalScrollIndicator={false}
-                    > */}
-
+                
                 <ChattingScreen>
+                   
                      <FlatList
                         data={messages}
                         keyExtractor={item => item.id.toString()}
-                       
+                        inverted
+                        showsVerticalScrollIndicator={false}
+                        // onEndReached={fetchOlderMessages}
+                        // onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
                             
                             // 이전 메시지와 비교해서 같은 사람인지 확인
-                            const showProfile =
-                            index === 0 || messages[index -1].senderFirstName !== item.senderFirstName;
+                           const showProfile =
+                            index === messages.length - 1 || // 마지막 메시지면 무조건 프로필 표시
+                            (messages[index + 1] && messages[index + 1].senderFirstName !== item.senderFirstName);
                             
                             
 
@@ -340,10 +395,8 @@ const updateTranslateScreen=async()=>{
                             }
                         }}
                         />
-                </ChattingScreen>
-                        
-                
-                <BottomContainer>
+              
+                <BottomContainer  style={{ paddingBottom: insets.bottom + 5 }}>
                     <BottomInputBox
                         value={inputText}
                         onChangeText={setInputText}
@@ -353,14 +406,28 @@ const updateTranslateScreen=async()=>{
                     <SendImageBox onPress={sendMessage}>
                         <SendImage source={require("@/assets/images/Send.png")}/>
                     </SendImageBox>
+                    
                 </BottomContainer>
-                 <TranslateButtonBox onPress={updateTranslateScreen}>
+            
+                </ChattingScreen>
+              
+               
+                
+                {!isTranslate&&( <TranslateButtonBox onPress={updateTranslateScreen}>
                         <TranslateImage source={require("@/assets/images/translate.png")}/>
-                    </TranslateButtonBox>
-            </Container>
-            </KeyboardAvoidingView>
-        </SafeArea>
+                </TranslateButtonBox>
+                )}
+            
 
+               
+               {isTranslate&&(  <TranslatingButtonBox onPress={fetchHistory}>
+                        <TranslatingImage source={require("@/assets/images/translating.png")}/>
+                    </TranslatingButtonBox>)}
+            
+            </Container>
+            
+        </SafeArea>
+     
 
     );
 
@@ -412,7 +479,7 @@ const Right=styled.View`
 const ChattingScreen=styled.View`
     flex:1;
     flex-direction: column; 
-    
+    padding-bottom:10px;
 `;
 const TimeView=styled.View`
     align-items:center;
@@ -473,14 +540,7 @@ const OtherNameText=styled.Text`
     font-size:13px;
 `;
 
-// const LeftMessageBox=styled.View`
-//     max-width:250px;
-//     align-self: flex-start;  /* 부모 기준 왼쪽 정렬 */
-//     margin-top:5px;
-//     flex-direction:row;
-//     justify-content: flex-end;   /* 가로 방향 끝 */
-//     align-items: flex-end;       /* 세로 방향 끝 */
-// `;
+
 const OtherFirstTextBox=styled.View`
   background-color: #414142;
   padding: 8px 12px;
@@ -571,8 +631,8 @@ const Divider=styled.View`
    margin:10px 0px;
 `;
 const TranslateButtonBox=styled.TouchableOpacity`
-    position:absolute;
-    bottom:100px;
+    position: absolute;
+    bottom: ${height * 0.17}px; 
     right:10px;
     width:50px;
     height:50px;
@@ -590,9 +650,31 @@ const TranslateImage=styled.Image`
     height:75px;
     resize-mode:contain;
 `;
+
+const TranslatingButtonBox=styled.TouchableOpacity`
+    position: absolute;
+    top: ${height * 0.1}px; 
+    width:50px;
+    height:50px;
+    align-self:center;
+    border-radius:30px;
+    z-index:999;
+    align-items:center;
+    justify-content:center;
+    flex-direction:row;
+    align-items:center;
+
+`;
+
+const TranslatingImage=styled.Image`
+    width:130px;
+    height:130px;
+    resize-mode:contain;
+`;
+
+
 const BottomContainer=styled.View`
     background-color:#1D1E1F;
-    height:90px;
     border-top-width:1px;
     border-top-color:#353637;
     flex-direction:row;
@@ -600,6 +682,7 @@ const BottomContainer=styled.View`
 `;
 const BottomInputBox=styled.TextInput`
     background-color:#353637;
+    color:#ffffff;
     border-radius:8px;
     width:85%;
     height:45px;

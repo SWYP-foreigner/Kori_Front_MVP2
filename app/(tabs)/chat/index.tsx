@@ -4,7 +4,8 @@ import Feather from '@expo/vector-icons/Feather';
 import MyChatRoomBox from '@/components/MyChatRoomBox';
 import GroupChatRoomBox from '@/components/GroupChatRoomBox';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useEffect, useState , useRef } from 'react';
+import { useEffect, useState , useRef,useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
@@ -36,20 +37,22 @@ export default function ChatScreen() {
     const createNewSpace=()=>{
       router.push('/chat/CreateSpaceScreen')
     }
-      // ================== 1️⃣ 초기 채팅방 불러오기 ==================
-  // 컴포넌트가 화면에 나타날 때 한 번만 서버에서 채팅방 리스트를 가져옴
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const res = await api.get('/api/v1/chat/rooms');
-        const data: ChatRoom[] = res.data.data; // data 배열만 추출
-        setChatRooms(data);
-      } catch (err) {
-        console.error('채팅방 불러오기 실패:', err);
-      }
-    };
-    fetchRooms();
-  }, []); // 빈 배열 → 마운트 시 한 번만 실행
+     
+  const fetchRooms = async () => {
+    try {
+      const res = await api.get('/api/v1/chat/rooms');
+      setChatRooms(res.data.data);
+    } catch (err) {
+      console.error('채팅방 불러오기 실패:', err);
+    }
+  };
+
+   // ================== 🔹 화면 focus 될 때마다 채팅방 갱신 ==================
+  useFocusEffect(
+    useCallback(() => {
+      fetchRooms();
+    }, [])
+  );
 
   useEffect(() => {
     // 1️⃣ STOMP 연결을 위한 async 함수 정의
