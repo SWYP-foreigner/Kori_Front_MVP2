@@ -25,7 +25,6 @@ const GeneralLoginScreen=()=>{
     const [password, setPassword]=useState('');
     const [error,setError]=useState(false);
     const [lookPassword, setLookPassword] = useState(true);
-    const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
     const isFull=(email&&password);
 
     const goLogin=async()=>{

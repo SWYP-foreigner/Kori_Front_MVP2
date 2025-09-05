@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 const SignUpDoneScreen=()=>{
     const router=useRouter();
     const goLoginScreen=()=>{
+        router.dismissAll(); // 네비게이션 스택 다 비움
         router.replace('./GeneralLoginScreen');
     };
 
