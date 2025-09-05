@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import styled from 'styled-components/native';
 import { useRouter } from 'expo-router';
 import api from '@/api/axiosInstance';
+import { Config } from '@/src/lib/config';
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -104,15 +105,27 @@ export default function FriendCard({
     else onFollow?.(userId);
   };
   
-  const handleChat=()=>{
+  const handleChat=async()=>{
+    try{
+        const res=await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`
+        , { otherUserId:userId }
+      );
+      
+      const data=res.data;
 
-    router.push({
-      pathname: '../screens/chatscreen/ChattingRoomScreen',
-      params: { 
-        userId: userId.toString(),       // props에서 바로 가져옴
-        name: encodeURIComponent(name),  // props에서 바로 가져옴
-      },
+      router.push({
+        pathname: '../screens/chatscreen/ChattingRoomScreen',
+        params: { 
+          userId: userId.toString(),       // props에서 바로 가져옴
+          roomName: encodeURIComponent(name), // props에서 바로 가져옴
+          roomId:data.id  
+        },
     });
+    }catch(error){
+      
+      console.error("채팅방 생성 실패",error);
+    }
+   
   };
 
 
