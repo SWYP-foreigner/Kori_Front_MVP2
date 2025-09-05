@@ -15,6 +15,8 @@ type AppLoginResponse = {
     userId: number;
     message: string;
     timestamp: string;
+    isNewUser:boolean;
+    
 };
 
 const GeneralLoginScreen=()=>{
@@ -23,7 +25,6 @@ const GeneralLoginScreen=()=>{
     const [password, setPassword]=useState('');
     const [error,setError]=useState(false);
     const [lookPassword, setLookPassword] = useState(true);
-    const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
     const isFull=(email&&password);
 
     const goLogin=async()=>{
@@ -34,13 +35,20 @@ const GeneralLoginScreen=()=>{
                 password:password.trim()
             });
             
-            const { accessToken, refreshToken, userId } = res.data;
+            const { accessToken, refreshToken, userId,isNewUser  } = res.data;
+
             console.log("로그인 여부2",res.data);
                   await SecureStore.setItemAsync('jwt', accessToken);
                   await SecureStore.setItemAsync('refresh', refreshToken);
                   await SecureStore.setItemAsync('MyuserId', userId.toString());
                   console.log("로그인 성공");
-                  router.replace('/(tabs)');
+            if(isNewUser)
+            {
+                router.push('/screens/makeprofile/NameStepScreen');
+            }
+            else{
+                router.replace('/(tabs)');
+            }
 
         }
         catch(error)
