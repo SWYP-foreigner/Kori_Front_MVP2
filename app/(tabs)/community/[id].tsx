@@ -18,11 +18,9 @@ import {
   Alert,
   Animated,
   Easing,
-  FlatList,
-  Keyboard,
+  FlatList, ImageErrorEventData, Keyboard,
   KeyboardAvoidingView,
-  Modal,
-  Platform,
+  Modal, NativeSyntheticEvent, Platform,
   Pressable,
   TextInput as RNTextInput,
   TextInputProps,
@@ -309,9 +307,10 @@ export default function PostDetailScreen() {
           ref={listRef}
           data={commentList}
           keyExtractor={(it) => String((it as any).id ?? (it as any).commentId)}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <CommentItem
               data={item}
+              isFirst={index === 0}                // ✅ 첫 댓글이면 top border 제거
               onPressLike={() => toggleCommentLike(item)}
             />
           )}
@@ -345,7 +344,7 @@ export default function PostDetailScreen() {
                       keyExtractor={(u, i) => `${u}#${i}`}
                       renderItem={({ item }) => (
                         <Img source={{ uri: item }} resizeMode="cover"
-                          onError={(e) =>
+                          onError={(e: NativeSyntheticEvent<ImageErrorEventData>) =>
                             console.log('[detail:image:error]', item, e.nativeEvent?.error)
                           }
                         />
@@ -547,7 +546,7 @@ const ActText = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
 const Grow = styled.View`flex: 1;`;
 const MoreBtn = styled.Pressable`padding: 6px;`;
 
-const SortWrap = styled.View`background: #171818; padding: 10px 16px 0 16px;`;
+const SortWrap = styled.View`background: #171818; padding: 10px 16px 0 16px; margin-bottom: 15px;`;
 const InputBar = styled.View`padding: 10px 12px 14px 12px; background: #1d1e1f; border-top-width: 1px; border-top-color: #222426; flex-direction: row; align-items: flex-end; gap: 10px;`;
 const Composer = styled.View`flex: 1; background: #414142; border-radius: 8px; padding: 10px 12px; flex-direction: row; align-items: center;`;
 const BottomInput = styled(RNTextInput)`flex: 1; color: #ffffff; font-size: 14px; padding: 0; background: transparent;`;

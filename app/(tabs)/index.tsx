@@ -9,6 +9,12 @@ import useDirectChat from '@/hooks/mutations/useSendChat';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
 
+const toBirthNumber = (v: unknown): number | undefined => {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  const n = Number(v as any);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 export default function HomeScreen() {
   const { data: friends, isLoading, isFetching, refetch } = useRecommendedFriends(20);
   const followMutation = useFollowUser();
@@ -75,8 +81,7 @@ export default function HomeScreen() {
                 userId={Number(item.id)}
                 name={item.name || 'Unknown'}
                 country={item.country || '-'}
-                birth={item.birth ?? undefined}
-                gender={item.gender || 'unspecified'}
+                birth={toBirthNumber(item.birth)} gender={item.gender || 'unspecified'}
                 purpose={item.purpose || '-'}
                 languages={item.languages || []}
                 personalities={item.personalities || []}

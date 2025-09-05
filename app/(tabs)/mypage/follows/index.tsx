@@ -53,11 +53,9 @@ export default function FollowListScreen() {
   const acceptMutation = useAcceptFollow();
   const declineMutation = useDeclineFollow();
 
-  const goToIndex = <T,>(
-    ref: React.RefObject<FlatList<T>>,
-    total: number,
-    idx0: number
-  ) => {
+  type RefLike<T> = { current: FlatList<T> | null };
+
+  const goToIndex = <T,>(ref: RefLike<T>, total: number, idx0: number) => {
     const node = ref.current;
     if (!node) return;
     const safe = Math.max(0, Math.min(total - 1, idx0));
