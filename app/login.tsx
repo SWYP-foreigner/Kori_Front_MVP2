@@ -27,6 +27,7 @@ type AppLoginResponse = {
     accessToken: string;
     refreshToken: string;
     userId: number;
+    isNewUser:boolean;
   };
   message: string;
   timestamp: string;
@@ -63,13 +64,19 @@ const LoginScreen = () => {
         { code }
       );
 
-      const { accessToken, refreshToken, userId } = res.data.data;
+      const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
 
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
+      if(isNewUser)
+      {
+        router.push('/screens/makeprofile/NameStepScreen');
+      }
+      else{
+        router.replace('/(tabs)');
+      }
 
-      router.replace('/(tabs)');
     } catch (error) {
       console.error('서버 요청 실패', error);
     }
