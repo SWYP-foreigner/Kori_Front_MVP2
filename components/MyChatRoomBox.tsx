@@ -37,6 +37,13 @@ const MyChatRoomBox = ({data}) => {
     }
   };
 
+  const formatTime = (sentAt: string | number) => {
+  const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
+  const date = new Date(ts);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
  
 
   return (
@@ -57,7 +64,7 @@ const MyChatRoomBox = ({data}) => {
                             }</ChatPerson>
                 <ChatPeople>{data.participantCount}</ChatPeople>
               </ChatPeopleContainer>
-              <ChatTime>{data.lastMessageTime}</ChatTime>
+              <ChatTime>{formatTime(data.lastMessageTime)}</ChatTime>
             </RoomTop>
             <RoomBottom>
               <ChatContent>  {data.lastMessageContent
