@@ -21,6 +21,7 @@ export type Post = {
   comments: number;
   bookmarked?: boolean;
   hotScore: number;
+  viewCount?: number;
 };
 
 type Props = {
@@ -36,7 +37,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     ? (data.minutesAgo! < 60 ? `${data.minutesAgo} min ago` : `${Math.floor(data.minutesAgo! / 60)} hours ago`)
     : data.createdAt.slice(5, 10).replace('-', '/');
 
-  const viewCount = (data.likes ?? 0) + (data.comments ?? 0);
+  const viewCount = data.viewCount ?? 0;
 
   const avatarUrl =
     (data as any).avatarUrl ??
