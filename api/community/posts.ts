@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import type { Category } from '@/components/CategoryChips';
 
 export type BoardId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type SortParam = 'LATEST' | 'POPULAR';
@@ -16,6 +17,19 @@ export function categoryToBoardId(cat: string): BoardId {
     }
 }
 
+export function categoryIdToCategory(id: number): Category {
+    switch (id) {
+        case 10: return 'News';
+        case 11: return 'Free talk';
+        case 12: return 'Q&A';
+        case 13: return 'Tip';
+        case 14: return 'Event';
+        case 15: return 'Activity';
+        // 필요시 더 추가
+        default: return 'Free talk';
+    }
+}
+
 export type PostListItem = {
     postId: number;
     title?: string;
@@ -26,6 +40,7 @@ export type PostListItem = {
     commentCount: number;
     viewCount: number;
     score?: number;
+    categoryId: number;
 };
 
 export type PostsCursorPage = {

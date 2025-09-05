@@ -43,7 +43,7 @@ type PostsListItem = {
     imageUrl?: string;
 
     userImageUrl?: string;
-    categoryName?: string;
+    boardCategory: Category;
 };
 
 type PostsListResp = {
@@ -101,12 +101,15 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
+    console.log('[DEBUG] row:', row);
+
+
     return {
         id: String(row.postId),
         postId: row.postId,
         author: row.authorName || 'Unknown',
         avatar: AV,
-        category: row.categoryName || 'Free talk',
+        category: (row.boardCategory?.[0] + row.boardCategory?.slice(1).toLowerCase()) as Category ?? 'Free talk',
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
         likes: Number(row.likeCount ?? 0),
@@ -244,7 +247,7 @@ export default function CommunityScreen() {
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
-            data={{ ...item, category: cat }}
+            data={{ ...item, category: cat === 'All' ? item.category : cat, }}
             onPress={() =>
                 router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
             }
