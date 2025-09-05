@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 const ProfileSetUpDoneScreen=()=>{
     const router=useRouter();
     const startKori=()=>{
-        router.replace('../../(tabs)');
+        router.replace('/(tabs)');
     };
 
     return( <SafeArea>

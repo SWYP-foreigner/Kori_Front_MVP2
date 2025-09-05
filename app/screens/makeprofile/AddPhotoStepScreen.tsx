@@ -223,7 +223,8 @@ export default function AddPhotoStepScreen({ navigation }) {
       // 서버로 전송
       const res = await api.patch('/api/v1/member/profile/setup', payload);
       console.log('프로필 업데이트 성공', res);
-      router.replace('/(tabs)');
+      router.dismissAll(); // 네비게이션 스택 다 비움
+      router.replace('/screens/makeprofile/ProfileSetUpDoneScreen');
     } catch (err) {
       console.error('프로필 업데이트 실패', err);
       throw err;
