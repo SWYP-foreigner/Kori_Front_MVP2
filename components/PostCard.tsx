@@ -71,6 +71,23 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     if (w && w !== boxW) setBoxW(w);
   };
 
+  const [imgHeights, setImgHeights] = useState<Record<string, number>>({});
+  const ensureSize = (uri: string) => {
+    if (!uri || !boxW || imgHeights[uri]) return;
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (!w || !h) return;
+        const height = Math.max(1, Math.round((boxW * h) / w));
+        setImgHeights(prev => (prev[uri] ? prev : { ...prev, [uri]: height }));
+      },
+      () => {
+        const fallback = Math.round((boxW * 9) / 16);
+        setImgHeights(prev => (prev[uri] ? prev : { ...prev, [uri]: fallback }));
+      }
+    );
+  };
+
   const [imgIndex, setImgIndex] = useState(0);
   const viewConfig = useRef<ViewabilityConfig>({ itemVisiblePercentThreshold: 60 }).current;
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -109,16 +126,20 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
             <FlatList
               data={imageUrls}
               keyExtractor={(u, i) => `${u}#${i}`}
-              renderItem={({ item }) => (
-                <Slide style={{ width: boxW }}>
-                  <Image
-                    source={{ uri: item }}
-                    style={{ width: '100%', height: 180, borderRadius: 12 }}
-                    resizeMode="cover"
-                    onError={(e) => console.log('[PostCard:image:error]', item, e.nativeEvent?.error)}
-                  />
-                </Slide>
-              )}
+              renderItem={({ item }) => {
+                ensureSize(item);
+                const h = imgHeights[item] ?? Math.round((boxW * 9) / 16); // 로딩 전 임시 높이
+                return (
+                  <Slide style={{ width: boxW }}>
+                    <Image
+                      source={{ uri: item }}
+                      style={{ width: '100%', height: h, borderRadius: 12 }}
+                      resizeMode="contain"
+                      onError={(e) => console.log('[PostCard:image:error]', item, e.nativeEvent?.error)}
+                    />
+                  </Slide>
+                );
+              }}
               horizontal
               pagingEnabled
               decelerationRate="fast"
@@ -132,7 +153,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
               <Image
                 source={{ uri: imageUrls[0] }}
                 style={{ width: '100%', height: 180, borderRadius: 12 }}
-                resizeMode="cover"
+                resizeMode="contain"
               />
             </Slide>
           )}
@@ -182,8 +203,8 @@ const CarouselBox = styled.View`
   overflow: hidden;
 `;
 const Slide = styled.View`
-  height: 180px;
 `;
+
 const Counter = styled.Text`
   position: absolute;
   right: 10px;
