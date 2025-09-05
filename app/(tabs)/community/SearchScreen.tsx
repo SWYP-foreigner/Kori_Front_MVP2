@@ -420,12 +420,13 @@ const Title = styled.Text`
   font-family: 'InstrumentSerif_400Regular';
   letter-spacing: -0.2px;
 `;
-const IconImage = styled.Image`
+const IconImage = styled.Image.attrs({ resizeMode: 'contain' })`
   margin-left: 4px;
   width: 20px;
   height: 20px;
-  resize-mode: contain;
 `;
+
+
 const Right = styled.View`
   flex-direction: row;
   align-items: center;
