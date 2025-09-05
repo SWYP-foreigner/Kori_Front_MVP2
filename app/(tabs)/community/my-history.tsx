@@ -231,20 +231,22 @@ export default function MyHistoryScreen() {
                 <RightPlaceholder />
             </Header>
 
-            <TabsBar>
-                <TabBtn $active={tab === 'post'} onPress={() => setTab('post')}>
-                    <TabText $active={tab === 'post'}>My Post</TabText>
-                    {tab === 'post' && <TabUnderline />}
-                </TabBtn>
-                <TabBtn $active={tab === 'comment'} onPress={() => setTab('comment')}>
-                    <TabText $active={tab === 'comment'}>Comments</TabText>
-                    {tab === 'comment' && <TabUnderline />}
-                </TabBtn>
-            </TabsBar>
+            {/* Tabs — same visual as Friends List */}
+            <TabsWrap>
+                <TabsRow>
+                    <TabItem active={tab === 'post'} onPress={() => setTab('post')}>
+                        <TabText active={tab === 'post'}>My Post</TabText>
+                    </TabItem>
+                    <TabItem active={tab === 'comment'} onPress={() => setTab('comment')}>
+                        <TabText active={tab === 'comment'}>Comments</TabText>
+                    </TabItem>
+                </TabsRow>
+                <TabsBottomLine />
+            </TabsWrap>
 
             <List
                 data={data}
-                keyExtractor={(it) => (it as any).id}
+                keyExtractor={(it: PostRow | CommentRow) => it.id}
                 renderItem={tab === 'post' ? (renderPost as any) : (renderComment as any)}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 24 }}
@@ -318,33 +320,37 @@ const RightPlaceholder = styled.View`
   width: 40px;
 `;
 
-const TabsBar = styled.View`
-  height: 44px;
-  flex-direction: row;
-  align-items: flex-end;
+const TabsWrap = styled.View`
+  position: relative;
   padding: 0 16px;
-  border-bottom-width: 1px;
-  border-bottom-color: #222426;
+  margin-top: 4px;
 `;
 
-const TabBtn = styled.Pressable<{ $active?: boolean }>`
+const TabsRow = styled.View`
+  flex-direction: row;
+`;
+
+const TabItem = styled.Pressable<{ active: boolean }>`
   flex: 1;
-  height: 100%;
   align-items: center;
-  justify-content: flex-end;
+  padding: 12px 6px;
+  border-bottom-width: 2px;
+  border-bottom-color: ${({ active }) => (active ? '#30F59B' : 'transparent')};
 `;
 
-const TabText = styled.Text<{ $active?: boolean }>`
-  color: ${({ $active }) => ($active ? '#30F59B' : '#9aa0a6')};
-  font-family: 'PlusJakartaSans_700Bold';
+const TabText = styled.Text<{ active: boolean }>`
+  color: ${({ active }) => (active ? '#30F59B' : '#cfcfcf')};
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-const TabUnderline = styled.View`
-  height: 2px;
-  width: 62px;
-  background: #30f59b;
-  border-radius: 2px;
-  margin-top: 6px;
+const TabsBottomLine = styled.View`
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: #212325;
 `;
 
 const RowWrap = styled.View`
