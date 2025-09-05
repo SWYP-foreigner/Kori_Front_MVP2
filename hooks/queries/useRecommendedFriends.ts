@@ -2,7 +2,8 @@ import { getRecommended, toFriendCard } from '@/api/home/recommend';
 import { useQuery } from '@tanstack/react-query';
 
 export type FriendCardItem = {
-    id: number;
+    id: string;
+    otherUserId?: number;
     name: string;
     country?: string;
     birth?: number | string;
@@ -18,27 +19,29 @@ export default function useRecommendedFriends(limit = 20) {
         queryKey: ['home', 'recommend', limit],
         queryFn: async () => {
             const rows = await getRecommended(limit);
+            const mapped = (rows ?? []).map((r, i) => toFriendCard(r as any, i));
 
-            const mapped = (rows ?? []).map((r: any, i: number) => toFriendCard(r, i));
+            const result = mapped.map((raw, i): FriendCardItem => {
+                const parsed = Number(raw?.id);
+                const otherUserId = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 
-            return mapped
-                .map((raw: any): FriendCardItem | null => {
-                    const n = Number(raw?.id);
-                    if (!Number.isFinite(n) || n <= 0) return null;
+                const item: FriendCardItem = {
+                    id: String(raw?.id ?? `rec-${i}`),
+                    otherUserId,
+                    name: raw?.name || 'Unknown',
+                    country: raw?.country ?? '-',
+                    birth: (raw as any)?.birth ?? (raw as any)?.birthday ?? undefined,
+                    gender: (raw?.gender as FriendCardItem['gender']) ?? 'unspecified',
+                    purpose: raw?.purpose ?? '-',
+                    languages: Array.isArray(raw?.languages) ? raw.languages : [],
+                    personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
+                    bio: (raw as any)?.bio ?? (raw as any)?.introduction ?? '',
+                };
+                return item;
+            });
 
-                    return {
-                        id: n,
-                        name: raw?.name || 'Unknown',
-                        country: raw?.country ?? '-',
-                        birth: raw?.birth ?? raw?.birthday ?? undefined,
-                        gender: (raw?.gender as FriendCardItem['gender']) ?? 'unspecified',
-                        purpose: raw?.purpose ?? '-',
-                        languages: Array.isArray(raw?.languages) ? raw.languages : [],
-                        personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
-                        bio: raw?.bio ?? raw?.introduction ?? '',
-                    };
-                })
-                .filter(Boolean) as FriendCardItem[]; // ❗️null 제거 후 타입 단언
+            console.log('✅[recommend:list]', result);
+            return result;
         },
         staleTime: 60_000,
     });

@@ -1,6 +1,7 @@
 import api from '@/api/axiosInstance';
 
 export type RecommendedFriendDto = {
+    userId?: number | string;
     memberId?: number | string;
     firstname?: string | null;
     lastname?: string | null;
@@ -19,6 +20,7 @@ export async function getRecommended(limit = 20) {
         '/api/v1/commend/content-based',
         { params: { limit } }
     );
+    console.log('🪵[step1] 추천 백엔드 응답:', JSON.stringify(data, null, 2));
     return data;
 }
 
@@ -45,8 +47,9 @@ export function toFriendCard(dto: RecommendedFriendDto, idx: number): FriendCard
     const name = [dto.firstname, dto.lastname].filter(Boolean).join(' ').trim() || 'Unknown';
     const year = dto.birthday?.match(/^\d{4}/)?.[0];
 
-    return {
-        id: dto.memberId ?? `rec-${idx}`,
+    const id = (dto.userId ?? dto.memberId ?? `rec-${idx}`);
+    const mapped: FriendCardData = {
+        id,
         name,
         country: dto.country ?? '-',
         birth: year ? Number(year) : undefined,
@@ -56,4 +59,6 @@ export function toFriendCard(dto: RecommendedFriendDto, idx: number): FriendCard
         personalities: dto.hobby ?? [],
         bio: dto.introduction ?? '',
     };
+    console.log(`🪵[step2] toFriendCard(${idx}):`, mapped);
+    return mapped;
 }
