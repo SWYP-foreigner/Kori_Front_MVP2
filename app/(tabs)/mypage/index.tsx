@@ -15,7 +15,9 @@ import {
 import styled from 'styled-components/native';
 
 import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
+import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
 import useMyProfile from '@/hooks/queries/useMyProfile';
+import { uploadBundledAvatarAndGetKey, uploadImageAndGetKey } from '@/lib/mypage/uploadImage';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -26,6 +28,7 @@ const AVATARS: ImageSourcePropType[] = [
 export default function MyPageScreen() {
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
+  const updateProfile = useUpdateProfile();
 
   const fullName = useMemo(() => {
     if (isLoading) return 'Loading...';
@@ -33,7 +36,8 @@ export default function MyPageScreen() {
     return name || '—';
   }, [me, isLoading]);
 
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(me?.imageUrl);
+
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [tempIdx, setTempIdx] = useState<number>(0);
   const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
@@ -48,24 +52,16 @@ export default function MyPageScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            // iOS Alert 콜백에서 비동기 바로 실행 이슈 회피
             setTimeout(() => {
               deleteAccountMut.mutate(undefined, {
                 onSuccess: async () => {
-                  try {
-                    await SecureStore.deleteItemAsync('jwt'); // 토큰 제거
-                  } catch (e) {
-                    console.log('[DeleteAccount] token clear error', e);
-                  }
+                  try { await SecureStore.deleteItemAsync('jwt'); } catch (e) { console.log('[DeleteAccount] token clear error', e); }
                   Alert.alert('Account deleted', 'Your account has been removed.', [
                     { text: 'OK', onPress: () => router.replace('/login') },
                   ]);
                 },
                 onError: (e: any) => {
-                  const msg =
-                    e?.response?.data?.message ??
-                    e?.message ??
-                    'Failed to delete account. Please try again.';
+                  const msg = e?.response?.data?.message ?? e?.message ?? 'Failed to delete account. Please try again.';
                   Alert.alert('Error', msg);
                 },
               });
@@ -93,37 +89,48 @@ export default function MyPageScreen() {
     setShowAvatarSheet(true);
   };
 
-  const saveAvatar = () => {
-    if (tempIdx === -1 && customPhotoUri) {
-      setAvatarUrl(customPhotoUri);
-    } else {
-      const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
-      if (src?.uri) setAvatarUrl(src.uri);
+  const saveAvatar = async () => {
+    try {
+      let uriToShow: string | undefined;
+      let imageKey: string | undefined;
+
+      if (tempIdx === -1 && customPhotoUri) {
+        imageKey = await uploadImageAndGetKey(customPhotoUri);
+        uriToShow = customPhotoUri;
+      } else {
+        const chosen = AVATARS[tempIdx];
+        imageKey = await uploadBundledAvatarAndGetKey(chosen as unknown as number);
+        const src = RNImage.resolveAssetSource(chosen);
+        uriToShow = src?.uri;
+      }
+
+      if (imageKey) {
+        await updateProfile.mutateAsync({ imageKey });
+      }
+
+      if (uriToShow) setAvatarUrl(uriToShow);
+      setShowAvatarSheet(false);
+      Alert.alert('Saved', 'Profile image updated.');
+    } catch (e: any) {
+      console.log('[avatar:save] error', e?.response?.data || e);
+      Alert.alert('Error', e?.response?.data?.message || e?.message || 'Failed to update profile.');
     }
-    setShowAvatarSheet(false);
   };
 
   const requestPermissions = async () => {
     const cam = await ImagePicker.requestCameraPermissionsAsync();
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
     const granted = cam.status === 'granted' && lib.status === 'granted';
-    if (!granted) {
-      Alert.alert('Permission required', 'Camera and photo library access is needed.');
-    }
+    if (!granted) Alert.alert('Permission required', 'Camera and photo library access is needed.');
     return granted;
   };
 
   const openCamera = async () => {
     const ok = await requestPermissions();
     if (!ok) return;
-
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 1,
     });
-
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setCustomPhotoUri(uri);
@@ -134,14 +141,9 @@ export default function MyPageScreen() {
   const openGallery = async () => {
     const ok = await requestPermissions();
     if (!ok) return;
-
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 1,
     });
-
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setCustomPhotoUri(uri);
@@ -166,7 +168,7 @@ export default function MyPageScreen() {
 
         <ProfileView>
           <AvatarPress onPress={openAvatarSheet}>
-            <EditAvatar />
+            <EditAvatar uri={avatarUrl || me?.imageUrl} />
           </AvatarPress>
 
           <Name numberOfLines={1} ellipsizeMode="tail">
@@ -230,13 +232,8 @@ export default function MyPageScreen() {
         </RowLink>
         <RowSeparator />
 
-        <DeletePressable
-          onPress={confirmDelete}
-          disabled={deleteAccountMut.isPending}
-        >
-          <DeleteText>
-            {deleteAccountMut.isPending ? 'Deleting...' : 'Delete Account'}
-          </DeleteText>
+        <DeletePressable onPress={confirmDelete} disabled={deleteAccountMut.isPending}>
+          <DeleteText>{deleteAccountMut.isPending ? 'Deleting...' : 'Delete Account'}</DeleteText>
         </DeletePressable>
       </Scroll>
 
@@ -304,237 +301,54 @@ export default function MyPageScreen() {
   );
 }
 
-
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1D1E1F;
-`;
+const Safe = styled.SafeAreaView`flex: 1; background: #1D1E1F;`;
 const Scroll = styled.ScrollView``;
 
-const Header = styled.View`
-  padding: 12px 16px 8px 16px;
-  flex-direction: row;
-  align-items: center;
-`;
-const Title = styled.Text`
-  font-family: 'InstrumentSerif_400Regular';
-  font-size: 32px;
-  color: #ffffff;
-  margin-right: 8px;
-`;
-const IconImage = styled.Image`
-  width: 22px;
-  height: 22px;
-  resize-mode: contain;
-  transform: translateY(-3px);
-`;
+const Header = styled.View`padding: 12px 16px 8px 16px; flex-direction: row; align-items: center;`;
+const Title = styled.Text`font-family: 'InstrumentSerif_400Regular'; font-size: 32px; color: #ffffff; margin-right: 8px;`;
+const IconImage = styled.Image`width: 22px; height: 22px; resize-mode: contain; transform: translateY(-3px);`;
 
-const ProfileView = styled.View`
-  align-items: center;
-  padding: 8px 16px 12px 16px;
-`;
-const AvatarPress = styled.Pressable`
-  position: relative;
-`;
-const Name = styled.Text`
-  margin-top: 10px;
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 22px;
-  font-family: 'PlusJakartaSans_700Bold';
-  max-width: 80%;
-  text-align: center;
-`;
-const EditButtonWrap = styled.View`
-  align-self: stretch;
-  padding: 12px 16px 0 16px;
-`;
+const ProfileView = styled.View`align-items: center; padding: 8px 16px 12px 16px;`;
+const AvatarPress = styled.Pressable`position: relative;`;
+const Name = styled.Text`margin-top: 10px; color: #ffffff; font-size: 18px; line-height: 22px; font-family: 'PlusJakartaSans_700Bold'; max-width: 80%; text-align: center;`;
+const EditButtonWrap = styled.View`align-self: stretch; padding: 12px 16px 0 16px;`;
 
-const SectionTitle = styled.Text`
-  color: #9aa0a6;
-  font-size: 14px;
-  line-height: 18px;
-  letter-spacing: 0.2px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-const SectionTitleRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin: 22px 16px 10px 16px;
-`;
+const SectionTitle = styled.Text`color: #9aa0a6; font-size: 14px; line-height: 18px; letter-spacing: 0.2px; font-family: 'PlusJakartaSans_600SemiBold';`;
+const SectionTitleRow = styled.View`flex-direction: row; align-items: center; margin: 22px 16px 10px 16px;`;
 
-function SectionTitleIcon() {
-  return (
-    <Ionicons
-      name="person-outline"
-      size={12}
-      color="#9aa0a6"
-      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
-    />
-  );
-}
+function SectionTitleIcon() { return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />; }
 function SectionTitleIconGlobe() {
-  return (
-    <Image
-      source={require('@/assets/icons/global.png')}
-      resizeMode="contain"
-      style={{ width: 12, height: 12, marginRight: 6, tintColor: '#9aa0a6', transform: [{ translateY: 1 }] }}
-    />
-  );
+  return <Image source={require('@/assets/icons/global.png')} resizeMode="contain" style={{ width: 12, height: 12, marginRight: 6, tintColor: '#9aa0a6', transform: [{ translateY: 1 }] }} />;
 }
 
-const RowLink = styled.Pressable`
-  padding: 14px 16px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-const RowLeft = styled.Text`
-  color: #e9ecef;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-const Chevron = styled.Text`
-  color: #b8bdc2;
-  font-size: 18px;
-  margin-left: 8px;
-`;
+const RowLink = styled.Pressable`padding: 14px 16px; flex-direction: row; justify-content: space-between; align-items: center;`;
+const RowLeft = styled.Text`color: #e9ecef; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
+const Chevron = styled.Text`color: #b8bdc2; font-size: 18px; margin-left: 8px;`;
 
-const RowHeader = styled.Text`
-  margin: 20px 16px 8px 16px;
-  color: #e9ecef;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-const RowSeparator = styled.View`
-  height: 1px;
-  margin: 4px 16px 18px 16px;
-  background: #2a2b2c;
-  opacity: 0.6;
-`;
+const RowHeader = styled.Text`margin: 20px 16px 8px 16px; color: #e9ecef; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
+const RowSeparator = styled.View`height: 1px; margin: 4px 16px 18px 16px; background: #2a2b2c; opacity: 0.6;`;
 
-const CountCard = styled.View`
-  margin: 10px 16px 12px 16px;
-  background: #2a2f33;
-  border-radius: 14px;
-  padding: 10px;
-  flex-direction: row;
-  align-items: stretch;
-`;
-const Divider = styled.View`
-  width: 1px;
-  background: #454a4f;
-  margin: 6px 4px;
-`;
-const CountItem = styled.Pressable`
-  flex: 1;
-  padding: 6px 8px;
-  align-items: center;
-  justify-content: center;
-`;
-const CountLabel = styled.Text`
-  color: #c7cbcf;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-const CountNumber = styled.Text`
-  margin-top: 2px;
-  color: #ffffff;
-  font-size: 16px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
+const CountCard = styled.View`margin: 10px 16px 12px 16px; background: #2a2f33; border-radius: 14px; padding: 10px; flex-direction: row; align-items: stretch;`;
+const Divider = styled.View`width: 1px; background: #454a4f; margin: 6px 4px;`;
+const CountItem = styled.Pressable`flex: 1; padding: 6px 8px; align-items: center; justify-content: center;`;
+const CountLabel = styled.Text`color: #c7cbcf; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
+const CountNumber = styled.Text`margin-top: 2px; color: #ffffff; font-size: 16px; font-family: 'PlusJakartaSans_700Bold';`;
 
-const DeletePressable = styled.Pressable<{ disabled?: boolean }>`
-  padding: 16px;
-  margin-top: 8px;
-  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
-`;
-const DeleteText = styled.Text`
-  color: #ff5a5a;
-  font-size: 14px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
+const DeletePressable = styled.Pressable<{ disabled?: boolean }>`padding: 16px; margin-top: 8px; opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};`;
+const DeleteText = styled.Text`color: #ff5a5a; font-size: 14px; font-family: 'PlusJakartaSans_600SemiBold';`;
 
-const SheetOverlay = styled.TouchableOpacity`
-  flex: 1;
-  background: rgba(0, 0, 0, 0.55);
-  justify-content: flex-end;
-`;
-const Sheet = styled.View`
-  background: #353637;
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  padding: 16px 16px 20px 16px;
-`;
-const Handle = styled.View`
-  align-self: center;
-  width: 54px;
-  height: 4px;
-  border-radius: 2px;
-  background: #9aa0a6;
-  margin-bottom: 10px;
-`;
-const SheetTitle = styled.Text`
-  color: #ffffff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
-  text-align: center;
-  margin-bottom: 16px;
-`;
+const SheetOverlay = styled.TouchableOpacity`flex: 1; background: rgba(0, 0, 0, 0.55); justify-content: flex-end;`;
+const Sheet = styled.View`background: #353637; border-top-left-radius: 22px; border-top-right-radius: 22px; padding: 16px 16px 20px 16px;`;
+const Handle = styled.View`align-self: center; width: 54px; height: 4px; border-radius: 2px; background: #9aa0a6; margin-bottom: 10px;`;
+const SheetTitle = styled.Text`color: #ffffff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold'; text-align: center; margin-bottom: 16px;`;
 
-const AvatarRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
-  margin-bottom: 18px;
-`;
+const AvatarRow = styled.View`flex-direction: row; align-items: center; justify-content: space-between; padding: 0 8px; margin-bottom: 18px;`;
 const AvatarItem = styled.Pressable``;
-const AvatarCircle = styled.View<{ selected: boolean }>`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
-  position: relative;
-`;
-const AvatarImg = styled.Image`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-`;
-const CheckBadge = styled.View`
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #30F59B;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: #353637;
-`;
+const AvatarCircle = styled.View<{ selected: boolean }>`width: 68px; height: 68px; border-radius: 34px; background: #1f2021; align-items: center; justify-content: center; border-width: 2px; border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')}; position: relative;`;
+const AvatarImg = styled.Image`width: 64px; height: 64px; border-radius: 32px;`;
+const CheckBadge = styled.View`position: absolute; right: -2px; top: -2px; width: 20px; height: 20px; border-radius: 10px; background: #30F59B; align-items: center; justify-content: center; border-width: 2px; border-color: #353637;`;
 
-const CameraCircleInner = styled.View`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-  align-items: center;
-  justify-content: center;
-  background: #1f2021;
-`;
+const CameraCircleInner = styled.View`width: 64px; height: 64px; border-radius: 32px; align-items: center; justify-content: center; background: #1f2021;`;
 
-const ButtonRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 10px;
-  padding-bottom: 28px;
-`;
-const Gap = styled.View`
-  width: 12px;
-`;
+const ButtonRow = styled.View`flex-direction: row; align-items: center; margin-top: 10px; padding-bottom: 28px;`;
+const Gap = styled.View`width: 12px;`;

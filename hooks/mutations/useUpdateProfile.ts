@@ -27,4 +27,4 @@ export function useUpdateProfile() {
             qc.invalidateQueries({ queryKey: ['myProfile'] });
         },
     });
-}
+} 
