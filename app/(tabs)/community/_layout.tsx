@@ -38,6 +38,13 @@ export default function CommunityLayout() {
                     title: "히스토리",
                 }}
             />
+            <Stack.Screen
+                name="SearchScreen"
+                options={{
+                    headerShown: false,
+                    title: "검색 페이지",
+                }}
+            />
         </Stack>
     )
 }

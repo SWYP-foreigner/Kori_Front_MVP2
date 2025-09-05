@@ -260,9 +260,15 @@ export default function CommunityScreen() {
                 </Left>
 
                 <Right>
-                    <IconBtn onPress={() => router.push('/community/search')}>
+                    <IconBtn
+                        onPress={() => {
+                            const qs = `?boardId=${encodeURIComponent(String(boardId))}&cat=${encodeURIComponent(cat)}`;
+                            router.push(`/community/SearchScreen${qs}`); // ✅ 변경: 문자열로 push
+                        }}
+                    >
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
+
                     <IconBtn onPress={() => router.push('/community/bookmarks')}>
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
                     </IconBtn>
