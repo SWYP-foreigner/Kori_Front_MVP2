@@ -1,8 +1,20 @@
 import { createPost, CreatePostBody } from '@/api/community/posts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export default function useCreatePost(boardId: number) {
+
+export default function useCreatePost(boardId?: number) {
+    const qc = useQueryClient();
+
     return useMutation({
-        mutationFn: (body: CreatePostBody) => createPost(boardId, body),
+        mutationFn: async (body: CreatePostBody) => {
+            if (!boardId) throw new Error('boardId is required');
+            return createPost(boardId, body);
+        },
+        onSuccess: () => {
+            if (!boardId) return;
+            qc.invalidateQueries({ queryKey: ['community-list', boardId] });
+            qc.invalidateQueries({ queryKey: ['board', boardId, 'posts'] });
+            qc.invalidateQueries({ queryKey: ['community-feed'] });
+        },
     });
 }
