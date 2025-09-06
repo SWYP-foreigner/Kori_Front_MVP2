@@ -4,7 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import * as SecureStore from 'expo-secure-store';
 
 export const ACCESS_KEY = 'jwt';
-export const REFRESH_KEY = 'refresh_token';
+export const REFRESH_KEY = 'refresh';
 export const PROFILE_KEY = 'profile';
 
 let refreshBlocked = false;

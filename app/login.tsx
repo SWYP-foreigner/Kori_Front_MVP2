@@ -16,7 +16,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
-
+import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -77,7 +77,7 @@ const LoginScreen = () => {
       );
 
       const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
-
+      
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
@@ -94,7 +94,7 @@ const LoginScreen = () => {
       console.error('서버 요청 실패', error);
     }
   };
-
+  
   // 구글 로그인
   const signIn = async () => {
     try {
@@ -130,7 +130,8 @@ const LoginScreen = () => {
     }
   };
   
-  const goEmailLoginScreen=()=>{
+  const goEmailLoginScreen=async()=>{
+   
     router.push("./screens/login/GeneralLoginScreen");
   };
   
