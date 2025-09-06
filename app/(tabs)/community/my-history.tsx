@@ -172,8 +172,13 @@ export default function MyHistoryScreen() {
         );
     };
 
+    const goPostDetail = (postId: string) => {
+        if (!postId) return;
+        router.push({ pathname: '/community/[id]', params: { id: postId } });
+    };
+
     const renderPost: ListRenderItem<PostRow> = ({ item }) => (
-        <RowWrap>
+        <RowPress onPress={() => goPostDetail(item.id)}>
             <PostTopRow>
                 <Avatar source={item.avatar} />
                 <Meta>
@@ -185,7 +190,12 @@ export default function MyHistoryScreen() {
                         <Sub style={{ marginLeft: 6 }}>{item.views}</Sub>
                     </SubRow>
                 </Meta>
-                <MoreBtn onPress={() => openSheet({ type: 'post', id: item.id })}>
+                <MoreBtn
+                    onPress={(e: any) => {
+                        e?.stopPropagation?.();
+                        openSheet({ type: 'post', id: item.id });
+                    }}
+                >
                     <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
                 </MoreBtn>
             </PostTopRow>
@@ -196,20 +206,25 @@ export default function MyHistoryScreen() {
                 <Act><AntDesign name="like2" size={14} color="#30F59B" /><ActText>{item.likes}</ActText></Act>
                 <Act><AntDesign name="message1" size={14} color="#cfd4da" /><ActText>{item.comments}</ActText></Act>
             </ActionRow>
-        </RowWrap>
+        </RowPress>
     );
 
     const renderComment: ListRenderItem<CommentRow> = ({ item }) => (
-        <RowWrap>
+        <RowPress onPress={() => goPostDetail(item.postId)}>
             <TopRow>
                 <DateText>{item.createdAt}</DateText>
-                <MoreBtn onPress={() => openSheet({ type: 'comment', id: item.id })}>
+                <MoreBtn
+                    onPress={(e: any) => {
+                        e?.stopPropagation?.();
+                        openSheet({ type: 'comment', id: item.id });
+                    }}
+                >
                     <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
                 </MoreBtn>
             </TopRow>
             {item.myText ? <CommentTitle numberOfLines={1}>{item.myText}</CommentTitle> : null}
             {item.parentSnippet ? <ParentSnippet numberOfLines={1}>{item.parentSnippet}</ParentSnippet> : null}
-        </RowWrap>
+        </RowPress>
     );
 
     const data = useMemo(() => (tab === 'post' ? posts : comments), [tab, posts, comments]);
@@ -231,7 +246,6 @@ export default function MyHistoryScreen() {
                 <RightPlaceholder />
             </Header>
 
-            {/* Tabs — same visual as Friends List */}
             <TabsWrap>
                 <TabsRow>
                     <TabItem active={tab === 'post'} onPress={() => setTab('post')}>
@@ -353,7 +367,7 @@ const TabsBottomLine = styled.View`
   background: #212325;
 `;
 
-const RowWrap = styled.View`
+const RowPress = styled.Pressable`
   padding: 14px 16px 12px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
