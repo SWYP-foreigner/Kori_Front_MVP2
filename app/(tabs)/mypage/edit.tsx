@@ -1,6 +1,7 @@
 import Avatar from '@/components/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
@@ -23,12 +24,27 @@ import PurposePicker, {
 
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
-import { useQueryClient } from '@tanstack/react-query';
+import { Config } from '@/src/lib/config';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
 const INPUT_BG = '#353637';
 const INPUT_BORDER = '#FFFFFF';
+
+/** 키 → URL 변환 (이미 URL이면 그대로 사용) */
+const toUrl = (u?: string) => {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const base =
+    (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+    (Config as any).NCP_PUBLIC_BASE_URL ||
+    (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+    (Config as any).IMAGE_BASE_URL ||
+    '';
+  return base
+    ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}`
+    : undefined;
+};
 
 export default function EditProfileScreen() {
   const queryClient = useQueryClient();
@@ -36,7 +52,7 @@ export default function EditProfileScreen() {
   const editMutation = useProfileEdit();
 
   const [name, setName] = useState('');
-  const [email] = useState(''); // 서버에서 이메일 안 주면 숨김 처리 유지
+  const [email] = useState('');
   const [country, setCountry] = useState('');
   const [showCountry, setShowCountry] = useState(false);
 
@@ -50,6 +66,9 @@ export default function EditProfileScreen() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [aboutMe, setAboutMe] = useState('');
 
+  const [avatarKeyOrUrl, setAvatarKeyOrUrl] = useState<string | undefined>(undefined);
+  const displayAvatarUrl = useMemo(() => toUrl(avatarKeyOrUrl), [avatarKeyOrUrl]);
+
   useEffect(() => {
     if (!me) return;
     const full = [me.firstname, me.lastname].filter(Boolean).join(' ');
@@ -60,6 +79,7 @@ export default function EditProfileScreen() {
     setLangs(me.language ?? []);
     setSelectedInterests(me.hobby ?? []);
     setAboutMe(me.introduction ?? '');
+    setAvatarKeyOrUrl((me as any)?.imageUrl || (me as any)?.imageKey || undefined);
   }, [me]);
 
   const languagesDisplay = useMemo(() => {
@@ -103,7 +123,6 @@ export default function EditProfileScreen() {
       purpose: purpose || '',
       language,
       hobby: selectedInterests ?? [],
-      imageKey: undefined,
     };
 
     try {
@@ -129,7 +148,7 @@ export default function EditProfileScreen() {
 
       <Scroll showsVerticalScrollIndicator={false}>
         <Center>
-          <Avatar />
+          <Avatar uri={displayAvatarUrl} />
           <NameText numberOfLines={1} ellipsizeMode="tail">
             {name || (isLoading ? 'Loading...' : '—')}
           </NameText>
@@ -254,7 +273,6 @@ export default function EditProfileScreen() {
     </Safe>
   );
 }
-
 
 const Safe = styled.SafeAreaView`
   flex: 1;
