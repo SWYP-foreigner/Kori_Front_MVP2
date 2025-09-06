@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
 import FriendCard from '@/components/FriendCard';
+import useCancelFollowRequest from '@/hooks/mutations/useCancelFollowRequest';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
 import useDirectChat from '@/hooks/mutations/useSendChat';
 import useMyProfile from '@/hooks/queries/useMyProfile';
@@ -16,7 +17,8 @@ const toBirthNumber = (v: unknown): number | undefined => {
 
 export default function HomeScreen() {
   const { data: friends, isLoading, isFetching, refetch } = useRecommendedFriends(20);
-  const followMutation = useFollowUser(); // mutate, mutateAsync 제공
+  const followMutation = useFollowUser();
+  const cancelReqMutation = useCancelFollowRequest();
   const { data: me } = useMyProfile();
   const sendDirectChat = useDirectChat();
 
@@ -88,6 +90,8 @@ export default function HomeScreen() {
                   languages={item.languages || []}
                   personalities={item.personalities || []}
                   bio={item.bio || undefined}
+                  imageUrl={(item as any).imageUrl}
+                  imageKey={(item as any).imageKey}
 
                   mode={isSent ? 'sent' : 'friend'}
 
@@ -101,12 +105,21 @@ export default function HomeScreen() {
                   }}
 
                   onCancel={async (id) => {
-                    unmarkRequested(id);
+                    if (myId && id === myId) return;
+                    const wasSent = requested.has(id);
+                    if (wasSent) unmarkRequested(id);
+                    try {
+                      await cancelReqMutation.mutateAsync(id);
+                    } catch (e) {
+                      // 롤백
+                      if (wasSent) markRequested(id);
+                    }
                   }}
                 />
               </CardWrap>
             );
           }}
+
           ListEmptyComponent={
             <EmptyWrap>
               <EmptyText>No recommendations yet.</EmptyText>

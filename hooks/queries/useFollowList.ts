@@ -1,19 +1,29 @@
 import api from '@/api/axiosInstance';
-import { keepPreviousData, useQuery } from '@tanstack/react-query'; // ✅ 헬퍼 import
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 export type FollowStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
-type Tab = 'sent' | 'received';
+export type Tab = 'sent' | 'received';
 
 export type RawFollowUser = {
-    id: number;
-    username?: string;
-    nationality?: string;
-    sex?: string;
-    birth?: string;
+    id?: number; userId?: number;
+    username?: string; name?: string; email?: string;
+    firstname?: string; lastname?: string;
+
+    nationality?: string; country?: string;
+
+    sex?: string; gender?: string;
+
+    birth?: string; birthday?: string;
+
     purpose?: string;
-    language?: string[];
-    hobby?: string[];
-    introduction?: string;
+
+    language?: string[]; languages?: string[];
+    hobby?: string[]; hobbies?: string[];
+
+    introduction?: string; bio?: string;
+
+    imageKey?: string; imageUrl?: string; image_url?: string;
+
     [k: string]: any;
 };
 
@@ -22,28 +32,65 @@ export type FollowUserItem = {
     name: string;
     country?: string;
     gender?: string;
-    birth?: string;
+    birthYear?: number;
     purpose?: string;
-    languages?: string[];
-    hobbies?: string[];
+    languages: string[];
+    hobbies: string[];
     bio?: string;
+    imageKey?: string;
+    imageUrl?: string;
     raw: RawFollowUser;
 };
 
-function adapt(u: RawFollowUser): FollowUserItem {
+const toYear = (v?: string): number | undefined => {
+    const y = (v ?? '').toString().match(/^\d{4}/)?.[0];
+    return y ? Number(y) : undefined;
+};
+
+const adapt = (u: RawFollowUser): FollowUserItem => {
+    const userId = Number(u?.id ?? u?.userId);
+
+    const first = (u?.firstname ?? '').trim();
+    const last = (u?.lastname ?? '').trim();
+    const full = [first, last].filter(Boolean).join(' ');
+    const name = full || u?.username || u?.name || u?.email || 'Unknown';
+
+    const country = u?.country ?? u?.nationality ?? '';
+    const gender = u?.gender ?? u?.sex;
+    const birthYear = toYear(u?.birthday ?? u?.birth);
+    const purpose = u?.purpose ?? '';
+
+    const languages = Array.isArray(u?.languages)
+        ? u.languages
+        : Array.isArray(u?.language)
+            ? u.language
+            : [];
+
+    const hobbies = Array.isArray(u?.hobbies)
+        ? u.hobbies
+        : Array.isArray(u?.hobby)
+            ? u.hobby
+            : [];
+
+    const bio = u?.introduction ?? u?.bio ?? '';
+    const imageKey = u?.imageKey ?? undefined;
+    const imageUrl = (u as any)?.imageUrl ?? (u as any)?.image_url ?? undefined;
+
     return {
-        userId: Number(u.id),
-        name: u.username ?? 'Unknown',
-        country: u.nationality,
-        gender: u.sex,
-        birth: u.birth,
-        purpose: u.purpose,
-        languages: u.language,
-        hobbies: u.hobby,
-        bio: u.introduction,
+        userId,
+        name,
+        country,
+        gender,
+        birthYear,
+        purpose,
+        languages,
+        hobbies,
+        bio,
+        imageKey,
+        imageUrl,
         raw: u,
     };
-}
+};
 
 export function useFollowList(status: FollowStatus, tab: Tab) {
     const isFollowers = tab === 'received';
@@ -51,19 +98,31 @@ export function useFollowList(status: FollowStatus, tab: Tab) {
     return useQuery<FollowUserItem[]>({
         queryKey: ['follow-list', status, tab] as const,
         queryFn: async () => {
-            const { data } = await api.get('/api/v1/mypage/follows', {
-                params: { status, isFollowers },
-            });
-            const arr: unknown = Array.isArray(data) ? data : (data?.data ?? []);
+            const params = { status, isFollowers: isFollowers ? 'true' : 'false' };
+            console.log('[follow-list] ▶ request params:', params);
+
+            const res = await api.get('/api/v1/mypage/follows', { params });
+            const data = res?.data;
+            console.log(
+                '[follow-list] ◀ raw response:',
+                Array.isArray(data) ? `Array(${data.length})` : data
+            );
+
+            const arr: unknown = Array.isArray(data) ? data : (data as any)?.data ?? [];
             if (!Array.isArray(arr)) {
-                console.warn('[useFollowList] Unexpected API response:', data);
+                console.warn('[follow-list] ❗ Unexpected response shape:', data);
                 return [];
             }
-            return (arr as RawFollowUser[])
-                .filter(x => x && typeof x.id !== 'undefined')
-                .map(adapt);
-        },
 
+            const adapted = (arr as RawFollowUser[])
+                .filter(x => x && (typeof x.id !== 'undefined' || typeof x.userId !== 'undefined'))
+                .map(adapt);
+
+            console.log('[follow-list] ✓ adapted length:', adapted.length);
+            if (adapted[0]) console.log('[follow-list] ✓ adapted[0]:', adapted[0]);
+
+            return adapted.filter(x => Number.isFinite(x.userId) && x.userId > 0);
+        },
         staleTime: 15_000,
         placeholderData: keepPreviousData,
     });

@@ -12,6 +12,8 @@ export type FriendCardItem = {
     languages: string[];
     personalities: string[];
     bio?: string;
+
+    imageUrl?: string; // ✅ 추가: 화면에서 바로 쓸 최종 URL
 };
 
 export default function useRecommendedFriends(limit = 20) {
@@ -25,7 +27,7 @@ export default function useRecommendedFriends(limit = 20) {
                 const parsed = Number(raw?.id);
                 const otherUserId = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 
-                const item: FriendCardItem = {
+                return {
                     id: String(raw?.id ?? `rec-${i}`),
                     otherUserId,
                     name: raw?.name || 'Unknown',
@@ -36,8 +38,8 @@ export default function useRecommendedFriends(limit = 20) {
                     languages: Array.isArray(raw?.languages) ? raw.languages : [],
                     personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
                     bio: (raw as any)?.bio ?? (raw as any)?.introduction ?? '',
+                    imageUrl: (raw as any)?.imageUrl, // ✅ FriendCard로 그대로 전달
                 };
-                return item;
             });
 
             console.log('✅[recommend:list]', result);

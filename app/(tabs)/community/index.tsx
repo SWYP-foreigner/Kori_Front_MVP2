@@ -5,6 +5,7 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -12,7 +13,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     ActivityIndicator,
     FlatList,
-    ListRenderItem, ViewToken, type FlatListProps
+    ListRenderItem,
+    ViewToken,
+    type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -26,7 +29,13 @@ type PostsListItem = {
     title?: string;
     contentPreview?: string;
     content?: string;
+
     authorName?: string;
+    userName?: string | null;
+    nickname?: string;
+    memberName?: string;
+    writerName?: string;
+
     createdAt?: string | number;
     createdTime?: string | number;
     likeCount?: number;
@@ -39,11 +48,12 @@ type PostsListItem = {
 
     contentImageUrls?: string[];
     imageUrls?: string[];
-    contentImageUrl?: string;
-    imageUrl?: string;
+    contentImageUrl?: string | null;
+    imageUrl?: string | null;
 
     userImageUrl?: string;
     boardCategory: Category;
+    isAnonymous?: boolean;
 };
 
 type PostsListResp = {
@@ -56,6 +66,7 @@ type PostsListResp = {
     timestamp?: string;
 };
 
+/* ===== date utils ===== */
 function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
 function parseDateFlexible(v?: unknown): Date | null {
     if (v == null) return null;
@@ -77,6 +88,26 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     } catch {
         return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
     }
+}
+
+/* ===== name helper ===== */
+function pickDisplayName(row: any): string | undefined {
+    const isAnon = row?.isAnonymous ?? row?.anonymous ?? false;
+
+    const candidates = [
+        row?.authorName,
+        row?.memberName,
+        row?.nickname,
+        row?.userName,
+        row?.writerName,
+        row?.displayName,
+        row?.name,
+    ]
+        .map(v => (v == null ? undefined : String(v).trim()))
+        .filter(Boolean) as string[];
+
+    if (isAnon) return candidates[0] || 'Anonymous';
+    return candidates[0];
 }
 
 type PostEx = Post & {
@@ -101,15 +132,45 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
-    console.log('[DEBUG] row:', row);
+    // 목록 디버그
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.log('[LIST:sample]', {
+            postId: row.postId,
+            authorName: row.authorName,
+            userName: row.userName ?? null,
+            nickname: row.nickname,
+            memberName: row.memberName,
+            isAnonymous: row.isAnonymous,
+        });
+        if (!row.authorName && !row.nickname && !row.memberName && !row.userName) {
+            console.warn('[LIST] authorName missing', {
+                postId: row.postId,
+                isAnon: Boolean(row.isAnonymous),
+                keys: Object.keys(row || {}),
+            });
+        }
+    }
 
+    // 이름 결정: 상세에서 머지되기 전 1차 표시
+    // - isAnonymous → Anonymous
+    // - userName === null → 탈퇴한 회원 (백엔드가 deactivated를 이렇게 표현하는 패턴 대응)
+    // - 완전 공란 → Unknown
+    let resolvedAuthor =
+        pickDisplayName(row) ??
+        (row.isAnonymous ? 'Anonymous' :
+            (row.userName === null ? '탈퇴한 회원' : 'Unknown'));
+
+    const niceCategory =
+        (row.boardCategory && typeof row.boardCategory === 'string')
+            ? (row.boardCategory[0] + row.boardCategory.slice(1).toLowerCase()) as Category
+            : ('Free talk' as Category);
 
     return {
         id: String(row.postId),
         postId: row.postId,
-        author: row.authorName || 'Unknown',
+        author: resolvedAuthor,
         avatar: AV,
-        category: (row.boardCategory?.[0] + row.boardCategory?.slice(1).toLowerCase()) as Category ?? 'Free talk',
+        category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
         likes: Number(row.likeCount ?? 0),
@@ -180,16 +241,52 @@ export default function CommunityScreen() {
         if (fetchedRef.current.has(postId)) return;
         fetchedRef.current.add(postId);
         try {
-            const { data } = await api.get(`/api/v1/posts/${postId}`);
+            const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
+
+            // 상세에서 받은 이름/아바타를 목록 아이템에 병합 (여기서 이름도 교정)
+            const detailName = pickDisplayName(detail);
+            console.log('[hydrate:name]', {
+                postId,
+                detailName,
+                isAnonymous: detail?.isAnonymous ?? detail?.anonymous,
+                userImageUrl: detail?.userImageUrl,
+            });
+
+            const mergedAvatarUrl =
+                detail?.userImageUrl ? keyToUrl(detail.userImageUrl) : undefined;
+
             const rawKeys: string[] =
-                (data?.contentImageUrls as string[] | undefined) ??
-                (data?.imageUrls as string[] | undefined) ??
-                (data?.contentImageUrl ? [String(data.contentImageUrl)] :
-                    data?.imageUrl ? [String(data.imageUrl)] : []);
+                (detail?.contentImageUrls as string[] | undefined) ??
+                (detail?.imageUrls as string[] | undefined) ??
+                (detail?.contentImageUrl ? [String(detail.contentImageUrl)] :
+                    detail?.imageUrl ? [String(detail.imageUrl)] : []);
+
+            setItems(prev =>
+                prev.map(p =>
+                    p.postId === postId
+                        ? {
+                            ...p,
+                            // 이미지 업데이트
+                            ...(rawKeys && rawKeys.length > 0 ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
+                            // 이름/아바타 업데이트
+                            ...(detailName ? { author: detailName } :
+                                (detail?.isAnonymous ? { author: 'Anonymous' } :
+                                    (detail?.userName === null ? { author: '탈퇴한 회원' } : {}))),
+                            ...(mergedAvatarUrl ? { avatar: { uri: mergedAvatarUrl } } : {}),
+                            ...(detail?.userImageUrl ? { userImageUrl: detail.userImageUrl } : {}),
+                        }
+                        : p
+                )
+            );
+
             if (rawKeys && rawKeys.length > 0) {
                 setImagesById(prev => ({ ...prev, [postId]: rawKeys.slice(0, MAX_IMAGES) }));
             }
-        } catch (e) {
+        } catch (e: any) {
+            // 409/403 등은 접근 제한 → 그냥 스킵
+            if (typeof __DEV__ !== 'undefined' && __DEV__) {
+                console.log('[hydrate:error]', postId, e?.response?.status, e?.response?.data);
+            }
         }
     }, []);
 
@@ -247,7 +344,7 @@ export default function CommunityScreen() {
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
-            data={{ ...item, category: cat === 'All' ? item.category : cat, }}
+            data={{ ...item, category: cat === 'All' ? item.category : cat }}
             onPress={() =>
                 router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
             }
@@ -268,7 +365,7 @@ export default function CommunityScreen() {
                     <IconBtn
                         onPress={() => {
                             const qs = `?boardId=${encodeURIComponent(String(boardId))}&cat=${encodeURIComponent(cat)}`;
-                            router.push(`/community/SearchScreen${qs}`); // ✅ 변경: 문자열로 push
+                            router.push(`/community/SearchScreen${qs}`);
                         }}
                     >
                         <AntDesign name="search1" size={18} color="#cfd4da" />
@@ -300,13 +397,7 @@ export default function CommunityScreen() {
                 onEndReached={loadMore}
                 refreshing={refreshing}
                 onRefresh={refresh}
-                ListFooterComponent={
-                    loading ? (
-                        <FooterLoading>
-                            <ActivityIndicator />
-                        </FooterLoading>
-                    ) : null
-                }
+                ListFooterComponent={loading ? <FooterLoading><ActivityIndicator /></FooterLoading> : null}
                 contentContainerStyle={{ paddingBottom: 80 }}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewConfig}
@@ -317,47 +408,20 @@ export default function CommunityScreen() {
     );
 }
 
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1d1e1f;
-`;
+/* ===== styles ===== */
+const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
 const Header = styled.View`
-  padding: 0 12px;
-  margin-top: 12px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  padding: 0 12px; margin-top: 12px;
+  flex-direction: row; align-items: center; justify-content: space-between;
 `;
-const Left = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
+const Left = styled.View`flex-direction: row; align-items: center;`;
 const Title = styled.Text`
-  color: #ffffff;
-  font-size: 32px;
-  font-family: 'InstrumentSerif_400Regular';
-  letter-spacing: -0.2px;
+  color: #ffffff; font-size: 32px; font-family: 'InstrumentSerif_400Regular'; letter-spacing: -0.2px;
 `;
-const IconImage = styled.Image`
-  margin-left: 4px;
-  width: 20px;
-  height: 20px;
-  resize-mode: contain;
-`;
-const Right = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-const IconBtn = styled.Pressable`
-  padding: 6px;
-  margin-left: 8px;
-`;
-const ChipsWrap = styled.View`
-  margin-top: 12px;
-`;
-const SortWrap = styled.View`
-  margin-top: 20px;
-  margin-bottom: 14px;
-`;
+const IconImage = styled.Image`margin-left: 4px; width: 20px; height: 20px; resize-mode: contain;`;
+const Right = styled.View`flex-direction: row; align-items: center;`;
+const IconBtn = styled.Pressable`padding: 6px; margin-left: 8px;`;
+const ChipsWrap = styled.View`margin-top: 12px;`;
+const SortWrap = styled.View`margin-top: 20px; margin-bottom: 14px;`;
 const List = styled(FlatList as React.ComponentType<FlatListProps<PostEx>>)``;
 const FooterLoading = styled.View`padding: 16px 0;`;

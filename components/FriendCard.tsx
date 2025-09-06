@@ -24,6 +24,10 @@ type Props = {
   personalities: string[];
   bio?: string;
 
+  /** 🔥 추가: 이미지 */
+  imageUrl?: string;      // 완전한 URL이 오면 그대로 사용
+  imageKey?: string;      // 키가 오면 base + key로 URL 구성
+
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
   onUnfollow?: (userId: number) => void;
@@ -66,6 +70,19 @@ const genderIconByType: Record<
   unspecified: 'help-circle-outline',
 };
 
+// 🔥 키→URL 간단 변환 (이미 URL이면 그대로)
+const toUrl = (u?: string) => {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const base =
+    (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+    (Config as any).NCP_PUBLIC_BASE_URL ||
+    (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+    (Config as any).IMAGE_BASE_URL ||
+    '';
+  return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
+};
+
 export default function FriendCard({
   userId,
   name,
@@ -76,6 +93,9 @@ export default function FriendCard({
   languages,
   personalities,
   bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
+
+  imageUrl,       // ✅ 추가
+  imageKey,       // ✅ 추가
 
   isFollowed = false,
   onFollow,
@@ -92,6 +112,8 @@ export default function FriendCard({
   const [expanded, setExpanded] = useState(true);
   const router = useRouter();
 
+  const finalAvatarUrl = imageUrl || toUrl(imageKey); // ✅ 최종 아바타 URL
+
   const handlePrimaryPress = () => {
     if (mode === 'received') {
       onAccept?.(userId);
@@ -107,26 +129,23 @@ export default function FriendCard({
 
   const handleChat = async () => {
     try {
-      const res = await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`
-        , { otherUserId: userId }
+      const res = await api.post(
+        `${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`,
+        { otherUserId: userId }
       );
-      
-      const {id}=res.data.data;
+      const data = res.data;
       router.push({
         pathname: '/screens/chatscreen/ChattingRoomScreen',
         params: {
-          userId: userId.toString(),       // props에서 바로 가져옴
-          roomName: encodeURIComponent(name), // props에서 바로 가져옴
-          roomId:id  
+          userId: String(userId),
+          roomName: encodeURIComponent(name),
+          roomId: data.id,
         },
       });
     } catch (error) {
-
-      console.error("채팅방 생성 실패", error);
+      console.error('채팅방 생성 실패', error);
     }
-
   };
-
 
   return (
     <CardWrap>
@@ -137,12 +156,14 @@ export default function FriendCard({
         })}
       >
         <Top>
-          <Avatar />
+          {/* ✅ 아바타에 URL 전달 */}
+          <Avatar uri={finalAvatarUrl} />
+
           <Name>{name}</Name>
 
           <MetaLine>
             <MetaDim>Birth </MetaDim>
-            <MetaStrong>{birth}</MetaStrong>
+            <MetaStrong>{birth ?? '-'}</MetaStrong>
 
             <GenderIconSpacer>
               <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
@@ -186,7 +207,7 @@ export default function FriendCard({
                 </LabelRow>
                 <LangWrap>
                   {languages.map((lg, i) => (
-                    <React.Fragment key={lg}>
+                    <React.Fragment key={`${lg}-${i}`}>
                       {i > 0 && <LangDot>•</LangDot>}
                       <LangText>{lg}</LangText>
                     </React.Fragment>
@@ -211,40 +232,19 @@ export default function FriendCard({
         <Actions>
           {mode === 'received' ? (
             <>
-              <CustomButton
-                label="Accept"
-                tone="mint"
-                filled
-                leftIcon="add"
-                onPress={handlePrimaryPress}
-              />
+              <CustomButton label="Accept" tone="mint" filled leftIcon="add" onPress={handlePrimaryPress} />
               <CustomButton
                 label="Decline"
                 tone="danger"
                 filled
                 leftIcon="close"
-                onPress={() => {
-                  console.log('[FriendCard] decline pressed', userId);
-                  onCancel?.(userId);
-                }}
+                onPress={() => onCancel?.(userId)}
               />
             </>
           ) : mode === 'sent' ? (
             <>
-              <CustomButton
-                label="Following"
-                tone="muted"
-                filled={false}
-                leftIcon="check"
-                onPress={handlePrimaryPress}
-              />
-              <CustomButton
-                label="Chat"
-                tone="black"
-                filled
-                leftIcon="chat-bubble-outline"
-                onPress={handleChat}
-              />
+              <CustomButton label="Following" tone="muted" filled={false} leftIcon="check" onPress={handlePrimaryPress} />
+              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={handleChat} />
             </>
           ) : (
             <>
@@ -254,32 +254,15 @@ export default function FriendCard({
                   tone="black"
                   filled={false}
                   leftIcon="check"
-                  onPress={() => {
-                    console.log('[FriendCard] unfollow pressed', userId);
-                    onUnfollow?.(userId);
-                  }}
+                  onPress={() => onUnfollow?.(userId)}
                 />
               ) : (
-                <CustomButton
-                  label="Follow"
-                  tone="mint"
-                  filled
-                  leftIcon="add"
-                  onPress={() => onFollow?.(userId)}
-                />
+                <CustomButton label="Follow" tone="mint" filled leftIcon="add" onPress={() => onFollow?.(userId)} />
               )}
-              <CustomButton
-                label="Chat"
-                tone="black"
-                filled
-                leftIcon="chat-bubble-outline"
-                onPress={handleChat}
-              />
+              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={handleChat} />
             </>
           )}
         </Actions>
-
-
 
         {footerSlot}
       </CardInner>
@@ -287,13 +270,13 @@ export default function FriendCard({
   );
 }
 
+/* ===== 스타일 그대로 ===== */
 const CardWrap = styled.View`
   width: 100%;
   align-self: stretch;
   padding: 0 ${P_H}px;
   margin: ${CARD_OUTER_GAP / 2}px 0;
 `;
-
 const CardInner = styled.View`
   align-self: center;
   width: 100%;
@@ -302,11 +285,7 @@ const CardInner = styled.View`
   border-radius: ${CARD_RADIUS}px;
   padding: ${P_TOP}px ${P_H}px ${P_BOTTOM}px ${P_H}px;
 `;
-
-const Top = styled.View`
-  align-items: center;
-`;
-
+const Top = styled.View` align-items: center; `;
 const Name = styled.Text`
   margin-top: ${NAME_MT}px;
   font-size: 18px;
@@ -315,31 +294,10 @@ const Name = styled.Text`
   color: #111;
   letter-spacing: 0.1px;
 `;
-
-const MetaLine = styled.View`
-  margin-top: ${META_MT}px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const GenderIconSpacer = styled.View`
-  margin: 1px 4px 0 4px;
-`;
-
-const MetaDim = styled.Text`
-  font-family: 'PlusJakartaSans_400Regular';
-  color: #9a9a9a;
-  font-size: 13px;
-  line-height: 18px;
-`;
-
-const MetaStrong = styled.Text`
-  font-family: 'PlusJakartaSans_500SemiBold';
-  color: #111;
-  font-size: 13px;
-  line-height: 18px;
-`;
-
+const MetaLine = styled.View` margin-top: ${META_MT}px; flex-direction: row; align-items: center; `;
+const GenderIconSpacer = styled.View` margin: 1px 4px 0 4px; `;
+const MetaDim = styled.Text` font-family: 'PlusJakartaSans_400Regular'; color: #9a9a9a; font-size: 13px; line-height: 18px; `;
+const MetaStrong = styled.Text` font-family: 'PlusJakartaSans_500SemiBold'; color: #111; font-size: 13px; line-height: 18px; `;
 const Bio = styled.Text`
   margin-top: ${BIO_MT}px;
   margin-bottom: ${BIO_MB}px;
@@ -347,121 +305,30 @@ const Bio = styled.Text`
   line-height: 22px;
   color: #000000;
   text-align: center;
-  font-family: 'PlusJakartaSans_300Light';`;
-
+  font-family: 'PlusJakartaSans_300Light';
+`;
 const DividerWrap = styled.View`
-  position: relative;
-  align-self: stretch;
-  align-items: center;
-  justify-content: center;
-  margin-top: 9px;
-  margin-bottom: 18px;
+  position: relative; align-self: stretch; align-items: center; justify-content: center;
+  margin-top: 9px; margin-bottom: 18px;
 `;
-
-const Divider = styled.View`
-  height: 1px;
-  align-self: stretch;
-  background-color: ${DIVIDER_COLOR};
-`;
-
+const Divider = styled.View` height: 1px; align-self: stretch; background-color: ${DIVIDER_COLOR}; `;
 const ChevronButton = styled.Pressable`
-  position: absolute;
-  top: 50%;
-  margin-top: -${CHEVRON.lift}px;
-  width: ${CHEVRON.size}px;
-  height: ${CHEVRON.size}px;
-  border-radius: ${CHEVRON.size / 2}px;
-  border-width: ${CHEVRON.ring}px;
-  border-color: #dcdcdc;
-  background-color: #ffffff;
-  align-items: center;
-  justify-content: center;
+  position: absolute; top: 50%; margin-top: -${CHEVRON.lift}px;
+  width: ${CHEVRON.size}px; height: ${CHEVRON.size}px; border-radius: ${CHEVRON.size / 2}px;
+  border-width: ${CHEVRON.ring}px; border-color: #dcdcdc; background-color: #ffffff; align-items: center; justify-content: center;
 `;
-
-const Row = styled.View`
-  flex-direction: row;
-  align-self: stretch;
-`;
-
-const RowTop = styled(Row)`
-  margin-top: ${SECTION_GAP_TOP}px;
-`;
-
-const Col = styled.View`
-  flex: 1;
-`;
-
-const ColRight = styled(Col)`
-  margin-left: ${COL_GAP}px;
-`;
-
-const LabelRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Icon = styled.Image`
-  width: 12px;
-  height: 12px;
-  tint-color: #808080;
-`;
-
-const Label = styled.Text`
-  font-size: 12px;
-  line-height: 16px;
-  color: #808080;
-  font-family: 'PlusJakartaSans_400Regular';
-  margin-left: 6px;
-`;
-
-const CategoryValue = styled.Text`
-  margin-top: 4px;
-  font-size: 14px;
-  line-height: 18px;
-  font-family: 'PlusJakartaSans_400Regular';
-  color: #000000;
-`;
-
-const LangWrap = styled.View`
-  margin-top: 4px;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const LangText = styled.Text`
-  font-size: 13px;
-  line-height: 18px;
-  font-family: 'PlusJakartaSans_400Regular';
-  color: #000000;
-`;
-
-const LangDot = styled.Text`
-  font-size: 8px;
-  color: #9e9e9e;
-  margin: 0 6px;
-`;
-
-const TagsWrap = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 2px;
-`;
-
-const Actions = styled.View`
-  margin-top: 16px;
-  flex-direction: row;
-  gap: ${BTN_GAP}px;
-`;
-
-const InterestHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 14px;
-  margin-bottom: 8px;
-`;
-
-const HeartIcon = styled(MaterialCommunityIcons)`
-  margin-right: 4px;
-`;
+const Row = styled.View` flex-direction: row; align-self: stretch; `;
+const RowTop = styled(Row)` margin-top: ${SECTION_GAP_TOP}px; `;
+const Col = styled.View` flex: 1; `;
+const ColRight = styled(Col)` margin-left: ${COL_GAP}px; `;
+const LabelRow = styled.View` flex-direction: row; align-items: center; `;
+const Icon = styled.Image` width: 12px; height: 12px; tint-color: #808080; `;
+const Label = styled.Text` font-size: 12px; line-height: 16px; color: #808080; font-family: 'PlusJakartaSans_400Regular'; margin-left: 6px; `;
+const CategoryValue = styled.Text` margin-top: 4px; font-size: 14px; line-height: 18px; font-family: 'PlusJakartaSans_400Regular'; color: #000000; `;
+const LangWrap = styled.View` margin-top: 4px; flex-direction: row; align-items: center; flex-wrap: wrap; `;
+const LangText = styled.Text` font-size: 13px; line-height: 18px; font-family: 'PlusJakartaSans_400Regular'; color: #000000; `;
+const LangDot = styled.Text` font-size: 8px; color: #9e9e9e; margin: 0 6px; `;
+const TagsWrap = styled.View` flex-direction: row; flex-wrap: wrap; gap: 10px; margin-top: 2px; `;
+const Actions = styled.View` margin-top: 16px; flex-direction: row; gap: ${BTN_GAP}px; `;
+const InterestHeader = styled.View` flex-direction: row; align-items: center; margin-top: 14px; margin-bottom: 8px; `;
+const HeartIcon = styled(MaterialCommunityIcons)` margin-right: 4px; `;
