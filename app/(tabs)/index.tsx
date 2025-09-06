@@ -1,5 +1,4 @@
-import { router } from 'expo-router';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -17,9 +16,11 @@ const toBirthNumber = (v: unknown): number | undefined => {
 
 export default function HomeScreen() {
   const { data: friends, isLoading, isFetching, refetch } = useRecommendedFriends(20);
-  const followMutation = useFollowUser();
+  const followMutation = useFollowUser(); // mutate, mutateAsync 제공
   const { data: me } = useMyProfile();
   const sendDirectChat = useDirectChat();
+
+  const [requested, setRequested] = useState<Set<number>>(new Set());
 
   const myId = useMemo(() => {
     const raw = (me as any)?.memberId ?? (me as any)?.id ?? (me as any)?.userId;
@@ -29,7 +30,6 @@ export default function HomeScreen() {
 
   const list = useMemo(() => {
     const arr = friends ?? [];
-    console.log('[recommend]', arr.map(u => ({ id: u.id, name: u.name })));
     return arr.filter(u => Number(u.id) > 0 && Number(u.id) !== myId);
   }, [friends, myId]);
 
@@ -37,24 +37,21 @@ export default function HomeScreen() {
     refetch();
   }, [refetch]);
 
-  // 채팅 버튼 → DM 전송 시도 → 채팅방으로 이동
-  const openChat = useCallback(
-    (userId: number, name?: string) => {
-      const fallbackMsg = "Hi! 👋 Let's chat";
-      sendDirectChat.mutate(
-        { userId, message: fallbackMsg },
-        {
-          onSettled: () => {
-            router.push({
-              pathname: '/screens/chatscreen/ChattingRoomScreen',
-              params: { userId: String(userId), name: name ?? '' },
-            });
-          },
-        }
-      );
-    },
-    [sendDirectChat]
-  );
+  const markRequested = useCallback((id: number) => {
+    setRequested(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const unmarkRequested = useCallback((id: number) => {
+    setRequested(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
 
   return (
     <Safe>
@@ -74,27 +71,42 @@ export default function HomeScreen() {
           refreshControl={
             <RefreshControl refreshing={Boolean(isFetching && !isLoading)} onRefresh={onRefresh} />
           }
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 16 }}
-          renderItem={({ item }) => (
-            <CardWrap>
-              <FriendCard
-                userId={Number(item.id)}
-                name={item.name || 'Unknown'}
-                country={item.country || '-'}
-                birth={toBirthNumber(item.birth)} gender={item.gender || 'unspecified'}
-                purpose={item.purpose || '-'}
-                languages={item.languages || []}
-                personalities={item.personalities || []}
-                bio={item.bio || undefined}
-                isFollowed={false}
-                onFollow={(id) => {
-                  if (myId && id === myId) return;
-                  followMutation.mutate(id);
-                }}
-                onChat={() => openChat(Number(item.id), item.name)}
-              />
-            </CardWrap>
-          )}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+          renderItem={({ item }) => {
+            const uid = Number(item.id);
+            const isSent = requested.has(uid);
+
+            return (
+              <CardWrap>
+                <FriendCard
+                  userId={uid}
+                  name={item.name || 'Unknown'}
+                  country={item.country || '-'}
+                  birth={toBirthNumber(item.birth)}
+                  gender={item.gender || 'unspecified'}
+                  purpose={item.purpose || '-'}
+                  languages={item.languages || []}
+                  personalities={item.personalities || []}
+                  bio={item.bio || undefined}
+
+                  mode={isSent ? 'sent' : 'friend'}
+
+                  onFollow={async (id) => {
+                    if (myId && id === myId) return;
+                    try {
+                      await followMutation.mutateAsync(id); // 성공해도 알림 X
+                      markRequested(id);                    // 🔸UI를 'sent'로 전환
+                    } catch (e) {
+                    }
+                  }}
+
+                  onCancel={async (id) => {
+                    unmarkRequested(id);
+                  }}
+                />
+              </CardWrap>
+            );
+          }}
           ListEmptyComponent={
             <EmptyWrap>
               <EmptyText>No recommendations yet.</EmptyText>
@@ -110,34 +122,41 @@ const Safe = styled.SafeAreaView`
   flex: 1;
   background-color: #1d1e1f;
 `;
+
 const Header = styled.View`
   padding: 12px 18px 8px 18px;
   flex-direction: row;
   align-items: center;
 `;
+
 const Title = styled.Text`
   color: #ffffff;
   font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
   letter-spacing: -0.2px;
 `;
+
 const IconImage = styled.Image`
   margin-left: 4px;
   width: 20px;
   height: 20px;
 `;
+
 const LoaderWrap = styled.View`
   flex: 1;
   align-items: center;
   justify-content: center;
 `;
+
 const CardWrap = styled.View`
   margin-top: 16px;
 `;
+
 const EmptyWrap = styled.View`
   padding: 40px 16px;
   align-items: center;
 `;
+
 const EmptyText = styled.Text`
   color: #cfcfcf;
 `;
