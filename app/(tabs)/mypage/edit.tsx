@@ -1,4 +1,5 @@
 import Avatar from '@/components/Avatar';
+import BottomSheetTagPicker, { TagSection } from '@/components/BottomSheetTagPicker';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useQueryClient } from '@tanstack/react-query';
@@ -60,7 +61,18 @@ const AVATAR_KEYS = [
   'avatars/character3.png',
 ] as const;
 
+const TAG_SECTIONS: TagSection[] = [
+  { title: 'Entertainment & Hobbies', items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'], emojis: ['🎵', '🎬', '📚', '🎬', '🎮'] },
+  { title: 'LifeStyle & Social', items: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'], emojis: ['🍺', '☕️', '✈️', '🧩', '🛍️', '💄️', '🛏️'] },
+  { title: 'Activities & Wellness', items: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'], emojis: ['🧘', '🏃', '🏋️', '🥾', '💃', '⛰️'] },
+  { title: 'Creativity & Personal Growth', items: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'], emojis: ['🎨', '🎤', '🍳', '🐶', '💼', '📸'] },
+  { title: 'Korean Culture', items: ['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover'], emojis: ['☕️', '🎬', '🍜'] },
+];
+
 export default function EditProfileScreen() {
+
+  const [showTagPicker, setShowTagPicker] = useState(false);
+
   const queryClient = useQueryClient();
   const { data: me, isLoading } = useMyProfile();
   const editMutation = useProfileEdit();
@@ -147,7 +159,7 @@ export default function EditProfileScreen() {
       purpose: purpose || '',
       language,
       hobby: selectedInterests ?? [],
-      imageKey: pendingImageKey, // 바텀시트에서 선택한 값이 있으면 서버로 전송
+      imageKey: pendingImageKey,
     };
 
     try {
@@ -336,6 +348,7 @@ export default function EditProfileScreen() {
             <LabelText>Personality</LabelText>
             <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
           </TopRow>
+
           <TagsWrap>
             {selectedInterests.map((t) => (
               <PreviewTag key={t}>
@@ -343,7 +356,16 @@ export default function EditProfileScreen() {
               </PreviewTag>
             ))}
           </TagsWrap>
+
+          {/* + Edit 버튼 */}
+          <EditRow>
+            <EditOutlineBtn onPress={() => setShowTagPicker(true)}>
+              <AntDesign name="plus" size={12} color="#30F59B" />
+              <EditOutlineText>Edit</EditOutlineText>
+            </EditOutlineBtn>
+          </EditRow>
         </Field>
+
 
         <Field>
           <LabelText>About Me</LabelText>
@@ -359,7 +381,6 @@ export default function EditProfileScreen() {
         <BottomPad />
       </Scroll>
 
-      {/* 피커 모달들 */}
       <CountryPicker
         visible={showCountry}
         value={country}
@@ -383,6 +404,15 @@ export default function EditProfileScreen() {
           setPurpose(p);
           setShowPurpose(false);
         }}
+      />
+      <BottomSheetTagPicker
+        visible={showTagPicker}
+        value={selectedInterests}
+        onClose={() => setShowTagPicker(false)}
+        onChange={setSelectedInterests}
+        sections={TAG_SECTIONS}
+        max={5}
+        title="Select your interests"
       />
 
       <Modal
@@ -701,4 +731,27 @@ const SheetBtnMint = styled.Pressable<{ disabled?: boolean }>`
 const SheetBtnMintText = styled.Text`
   color: #0f1011;
   font-weight: 800;
+`;
+
+const EditRow = styled.View`
+  margin-top: 10px;
+`;
+
+const EditOutlineBtn = styled.Pressable`
+  align-self: flex-start;
+  flex-direction: row;
+  align-items: center;
+  height: 28px;                 /* Fixed(28px) */
+  padding: 0 10px;              /* Left/Right 10px */
+  gap: 4px;                     /* 아이콘-텍스트 간격 */
+  border-radius: 100px;         /* Radius 100px */
+  border-width: 1px;            /* Border 1px */
+  border-color: #30F59B;        /* Primary/Mint */
+  background: transparent;
+`;
+
+const EditOutlineText = styled.Text`
+  color: #30F59B;               /* Primary/Mint */
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_600SemiBold';
 `;
