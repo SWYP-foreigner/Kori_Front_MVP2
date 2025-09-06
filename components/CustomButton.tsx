@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import styled from 'styled-components/native';
 
-type Tone = 'mint' | 'black' | 'danger';
+type Tone = 'mint' | 'black' | 'danger' | 'muted';
 
 type ButtonProps = {
     label: string;
@@ -21,6 +21,7 @@ const PALETTE = {
     black: '#1D1E1F',
     white: '#FFFFFF',
     danger: '#FF4F4F',
+    muted: '#848687',
 } as const;
 
 export default function CustomButton({

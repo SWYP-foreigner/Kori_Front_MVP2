@@ -94,8 +94,8 @@ export default function HomeScreen() {
                   onFollow={async (id) => {
                     if (myId && id === myId) return;
                     try {
-                      await followMutation.mutateAsync(id); // 성공해도 알림 X
-                      markRequested(id);                    // 🔸UI를 'sent'로 전환
+                      await followMutation.mutateAsync(id);
+                      markRequested(id);
                     } catch (e) {
                     }
                   }}

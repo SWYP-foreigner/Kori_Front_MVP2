@@ -141,7 +141,7 @@ const Back = styled.Pressable`
 const Title = styled.Text`
   color: #ffffff;
   font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_500Bold';
 `;
 
 const RightSpace = styled.View`
