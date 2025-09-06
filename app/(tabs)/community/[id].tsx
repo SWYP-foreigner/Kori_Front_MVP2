@@ -90,7 +90,7 @@ export default function PostDetailScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [blockUserLoading, setBlockUserLoading] = useState(false);
+  const [reportTarget, setReportTarget] = useState<'post' | 'user'>('post'); // ← 추가: 어떤 이름으로 표시할지만 다름
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
@@ -301,45 +301,13 @@ export default function PostDetailScreen() {
       }).start(() => { setMenuVisible(false); resolve(); });
     });
 
-  async function blockAuthorNow() {
-    const uid = authorId || post.userId || post.authorId || post.memberId;
-    if (!uid) {
-      Alert.alert('Report', 'Author id is missing (anonymous/system content).');
-      return;
-    }
-    console.groupCollapsed('[user-block] start');
-    console.log('endpoint', `/api/v1/users/${uid}/block`);
-    console.log('authorId', uid, 'authorName', authorName);
-    console.groupEnd();
-
-    try {
-      setBlockUserLoading(true);
-      const t0 = Date.now();
-      const r = await api.post(`/api/v1/users/${uid}/block`);
-      console.groupCollapsed('[user-block] success');
-      console.log('status', r.status, 'timeMs', Date.now() - t0);
-      console.log('data', r.data);
-      console.groupEnd();
-      Alert.alert('Blocked', 'You will not see posts from this author.');
-    } catch (e: any) {
-      const s = e?.response?.status ?? 'ERR';
-      const d = e?.response?.data;
-      console.group('[user-block] error');
-      console.log('status', s, 'resp.data', d);
-      console.groupEnd();
-      let msg = d?.message || 'Failed to block the author.';
-      if (s === 401) msg = 'Authentication required. Please log in again.';
-      Alert.alert('Block Author', msg);
-    } finally {
-      setBlockUserLoading(false);
-    }
-  }
-
   const onSubmitReport = () => {
     const text = reportText.trim();
     if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
 
-    Alert.alert('Report', 'Are you sure\nreport (block) this post?', [
+    const titleText = reportTarget === 'user' ? 'Report This User' : 'Report This Post';
+
+    Alert.alert('Report', `Are you sure\n${titleText}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Report',
@@ -350,10 +318,10 @@ export default function PostDetailScreen() {
           setReportLoading(true);
 
           console.groupCollapsed('[report] start');
+          console.log('target', reportTarget);
           console.log('endpoint', reqUrl);
           console.log('postId', postId, 'authorId', authorId, 'authorName', authorName);
-          console.log('bodySent', '(none)');
-          console.log('note', 'If backend needs reason later → retry with { reason }');
+          console.log('bodySent', '(none) first-try');
           console.groupEnd();
 
           try {
@@ -361,69 +329,45 @@ export default function PostDetailScreen() {
             const ms = Date.now() - t0;
 
             console.groupCollapsed('[report] success');
-            console.log('status', res.status);
-            console.log('timeMs', ms);
+            console.log('target', reportTarget, 'status', res.status, 'timeMs', ms);
             console.log('data', res.data);
             console.groupEnd();
 
             setReportOpen(false);
             setReportText('');
-            Alert.alert('Report', 'The post has been reported (blocked).');
+            Alert.alert('Report', 'The request has been submitted.');
           } catch (e: any) {
             const ms = Date.now() - t0;
             const status = e?.response?.status ?? 'ERR';
             const data = e?.response?.data;
-            const url = e?.config?.url;
-            const method = (e?.config?.method || 'post').toUpperCase();
 
             console.group('[report] error 1st');
-            console.log('status', status, 'timeMs', ms);
-            console.log('url', url, 'method', method);
+            console.log('target', reportTarget, 'status', status, 'timeMs', ms);
             console.log('resp.data', data);
-            console.log('authorId', authorId, 'authorName', authorName);
-            console.log('postMeta', { createdRaw, createdLabel, views, likeCount, commentCount, postType, isAnonymous });
+            console.log('meta', { postId, authorId, authorName, postType, isAnonymous });
             console.groupEnd();
 
             if (status === 400) {
               try {
-                console.log('[report] retry with body { reason }');
-                const r2 = await api.post(reqUrl, { reason: text });
-                console.log('[report] success (with-body)', { status: r2.status });
+                console.log('[report] retry with { reason }');
+                const r2 = await api.post(reqUrl, { reason: text }); // ← 동일 엔드포인트, 바디만 추가
+                console.log('[report] success (with-body)', { status: r2.status, target: reportTarget });
                 setReportOpen(false);
                 setReportText('');
-                Alert.alert('Report', 'The post has been reported (blocked).');
+                Alert.alert('Report', 'The request has been submitted.');
               } catch (e2: any) {
                 const s2 = e2?.response?.status ?? 'ERR';
                 const d2 = e2?.response?.data;
                 console.group('[report] error 2nd');
-                console.log('status', s2, 'resp.data', d2);
-                console.log('authorId', authorId, 'authorName', authorName, 'postType', postType, 'isAnonymous', isAnonymous);
-                console.log('hint', 'If still 400: server policy likely disallows blocking this target (anonymous/system/own/already-blocked).');
+                console.log('target', reportTarget, 'status', s2, 'resp.data', d2);
+                console.log('hint', 'If still 400: server policy likely disallows blocking this target/asset.');
                 console.groupEnd();
-
-                // 작성자 차단 폴백 옵션 (authorId 있을 때만)
-                const srvMsg = d2?.message as string | undefined;
-                if (authorId) {
-                  Alert.alert(
-                    'Report',
-                    srvMsg || 'This post cannot be blocked.',
-                    [
-                      { text: 'OK' },
-                      {
-                        text: 'Block Author',
-                        style: 'destructive',
-                        onPress: blockAuthorNow,
-                      },
-                    ],
-                  );
-                } else {
-                  Alert.alert('Report', srvMsg || 'This post cannot be blocked.');
-                }
+                Alert.alert('Report', d2?.message || 'This target cannot be blocked/reported.');
               }
             } else {
-              let msg = 'Failed to report this post.';
+              let msg = 'Failed to submit the report.';
               if (status === 401) msg = 'Authentication required. Please log in again.';
-              else if (status === 403) msg = 'You do not have permission to report this post.';
+              else if (status === 403) msg = 'You do not have permission.';
               else if (status === 404) msg = 'Post not found.';
               Alert.alert('Report', msg);
             }
@@ -448,6 +392,8 @@ export default function PostDetailScreen() {
       Alert.alert('Edit', 'Failed to save changes.');
     }
   };
+
+  const reportTitle = reportTarget === 'user' ? 'Report This User' : 'Report This Post';
 
   return (
     <Safe>
@@ -588,36 +534,28 @@ export default function PostDetailScreen() {
             }}
           >
             <SheetHandle />
-            {/* 게시글 신고 */}
-            <SheetItem onPress={async () => { setMenuVisible(false); setReportText(''); setReportOpen(true); }}>
-              <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
-              <SheetLabel $danger>Report This Post</SheetLabel>
-            </SheetItem>
-            {/* 사용자 신고 → 실제 차단 API 호출 */}
             <SheetItem
               onPress={() => {
                 setMenuVisible(false);
-                const uid = authorId || post.userId || post.authorId || post.memberId;
-                Alert.alert(
-                  'Report',
-                  uid
-                    ? 'Are you sure\nreport (block) this user?'
-                    : 'This content has no identifiable author.',
-                  uid
-                    ? [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: blockUserLoading ? 'Working…' : 'Report',
-                        style: 'destructive',
-                        onPress: blockAuthorNow,
-                      },
-                    ]
-                    : [{ text: 'OK' }],
-                );
+                setReportTarget('post');
+                setReportText('');
+                setReportOpen(true);
+              }}
+            >
+              <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
+              <SheetLabel $danger>Report This Post</SheetLabel>
+            </SheetItem>
+
+            <SheetItem
+              onPress={() => {
+                setMenuVisible(false);
+                setReportTarget('user');
+                setReportText('');
+                setReportOpen(true);
               }}
             >
               <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
-              <SheetLabel $danger>{blockUserLoading ? 'Blocking…' : 'Report This User'}</SheetLabel>
+              <SheetLabel $danger>Report This User</SheetLabel>
             </SheetItem>
 
             <SheetDivider />
@@ -636,7 +574,7 @@ export default function PostDetailScreen() {
             <DialogHeader>
               <DialogTitle>
                 <MaterialCommunityIcons name="flag-variant" size={18} color={DANGER} />
-                <DialogTitleText $danger>  Report This Post</DialogTitleText>
+                <DialogTitleText $danger>  {reportTitle}</DialogTitleText>
               </DialogTitle>
               <CloseBtn onPress={() => setReportOpen(false)}>
                 <AntDesign name="close" size={18} color="#cfd4da" />
@@ -646,7 +584,9 @@ export default function PostDetailScreen() {
             <DialogTextarea
               value={reportText}
               onChangeText={setReportText}
-              placeholder="Tell us what’s wrong with this post…"
+              placeholder={reportTarget === 'user'
+                ? "Tell us what’s wrong with this user’s content…"
+                : "Tell us what’s wrong with this post…"}
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"
