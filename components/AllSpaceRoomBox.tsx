@@ -9,11 +9,11 @@ const AllSpaceRoomBox=({data})=>{
       router.push({
       pathname: '/screens/chatscreen/LinkedSpaceDetail',
       params: { 
-        roomId: data.chatRoomId     // props에서 바로 가져옴
+        roomId: data.chatRoomId // props에서 바로 가져옴
       },
     });
     };
-
+    console.log("AllSpaceRoom",data);
     return(
         <AllSpacesBox onPress={onhandleNext}>
         <AllSpaceTitleContainer>
@@ -25,7 +25,11 @@ const AllSpaceRoomBox=({data})=>{
         </AllSpaceMemberContainer>
         </AllSpaceTitleContainer>
         <AllSpaceImageContainer>
-            <AllSpaceImage source={{ uri: data.roomImageUrl }}/>
+            <AllSpaceImage source={
+                  data.roomImageUrl
+                    ? { uri: data.roomImageUrl }               // URL이 있으면 원격 이미지
+                    : require("@/assets/images/character1.png") // 없으면 로컬 디폴트 이미지
+                }/>
         </AllSpaceImageContainer>
         </AllSpacesBox>
     );
