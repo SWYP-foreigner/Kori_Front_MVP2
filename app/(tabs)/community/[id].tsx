@@ -1,3 +1,4 @@
+import api from '@/api/axiosInstance';
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -88,6 +89,8 @@ export default function PostDetailScreen() {
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+  const [blockUserLoading, setBlockUserLoading] = useState(false);
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
@@ -97,7 +100,7 @@ export default function PostDetailScreen() {
 
   const [value, setValue] = useState('');
   const [anonymous, setAnonymous] = useState(false);
-  const canSend = value.trim().length > 0; // ✅ 전송 가능 여부
+  const canSend = value.trim().length > 0;
 
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
@@ -192,7 +195,20 @@ export default function PostDetailScreen() {
   }
 
   const post = data as any;
-  const author = post.userName ?? post.authorName ?? 'Unknown';
+
+  const authorId: string = String(
+    post.userId ?? post.authorId ?? post.memberId ?? post.writerId ??
+    post.ownerId ?? post.creatorId ?? post.author?.id ?? post.user?.id ?? ''
+  );
+  const authorName: string =
+    post.userName ?? post.authorName ?? post.memberName ?? post.writerName ??
+    post.ownerName ?? post.creatorName ?? post.author?.name ?? post.user?.name ?? 'Unknown';
+  const postType = post.type ?? post.category ?? post.postType ?? post.kind ?? 'unknown';
+  const isAnonymous = Boolean(post.anonymous ?? post.isAnonymous ?? post.private);
+  const isBlocked = Boolean(post.blocked ?? post.isBlocked);
+  const isDeleted = Boolean(post.deleted ?? post.isDeleted ?? post.status === 'DELETED');
+
+  const author = authorName;
   const avatarUrl = post.userImageUrl ? keyToUrl(post.userImageUrl) : undefined;
   const avatarSrc = avatarUrl ? { uri: avatarUrl } : AV;
 
@@ -204,6 +220,16 @@ export default function PostDetailScreen() {
   const commentCount = post.commentCount ?? 0;
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
+
+  try {
+    console.groupCollapsed('[post-meta]');
+    console.log('postId', postId);
+    console.log('authorId', authorId, 'authorName', authorName);
+    console.log('postType', postType, 'isAnonymous', isAnonymous, 'isBlocked', isBlocked, 'isDeleted', isDeleted);
+    const keys = Object.keys(post || {});
+    console.log('post.keys', keys);
+    console.groupEnd();
+  } catch { }
 
   const toggleCommentLike = (comment: Comment) => {
     const cmtId = Number((comment as any).id ?? (comment as any).commentId);
@@ -256,6 +282,12 @@ export default function PostDetailScreen() {
   };
 
   const openMenu = () => {
+    console.groupCollapsed('[menu] open');
+    console.log('postId', postId);
+    console.log('authorId', authorId, 'authorName', authorName);
+    console.log('createdRaw', createdRaw, 'createdLabel', createdLabel);
+    console.groupEnd();
+
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, {
@@ -269,12 +301,137 @@ export default function PostDetailScreen() {
       }).start(() => { setMenuVisible(false); resolve(); });
     });
 
+  async function blockAuthorNow() {
+    const uid = authorId || post.userId || post.authorId || post.memberId;
+    if (!uid) {
+      Alert.alert('Report', 'Author id is missing (anonymous/system content).');
+      return;
+    }
+    console.groupCollapsed('[user-block] start');
+    console.log('endpoint', `/api/v1/users/${uid}/block`);
+    console.log('authorId', uid, 'authorName', authorName);
+    console.groupEnd();
+
+    try {
+      setBlockUserLoading(true);
+      const t0 = Date.now();
+      const r = await api.post(`/api/v1/users/${uid}/block`);
+      console.groupCollapsed('[user-block] success');
+      console.log('status', r.status, 'timeMs', Date.now() - t0);
+      console.log('data', r.data);
+      console.groupEnd();
+      Alert.alert('Blocked', 'You will not see posts from this author.');
+    } catch (e: any) {
+      const s = e?.response?.status ?? 'ERR';
+      const d = e?.response?.data;
+      console.group('[user-block] error');
+      console.log('status', s, 'resp.data', d);
+      console.groupEnd();
+      let msg = d?.message || 'Failed to block the author.';
+      if (s === 401) msg = 'Authentication required. Please log in again.';
+      Alert.alert('Block Author', msg);
+    } finally {
+      setBlockUserLoading(false);
+    }
+  }
+
   const onSubmitReport = () => {
     const text = reportText.trim();
     if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
-    Alert.alert('Report', 'Are you sure\nreport this post?', [
+
+    Alert.alert('Report', 'Are you sure\nreport (block) this post?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Report', style: 'destructive', onPress: () => { console.log('[report post]', { postId, text }); setReportOpen(false); } },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: async () => {
+          const reqUrl = `/api/v1/posts/${postId}/block`;
+          const t0 = Date.now();
+          setReportLoading(true);
+
+          console.groupCollapsed('[report] start');
+          console.log('endpoint', reqUrl);
+          console.log('postId', postId, 'authorId', authorId, 'authorName', authorName);
+          console.log('bodySent', '(none)');
+          console.log('note', 'If backend needs reason later → retry with { reason }');
+          console.groupEnd();
+
+          try {
+            const res = await api.post(reqUrl);
+            const ms = Date.now() - t0;
+
+            console.groupCollapsed('[report] success');
+            console.log('status', res.status);
+            console.log('timeMs', ms);
+            console.log('data', res.data);
+            console.groupEnd();
+
+            setReportOpen(false);
+            setReportText('');
+            Alert.alert('Report', 'The post has been reported (blocked).');
+          } catch (e: any) {
+            const ms = Date.now() - t0;
+            const status = e?.response?.status ?? 'ERR';
+            const data = e?.response?.data;
+            const url = e?.config?.url;
+            const method = (e?.config?.method || 'post').toUpperCase();
+
+            console.group('[report] error 1st');
+            console.log('status', status, 'timeMs', ms);
+            console.log('url', url, 'method', method);
+            console.log('resp.data', data);
+            console.log('authorId', authorId, 'authorName', authorName);
+            console.log('postMeta', { createdRaw, createdLabel, views, likeCount, commentCount, postType, isAnonymous });
+            console.groupEnd();
+
+            if (status === 400) {
+              try {
+                console.log('[report] retry with body { reason }');
+                const r2 = await api.post(reqUrl, { reason: text });
+                console.log('[report] success (with-body)', { status: r2.status });
+                setReportOpen(false);
+                setReportText('');
+                Alert.alert('Report', 'The post has been reported (blocked).');
+              } catch (e2: any) {
+                const s2 = e2?.response?.status ?? 'ERR';
+                const d2 = e2?.response?.data;
+                console.group('[report] error 2nd');
+                console.log('status', s2, 'resp.data', d2);
+                console.log('authorId', authorId, 'authorName', authorName, 'postType', postType, 'isAnonymous', isAnonymous);
+                console.log('hint', 'If still 400: server policy likely disallows blocking this target (anonymous/system/own/already-blocked).');
+                console.groupEnd();
+
+                // 작성자 차단 폴백 옵션 (authorId 있을 때만)
+                const srvMsg = d2?.message as string | undefined;
+                if (authorId) {
+                  Alert.alert(
+                    'Report',
+                    srvMsg || 'This post cannot be blocked.',
+                    [
+                      { text: 'OK' },
+                      {
+                        text: 'Block Author',
+                        style: 'destructive',
+                        onPress: blockAuthorNow,
+                      },
+                    ],
+                  );
+                } else {
+                  Alert.alert('Report', srvMsg || 'This post cannot be blocked.');
+                }
+              }
+            } else {
+              let msg = 'Failed to report this post.';
+              if (status === 401) msg = 'Authentication required. Please log in again.';
+              else if (status === 403) msg = 'You do not have permission to report this post.';
+              else if (status === 404) msg = 'Post not found.';
+              Alert.alert('Report', msg);
+            }
+          } finally {
+            setReportLoading(false);
+          }
+        },
+      },
     ]);
   };
 
@@ -334,7 +491,6 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
 
-                  {/* 아이콘만 보이도록 박스 제거 */}
                   <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
                     <MaterialIcons
                       name="bookmark-border"
@@ -368,7 +524,6 @@ export default function PostDetailScreen() {
                 <Body>{body}</Body>
 
                 <Footer>
-                  {/* 좋아요: outline만, 색만 변경 */}
                   <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
                     <AntDesign
                       name="like2"
@@ -413,7 +568,6 @@ export default function PostDetailScreen() {
             </AnonToggle>
           </Composer>
 
-          {/* ✅ 입력 가능 시 send 아이콘 색 #02F59B, 버튼 활성화 */}
           <SendBtn onPress={submit} disabled={!canSend} hitSlop={8}>
             <Feather name="send" size={22} color={canSend ? '#02F59B' : '#D9D9D9'} />
           </SendBtn>
@@ -434,21 +588,38 @@ export default function PostDetailScreen() {
             }}
           >
             <SheetHandle />
+            {/* 게시글 신고 */}
             <SheetItem onPress={async () => { setMenuVisible(false); setReportText(''); setReportOpen(true); }}>
               <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
               <SheetLabel $danger>Report This Post</SheetLabel>
             </SheetItem>
-            <SheetItem onPress={async () => {
-              setMenuVisible(false);
-              const userId = post.userId ?? post.authorId;
-              Alert.alert('Report', 'Are you sure\nreport this user?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Report', style: 'destructive', onPress: () => console.log('[report user]', userId) },
-              ]);
-            }}>
+            {/* 사용자 신고 → 실제 차단 API 호출 */}
+            <SheetItem
+              onPress={() => {
+                setMenuVisible(false);
+                const uid = authorId || post.userId || post.authorId || post.memberId;
+                Alert.alert(
+                  'Report',
+                  uid
+                    ? 'Are you sure\nreport (block) this user?'
+                    : 'This content has no identifiable author.',
+                  uid
+                    ? [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: blockUserLoading ? 'Working…' : 'Report',
+                        style: 'destructive',
+                        onPress: blockAuthorNow,
+                      },
+                    ]
+                    : [{ text: 'OK' }],
+                );
+              }}
+            >
               <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
-              <SheetLabel $danger>Report This User</SheetLabel>
+              <SheetLabel $danger>{blockUserLoading ? 'Blocking…' : 'Report This User'}</SheetLabel>
             </SheetItem>
+
             <SheetDivider />
             <SheetItem onPress={() => setMenuVisible(false)}>
               <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
@@ -479,10 +650,11 @@ export default function PostDetailScreen() {
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"
+              editable={!reportLoading}
             />
 
-            <SubmitBtn onPress={onSubmitReport}>
-              <SubmitText>Submit</SubmitText>
+            <SubmitBtn onPress={onSubmitReport} disabled={reportLoading || !reportText.trim()}>
+              <SubmitText>{reportLoading ? 'Submitting…' : 'Submit'}</SubmitText>
             </SubmitBtn>
           </Dialog>
         </View>
@@ -546,8 +718,8 @@ const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
 const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
 
 const BookmarkWrap = styled.Pressable<{ $active?: boolean }>`
-  padding: 6px;                /* 아이콘만 보이게 여백만 */
-  background: transparent;     /* 네모 박스 제거 */
+  padding: 6px;
+  background: transparent;
 `;
 
 const Img = styled.Image`width: 360px; height: 200px; border-radius: 12px; margin-right: 8px;`;
@@ -571,7 +743,6 @@ const AnonToggle = styled.Pressable`flex-direction: row; align-items: center; ma
 const AnonLabel = styled.Text`color: #cccfd5; font-size: 14px; margin-right: 8px; font-family: 'PlusJakartaSans_Light';`;
 const Check = styled.View<{ $active?: boolean }>`width: 16px; height: 16px; border-radius: 2px; border-width: 1.1px; border-color: #cccfd5; background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')}; align-items: center; justify-content: center;`;
 
-/* ✅ disabled 시 투명도 */
 const SendBtn = styled.Pressable<{ disabled?: boolean }>`
   width: 36px;
   height: 36px;
@@ -592,7 +763,15 @@ const DialogTitle = styled.View`flex-direction: row; align-items: center;`;
 const DialogTitleText = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')}; font-size: 14px; font-weight: 700;`;
 const CloseBtn = styled.Pressable`padding: 4px;`;
 const DialogTextarea = styled.TextInput`min-height: 220px; border-radius: 8px; padding: 12px; background: #1f2021; color: #e7eaed; font-size: 14px; border-width: 1px; border-color: #3a3d40;`;
-const SubmitBtn = styled.Pressable`background: #ff4d4f; padding: 12px; border-radius: 8px; align-items: center; justify-content: center; margin-top: 12px;`;
+const SubmitBtn = styled.Pressable<{ disabled?: boolean }>`
+  background: #ff4d4f;
+  padding: 12px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
 const SubmitText = styled.Text`color: #ffffff; font-weight: 700;`;
 const EditBox = styled.View`width: 100%; max-width: 360px; background: #2a2b2c; border-radius: 12px; padding: 12px 12px 16px 12px;`;
 const EditHeader = styled.View`flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px;`;
