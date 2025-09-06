@@ -1,6 +1,8 @@
 import Avatar from '@/components/Avatar';
+import BottomSheetTagPicker, { TagSection } from '@/components/BottomSheetTagPicker';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
@@ -23,20 +25,60 @@ import PurposePicker, {
 
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
-import { useQueryClient } from '@tanstack/react-query';
+import { Config } from '@/src/lib/config';
+
+import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
+import * as ImagePicker from 'expo-image-picker';
+import { Alert, Image as RNImage, Modal } from 'react-native';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
 const INPUT_BG = '#353637';
 const INPUT_BORDER = '#FFFFFF';
 
+const toUrl = (u?: string) => {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const base =
+    (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+    (Config as any).NCP_PUBLIC_BASE_URL ||
+    (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+    (Config as any).IMAGE_BASE_URL ||
+    '';
+  return base
+    ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}`
+    : undefined;
+};
+
+const AVATARS = [
+  require('@/assets/images/character1.png'),
+  require('@/assets/images/character2.png'),
+  require('@/assets/images/character3.png'),
+] as const;
+const AVATAR_KEYS = [
+  'avatars/character1.png',
+  'avatars/character2.png',
+  'avatars/character3.png',
+] as const;
+
+const TAG_SECTIONS: TagSection[] = [
+  { title: 'Entertainment & Hobbies', items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'], emojis: ['🎵', '🎬', '📚', '🎬', '🎮'] },
+  { title: 'LifeStyle & Social', items: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'], emojis: ['🍺', '☕️', '✈️', '🧩', '🛍️', '💄️', '🛏️'] },
+  { title: 'Activities & Wellness', items: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'], emojis: ['🧘', '🏃', '🏋️', '🥾', '💃', '⛰️'] },
+  { title: 'Creativity & Personal Growth', items: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'], emojis: ['🎨', '🎤', '🍳', '🐶', '💼', '📸'] },
+  { title: 'Korean Culture', items: ['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover'], emojis: ['☕️', '🎬', '🍜'] },
+];
+
 export default function EditProfileScreen() {
+
+  const [showTagPicker, setShowTagPicker] = useState(false);
+
   const queryClient = useQueryClient();
   const { data: me, isLoading } = useMyProfile();
   const editMutation = useProfileEdit();
 
   const [name, setName] = useState('');
-  const [email] = useState(''); // 서버에서 이메일 안 주면 숨김 처리 유지
+  const [email] = useState('');
   const [country, setCountry] = useState('');
   const [showCountry, setShowCountry] = useState(false);
 
@@ -50,6 +92,16 @@ export default function EditProfileScreen() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [aboutMe, setAboutMe] = useState('');
 
+  const [avatarKeyOrUrl, setAvatarKeyOrUrl] = useState<string | undefined>(undefined);
+  const displayAvatarUrl = useMemo(() => toUrl(avatarKeyOrUrl), [avatarKeyOrUrl]);
+
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const [tempIdx, setTempIdx] = useState<number>(0);
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
+  const [sheetSaving, setSheetSaving] = useState(false);
+
+  const [pendingImageKey, setPendingImageKey] = useState<string | undefined>(undefined);
+
   useEffect(() => {
     if (!me) return;
     const full = [me.firstname, me.lastname].filter(Boolean).join(' ');
@@ -60,6 +112,10 @@ export default function EditProfileScreen() {
     setLangs(me.language ?? []);
     setSelectedInterests(me.hobby ?? []);
     setAboutMe(me.introduction ?? '');
+
+    const initial = (me as any)?.imageUrl || (me as any)?.imageKey || undefined;
+    setAvatarKeyOrUrl(initial);
+    setPendingImageKey(undefined);
   }, [me]);
 
   const languagesDisplay = useMemo(() => {
@@ -103,7 +159,7 @@ export default function EditProfileScreen() {
       purpose: purpose || '',
       language,
       hobby: selectedInterests ?? [],
-      imageKey: undefined,
+      imageKey: pendingImageKey,
     };
 
     try {
@@ -112,6 +168,92 @@ export default function EditProfileScreen() {
       router.back();
     } catch (e) {
       console.log('[Profile Save Error]', e);
+      Alert.alert('Save failed', 'Please try again.');
+    }
+  };
+
+
+  const openAvatarSheet = () => {
+    const cur = AVATARS.findIndex(
+      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (displayAvatarUrl ?? '')
+    );
+    if (cur >= 0) {
+      setTempIdx(cur);
+      setCustomPhotoUri(undefined);
+    } else if (displayAvatarUrl) {
+      setTempIdx(-1);
+      setCustomPhotoUri(displayAvatarUrl);
+    } else {
+      setTempIdx(0);
+      setCustomPhotoUri(undefined);
+    }
+    setShowAvatarSheet(true);
+  };
+
+  const requestPermissions = async () => {
+    const cam = await ImagePicker.requestCameraPermissionsAsync();
+    const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const granted = cam.status === 'granted' && lib.status === 'granted';
+    if (!granted) Alert.alert('Permission required', 'Camera and photo library access is needed.');
+    return granted;
+  };
+
+  const openCamera = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [1, 1], quality: 1,
+    });
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const openGallery = async () => {
+    const ok = await requestPermissions();
+    if (!ok) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [1, 1], quality: 1,
+    });
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setTempIdx(-1);
+    }
+  };
+
+  const pickFromCameraOrGallery = () =>
+    Alert.alert('Pick photo', 'How to pick your profile photo?', [
+      { text: 'Camera', onPress: openCamera },
+      { text: 'Gallery', onPress: openGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+
+  const saveAvatarSelection = async () => {
+    try {
+      setSheetSaving(true);
+
+      if (tempIdx === -1) {
+        if (!customPhotoUri) throw new Error('No custom photo selected');
+        const key = await uploadLocalImageAndGetKey(customPhotoUri);
+        setPendingImageKey(key);
+        setAvatarKeyOrUrl(customPhotoUri);
+      } else {
+        const key = AVATAR_KEYS[tempIdx];
+        const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
+        setPendingImageKey(key);
+        setAvatarKeyOrUrl(src?.uri);
+      }
+
+      setShowAvatarSheet(false);
+    } catch (e: any) {
+      const raw = e?.detail || e?.response?.data || e?.message || e;
+      const msg = typeof raw === 'string' ? raw : raw?.message || raw?.error || 'Upload failed.';
+      Alert.alert('Upload error', String(msg));
+    } finally {
+      setSheetSaving(false);
     }
   };
 
@@ -129,7 +271,9 @@ export default function EditProfileScreen() {
 
       <Scroll showsVerticalScrollIndicator={false}>
         <Center>
-          <Avatar />
+          <AvatarPress onPress={openAvatarSheet}>
+            <Avatar uri={displayAvatarUrl} />
+          </AvatarPress>
           <NameText numberOfLines={1} ellipsizeMode="tail">
             {name || (isLoading ? 'Loading...' : '—')}
           </NameText>
@@ -204,6 +348,7 @@ export default function EditProfileScreen() {
             <LabelText>Personality</LabelText>
             <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
           </TopRow>
+
           <TagsWrap>
             {selectedInterests.map((t) => (
               <PreviewTag key={t}>
@@ -211,7 +356,16 @@ export default function EditProfileScreen() {
               </PreviewTag>
             ))}
           </TagsWrap>
+
+          {/* + Edit 버튼 */}
+          <EditRow>
+            <EditOutlineBtn onPress={() => setShowTagPicker(true)}>
+              <AntDesign name="plus" size={12} color="#30F59B" />
+              <EditOutlineText>Edit</EditOutlineText>
+            </EditOutlineBtn>
+          </EditRow>
         </Field>
+
 
         <Field>
           <LabelText>About Me</LabelText>
@@ -251,6 +405,80 @@ export default function EditProfileScreen() {
           setShowPurpose(false);
         }}
       />
+      <BottomSheetTagPicker
+        visible={showTagPicker}
+        value={selectedInterests}
+        onClose={() => setShowTagPicker(false)}
+        onChange={setSelectedInterests}
+        sections={TAG_SECTIONS}
+        max={5}
+        title="Select your interests"
+      />
+
+      <Modal
+        visible={showAvatarSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAvatarSheet(false)}
+      >
+        <SheetOverlay activeOpacity={1} onPress={() => setShowAvatarSheet(false)}>
+          <Sheet onStartShouldSetResponder={() => true}>
+            <Handle />
+            <SheetTitle>Select Profile</SheetTitle>
+
+            <AvatarRow>
+              {AVATARS.map((img, idx) => {
+                const selected = idx === tempIdx;
+                return (
+                  <AvatarItem
+                    key={idx}
+                    onPress={() => {
+                      setTempIdx(idx);
+                      setCustomPhotoUri(undefined);
+                    }}
+                  >
+                    <AvatarCircle selected={selected}>
+                      <AvatarImg source={img} />
+                      {selected && (
+                        <CheckBadge>
+                          <Ionicons name="checkmark" size={14} color="#0f1011" />
+                        </CheckBadge>
+                      )}
+                    </AvatarCircle>
+                  </AvatarItem>
+                );
+              })}
+
+              <AvatarItem onPress={pickFromCameraOrGallery}>
+                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
+                  {customPhotoUri ? (
+                    <AvatarImg source={{ uri: customPhotoUri }} />
+                  ) : (
+                    <CameraCircleInner>
+                      <Ionicons name="camera" size={22} color="#cfd4da" />
+                    </CameraCircleInner>
+                  )}
+                  {tempIdx === -1 && !!customPhotoUri && (
+                    <CheckBadge>
+                      <Ionicons name="checkmark" size={14} color="#0f1011" />
+                    </CheckBadge>
+                  )}
+                </AvatarCircle>
+              </AvatarItem>
+            </AvatarRow>
+
+            <ButtonRow>
+              <SheetBtn onPress={() => setShowAvatarSheet(false)}>
+                <SheetBtnText>Cancel</SheetBtnText>
+              </SheetBtn>
+              <Gap />
+              <SheetBtnMint disabled={sheetSaving} onPress={saveAvatarSelection}>
+                <SheetBtnMintText>{sheetSaving ? 'Saving…' : 'Save'}</SheetBtnMintText>
+              </SheetBtnMint>
+            </ButtonRow>
+          </Sheet>
+        </SheetOverlay>
+      </Modal>
     </Safe>
   );
 }
@@ -290,6 +518,9 @@ const SaveText = styled.Text`
 const Center = styled.View`
   align-items: center;
   padding: 8px 0 16px 0;
+`;
+const AvatarPress = styled.Pressable`
+  position: relative;
 `;
 const NameText = styled.Text`
   margin-top: 8px;
@@ -391,4 +622,136 @@ const TextArea = styled.TextInput`
 
 const BottomPad = styled.View`
   height: 20px;
+`;
+
+/* ===== 바텀시트 스타일 ===== */
+const SheetOverlay = styled.TouchableOpacity`
+  flex: 1;
+  background: rgba(0, 0, 0, 0.55);
+  justify-content: flex-end;
+`;
+const Sheet = styled.View`
+  background: #353637;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  padding: 16px 16px 20px 16px;
+`;
+const Handle = styled.View`
+  align-self: center;
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+  background: #9aa0a6;
+  margin-bottom: 10px;
+`;
+const SheetTitle = styled.Text`
+  color: #ffffff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_700Bold';
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const AvatarRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 18px;
+`;
+const AvatarItem = styled.Pressable``;
+const AvatarCircle = styled.View<{ selected: boolean }>`
+  width: 68px;
+  height: 68px;
+  border-radius: 34px;
+  background: #1f2021;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
+  position: relative;
+`;
+const AvatarImg = styled.Image`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+`;
+const CheckBadge = styled.View`
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #30F59B;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  border-color: #353637;
+`;
+const CameraCircleInner = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  align-items: center;
+  justify-content: center;
+  background: #1f2021;
+`;
+
+const ButtonRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+  padding-bottom: 28px;
+`;
+const Gap = styled.View`
+  width: 12px;
+`;
+const SheetBtn = styled.Pressable`
+  flex: 1;
+  height: 44px;
+  border-radius: 10px;
+  background: #222425;
+  align-items: center;
+  justify-content: center;
+`;
+const SheetBtnText = styled.Text`
+  color: #e7eaed;
+  font-weight: 700;
+`;
+const SheetBtnMint = styled.Pressable<{ disabled?: boolean }>`
+  flex: 1;
+  height: 44px;
+  border-radius: 10px;
+  background: #30f59b;
+  align-items: center;
+  justify-content: center;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
+const SheetBtnMintText = styled.Text`
+  color: #0f1011;
+  font-weight: 800;
+`;
+
+const EditRow = styled.View`
+  margin-top: 10px;
+`;
+
+const EditOutlineBtn = styled.Pressable`
+  align-self: flex-start;
+  flex-direction: row;
+  align-items: center;
+  height: 28px;                 /* Fixed(28px) */
+  padding: 0 10px;              /* Left/Right 10px */
+  gap: 4px;                     /* 아이콘-텍스트 간격 */
+  border-radius: 100px;         /* Radius 100px */
+  border-width: 1px;            /* Border 1px */
+  border-color: #30F59B;        /* Primary/Mint */
+  background: transparent;
+`;
+
+const EditOutlineText = styled.Text`
+  color: #30F59B;               /* Primary/Mint */
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_600SemiBold';
 `;
