@@ -104,7 +104,7 @@ api.interceptors.response.use(
         const res = await axios.post(`${BASE_URL}/api/v1/member/refresh`, { refreshToken });
         const newToken = res.data.accessToken;
         await SecureStore.setItemAsync("jwt", newToken);
-
+        
         api.defaults.headers.common["Authorization"] = "Bearer " + newToken;
         processQueue(null, newToken);
 
