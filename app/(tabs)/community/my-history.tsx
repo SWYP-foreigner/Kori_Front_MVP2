@@ -210,7 +210,7 @@ export default function MyHistoryScreen() {
     );
 
     const renderComment: ListRenderItem<CommentRow> = ({ item }) => (
-        <RowPress onPress={() => goPostDetail(item.postId)}>
+        <RowPress onPress={() => router.push({ pathname: '/community/[id]', params: { id: item.postId } })}>
             <TopRow>
                 <DateText>{item.createdAt}</DateText>
                 <MoreBtn
