@@ -15,6 +15,7 @@ type BuzzingData = {
   userCount: string;
 };
 
+
 type AllSpaceData = BuzzingData;
 
 // 🔹 memo 적용
