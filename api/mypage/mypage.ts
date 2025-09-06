@@ -67,7 +67,7 @@ export async function unfollowUser(friendId: number) {
 }
 
 export async function getFollowing(status: FollowStatus) {
-    const { data } = await api.get<FollowingRow[]>('/api/v1/mypage/following', {
+    const { data } = await api.get<FollowingRow[]>('/api/v1/mypage/follows', {
         params: { status },
     });
     return data;

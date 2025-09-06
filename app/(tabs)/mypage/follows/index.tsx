@@ -16,6 +16,7 @@ import {
 import styled from 'styled-components/native';
 
 type Tab = 'received' | 'sent';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type FriendItem = {
   id: number;
@@ -26,22 +27,8 @@ type FriendItem = {
   languages: string[];
   personalities: string[];
   bio?: string;
-};
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const toFriendItem = (row: any): FriendItem => {
-  const yearMatch = (row?.birth ?? '').toString().match(/^\d{4}/)?.[0];
-  return {
-    id: Number(row?.userId ?? row?.id),
-    name: row?.name ?? 'Unknown',
-    country: row?.country ?? '-',
-    birth: yearMatch ? Number(yearMatch) : undefined,
-    purpose: row?.purpose ?? '',
-    languages: Array.isArray(row?.languages) ? row.languages : [],
-    personalities: Array.isArray(row?.hobbies) ? row.hobbies : [],
-    bio: row?.bio ?? '',
-  };
+  imageKey?: string;
+  imageUrl?: string; // 백엔드가 URL도 줄 수 있음
 };
 
 function HListBase(props: FlatListProps<FriendItem>) {
@@ -65,8 +52,51 @@ export default function FollowListScreen() {
     isError: errorSent,
   } = useFollowList('PENDING', 'sent');
 
-  const receivedList = useMemo<FriendItem[]>(() => receivedData.map(toFriendItem), [receivedData]);
-  const sentList = useMemo<FriendItem[]>(() => sentData.map(toFriendItem), [sentData]);
+  // ─── Debug logs: raw from hook ──────────────────────────────────────────────
+  console.log('[FollowListScreen] receivedData len:', receivedData.length);
+  if (receivedData[0]) console.log('[FollowListScreen] receivedData[0]:', receivedData[0]);
+
+  console.log('[FollowListScreen] sentData len:', sentData.length);
+  if (sentData[0]) console.log('[FollowListScreen] sentData[0]:', sentData[0]);
+
+  /* FriendCard에 맞게 경량 변환 */
+  const receivedList = useMemo<FriendItem[]>(
+    () =>
+      receivedData.map(u => ({
+        id: u.userId,
+        name: u.name,
+        country: u.country ?? '-',
+        birth: u.birthYear,
+        purpose: u.purpose ?? '',
+        languages: u.languages ?? [],
+        personalities: u.hobbies ?? [],
+        bio: u.bio ?? '',
+        imageKey: u.imageKey,
+        imageUrl: u.imageUrl,
+      })),
+    [receivedData]
+  );
+
+  const sentList = useMemo<FriendItem[]>(
+    () =>
+      sentData.map(u => ({
+        id: u.userId,
+        name: u.name,
+        country: u.country ?? '-',
+        birth: u.birthYear,
+        purpose: u.purpose ?? '',
+        languages: u.languages ?? [],
+        personalities: u.hobbies ?? [],
+        bio: u.bio ?? '',
+        imageKey: u.imageKey,
+        imageUrl: u.imageUrl,
+      })),
+    [sentData]
+  );
+
+  // ─── Debug logs: mapped results ─────────────────────────────────────────────
+  if (receivedList[0]) console.log('[FollowListScreen] receivedList[0]:', receivedList[0]);
+  if (sentList[0]) console.log('[FollowListScreen] sentList[0]:', sentList[0]);
 
   const rRef = useRef<FlatList<FriendItem>>(null);
   const sRef = useRef<FlatList<FriendItem>>(null);
@@ -183,6 +213,8 @@ export default function FollowListScreen() {
                     languages={item.languages}
                     personalities={item.personalities}
                     bio={item.bio}
+                    imageKey={item.imageKey}
+                    imageUrl={item.imageUrl}
                     collapsible={false}
                     mode="received"
                     onAccept={handleAccept}
@@ -246,10 +278,12 @@ export default function FollowListScreen() {
                     languages={item.languages}
                     personalities={item.personalities}
                     bio={item.bio}
+                    imageKey={item.imageKey}
+                    imageUrl={item.imageUrl}
                     collapsible={false}
                     mode="sent"
                     onAccept={() => { }}
-                    onCancel={() => handleCancelSent(item.id)}  // ✅ 요청 취소 연결
+                    onCancel={() => handleCancelSent(item.id)}
                     onChat={() => { }}
                     isFollowed={false}
                   />
@@ -287,13 +321,13 @@ export default function FollowListScreen() {
   );
 }
 
+/* styles */
 const Safe = styled.SafeAreaView`flex:1;background:#1d1e1f;`;
 const Header = styled.View`flex-direction:row;align-items:center;padding:12px 16px;`;
 const BackBtn = styled.Pressable`width:40px;align-items:flex-start;`;
 const HeaderCenter = styled.View`flex:1;align-items:center;justify-content:center;`;
 const RightSlot = styled.View`width:40px;`;
 const Title = styled.Text`color:#fff;font-size:20px;font-family:'PlusJakartaSans_700Bold';`;
-
 const TabsWrap = styled.View`position:relative;padding:0 16px;margin-top:4px;`;
 const TabsRow = styled.View`flex-direction:row;`;
 const TabItem = styled.Pressable<{ active: boolean }>`
@@ -304,16 +338,11 @@ const TabText = styled.Text<{ active: boolean }>`
   color:${p => p.active ? '#30F59B' : '#cfcfcf'};font-size:16px;font-family:'PlusJakartaSans_600SemiBold';
 `;
 const TabsBottomLine = styled.View`position:absolute;left:16px;right:16px;bottom:0;height:1px;background:#212325;`;
-
 const Page = styled.View`justify-content:center;`;
 const Inner = styled.View`padding:0 16px;margin-top:-27px;`;
-
-const Pager = styled.View`
-  position:absolute;bottom:10px;left:0;right:0;flex-direction:row;align-items:center;justify-content:center;
-`;
+const Pager = styled.View`position:absolute;bottom:10px;left:0;right:0;flex-direction:row;align-items:center;justify-content:center;`;
 const PagerBtn = styled.Pressable<{ disabled?: boolean }>`opacity:${p => p.disabled ? 0.3 : 1};padding:6px 10px;`;
 const PagerArrow = styled.Text`color:#b7babd;font-size:20px;padding:0 4px;`;
 const PagerText = styled.Text`color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-
 const Empty = styled.View`padding:40px 16px;align-items:center;`;
 const EmptyText = styled.Text`color:#cfcfcf;`;

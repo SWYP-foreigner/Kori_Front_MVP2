@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import { keyToUrl } from '@/utils/image';
 
 export type RecommendedFriendDto = {
     userId?: number | string;
@@ -12,53 +13,51 @@ export type RecommendedFriendDto = {
     purpose?: string | null;
     language?: string[] | null;
     hobby?: string[] | null;
-    imageKey?: string | null;
+    imageKey?: string | null;   // 서버에서 오는 키 또는 완전 URL
 };
-
-export async function getRecommended(limit = 20) {
-    const { data } = await api.get<RecommendedFriendDto[]>(
-        '/api/v1/commend/content-based',
-        { params: { limit } }
-    );
-    console.log('🪵[step1] 추천 백엔드 응답:', JSON.stringify(data, null, 2));
-    return data;
-}
 
 export type FriendCardData = {
     id: number | string;
     name: string;
-    country: string;
+    country?: string;
     birth?: number;
     gender?: 'male' | 'female' | 'unspecified';
-    purpose: string;
+    purpose?: string;
     languages: string[];
     personalities: string[];
     bio?: string;
+    imageUrl?: string;          // 최종 URL (화면에서 이걸 사용)
+    imageKey?: string | null;   // 원본 키(옵션)
 };
 
-function mapGender(g?: string | null): FriendCardData['gender'] {
+const mapGender = (g?: string | null): FriendCardData['gender'] => {
     const v = (g || '').toLowerCase();
     if (v.startsWith('male') || v === 'm') return 'male';
     if (v.startsWith('female') || v === 'f') return 'female';
     return 'unspecified';
-}
+};
 
 export function toFriendCard(dto: RecommendedFriendDto, idx: number): FriendCardData {
     const name = [dto.firstname, dto.lastname].filter(Boolean).join(' ').trim() || 'Unknown';
     const year = dto.birthday?.match(/^\d{4}/)?.[0];
+    const id = dto.userId ?? dto.memberId ?? `rec-${idx}`;
 
-    const id = (dto.userId ?? dto.memberId ?? `rec-${idx}`);
-    const mapped: FriendCardData = {
+    return {
         id,
         name,
         country: dto.country ?? '-',
         birth: year ? Number(year) : undefined,
-        gender: mapGender(dto.gender || undefined),
+        gender: mapGender(dto.gender),
         purpose: dto.purpose ?? '-',
         languages: dto.language ?? [],
         personalities: dto.hobby ?? [],
         bio: dto.introduction ?? '',
+        imageKey: dto.imageKey ?? null,
+        imageUrl: dto.imageKey ? keyToUrl(dto.imageKey) : undefined,
     };
-    console.log(`🪵[step2] toFriendCard(${idx}):`, mapped);
-    return mapped;
+}
+
+export async function getRecommended(limit = 20): Promise<RecommendedFriendDto[]> {
+    const { data } = await api.get('/api/v1/commend/content-based', { params: { limit } });
+    return data ?? [];
 }
