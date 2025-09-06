@@ -40,8 +40,8 @@ const MemberContainer=styled.View`
     align-items:center;
 `;
 const ProfileBox=styled.View`
-    width:55px;
-    height:55px;
+    width:50px;
+    height:50px;
     overflow:hidden;
     border-radius:30px;
 
@@ -80,7 +80,7 @@ const HostText=styled.Text`
     font-family:PlusJakartaSans_500Medium;
 `;
 const MemberNameText=styled.Text`
-    margin-left:10px;
+    margin-left:12px;
     color:#FFFFFF;
     font-family:PlusJakartaSans_500Medium;
     font-size:14px;
