@@ -98,9 +98,7 @@ export default function FriendsOnlyScreen() {
                     <Title>Friends List</Title>
                 </TitleWrap>
 
-                <IconRow>
-                    <AntDesign name="search1" size={18} color="#cfd4da" />
-                </IconRow>
+
             </Header>
 
             <HList
