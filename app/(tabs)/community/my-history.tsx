@@ -313,7 +313,7 @@ const Back = styled.Pressable`
 const HeaderTitle = styled.Text`
   color: #fff;
   font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_500Bold';
 `;
 
 const RightPlaceholder = styled.View`
@@ -341,7 +341,7 @@ const TabItem = styled.Pressable<{ active: boolean }>`
 const TabText = styled.Text<{ active: boolean }>`
   color: ${({ active }) => (active ? '#30F59B' : '#cfcfcf')};
   font-size: 16px;
-  font-family: 'PlusJakartaSans_600SemiBold';
+  font-family: 'PlusJakartaSans_500SemiBold';
 `;
 
 const TabsBottomLine = styled.View`

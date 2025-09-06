@@ -22,6 +22,8 @@ export type Post = {
   bookmarked?: boolean;
   hotScore: number;
   viewCount?: number;
+  // 선택적: 부모가 관리한다면 여기에 likedByMe를 추가해도 됨
+  // likedByMe?: boolean;
 };
 
 type Props = {
@@ -97,6 +99,11 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     }
   }).current;
 
+  // ✅ 좋아요 상태 유연 추출 (likedByMe | isLiked | liked)
+  const liked = Boolean(
+    (data as any).likedByMe ?? (data as any).isLiked ?? (data as any).liked ?? false
+  );
+
   return (
     <Wrap onPress={onPress}>
       <HeaderRow>
@@ -111,6 +118,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
             <SmallCount>{viewCount}</SmallCount>
           </SubRow>
         </Meta>
+
         <BookBtn onPress={onToggleBookmark} hitSlop={8}>
           <MaterialIcons
             name={data.bookmarked ? 'bookmark' : 'bookmark-border'}
@@ -128,7 +136,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
               keyExtractor={(u, i) => `${u}#${i}`}
               renderItem={({ item }) => {
                 ensureSize(item);
-                const h = imgHeights[item] ?? Math.round((boxW * 9) / 16); // 로딩 전 임시 높이
+                const h = imgHeights[item] ?? Math.round((boxW * 9) / 16);
                 return (
                   <Slide style={{ width: boxW }}>
                     <Image
@@ -165,13 +173,19 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
 
       <FooterRow>
         <IconBtn onPress={onToggleLike} hitSlop={8}>
-          <AntDesign name="like2" size={16} color="#30F59B" />
+          <AntDesign
+            name="like2"
+            size={16}
+            color={liked ? '#02F59B' : '#CCCFD0'}
+          />
           <Count>{data.likes}</Count>
         </IconBtn>
+
         <IconBtn hitSlop={8}>
           <AntDesign name="message1" size={16} color="#cfd4da" />
           <Count>{data.comments}</Count>
         </IconBtn>
+
         <More>···</More>
       </FooterRow>
     </Wrap>
@@ -190,7 +204,7 @@ const Meta = styled.View`margin-left: 10px; flex: 1;`;
 const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
 const SubRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center; gap: 5px;`;
 const TimeText = styled.Text`color: #9aa0a6; font-size: 11px;`;
-const CatBadge = styled.View`padding: 2px 8px; border-radius: 6px; background: #184b3f;`;
+const CatBadge = styled.View`padding: 3px 8px; border-radius: 4px; background: #184b3f;`;
 const CatText = styled.Text`color: #E9E9E9; font-size: 11px; font-family: 'PlusJakartaSans_600SemiBold';`;
 const Dot = styled.Text`color: #9aa0a6; font-size: 12px;`;
 const SmallCount = styled.Text`color: #cfd4da; font-size: 11px; margin-left: 4px;`;
@@ -202,8 +216,7 @@ const CarouselBox = styled.View`
   border-radius: 12px;
   overflow: hidden;
 `;
-const Slide = styled.View`
-`;
+const Slide = styled.View``;
 
 const Counter = styled.Text`
   position: absolute;

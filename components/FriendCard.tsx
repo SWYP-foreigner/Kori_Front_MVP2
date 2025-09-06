@@ -1,13 +1,13 @@
+import api from '@/api/axiosInstance';
 import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
+import { Config } from '@/src/lib/config';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
-import { useRouter } from 'expo-router';
-import api from '@/api/axiosInstance';
-import { Config } from '@/src/lib/config';
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -32,7 +32,7 @@ type Props = {
   onAccept?: (userId: number) => void;
   onCancel?: (userId: number) => void;
 
-  onChat?: () => void; 
+  onChat?: () => void;
   footerSlot?: React.ReactNode;
   collapsible?: boolean;
 };
@@ -104,28 +104,28 @@ export default function FriendCard({
     if (isFollowed) onUnfollow?.(userId);
     else onFollow?.(userId);
   };
-  
-  const handleChat=async()=>{
-    try{
-        const res=await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`
-        , { otherUserId:userId }
+
+  const handleChat = async () => {
+    try {
+      const res = await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`
+        , { otherUserId: userId }
       );
-      
-      const data=res.data;
+
+      const data = res.data;
 
       router.push({
         pathname: '/screens/chatscreen/ChattingRoomScreen',
-        params: { 
+        params: {
           userId: userId.toString(),       // props에서 바로 가져옴
           roomName: encodeURIComponent(name), // props에서 바로 가져옴
-          roomId:data.id  
+          roomId: data.id
         },
-    });
-    }catch(error){
-      
-      console.error("채팅방 생성 실패",error);
+      });
+    } catch (error) {
+
+      console.error("채팅방 생성 실패", error);
     }
-   
+
   };
 
 
@@ -233,8 +233,8 @@ export default function FriendCard({
           ) : mode === 'sent' ? (
             <>
               <CustomButton
-                label="Requested"
-                tone="black"
+                label="Following"
+                tone="muted"
                 filled={false}
                 leftIcon="check"
                 onPress={handlePrimaryPress}
@@ -330,26 +330,25 @@ const GenderIconSpacer = styled.View`
 const MetaDim = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';
   color: #9a9a9a;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
 `;
 
 const MetaStrong = styled.Text`
-  font-family: 'PlusJakartaSans_600SemiBold';
+  font-family: 'PlusJakartaSans_500SemiBold';
   color: #111;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 18px;
 `;
 
 const Bio = styled.Text`
   margin-top: ${BIO_MT}px;
   margin-bottom: ${BIO_MB}px;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 22px;
   color: #000000;
   text-align: center;
-  font-family: 'PlusJakartaSans_500Medium';
-`;
+  font-family: 'PlusJakartaSans_300Light';`;
 
 const DividerWrap = styled.View`
   position: relative;

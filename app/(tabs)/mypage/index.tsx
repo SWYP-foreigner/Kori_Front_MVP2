@@ -13,6 +13,10 @@ import styled from 'styled-components/native';
 import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
 import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
 import useMyProfile from '@/hooks/queries/useMyProfile';
+
+import { usePendingFollowing } from '@/hooks/queries/useFollowing';
+
+
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 
 const AVATARS: ImageSourcePropType[] = [
@@ -31,6 +35,12 @@ export default function MyPageScreen() {
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
   const updateProfile = useUpdateProfile();
+
+  const { data: pendingReceived } = usePendingFollowing();
+  const receivedCount = Array.isArray(pendingReceived) ? pendingReceived.length : 0;
+
+
+  const sentCount = 0;
 
   const fullName = useMemo(() => {
     if (isLoading) return 'Loading...';
@@ -87,7 +97,6 @@ export default function MyPageScreen() {
 
   const saveAvatar = async () => {
     try {
-      console.log('[avatar:save] start', { tempIdx, customPhotoUri });
       let imageKey: string | undefined;
       let uriToShow: string | undefined;
 
@@ -102,7 +111,6 @@ export default function MyPageScreen() {
         throw new Error('Invalid avatar selection');
       }
 
-      console.log('[avatar:save] patch payload', { imageKey });
       await updateProfile.mutateAsync({ imageKey });
 
       if (uriToShow) setAvatarUrl(uriToShow);
@@ -110,7 +118,6 @@ export default function MyPageScreen() {
       Alert.alert('Saved', 'Profile image updated.');
     } catch (e: any) {
       const raw = e?.detail || e?.response?.data || e?.message || e;
-      console.log('[avatar:save] error', raw);
       const msg =
         typeof raw === 'string'
           ? raw
@@ -197,12 +204,12 @@ export default function MyPageScreen() {
         <CountCard>
           <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
             <CountLabel>Received</CountLabel>
-            <CountNumber>{0}</CountNumber>
+            <CountNumber>{receivedCount}</CountNumber>
           </CountItem>
           <Divider />
           <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
             <CountLabel>Sent</CountLabel>
-            <CountNumber>{0}</CountNumber>
+            <CountNumber>{sentCount}</CountNumber>
           </CountItem>
         </CountCard>
 
@@ -294,6 +301,8 @@ export default function MyPageScreen() {
   );
 }
 
+/* ===== styles ===== */
+
 const Safe = styled.SafeAreaView`flex: 1; background: #1D1E1F;`;
 const Scroll = styled.ScrollView``;
 
@@ -308,10 +317,7 @@ const EditButtonWrap = styled.View`align-self: stretch; padding: 12px 16px 0 16p
 
 const SectionTitle = styled.Text`color: #9aa0a6; font-size: 14px; line-height: 18px; letter-spacing: 0.2px; font-family: 'PlusJakartaSans_600SemiBold';`;
 const SectionTitleRow = styled.View`flex-direction: row; align-items: center; margin: 22px 16px 10px 16px;`;
-
-function SectionTitleIcon() {
-  return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />;
-}
+function SectionTitleIcon() { return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />; }
 function SectionTitleIconGlobe() {
   return (
     <Image

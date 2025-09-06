@@ -269,7 +269,7 @@ const IconBtn = styled.Pressable`
 const HeaderTitle = styled.Text`
   color: #fff;
   font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_500Bold';
 `;
 const SaveBtn = styled.Pressable<{ disabled?: boolean }>`
   padding: 6px;
@@ -283,29 +283,28 @@ const SaveText = styled.Text<{ $enabled: boolean }>`
 
 const CatRow = styled.Pressable<{ disabled?: boolean }>`
   padding: 10px 12px 8px 12px;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: left;
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
+  gap: 10px;
 `;
 const CatLabel = styled.Text`
   color: #9aa0a6;
-  font-size: 12px;
+  font-size: 13px;
   margin-right: 10px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
 const CatChip = styled.View`
   height: 24px;
   padding: 0 10px;
-  border-radius: 6px;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
+  background: #1d1e1f;
   flex-direction: row;
   align-items: center;
   gap: 6px;
 `;
 const CatText = styled.Text`
   color: #cfd4da;
-  font-size: 12px;
+  font-size: 16px;
 `;
 const Divider = styled.View`
   height: 1px;
@@ -333,7 +332,6 @@ const PreviewWrap = styled.View`
   padding: 8px 12px 0 12px;
 `;
 
-// ✅ 썸네일 그리드/가로 스크롤용
 const Thumb = styled.View`
   width: 96px;
   height: 96px;
@@ -382,18 +380,13 @@ const BarIcon = styled.Pressable`
   border-radius: 6px;
   align-items: center;
   justify-content: center;
-  background: #1a1b1c;
-  border: 1px solid #2a2b2c;
 `;
 const Anon = styled.Pressable<{ $active?: boolean; disabled?: boolean }>`
   height: 32px;
-  border-radius: 8px;
   padding: 0 10px;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  background: ${({ $active }) => ($active ? '#2d3f38' : '#1a1b1c')};
-  border: 1px solid ${({ $active }) => ($active ? '#30F59B' : '#2a2b2c')};
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 `;
 const AnonText = styled.Text<{ $active?: boolean }>`
