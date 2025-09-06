@@ -1,16 +1,16 @@
+
+
 import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
 import { Config } from "@/src/lib/config";
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router"; 
 
 const BASE_URL = Config.SERVER_URL;
-const router=useRouter();
 
 function maskToken(t?: string | null) {
-
     if (!t) return "no";
-    return `yes(Bearer ${t.slice(0, 10)}...)`;
+    const v = t.startsWith("Bearer ") ? t.slice(7) : t;
+    return `yes(Bearer ${v.slice(0, 10)}...)`;
 }
 
 function shortUrl(base: string, url?: string) {
@@ -29,17 +29,7 @@ const api: AxiosInstance = axios.create({
     headers: { Accept: "application/json" },
 });
 
-// 🚨 refresh 요청 중복 방지
-let isRefreshing = false;
-let failedQueue: any[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
-  });
-  failedQueue = [];
-};
+let refreshPromise: Promise<string | null> | null = null;
 
 api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
@@ -73,10 +63,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
-
 );
-
-let refreshPromise: Promise<string | null> | null = null;
 
 api.interceptors.response.use(
     (res) => {
@@ -96,15 +83,21 @@ api.interceptors.response.use(
             error.response?.data || error.message
         );
 
-        if (error.response?.status !== 401) return Promise.reject(error);
+        if (error.response?.status !== 401) {
+            return Promise.reject(error);
+        }
 
-        if (isRefreshBlocked()) return Promise.reject(error);
+        if (isRefreshBlocked()) {
+            return Promise.reject(error);
+        }
 
         if (cfg?.url?.includes("/api/v1/member/refresh")) {
             return Promise.reject(error);
         }
 
-        if (cfg._retry) return Promise.reject(error);
+        if (cfg._retry) {
+            return Promise.reject(error);
+        }
         cfg._retry = true;
 
         const doRefresh = async (): Promise<string | null> => {
@@ -145,11 +138,8 @@ api.interceptors.response.use(
             refreshPromise = null;
             return Promise.reject(e);
         }
-
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default api;
+
