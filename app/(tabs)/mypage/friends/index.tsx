@@ -1,5 +1,5 @@
 import FriendCard from '@/components/FriendCard';
-import useUnfollow from '@/hooks/mutations/useUnfollow';
+import useUnfollowAccepted from '@/hooks/mutations/useUnfollowAccepted'; // ✅ 변경
 import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
@@ -56,7 +56,7 @@ export default function FriendsOnlyScreen() {
     const [page, setPage] = useState(1);
     const listRef = useRef<import('react-native').FlatList>(null);
 
-    const unfollowMutation = useUnfollow();
+    const unfollowMutation = useUnfollowAccepted(); // ✅ 변경
 
     const confirmUnfollow = (userId: number) => {
         Alert.alert(
@@ -97,8 +97,6 @@ export default function FriendsOnlyScreen() {
                 <TitleWrap pointerEvents="none">
                     <Title>Friends List</Title>
                 </TitleWrap>
-
-
             </Header>
 
             <HList
@@ -146,11 +144,7 @@ export default function FriendsOnlyScreen() {
                 ListEmptyComponent={
                     <Empty>
                         <EmptyText>
-                            {isLoading
-                                ? 'Loading...'
-                                : isError
-                                    ? 'Failed to load.'
-                                    : 'No friends yet.'}
+                            {isLoading ? 'Loading...' : isError ? 'Failed to load.' : 'No friends yet.'}
                         </EmptyText>
                     </Empty>
                 }
@@ -176,7 +170,6 @@ const Header = styled.View`position:relative;flex-direction:row;justify-content:
 const BackBtn = styled.Pressable`width:40px;align-items:flex-start;`;
 const TitleWrap = styled.View`position:absolute;left:0;right:0;align-items:center;`;
 const Title = styled.Text`color:#fff;font-size:18px;font-family:'PlusJakartaSans_700Bold';`;
-const IconRow = styled.View`flex-direction:row;align-items:center;`;
 const HList = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
 const Page = styled.View`justify-content:center;`;
 const Inner = styled.View`padding:0 16px;margin-top:-30px;`;
