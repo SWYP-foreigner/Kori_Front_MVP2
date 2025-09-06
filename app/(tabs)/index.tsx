@@ -88,6 +88,8 @@ export default function HomeScreen() {
                   languages={item.languages || []}
                   personalities={item.personalities || []}
                   bio={item.bio || undefined}
+                  imageUrl={(item as any).imageUrl}
+                  imageKey={(item as any).imageKey}
 
                   mode={isSent ? 'sent' : 'friend'}
 
@@ -96,8 +98,7 @@ export default function HomeScreen() {
                     try {
                       await followMutation.mutateAsync(id);
                       markRequested(id);
-                    } catch (e) {
-                    }
+                    } catch (e) { }
                   }}
 
                   onCancel={async (id) => {
@@ -107,6 +108,7 @@ export default function HomeScreen() {
               </CardWrap>
             );
           }}
+
           ListEmptyComponent={
             <EmptyWrap>
               <EmptyText>No recommendations yet.</EmptyText>
