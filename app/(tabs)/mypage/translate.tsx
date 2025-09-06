@@ -1,13 +1,12 @@
+import api from '@/api/axiosInstance';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert } from 'react-native';
 import styled from 'styled-components/native';
 
-type Lang = {
-  label: string;
-  code: string;
-};
+type Lang = { label: string; code: string };
 
 const LANGUAGES: string[] = [
   'Abkhaz [AB]', 'Acehnese [ACE]', 'Acholi [ACH]', 'Afrikaans [AF]', 'Albanian [SQ]', 'Alur [ALZ]', 'Amharic [AM]', 'Arabic [AR]',
@@ -40,15 +39,61 @@ const LANGUAGES: string[] = [
 const toOptions = (arr: string[]): Lang[] =>
   arr.map((s) => {
     const m = s.match(/^(.*?)\s*\[([^\]]+)\]\s*$/);
-    return {
-      label: m ? m[1].trim() : s,
-      code: m ? m[2].trim() : s,
-    };
+    return { label: m ? m[1].trim() : s, code: m ? m[2].trim() : s };
   });
 
 export default function TranslateScreen() {
   const OPTIONS = useMemo<Lang[]>(() => toOptions(LANGUAGES), []);
   const [selected, setSelected] = useState<string>('EN');
+  const [saving, setSaving] = useState<boolean>(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get('/api/v1/mypage/profile');
+        const code: string = res?.data?.data?.language || 'EN';
+        if (mounted) setSelected(code);
+      } catch {
+
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const saveLanguage = async (code: string) => {
+    setSaving(true);
+    try {
+      const res = await api.put('/api/v1/mypage/user/language', { language: code });
+
+      const ct = (res.headers as any)['content-type'] || '';
+      if (ct.includes('text/html')) {
+        throw new Error('Received HTML from API. Check Config.SERVER_URL or path.');
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Please try again.';
+      Alert.alert('Save failed', String(msg));
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onPick = async (code: string) => {
+    if (saving || code === selected) return;
+    const prev = selected;
+    setSelected(code);
+    try {
+      await saveLanguage(code);
+    } catch {
+      setSelected(prev);
+    }
+  };
 
   return (
     <Safe>
@@ -61,7 +106,9 @@ export default function TranslateScreen() {
           <Title>Chat Translation Language</Title>
         </HeaderCenter>
 
-        <RightSlot />
+        <RightSlot>
+          {saving ? <ActivityIndicator size="small" color="#30F59B" /> : null}
+        </RightSlot>
       </Header>
 
       <Body>
@@ -70,17 +117,16 @@ export default function TranslateScreen() {
           return (
             <Row
               key={code}
-              onPress={() => setSelected(code)}
+              onPress={() => onPick(code)}
               accessibilityRole="button"
-              accessibilityState={{ selected: active }}
+              accessibilityState={{ selected: active, disabled: saving }}
               hitSlop={HIT}
               active={active}
+              disabled={saving}
             >
-              {/* 대괄호 유지하여 렌더링 */}
               <RowText active={active}>
                 {label} [{code}]
               </RowText>
-
               {active && (
                 <CheckWrap>
                   <MaterialIcons name="check" size={18} color="#30F59B" />
@@ -100,57 +146,49 @@ const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1D1E1F;
 `;
-
 const Header = styled.View`
   flex-direction: row;
   align-items: center;
   padding: 12px 16px;
 `;
-
 const BackBtn = styled.Pressable`
   width: 40px;
   align-items: flex-start;
 `;
-
 const HeaderCenter = styled.View`
   flex: 1;
   align-items: center;
   justify-content: center;
 `;
-
 const RightSlot = styled.View`
   width: 40px;
+  align-items: flex-end;
+  justify-content: center;
 `;
-
 const Title = styled.Text`
   color: #ffffff;
   font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_500Bold';
 `;
-
 const Body = styled.ScrollView`
   padding: 12px 16px;
 `;
-
-const Row = styled.Pressable<{ active: boolean }>`
+const Row = styled.Pressable<{ active: boolean; disabled?: boolean }>`
   height: 48px;
   border-radius: 10px;
   padding: 0 16px;
   margin-bottom: 10px;
-
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-
+  justify-content: space-between; /* ⬅️ 오타 수정 */
   background: ${({ active }) => (active ? '#2A2B2C' : 'transparent')};
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
-
 const RowText = styled.Text<{ active: boolean }>`
   color: ${({ active }) => (active ? '#EDEFF1' : '#E1E3E6')};
   font-size: 16px;
-  font-family: 'PlusJakartaSans_600SemiBold';
+  font-family: 'PlusJakartaSans_500SemiBold';
 `;
-
 const CheckWrap = styled.View`
   margin-left: 10px;
 `;
