@@ -1,5 +1,3 @@
-
-
 import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
 import { Config } from "@/src/lib/config";
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
@@ -83,53 +81,64 @@ api.interceptors.response.use(
             error.response?.data || error.message
         );
 
-    if (status === 401 && !cfg._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            cfg.headers["Authorization"] = "Bearer " + token;
+        if (error.response?.status !== 401) {
+            return Promise.reject(error);
+        }
+
+        if (isRefreshBlocked()) {
+            return Promise.reject(error);
+        }
+
+        if (cfg?.url?.includes("/api/v1/member/refresh")) {
+            return Promise.reject(error);
+        }
+
+        if (cfg._retry) {
+            return Promise.reject(error);
+        }
+        cfg._retry = true;
+
+        const doRefresh = async (): Promise<string | null> => {
+            const rt = await SecureStore.getItemAsync(REFRESH_KEY);
+            if (!rt) return null;
+
+            try {
+                const res = await api.post("/api/v1/member/refresh", { refreshToken: rt });
+                const data = (res as any).data?.data || {};
+                const newAt: string | undefined = data.accessToken;
+                const newRt: string | undefined = data.refreshToken;
+
+                if (newAt) {
+                    await SecureStore.setItemAsync(ACCESS_KEY, newAt);
+                    (api.defaults.headers as any).Authorization = `Bearer ${newAt}`;
+                }
+                if (newRt) {
+                    await SecureStore.setItemAsync(REFRESH_KEY, newRt);
+                }
+                return newAt ?? null;
+            } catch {
+                return null;
+            }
+        };
+
+        try {
+            if (!refreshPromise) refreshPromise = doRefresh();
+            const newAccess = await refreshPromise;
+            refreshPromise = null;
+
+            if (!newAccess) {
+                return Promise.reject(error);
+            }
+
+            (cfg.headers as any).Authorization = `Bearer ${newAccess}`;
             return api(cfg);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      cfg._retry = true;
-      isRefreshing = true;
-
-      try {
-        const refreshToken = await SecureStore.getItemAsync("refresh");
-        if (!refreshToken) throw new Error("No refresh token");
-
-        const res = await axios.post(`${BASE_URL}/api/v1/member/refresh`, { refreshToken });
-        const newToken = res.data.accessToken;
-        await SecureStore.setItemAsync("jwt", newToken);
-        
-        api.defaults.headers.common["Authorization"] = "Bearer " + newToken;
-        processQueue(null, newToken);
-
-        cfg.headers["Authorization"] = "Bearer " + newToken;
-        return api(cfg);
-      } catch (err) {
-        processQueue(err, null);
-
-        // refresh token 만료 → JWT 삭제 및 로그인 페이지 이동
-        await SecureStore.deleteItemAsync("jwt");
-        await SecureStore.deleteItemAsync("refresh");
-
-        console.log("Refresh token expired, redirecting to login...");
-        router.replace("/login"); // 로그인 페이지로 이동
-
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
-      }
+        } catch (e) {
+            refreshPromise = null;
+            return Promise.reject(e);
+        }
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default api;
+
 
