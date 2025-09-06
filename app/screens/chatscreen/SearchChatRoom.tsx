@@ -87,7 +87,7 @@ const SearchChatRoom=()=>{
                     <SearchInputText
                         value={searchText}
                         onChangeText={setSearchText}
-                        placeholder='Search Linked Space'
+                        placeholder={isGroupChatBool?('Search linked space'):('Search my chat')}
                         placeholderTextColor='#616262'
 
                     />
@@ -151,6 +151,7 @@ const SearchContainer=styled.View`
     align-items:center;
     justify-content:center;
     padding: 0px 3px;
+    border-radius:8px;
 `;
 const SearchInputText=styled.TextInput`
     background-color:#353637;

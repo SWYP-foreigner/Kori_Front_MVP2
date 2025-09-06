@@ -10,8 +10,6 @@ const MyChatRoomBox = ({data}) => {
  
    const router = useRouter();
 
-
-
   
   //채팅방 진입
   const enterChattingRoom=async()=>{
@@ -52,7 +50,7 @@ const MyChatRoomBox = ({data}) => {
         <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
             
-            <RoomImage source={{ uri: "https://kr.object.ncloudstorage.com/foreigner-bucket/tempsss/계족산_1.jpg" }}/>
+            <RoomImage source={{ uri: data.roomImageUrl  }}/>
     
           </RoomImageContainer>
           <RoomWrapper>
@@ -62,12 +60,12 @@ const MyChatRoomBox = ({data}) => {
                               ?data.roomName.slice(0,22)+"..."
                               :data.roomName:""
                             }</ChatPerson>
-                <ChatPeople>{data.participantCount}</ChatPeople>
+                {data.participantCount>2&&<ChatPeople>{data.participantCount}</ChatPeople>}
               </ChatPeopleContainer>
               <ChatTime>{formatTime(data.lastMessageTime)}</ChatTime>
             </RoomTop>
             <RoomBottom>
-              <ChatContent>  {data.lastMessageContent
+              <ChatContent textColor={data.unreadCount>0}>  {data.lastMessageContent
                               ? data.lastMessageContent.length > 33
                                 ? data.lastMessageContent.slice(0, 33) + "..."
                                 : data.lastMessageContent
@@ -93,15 +91,6 @@ const ChatRoom = styled.View`
   
 `;
 
-// const DeleteButton = styled.TouchableOpacity`
-//   position: absolute;
-//   right: 0;
-//   width: 25%;
-//   height: 100%;
-//   background-color: #FF4F4F;
-//   align-items: center;
-//   justify-content: center;
-// `;
 
 
 const RoomBox = styled.TouchableOpacity`
@@ -117,21 +106,21 @@ const RoomBox = styled.TouchableOpacity`
 
 const RoomImageContainer = styled.View`
 
-  width: 20%;
-  height: 100%;
+  width: 60px;
+  height: 60px;
   align-items:center;
   justify-content:center;
   
 `;
 
 const RoomImage = styled.Image`
-  width: 85%;
+  width: 80%;
   height: 80%;
   border-radius:30px;  
 `;
 
 const RoomWrapper = styled.View`
-  width: 75%;
+  width: 80%;
   height: 70px;
   flex-direction: column;
 `;
@@ -179,8 +168,8 @@ const ChatTime = styled.Text`
 
 const ChatContent = styled.Text`
   font-size: 13px;
-  margin-left: 5px;
-  color: #ffffff;
+  margin-left: 1px;
+  color:${(props)=>(props.textColor ?  '#ffffff':'#848687')};
   font-family: "PlusJakartaSans_300Light";
 `;
 

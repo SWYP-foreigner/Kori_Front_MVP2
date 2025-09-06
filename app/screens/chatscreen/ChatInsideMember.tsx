@@ -80,7 +80,7 @@ const ChatInsideMember=()=>{
                         keyExtractor={(item) => item.userId.toString()}
                         renderItem={({ item }) => (
                             <MembersBox
-                            name={item.firstName}
+                            name={item.firstName+"  "+item.lastName}
                             isHost={item.isHost}
                             imageUrl={item.userImageUrl}
                             onPressMore={() => {
@@ -153,7 +153,7 @@ const Right=styled.View`
 `;
 
 const MembersTextContainer=styled.View`
-    height:70px;
+    height:50px;
     justify-content:center;
 
 `;

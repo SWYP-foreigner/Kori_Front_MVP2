@@ -307,11 +307,11 @@ const updateTranslateScreen=async()=>{
                             <HeaderTitleText>{roomName}</HeaderTitleText>
                         </Center>
                         <Right>
-                            <TouchableOpacity onPress={() => router.back()}>
+                            {/* <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="search" size={26} color="#CCCFD0" />
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                              <TouchableOpacity onPress={onhandleNext}>
-                            <SimpleLineIcons name="menu" size={26} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
+                            <SimpleLineIcons name="menu" size={23} color="#CCCFD0"  style={{ marginLeft: 10 }}  />
                             </TouchableOpacity>
                         </Right>
                 </HeaderContainer>
@@ -323,6 +323,12 @@ const updateTranslateScreen=async()=>{
                         keyExtractor={item => item.id.toString()}
                         inverted
                         showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{
+                            flexGrow: 1,
+                            justifyContent: 'flex-end',
+                            paddingTop: 10,   // 상단 여백 추가 가능
+                            paddingBottom: 10 // 하단 여백 추가 가능
+                        }}
                         // onEndReached={fetchOlderMessages}
                         // onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
@@ -368,7 +374,7 @@ const updateTranslateScreen=async()=>{
                                     </ProfileBox>
                                  </ProfileContainer>
                                 <OtherContainer>
-                                    <OtherNameText>{item.senderFirstName}</OtherNameText>
+                                    <OtherNameText>{item.senderLastName}</OtherNameText>
                                 <LeftMessageBox>
                                 <OtherFirstTextBox>
                                     <OtherText>{isTranslate?(item.targetContent):(item.content||item.originContent)}</OtherText>
@@ -400,7 +406,7 @@ const updateTranslateScreen=async()=>{
                     <BottomInputBox
                         value={inputText}
                         onChangeText={setInputText}
-                        placeholder="메시지를 입력하세요"
+                        placeholder="Enter a message"
                         placeholderTextColor="#888"
                     />
                     <SendImageBox onPress={sendMessage}>
@@ -462,16 +468,19 @@ const HeaderTitleText=styled.Text`
 
 `;
 
-const Left=styled.View`
-    flex:1;
+const Left=styled.View`    
+   
 `;
 const Center=styled.View`
-    flex:2;
+  
+    flex:1;
+    justify-content:center;
     align-items:center;
 `;
 const Right=styled.View`
+    margin-right:5px;
     flex-direction:row;
-    flex:1;
+    
     justify-content:center;
 
 `;
