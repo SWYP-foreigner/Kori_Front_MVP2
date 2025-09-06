@@ -22,6 +22,7 @@ type RoomDetail = {
 const LinkedSpaceDetail=()=>{
     const { roomId }= useLocalSearchParams<{ roomId : string }>();
     const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
+    console.log("roomId",roomId);
     const router = useRouter();
     
   const getChatRoomDetail=async()=>{
@@ -32,6 +33,7 @@ const LinkedSpaceDetail=()=>{
 
   const JoinRoom=async()=>{
     const res=await api.post(`/api/v1/chat/rooms/group/${roomId}/join`)
+
     console.log("방 가입 여부",res);
     router.back();
 
