@@ -22,6 +22,7 @@ type RoomDetail = {
 const LinkedSpaceDetail=()=>{
     const { roomId }= useLocalSearchParams<{ roomId : string }>();
     const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
+    console.log("roomId",roomId);
     const router = useRouter();
     
   const getChatRoomDetail=async()=>{
@@ -32,6 +33,7 @@ const LinkedSpaceDetail=()=>{
 
   const JoinRoom=async()=>{
     const res=await api.post(`/api/v1/chat/rooms/group/${roomId}/join`)
+
     console.log("방 가입 여부",res);
     router.back();
 
@@ -53,17 +55,25 @@ const LinkedSpaceDetail=()=>{
 
 
     return(
+        
         <Container>
+            <ScrollView
+                contentContainerStyle={{ flexGrow: 1 }}
+                showsVerticalScrollIndicator={false}
+
+            >
+
             
             <BackgroundContainer>
                 <Background
                     source={require("@/assets/images/background1.png")}
-                    resizeMode="contain"> 
+                    resizeMode="cover"> 
                     <ProfileBox>    
-                        <ProfileImage source={{ uri: roomDetail?.roomImageUrl }} />
+                        <ProfileImage source={ { uri: roomDetail?.roomImageUrl } } />
                     </ProfileBox>
                 </Background>  
             </BackgroundContainer>
+        
             <DetailContainer>
                 <DetailTopContainer>
                     <TitleContainer>
@@ -105,6 +115,7 @@ const LinkedSpaceDetail=()=>{
                         </MemberImageContainer>
                     </MembersContainer>
                 </DetailTopContainer>
+                
                 <DetailDivider/>
                 <DetailBottomContainer>
                     <BottomTitleContainer>
@@ -116,13 +127,13 @@ const LinkedSpaceDetail=()=>{
                         </BottomContent>
                     </BottomContentContainer>
                 </DetailBottomContainer>
-               
-                    <NextButton onPress={JoinRoom}>
+            </DetailContainer>
+            </ScrollView>              
+             <NextButton onPress={JoinRoom}>
                     <ButtonText>Join</ButtonText>
                     </NextButton>
 
                 <BottomSpacer/>
-            </DetailContainer>
         </Container>
     );
 
@@ -133,12 +144,16 @@ const LinkedSpaceDetail=()=>{
 
 export default LinkedSpaceDetail;
 
+
+
 const Container=styled.View`
     flex:1;
      background-color: #1d1e1f;
 `;
 const BackgroundContainer=styled.View`
     flex:1.2;
+
+    
 `;
 const Background = styled.ImageBackground`
   flex: 1;
@@ -197,7 +212,8 @@ const HostContainer=styled.View`
     align-items:center;
 `;
 const HostImageBox=styled.View`
-    width:20%;
+    width:50px;
+    height:50px;
     overflow:hidden;
 `;
 const HostImage=styled.Image`

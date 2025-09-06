@@ -18,7 +18,7 @@ const MyChatRoomBox = ({data}) => {
       if(res.status===200)
       {
             router.push({
-          pathname: '../screens/chatscreen/ChattingRoomScreen',
+          pathname: '/screens/chatscreen/ChattingRoomScreen',
           params: { 
             roomId: data.roomId,       // props에서 바로 가져옴
             roomName: data.roomName,  // props에서 바로 가져옴
