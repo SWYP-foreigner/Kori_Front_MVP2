@@ -18,23 +18,37 @@ type FriendItem = {
     languages: string[];
     personalities: string[];
     bio?: string;
+    imageKey?: string;
 };
 
-const toFriendItem = (row: any): FriendItem => ({
-    id: Number(row?.id),
-    name: row?.username ?? 'Unknown',
-    country: row?.nationality ?? '',
-    birth: undefined,
-    purpose: '',
-    languages: [],
-    personalities: [],
-    bio: '',
-});
+const yearFromBirthday = (b?: string) => {
+    const m = (b ?? '').toString().match(/^\d{4}/)?.[0];
+    return m ? Number(m) : undefined;
+};
+
+const toFriendItem = (row: any): FriendItem => {
+    const id = Number(row?.id ?? row?.userId);
+    const first = (row?.firstname ?? '').trim();
+    const last = (row?.lastname ?? '').trim();
+    const name = [first, last].filter(Boolean).join(' ') || row?.email || 'Unknown';
+
+    return {
+        id,
+        name,
+        country: row?.country ?? '',
+        birth: yearFromBirthday(row?.birthday),
+        purpose: row?.purpose ?? '',
+        languages: Array.isArray(row?.language) ? row.language : [],
+        personalities: Array.isArray(row?.hobby) ? row.hobby : [],
+        bio: row?.introduction ?? '',
+        imageKey: row?.imageKey ?? undefined,
+    };
+};
 
 export default function FriendsOnlyScreen() {
     const { data, isLoading, isError, refetch } = useAcceptedFollowing();
     const list = useMemo<FriendItem[]>(
-        () => (data ?? []).map(toFriendItem),
+        () => (data ?? []).map(toFriendItem).filter(v => Number.isFinite(v.id) && v.id > 0),
         [data]
     );
 
@@ -122,6 +136,7 @@ export default function FriendsOnlyScreen() {
                                 languages={item.languages}
                                 personalities={item.personalities}
                                 bio={item.bio}
+                                imageKey={item.imageKey}
                                 isFollowed
                                 onChat={() => { }}
                                 onUnfollow={() => confirmUnfollow(item.id)}
@@ -144,19 +159,13 @@ export default function FriendsOnlyScreen() {
             />
 
             <Pager>
-                <PagerBtn
-                    disabled={page <= 1}
-                    onPress={() => goToIndex(page - 2)}
-                >
+                <PagerBtn disabled={page <= 1} onPress={() => goToIndex(page - 2)}>
                     <PagerArrow>‹</PagerArrow>
                 </PagerBtn>
 
                 <PagerText>{` ${page} / ${totalPages} `}</PagerText>
 
-                <PagerBtn
-                    disabled={page >= totalPages}
-                    onPress={() => goToIndex(page)}
-                >
+                <PagerBtn disabled={page >= totalPages} onPress={() => goToIndex(page)}>
                     <PagerArrow>›</PagerArrow>
                 </PagerBtn>
             </Pager>
@@ -164,85 +173,18 @@ export default function FriendsOnlyScreen() {
     );
 }
 
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #1d1e1f;
-`;
-
-const Header = styled.View`
-  position: relative;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-`;
-
-const BackBtn = styled.Pressable`
-  width: 40px;
-  align-items: flex-start;
-`;
-
-const TitleWrap = styled.View`
-  position: absolute;
-  left: 0;
-  right: 0;
-  align-items: center;
-`;
-
-const Title = styled.Text`
-  color: #fff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const IconRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
+const Safe = styled.SafeAreaView`flex:1;background:#1d1e1f;`;
+const Header = styled.View`position:relative;flex-direction:row;justify-content:space-between;align-items:center;padding:12px 16px;`;
+const BackBtn = styled.Pressable`width:40px;align-items:flex-start;`;
+const TitleWrap = styled.View`position:absolute;left:0;right:0;align-items:center;`;
+const Title = styled.Text`color:#fff;font-size:18px;font-family:'PlusJakartaSans_700Bold';`;
+const IconRow = styled.View`flex-direction:row;align-items:center;`;
 const HList = styled.FlatList`` as unknown as typeof import('react-native').FlatList;
-
-const Page = styled.View`
-  justify-content: center;
-`;
-
-const Inner = styled.View`
-  padding: 0 16px;
-  margin-top: -30px;
-`;
-
-const Pager = styled.View`
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  right: 0;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
-
-const PagerBtn = styled.Pressable<{ disabled?: boolean }>`
-  opacity: ${({ disabled }) => (disabled ? 0.3 : 1)};
-  padding: 6px 10px;
-`;
-
-const PagerArrow = styled.Text`
-  color: #b7babd;
-  font-size: 20px;
-  padding: 0 4px;
-`;
-
-const PagerText = styled.Text`
-  color: #b7babd;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const Empty = styled.View`
-  padding: 40px 16px;
-  align-items: center;
-`;
-
-const EmptyText = styled.Text`
-  color: #cfcfcf;
-`;
+const Page = styled.View`justify-content:center;`;
+const Inner = styled.View`padding:0 16px;margin-top:-30px;`;
+const Pager = styled.View`position:absolute;bottom:10px;left:0;right:0;flex-direction:row;align-items:center;justify-content:center;`;
+const PagerBtn = styled.Pressable<{ disabled?: boolean }>`opacity:${p => p.disabled ? 0.3 : 1};padding:6px 10px;`;
+const PagerArrow = styled.Text`color:#b7babd;font-size:20px;padding:0 4px;`;
+const PagerText = styled.Text`color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const Empty = styled.View`padding:40px 16px;align-items:center;`;
+const EmptyText = styled.Text`color:#cfcfcf;`;
