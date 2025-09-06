@@ -194,13 +194,13 @@ export default function AddPhotoStepScreen({ navigation }) {
     // 2️⃣ Base64 → Buffer 변환
     const buffer = Buffer.from(fileData, "base64");
 
-     // 2) 헤더: presignedInfo.headers 그대로 사용 (필수 헤더 모두 포함됨)
-    const headers = { ...(presignedInfo.headers || {}) };
-    // 혹시 host가 내려왔다면 제거(네트워크 스택이 자동 설정)
-    delete headers.host;
-
     // 3️⃣ PUT 요청
-    await axios.put(presignedInfo.putUrl, buffer, {headers});
+    await axios.put(presignedInfo.putUrl, buffer, {
+      headers: {
+        ...presignedInfo.headers,
+        "Content-Type": photo.typeMime,
+      },
+    });
 
     console.log("✅ 업로드 성공");
   } catch (err) {

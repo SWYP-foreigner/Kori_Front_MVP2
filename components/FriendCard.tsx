@@ -110,15 +110,14 @@ export default function FriendCard({
       const res = await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`
         , { otherUserId: userId }
       );
-
-      const data = res.data;
-
+      
+      const {id}=res.data.data;
       router.push({
         pathname: '/screens/chatscreen/ChattingRoomScreen',
         params: {
           userId: userId.toString(),       // props에서 바로 가져옴
           roomName: encodeURIComponent(name), // props에서 바로 가져옴
-          roomId: data.id
+          roomId:id  
         },
       });
     } catch (error) {
