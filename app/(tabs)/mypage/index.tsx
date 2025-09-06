@@ -1,23 +1,25 @@
+import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
-import EditAvatar from '@/components/EditAvatar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Image, Image as RNImage, ImageSourcePropType, Modal
+  Alert,
+  Image,
+  Image as RNImage,
+  ImageSourcePropType,
+  Modal
 } from 'react-native';
 import styled from 'styled-components/native';
 
 import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
 import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
-import useMyProfile from '@/hooks/queries/useMyProfile';
-
 import { usePendingFollowing } from '@/hooks/queries/useFollowing';
-
-
+import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
+import { Config } from '@/src/lib/config';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -31,6 +33,20 @@ const AVATAR_KEYS = [
   'avatars/character3.png',
 ];
 
+const toUrl = (u?: string) => {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const base =
+    (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+    (Config as any).NCP_PUBLIC_BASE_URL ||
+    (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+    (Config as any).IMAGE_BASE_URL ||
+    '';
+  return base
+    ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}`
+    : undefined;
+};
+
 export default function MyPageScreen() {
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
@@ -38,8 +54,6 @@ export default function MyPageScreen() {
 
   const { data: pendingReceived } = usePendingFollowing();
   const receivedCount = Array.isArray(pendingReceived) ? pendingReceived.length : 0;
-
-
   const sentCount = 0;
 
   const fullName = useMemo(() => {
@@ -48,11 +62,17 @@ export default function MyPageScreen() {
     return name || '—';
   }, [me, isLoading]);
 
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(me?.imageUrl);
-  useEffect(() => { setAvatarUrl(me?.imageUrl); }, [me?.imageUrl]);
+  const initialKeyOrUrl = (me as any)?.imageUrl || (me as any)?.imageKey || undefined;
+
+  const [avatarKeyOrUrl, setAvatarKeyOrUrl] = useState<string | undefined>(initialKeyOrUrl);
+  useEffect(() => {
+    setAvatarKeyOrUrl((me as any)?.imageUrl || (me as any)?.imageKey || undefined);
+  }, [me?.imageUrl, (me as any)?.imageKey]);
+
+  const displayAvatarUrl = toUrl(avatarKeyOrUrl);
 
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
-  const [tempIdx, setTempIdx] = useState<number>(0); // 0/1/2: 기본, -1: 커스텀
+  const [tempIdx, setTempIdx] = useState<number>(0);
   const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
 
   const confirmDelete = () => {
@@ -68,13 +88,18 @@ export default function MyPageScreen() {
             setTimeout(() => {
               deleteAccountMut.mutate(undefined, {
                 onSuccess: async () => {
-                  try { await SecureStore.deleteItemAsync('jwt'); } catch { }
+                  try {
+                    await SecureStore.deleteItemAsync('jwt');
+                  } catch { }
                   Alert.alert('Account deleted', 'Your account has been removed.', [
                     { text: 'OK', onPress: () => router.replace('/login') },
                   ]);
                 },
                 onError: (e: any) => {
-                  const msg = e?.response?.data?.message ?? e?.message ?? 'Failed to delete account. Please try again.';
+                  const msg =
+                    e?.response?.data?.message ??
+                    e?.message ??
+                    'Failed to delete account. Please try again.';
                   Alert.alert('Error', msg);
                 },
               });
@@ -86,12 +111,19 @@ export default function MyPageScreen() {
   };
 
   const openAvatarSheet = () => {
-    const cur = AVATARS.findIndex(
-      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (avatarUrl ?? ''),
+    const currentAssetIdx = AVATARS.findIndex(
+      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (displayAvatarUrl ?? ''),
     );
-    if (cur >= 0) { setTempIdx(cur); setCustomPhotoUri(undefined); }
-    else if (avatarUrl) { setTempIdx(-1); setCustomPhotoUri(avatarUrl); }
-    else { setTempIdx(0); setCustomPhotoUri(undefined); }
+    if (currentAssetIdx >= 0) {
+      setTempIdx(currentAssetIdx);
+      setCustomPhotoUri(undefined);
+    } else if (displayAvatarUrl) {
+      setTempIdx(-1);
+      setCustomPhotoUri(displayAvatarUrl);
+    } else {
+      setTempIdx(0);
+      setCustomPhotoUri(undefined);
+    }
     setShowAvatarSheet(true);
   };
 
@@ -113,15 +145,13 @@ export default function MyPageScreen() {
 
       await updateProfile.mutateAsync({ imageKey });
 
-      if (uriToShow) setAvatarUrl(uriToShow);
+      setAvatarKeyOrUrl(imageKey || uriToShow);
       setShowAvatarSheet(false);
       Alert.alert('Saved', 'Profile image updated.');
     } catch (e: any) {
       const raw = e?.detail || e?.response?.data || e?.message || e;
       const msg =
-        typeof raw === 'string'
-          ? raw
-          : raw?.message || raw?.error || '이미지 업로드에 실패했습니다.';
+        typeof raw === 'string' ? raw : raw?.message || raw?.error || '이미지 업로드에 실패했습니다.';
       Alert.alert('Upload error', String(msg));
     }
   };
@@ -139,9 +169,14 @@ export default function MyPageScreen() {
     if (!ok) return;
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
-    if (!result.canceled) { setCustomPhotoUri(result.assets[0].uri); setTempIdx(-1); }
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setTempIdx(-1);
+    }
   };
 
   const openGallery = async () => {
@@ -149,9 +184,14 @@ export default function MyPageScreen() {
     if (!ok) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
-    if (!result.canceled) { setCustomPhotoUri(result.assets[0].uri); setTempIdx(-1); }
+    if (!result.canceled) {
+      setCustomPhotoUri(result.assets[0].uri);
+      setTempIdx(-1);
+    }
   };
 
   const pickFromCameraOrGallery = () =>
@@ -171,7 +211,7 @@ export default function MyPageScreen() {
 
         <ProfileView>
           <AvatarPress onPress={openAvatarSheet}>
-            <EditAvatar uri={avatarUrl || me?.imageUrl} />
+            <Avatar uri={displayAvatarUrl} />
           </AvatarPress>
 
           <Name numberOfLines={1} ellipsizeMode="tail">
@@ -257,7 +297,10 @@ export default function MyPageScreen() {
                 return (
                   <AvatarItem
                     key={idx}
-                    onPress={() => { setTempIdx(idx); setCustomPhotoUri(undefined); }}
+                    onPress={() => {
+                      setTempIdx(idx);
+                      setCustomPhotoUri(undefined);
+                    }}
                   >
                     <AvatarCircle selected={selected}>
                       <AvatarImg source={img} />
@@ -301,68 +344,242 @@ export default function MyPageScreen() {
   );
 }
 
-/* ===== styles ===== */
 
-const Safe = styled.SafeAreaView`flex: 1; background: #1D1E1F;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1D1E1F;
+`;
 const Scroll = styled.ScrollView``;
 
-const Header = styled.View`padding: 12px 16px 8px 16px; flex-direction: row; align-items: center;`;
-const Title = styled.Text`font-family: 'InstrumentSerif_400Regular'; font-size: 32px; color: #ffffff; margin-right: 8px;`;
-const IconImage = styled.Image`width: 22px; height: 22px; resize-mode: contain; transform: translateY(-3px);`;
+const Header = styled.View`
+  padding: 12px 16px 8px 16px;
+  flex-direction: row;
+  align-items: center;
+`;
+const Title = styled.Text`
+  font-family: 'InstrumentSerif_400Regular';
+  font-size: 32px;
+  color: #ffffff;
+  margin-right: 8px;
+`;
+const IconImage = styled.Image`
+  width: 22px;
+  height: 22px;
+  resize-mode: contain;
+  transform: translateY(-3px);
+`;
 
-const ProfileView = styled.View`align-items: center; padding: 8px 16px 12px 16px;`;
-const AvatarPress = styled.Pressable`position: relative;`;
-const Name = styled.Text`margin-top: 10px; color: #ffffff; font-size: 18px; line-height: 22px; font-family: 'PlusJakartaSans_700Bold'; max-width: 80%; text-align: center;`;
-const EditButtonWrap = styled.View`align-self: stretch; padding: 12px 16px 0 16px;`;
+const ProfileView = styled.View`
+  align-items: center;
+  padding: 8px 16px 12px 16px;
+`;
+const AvatarPress = styled.Pressable`
+  position: relative;
+`;
+const Name = styled.Text`
+  margin-top: 10px;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 22px;
+  font-family: 'PlusJakartaSans_700Bold';
+  max-width: 80%;
+  text-align: center;
+`;
+const EditButtonWrap = styled.View`
+  align-self: stretch;
+  padding: 12px 16px 0 16px;
+`;
 
-const SectionTitle = styled.Text`color: #9aa0a6; font-size: 14px; line-height: 18px; letter-spacing: 0.2px; font-family: 'PlusJakartaSans_600SemiBold';`;
-const SectionTitleRow = styled.View`flex-direction: row; align-items: center; margin: 22px 16px 10px 16px;`;
-function SectionTitleIcon() { return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />; }
+const SectionTitle = styled.Text`
+  color: #9aa0a6;
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const SectionTitleRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin: 22px 16px 10px 16px;
+`;
+function SectionTitleIcon() {
+  return (
+    <Ionicons
+      name="person-outline"
+      size={12}
+      color="#9aa0a6"
+      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
+    />
+  );
+}
 function SectionTitleIconGlobe() {
   return (
     <Image
       source={require('@/assets/icons/global.png')}
       resizeMode="contain"
-      style={{ width: 12, height: 12, marginRight: 6, tintColor: '#9aa0a6', transform: [{ translateY: 1 }] }}
+      style={{
+        width: 12,
+        height: 12,
+        marginRight: 6,
+        tintColor: '#9aa0a6',
+        transform: [{ translateY: 1 }],
+      }}
     />
   );
 }
 
-const RowLink = styled.Pressable`padding: 14px 16px; flex-direction: row; justify-content: space-between; align-items: center;`;
-const RowLeft = styled.Text`color: #e9ecef; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
-const Chevron = styled.Text`color: #b8bdc2; font-size: 18px; margin-left: 8px;`;
+const RowLink = styled.Pressable`
+  padding: 14px 16px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+const RowLeft = styled.Text`
+  color: #e9ecef;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const Chevron = styled.Text`
+  color: #b8bdc2;
+  font-size: 18px;
+  margin-left: 8px;
+`;
 
-const RowHeader = styled.Text`margin: 20px 16px 8px 16px; color: #e9ecef; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
-const RowSeparator = styled.View`height: 1px; margin: 4px 16px 18px 16px; background: #2a2b2c; opacity: 0.6;`;
+const RowHeader = styled.Text`
+  margin: 20px 16px 8px 16px;
+  color: #e9ecef;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const RowSeparator = styled.View`
+  height: 1px;
+  margin: 4px 16px 18px 16px;
+  background: #2a2b2c;
+  opacity: 0.6;
+`;
 
-const CountCard = styled.View`margin: 10px 16px 12px 16px; background: #2a2f33; border-radius: 14px; padding: 10px; flex-direction: row; align-items: stretch;`;
-const Divider = styled.View`width: 1px; background: #454a4f; margin: 6px 4px;`;
-const CountItem = styled.Pressable`flex: 1; padding: 6px 8px; align-items: center; justify-content: center;`;
-const CountLabel = styled.Text`color: #c7cbcf; font-size: 15px; font-family: 'PlusJakartaSans_400Regular';`;
-const CountNumber = styled.Text`margin-top: 2px; color: #ffffff; font-size: 16px; font-family: 'PlusJakartaSans_700Bold';`;
+const CountCard = styled.View`
+  margin: 10px 16px 12px 16px;
+  background: #2a2f33;
+  border-radius: 14px;
+  padding: 10px;
+  flex-direction: row;
+  align-items: stretch;
+`;
+const Divider = styled.View`
+  width: 1px;
+  background: #454a4f;
+  margin: 6px 4px;
+`;
+const CountItem = styled.Pressable`
+  flex: 1;
+  padding: 6px 8px;
+  align-items: center;
+  justify-content: center;
+`;
+const CountLabel = styled.Text`
+  color: #c7cbcf;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const CountNumber = styled.Text`
+  margin-top: 2px;
+  color: #ffffff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
 
-const DeletePressable = styled.Pressable<{ disabled?: boolean }>`padding: 16px; margin-top: 8px; opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};`;
-const DeleteText = styled.Text`color: #ff5a5a; font-size: 14px; font-family: 'PlusJakartaSans_600SemiBold';`;
+const DeletePressable = styled.Pressable<{ disabled?: boolean }>`
+  padding: 16px;
+  margin-top: 8px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
+const DeleteText = styled.Text`
+  color: #ff5a5a;
+  font-size: 14px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
 
-const SheetOverlay = styled.TouchableOpacity`flex: 1; background: rgba(0, 0, 0, 0.55); justify-content: flex-end;`;
-const Sheet = styled.View`background: #353637; border-top-left-radius: 22px; border-top-right-radius: 22px; padding: 16px 16px 20px 16px;`;
-const Handle = styled.View`align-self: center; width: 54px; height: 4px; border-radius: 2px; background: #9aa0a6; margin-bottom: 10px;`;
-const SheetTitle = styled.Text`color: #ffffff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold'; text-align: center; margin-bottom: 16px;`;
+/* Bottom Sheet (Avatar 선택) */
+const SheetOverlay = styled.TouchableOpacity`
+  flex: 1;
+  background: rgba(0, 0, 0, 0.55);
+  justify-content: flex-end;
+`;
+const Sheet = styled.View`
+  background: #353637;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  padding: 16px 16px 20px 16px;
+`;
+const Handle = styled.View`
+  align-self: center;
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+  background: #9aa0a6;
+  margin-bottom: 10px;
+`;
+const SheetTitle = styled.Text`
+  color: #ffffff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_700Bold';
+  text-align: center;
+  margin-bottom: 16px;
+`;
 
-const AvatarRow = styled.View`flex-direction: row; align-items: center; justify-content: space-between; padding: 0 8px; margin-bottom: 18px;`;
+const AvatarRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 18px;
+`;
 const AvatarItem = styled.Pressable``;
 const AvatarCircle = styled.View<{ selected: boolean }>`
-  width: 68px; height: 68px; border-radius: 34px; background: #1f2021;
-  align-items: center; justify-content: center;
-  border-width: 2px; border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
+  width: 68px;
+  height: 68px;
+  border-radius: 34px;
+  background: #1f2021;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
   position: relative;
 `;
-const AvatarImg = styled.Image`width: 64px; height: 64px; border-radius: 32px;`;
-const CheckBadge = styled.View`
-  position: absolute; right: -2px; top: -2px; width: 20px; height: 20px; border-radius: 10px;
-  background: #30F59B; align-items: center; justify-content: center; border-width: 2px; border-color: #353637;
+const AvatarImg = styled.Image`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
 `;
-const CameraCircleInner = styled.View`width: 64px; height: 64px; border-radius: 32px; align-items: center; justify-content: center; background: #1f2021;`;
+const CheckBadge = styled.View`
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: #30F59B;
+  align-items: center;
+  justify-content: center;
+  border-width: 2px;
+  border-color: #353637;
+`;
+const CameraCircleInner = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  align-items: center;
+  justify-content: center;
+  background: #1f2021;
+`;
 
-const ButtonRow = styled.View`flex-direction: row; align-items: center; margin-top: 10px; padding-bottom: 28px;`;
-const Gap = styled.View`width: 12px;`;
+const ButtonRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+  padding-bottom: 28px;
+`;
+const Gap = styled.View`
+  width: 12px;
+`;
