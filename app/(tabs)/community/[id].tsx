@@ -97,6 +97,7 @@ export default function PostDetailScreen() {
 
   const [value, setValue] = useState('');
   const [anonymous, setAnonymous] = useState(false);
+  const canSend = value.trim().length > 0; // ✅ 전송 가능 여부
 
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
@@ -310,7 +311,7 @@ export default function PostDetailScreen() {
           renderItem={({ item, index }) => (
             <CommentItem
               data={item}
-              isFirst={index === 0}                // ✅ 첫 댓글이면 top border 제거
+              isFirst={index === 0}
               onPressLike={() => toggleCommentLike(item)}
             />
           )}
@@ -332,9 +333,15 @@ export default function PostDetailScreen() {
                       <Sub style={{ marginLeft: 6 }}>{views}</Sub>
                     </MetaRow>
                   </Meta>
-                  <SmallFlag onPress={() => setBookmarked(v => !v)} hitSlop={8}>
-                    <MaterialIcons name="bookmark" size={20} color={bookmarked ? '#30F59B' : '#8a8a8a'} />
-                  </SmallFlag>
+
+                  {/* 아이콘만 보이도록 박스 제거 */}
+                  <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
+                    <MaterialIcons
+                      name="bookmark-border"
+                      size={20}
+                      color={bookmarked ? '#30F59B' : '#8a8a8a'}
+                    />
+                  </BookmarkWrap>
                 </Row>
 
                 {imageUrls.length > 0 && (
@@ -361,8 +368,13 @@ export default function PostDetailScreen() {
                 <Body>{body}</Body>
 
                 <Footer>
+                  {/* 좋아요: outline만, 색만 변경 */}
                   <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
-                    <AntDesign name={likedByMe ? 'like1' : 'like2'} size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
+                    <AntDesign
+                      name="like2"
+                      size={16}
+                      color={likedByMe ? '#30F59B' : '#cfd4da'}
+                    />
                     <ActText>{likeCount}</ActText>
                   </Act>
                   <Act>
@@ -390,7 +402,7 @@ export default function PostDetailScreen() {
               value={value}
               onChangeText={setValue}
               placeholder="Write Your Text"
-              placeholderTextColor="#BFC3C5"
+              placeholderTextColor="#616262"
               returnKeyType="send"
               blurOnSubmit
               onSubmitEditing={submit}
@@ -401,8 +413,9 @@ export default function PostDetailScreen() {
             </AnonToggle>
           </Composer>
 
-          <SendBtn onPress={submit} hitSlop={8}>
-            <Feather name="send" size={22} color="#D9D9D9" />
+          {/* ✅ 입력 가능 시 send 아이콘 색 #02F59B, 버튼 활성화 */}
+          <SendBtn onPress={submit} disabled={!canSend} hitSlop={8}>
+            <Feather name="send" size={22} color={canSend ? '#02F59B' : '#D9D9D9'} />
           </SendBtn>
         </InputBar>
       </KeyboardAvoidingView>
@@ -518,7 +531,7 @@ export default function PostDetailScreen() {
 const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
 const Header = styled.View`height: 48px; padding: 0 12px; flex-direction: row; align-items: center; justify-content: space-between;`;
 const Back = styled.Pressable`width: 40px; align-items: flex-start;`;
-const HeaderTitle = styled.Text`color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_700Bold'; text-align: center; flex: 1;`;
+const HeaderTitle = styled.Text`color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_500Bold'; text-align: center; flex: 1;`;
 const RightPlaceholder = styled.View`width: 40px;`;
 const Center = styled.View`flex: 1; align-items: center; justify-content: center;`;
 const Dim = styled.Text`color: #cfd4da;`;
@@ -531,7 +544,11 @@ const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakar
 const MetaRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center;`;
 const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
 const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
-const SmallFlag = styled.Pressable`padding: 6px;`;
+
+const BookmarkWrap = styled.Pressable<{ $active?: boolean }>`
+  padding: 6px;                /* 아이콘만 보이게 여백만 */
+  background: transparent;     /* 네모 박스 제거 */
+`;
 
 const Img = styled.Image`width: 360px; height: 200px; border-radius: 12px; margin-right: 8px;`;
 const Counter = styled.Text`
@@ -553,7 +570,15 @@ const BottomInput = styled(RNTextInput)`flex: 1; color: #ffffff; font-size: 14px
 const AnonToggle = styled.Pressable`flex-direction: row; align-items: center; margin-left: 10px;`;
 const AnonLabel = styled.Text`color: #cccfd5; font-size: 14px; margin-right: 8px; font-family: 'PlusJakartaSans_Light';`;
 const Check = styled.View<{ $active?: boolean }>`width: 16px; height: 16px; border-radius: 2px; border-width: 1.1px; border-color: #cccfd5; background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')}; align-items: center; justify-content: center;`;
-const SendBtn = styled.Pressable`width: 36px; height: 36px; align-items: center; justify-content: center;`;
+
+/* ✅ disabled 시 투명도 */
+const SendBtn = styled.Pressable<{ disabled?: boolean }>`
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
 
 const SheetHandle = styled.View`align-self: center; width: 44px; height: 4px; border-radius: 2px; background: #44484d; margin-bottom: 8px;`;
 const SheetItem = styled.Pressable`flex-direction: row; align-items: center; padding: 14px 20px;`;
