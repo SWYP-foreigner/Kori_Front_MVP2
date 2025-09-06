@@ -1,7 +1,7 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
 type Lang = {
@@ -9,17 +9,45 @@ type Lang = {
   code: string;
 };
 
-const OPTIONS: Lang[] = [
-  { label: 'English', code: 'EN' },
-  { label: 'Spanish', code: 'ES' },
-  { label: 'French', code: 'FR' },
-  { label: 'Vietnamese', code: 'VI' },
-  { label: 'Italian', code: 'IT' },
-  { label: 'Chinese', code: 'ZH' },
-  { label: 'Japanese', code: 'JP' },
+const LANGUAGES: string[] = [
+  'Abkhaz [AB]', 'Acehnese [ACE]', 'Acholi [ACH]', 'Afrikaans [AF]', 'Albanian [SQ]', 'Alur [ALZ]', 'Amharic [AM]', 'Arabic [AR]',
+  'Armenian [HY]', 'Assamese [AS]', 'Awadhi [AWA]', 'Aymara [AY]', 'Azerbaijani [AZ]', 'Balinese [BAN]', 'Bambara [BM]', 'Bashkir [BA]',
+  'Basque [EU]', 'Batak Karo [BTX]', 'Batak Simalungun [BTS]', 'Batak Toba [BBC]', 'Belarusian [BE]', 'Bemba [BEM]', 'Bengali [BN]',
+  'Betawi [BEW]', 'Bhojpuri [BHO]', 'Bikol [BIK]', 'Bosnian [BS]', 'Breton [BR]', 'Bulgarian [BG]', 'Buryat [BUA]', 'Cantonese [YUE]',
+  'Catalan [CA]', 'Cebuano [CEB]', 'Chichewa [NY]', 'Chinese (Simplified) [ZH-CN]', 'Chinese (Traditional) [ZH-TW]', 'Chuvash [CV]',
+  'Corsican [CO]', 'Crimean Tatar [CRH]', 'Croatian [HR]', 'Czech [CS]', 'Danish [DA]', 'Dinka [DIN]', 'Divehi [DV]', 'Dogri [DOI]',
+  'Dombe [DOV]', 'Dutch [NL]', 'Dzongkha [DZ]', 'English [EN]', 'Esperanto [EO]', 'Estonian [ET]', 'Ewe [EE]', 'Fijian [FJ]', 'Filipino [FIL]',
+  'Finnish [FI]', 'French [FR]', 'French (French) [FR-FR]', 'French (Canadian) [FR-CA]', 'Frisian [FY]', 'Fulfulde [FF]', 'Ga [GAA]',
+  'Galician [GL]', 'Ganda [LG]', 'Georgian [KA]', 'German [DE]', 'Greek [EL]', 'Guarani [GN]', 'Gujarati [GU]', 'Haitian Creole [HT]',
+  'Hakha Chin [CNH]', 'Hausa [HA]', 'Hawaiian [HAW]', 'Hebrew [IW]', 'Hiligaynon [HIL]', 'Hindi [HI]', 'Hmong [HMN]', 'Hungarian [HU]',
+  'Hunsrik [HRX]', 'Icelandic [IS]', 'Igbo [IG]', 'Iloko [ILO]', 'Indonesian [ID]', 'Irish [GA]', 'Italian [IT]', 'Japanese [JA]',
+  'Javanese [JW]', 'Kannada [KN]', 'Kapampangan [PAM]', 'Kazakh [KK]', 'Khmer [KM]', 'Kiga [CGG]', 'Kinyarwanda [RW]', 'Kituba [KTU]',
+  'Konkani [GOM]', 'Korean [KO]', 'Krio [KRI]', 'Kurdish (Kurmanji) [KU]', 'Kurdish (Sorani) [CKB]', 'Kyrgyz [KY]', 'Lao [LO]',
+  'Latgalian [LTG]', 'Latin [LA]', 'Latvian [LV]', 'Ligurian [LIJ]', 'Limburgan [LI]', 'Lingala [LN]', 'Lithuanian [LT]', 'Lombard [LMO]',
+  'Luo [LUO]', 'Luxembourgish [LB]', 'Macedonian [MK]', 'Maithili [MAI]', 'Makassar [MAK]', 'Malagasy [MG]', 'Malay [MS]', 'Malay (Jawi) [MS-ARAB]',
+  'Malayalam [ML]', 'Maltese [MT]', 'Maori [MI]', 'Marathi [MR]', 'Meadow Mari [CHM]', 'Meiteilon [MNI-MTEI]', 'Minang [MIN]', 'Mizo [LUS]',
+  'Mongolian [MN]', 'Myanmar (Burmese) [MY]', 'Ndebele (South) [NR]', 'Nepalbhasa [NEW]', 'Nepali [NE]', 'Northern Sotho [NSO]', 'Norwegian [NO]',
+  'Nuer [NUS]', 'Occitan [OC]', 'Odia [OR]', 'Oromo [OM]', 'Pangasinan [PAG]', 'Papiamento [PAP]', 'Pashto [PS]', 'Persian [FA]', 'Polish [PL]',
+  'Portuguese [PT]', 'Portuguese (Portugal) [PT-PT]', 'Portuguese (Brazil) [PT-BR]', 'Punjabi [PA]', 'Punjabi (Shahmukhi) [PA-ARAB]',
+  'Quechua [QU]', 'Romani [ROM]', 'Romanian [RO]', 'Rundi [RN]', 'Russian [RU]', 'Samoan [SM]', 'Sango [SG]', 'Sanskrit [SA]', 'Scots Gaelic [GD]',
+  'Serbian [SR]', 'Sesotho [ST]', 'Seychellois Creole [CRS]', 'Shan [SHN]', 'Shona [SN]', 'Sicilian [SCN]', 'Silesian [SZL]', 'Sindhi [SD]',
+  'Sinhala [SI]', 'Slovak [SK]', 'Slovenian [SL]', 'Somali [SO]', 'Spanish [ES]', 'Sundanese [SU]', 'Swahili [SW]', 'Swati [SS]',
+  'Swedish [SV]', 'Tajik [TG]', 'Tamil [TA]', 'Tatar [TT]', 'Telugu [TE]', 'Tetum [TET]', 'Thai [TH]', 'Tigrinya [TI]', 'Tsonga [TS]', 'Tswana [TN]',
+  'Turkish [TR]', 'Turkmen [TK]', 'Twi [AK]', 'Ukrainian [UK]', 'Urdu [UR]', 'Uyghur [UG]', 'Uzbek [UZ]', 'Vietnamese [VI]', 'Welsh [CY]',
+  'Xhosa [XH]', 'Yiddish [YI]', 'Yoruba [YO]', 'Yucatec Maya [YUA]', 'Zulu [ZU]'
 ];
 
+const toOptions = (arr: string[]): Lang[] =>
+  arr.map((s) => {
+    const m = s.match(/^(.*?)\s*\[([^\]]+)\]\s*$/);
+    return {
+      label: m ? m[1].trim() : s,
+      code: m ? m[2].trim() : s,
+    };
+  });
+
 export default function TranslateScreen() {
+  const OPTIONS = useMemo<Lang[]>(() => toOptions(LANGUAGES), []);
   const [selected, setSelected] = useState<string>('EN');
 
   return (
@@ -48,8 +76,9 @@ export default function TranslateScreen() {
               hitSlop={HIT}
               active={active}
             >
+              {/* 대괄호 유지하여 렌더링 */}
               <RowText active={active}>
-                {label} ({code})
+                {label} [{code}]
               </RowText>
 
               {active && (
@@ -90,7 +119,7 @@ const HeaderCenter = styled.View`
 `;
 
 const RightSlot = styled.View`
-  width: 40px; /* 우측 균형용 빈 슬롯 */
+  width: 40px;
 `;
 
 const Title = styled.Text`
