@@ -20,6 +20,7 @@ import { usePendingFollowing } from '@/hooks/queries/useFollowing';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 import { Config } from '@/src/lib/config';
+import api from '@/api/axiosInstance';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -201,6 +202,37 @@ export default function MyPageScreen() {
       { text: 'Cancel', style: 'cancel' },
     ]);
 
+    //로그아웃 로직
+    const AccountLogout = async () => {
+        // 로그아웃 확인 알림
+        Alert.alert(
+          "Log Out",
+          "Are you sure you want to log out?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Log Out",
+              style: "destructive",
+              onPress: async () => {
+                try {
+                  await api.post(`${Config.SERVER_URL}/api/v1/member/logout`);
+                  await SecureStore.deleteItemAsync("jwt");
+                  await SecureStore.deleteItemAsync("refresh");
+                  console.log("로그아웃 완료");
+
+                  router.replace("/login"); // 로그인 화면으로 이동
+                } catch (error) {
+                  console.error("로그아웃 실패", error);
+                }
+              },
+            },
+          ]
+        );
+      };
+
   return (
     <Safe>
       <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
@@ -269,7 +301,7 @@ export default function MyPageScreen() {
           <SectionTitle>My Account</SectionTitle>
         </SectionTitleRow>
 
-        <RowLink onPress={() => { /* TODO: logout */ }}>
+        <RowLink onPress={AccountLogout}>
           <RowLeft>Account Logout</RowLeft>
           <Chevron>›</Chevron>
         </RowLink>

@@ -103,7 +103,7 @@ const NewSpaceCreated=()=>{
       // 서버로 전송
       const res = await api.post('/api/v1/chat/rooms/group', payload);
       console.log('New Spaces Created', res);
-      router.replace('../../(tabs)/chat');
+      router.replace('/(tabs)/chat');
     } catch (err) {
       console.error('Fail New Spaces Created', err);
       throw err;
@@ -137,17 +137,19 @@ const Background = styled.ImageBackground`
   flex: 1;
   justify-content:flex-start;
   align-items: center;
-  padding-top: 200px;     
+  padding-top: 200px;  
 `;
 const ProfileBox=styled.View`
-    width:150px;
-    height:150px;
+    width:160px;
+    height:160px;
     overflow: hidden;
+   
 `;
 const ProfileImage=styled.Image`
     width:100%;
     height:100%;
     resize-mode:contain;
+    border-radius:100px;
 `;
 
 const TextBox=styled.View`

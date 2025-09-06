@@ -149,9 +149,11 @@ export default function ChatScreen() {
       ) : (
         <GroupChatRoomBox/>
       )}
+      {isGroupChat&&
         <CreateSpaceButton onPress={createNewSpace}>
           <AntDesign name="plus" size={24} color="black" />
-        </CreateSpaceButton>
+        </CreateSpaceButton>}
+        
       </Container>
         </Safe>
     );
@@ -196,10 +198,12 @@ const IconImage = styled.Image`
 const ChatWrapper=styled.View`
     height:50px;
     flex-direction:row;
+    border-bottom-width:1px;
+    border-bottom-color:#616262;
 `;
+
 const ChatBox=styled.View`
     width:50%;
-    
     height:50px;
     align-items:center;
     justify-content:center;
@@ -211,7 +215,7 @@ const MyChatBox=styled.TouchableOpacity`
     height:50px;
     margin:0px 100px;
     border-bottom-color:${(props)=>(props.isGroupChat ? '#616262' :'#02F59B')};
-    border-bottom-width:2px;
+    border-bottom-width:${(props)=>(props.isGroupChat ? '1px' :'2px')};
     align-items:center;
     justify-content:center;
 `;
@@ -220,7 +224,7 @@ const GroupChatBox=styled.TouchableOpacity`
     width:70%;
     height:50px;
     border-bottom-color:${(props)=>(props.isGroupChat ? '#02F59B' :'#616262')};
-    border-bottom-width:2px;
+    border-bottom-width:${(props)=>(props.isGroupChat ? '2px' :'1px')};
     align-items:center;
     justify-content:center;
 `;

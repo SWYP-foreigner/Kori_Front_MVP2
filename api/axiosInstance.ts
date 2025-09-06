@@ -1,15 +1,14 @@
 import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
 import { Config } from "@/src/lib/config";
-import axios, {
-    AxiosError,
-    AxiosInstance,
-    InternalAxiosRequestConfig
-} from "axios";
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import * as SecureStore from "expo-secure-store";
+import { useRouter } from "expo-router"; 
 
 const BASE_URL = Config.SERVER_URL;
+const router=useRouter();
 
 function maskToken(t?: string | null) {
+
     if (!t) return "no";
     return `yes(Bearer ${t.slice(0, 10)}...)`;
 }
@@ -29,6 +28,18 @@ const api: AxiosInstance = axios.create({
     timeout: 10000,
     headers: { Accept: "application/json" },
 });
+
+// 🚨 refresh 요청 중복 방지
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
 
 api.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
@@ -62,6 +73,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
+
 );
 
 let refreshPromise: Promise<string | null> | null = null;
@@ -133,7 +145,11 @@ api.interceptors.response.use(
             refreshPromise = null;
             return Promise.reject(e);
         }
+
     }
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;
