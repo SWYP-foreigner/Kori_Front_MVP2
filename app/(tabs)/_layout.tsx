@@ -1,12 +1,15 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Image ,Text} from "react-native";
+import { SafeAreaView,Image ,Text,StatusBar,Platform} from "react-native";
 import { Dimensions } from "react-native";
 const { height: screenHeight } = Dimensions.get("window");
 const TAB_BAR_HEIGHT = screenHeight * 0.15; // 화면 높이의 15%
 
+
+
 export default function TabLayout() {
   return (
+   
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -108,5 +111,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+   
   );
 }

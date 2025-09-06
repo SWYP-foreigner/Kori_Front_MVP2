@@ -79,7 +79,7 @@ const ChattingRoomScreen=()=>{
         if(initTranslate){
             const res =await api.get(`/api/v1/chat/rooms/${roomId}/first_messages`);
             const chatHistory:ChatHistory[]=res.data.data;
-                // 메시지 담기
+            // 메시지 담기
             setMessages([...chatHistory])
         }
         setIsTranslate(false);

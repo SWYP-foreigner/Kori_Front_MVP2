@@ -1,4 +1,4 @@
-import { SafeAreaView, Text,StatusBar ,FlatList} from 'react-native';
+import { SafeAreaView, Text,StatusBar ,FlatList,Platform} from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import MyChatRoomBox from '@/components/MyChatRoomBox';
@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/api/axiosInstance';
+
 
 type ChatRoom = {
   roomId: string;        // 채팅방 아이디
