@@ -69,7 +69,11 @@ const LinkedSpaceDetail=()=>{
                     source={require("@/assets/images/background1.png")}
                     resizeMode="cover"> 
                     <ProfileBox>    
-                        <ProfileImage source={ { uri: roomDetail?.roomImageUrl } } />
+                        <ProfileImage source={
+                  roomDetail?.roomImageUrl
+                    ? { uri: roomDetail?.roomImageUrl }               // URL이 있으면 원격 이미지
+                    : require("@/assets/images/character1.png") // 없으면 로컬 디폴트 이미지
+                    } />
                     </ProfileBox>
                 </Background>  
             </BackgroundContainer>
@@ -84,7 +88,7 @@ const LinkedSpaceDetail=()=>{
                     </MembersTextContainer>
                     <HostContainer>
                        <HostImageBox>
-                        <HostImage  source={{ uri: roomDetail?.ownerImageUrl }}/>
+                        <HostImage  source={roomDetail?.ownerImageUrl?{ uri: roomDetail?.ownerImageUrl }:require("@/assets/images/character3.png")}/>
                        </HostImageBox>
                        <HostNameText>{roomDetail?.ownerFirstName}</HostNameText>
                        <HostBox>

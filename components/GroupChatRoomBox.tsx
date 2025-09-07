@@ -39,6 +39,7 @@ const GroupChatRoomBox = () => {
 
   const getAllSpaceData = async () => {
     const res = await api.get('/api/v1/chat/group/latest');
+    
     return res.data.data;
   };
 

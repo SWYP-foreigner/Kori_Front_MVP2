@@ -17,7 +17,7 @@ import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
 import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
-
+import api from "@/api/axiosInstance";
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
   iosClientId: `${Config.GOOGLE_IOS_CLIENT_ID}`,
@@ -77,7 +77,6 @@ const LoginScreen = () => {
       );
 
       const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
-      
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());

@@ -10,7 +10,7 @@
     "owner": "koriapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Kori_Icon.png",
     "scheme": "korifront",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

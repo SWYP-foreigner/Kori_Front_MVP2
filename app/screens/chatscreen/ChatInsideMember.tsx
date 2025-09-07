@@ -7,7 +7,8 @@ import MembersBox from "@/components/MembersBox";
 import { useLocalSearchParams } from "expo-router";
 import { FlatList } from 'react-native';
 import api from "@/api/axiosInstance";
-import { Config } from "@/src/lib/config";
+
+
 
 type ChatMembers={
     userId:number,

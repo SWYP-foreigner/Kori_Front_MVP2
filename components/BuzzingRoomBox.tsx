@@ -19,7 +19,11 @@ const BuzzingRoomBox=({data})=>{
     return(
     <BuzzingBox onPress={onhandleNext}>
                 <BuzzingImageContainer>
-                    <BuzzingImage source={{ uri: data.roomImageUrl }}/>
+                    <BuzzingImage source={
+                  data.roomImageUrl
+                    ? { uri: data.roomImageUrl }               // URL이 있으면 원격 이미지
+                    : require("@/assets/images/character2.png") // 없으면 로컬 디폴트 이미지
+                }/>
                 </BuzzingImageContainer>
                 <BuzzingTitleContainer>
                     <BuzzingTitle>{data.roomName}</BuzzingTitle>
