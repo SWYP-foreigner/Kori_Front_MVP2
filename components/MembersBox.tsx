@@ -9,7 +9,7 @@ const MembersBox=({ name, onPressMore,isHost,imageUrl })=>{
     const router = useRouter();
     return(<MemberContainer>   
                     <ProfileBox>
-                        <ProfileImage source={{uri:imageUrl}}/>
+                        <ProfileImage source={imageUrl?{uri:imageUrl}:require("@/assets/images/character1.png")}/>
                     </ProfileBox>
                     <Memberbox>
                         <MemberisHostBox>

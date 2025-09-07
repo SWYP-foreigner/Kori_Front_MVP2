@@ -329,35 +329,190 @@ const ChattingRoomScreen=()=>{
 export default ChattingRoomScreen;
 
 // ===================== styled-components =====================
-const SafeArea=styled.SafeAreaView` flex:1; background-color:#1D1E1F; `;
-const Container=styled.View` flex:1; background-color:#1D1E1F; padding:0px 15px; `;
-const HeaderContainer=styled.View` flex-direction:row; height:10%; align-items:center; justify-content: center; `;
-const HeaderTitleText=styled.Text` color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; `;
+const SafeArea=styled.SafeAreaView` 
+flex:1; background-color:#1D1E1F; 
+`;
+const Container=styled.View`
+ flex:1; background-color:#1D1E1F; padding:0px 15px; 
+ `;
+const HeaderContainer=styled.View` 
+flex-direction:row; height:10%; align-items:center; justify-content: center; 
+`;
+const HeaderTitleText=styled.Text` 
+color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; 
+`;
 const Left=styled.View``;
-const Center=styled.View` flex:1; justify-content:center; align-items:center; `;
-const Right=styled.View` margin-right:5px; flex-direction:row; justify-content:center; `;
-const ChattingScreen=styled.View` flex:1; flex-direction: column; padding-bottom:10px; `;
-const ChattingLeftContainer = styled.View` margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')}; align-self: flex-start; max-width:280px; flex-direction: row; `;
-const ProfileContainer = styled.View` width: 38px; margin-right: 7px; `;
-const LeftMessageBox = styled.View` max-width: 250px; margin-top: 5px; flex-direction: row; align-items: flex-end; justify-content: flex-start; `;
-const ProfileBox=styled.View` width:38px; height:38px; border-radius:100px; overflow:hidden; `;
-const ProfileImage=styled.Image` width:100%; height:100%; resize-mode:cover; `;
-const OtherContainer=styled.View` max-width:242px; padding-left:7px; `;
-const OtherNameText=styled.Text` color:#FFFFFF; font-family:PlusJakartaSans_600SemiBold; font-size:13px; `;
-const OtherFirstTextBox=styled.View` background-color: #414142; padding: 8px 12px; max-width: 210px; border-top-left-radius: 0px; border-top-right-radius: 16px; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; align-self: flex-start; align-items:center; justify-content:center; `;
-const OtherText=styled.Text` color:#FFFFFF; font-size:14px; font-family:PlusJakartaSans_300Light; `;
-const OtherNotFirstTextBox=styled.View` background-color:#414142; max-width:210px; padding:8px 12px; border-radius:16px; align-items:center; justify-content:center; align-self: flex-start; `;
-const ChatTimeText=styled.Text` color:#848687; font-size:10px; font-family:PlusJakartaSans_300Light; margin-left:3px; `;
-const ChattingRightContainer = styled.View` margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')}; align-self: flex-end; max-width:280px; flex-direction: row; justify-content: flex-start; align-items: flex-end; margin-right:8px; `;
-const MyChatTimeText=styled.Text` color:#848687; font-size:10px; font-family:PlusJakartaSans_300Light; margin-right:4px; `;
-const MyTextFirstBox=styled.View` background-color: #02F59B; padding: 8px 12px; max-width: 210px; border-top-left-radius: 16px; border-top-right-radius: 16px; border-bottom-left-radius: 16px; border-bottom-right-radius: 0px; align-self: flex-end; align-items:center; justify-content:center; `;
-const MyTextNotFirstBox=styled.View` background-color: #02F59B; padding: 8px 12px; max-width: 210px; border-radius: 16px; align-self: flex-end; align-items:center; justify-content:center; `;
-const MyText=styled.Text` color:#1D1E1F; font-size:14px; font-family:PlusJakartaSans_400Regular; `;
-const TranslateButtonBox=styled.TouchableOpacity` position: absolute; bottom: ${height * 0.17}px; right:10px; width:50px; height:50px; border-radius:30px; z-index:999; align-items:center; justify-content:center; flex-direction:row; `;
-const TranslateImage=styled.Image` width:75px; height:75px; resize-mode:contain; `;
-const TranslatingButtonBox=styled.TouchableOpacity` position: absolute; top: ${height * 0.1}px; width:50px; height:50px; align-self:center; border-radius:30px; z-index:999; align-items:center; justify-content:center; flex-direction:row; `;
-const TranslatingImage=styled.Image` width:130px; height:130px; resize-mode:contain; `;
-const BottomContainer=styled.View` background-color:#1D1E1F; border-top-width:1px; border-top-color:#353637; flex-direction:row; `;
-const BottomInputBox=styled.TextInput` background-color:#353637; color:#ffffff; border-radius:8px; width:85%; height:45px; margin-top:10px; padding-left:10px; `;
-const SendImageBox=styled.TouchableOpacity` width:23px; height:23px; margin:20px; `;
-const SendImage=styled.Image` width:100%; height:100%; resize-mode:contain; `;
+const Center=styled.View` 
+flex:1; justify-content:center; align-items:center;
+ `;
+const Right=styled.View`
+ margin-right:5px; flex-direction:row; justify-content:center;
+  `;
+const ChattingScreen=styled.View` 
+flex:1; flex-direction: column; padding-bottom:10px; 
+`;
+const ChattingLeftContainer = styled.View`
+ margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
+  align-self: flex-start; max-width:280px; 
+  flex-direction: row; 
+  `;
+const ProfileContainer = styled.View` 
+width: 38px; 
+margin-right: 7px;
+ `;
+const LeftMessageBox = styled.View`
+ max-width: 250px; 
+ margin-top: 5px; 
+ flex-direction: row; 
+ align-items: flex-end; 
+ justify-content: flex-start;
+  `;
+const ProfileBox=styled.View`
+ width:38px; 
+ height:38px;
+  border-radius:100px; 
+  overflow:hidden; 
+  `;
+const ProfileImage=styled.Image` 
+width:100%; 
+height:100%;
+ resize-mode:cover; 
+ `;
+const OtherContainer=styled.View` 
+max-width:242px;
+ padding-left:7px; 
+ `;
+const OtherNameText=styled.Text`
+ color:#FFFFFF; 
+ font-family:PlusJakartaSans_600SemiBold;
+  font-size:13px;
+   `;
+const OtherFirstTextBox=styled.View`
+ background-color: #414142; 
+ padding: 8px 12px; 
+ max-width: 210px;
+ border-top-left-radius: 0px;
+border-top-right-radius: 16px;
+border-bottom-left-radius: 16px;
+border-bottom-right-radius: 16px;
+align-self: flex-start; 
+align-items:center; 
+justify-content:center; 
+`;
+const OtherText=styled.Text`
+ color:#FFFFFF; 
+ font-size:14px; 
+ font-family:PlusJakartaSans_300Light;
+  `;
+const OtherNotFirstTextBox=styled.View` 
+background-color:#414142; 
+max-width:210px; 
+padding:8px 12px;
+ border-radius:16px; 
+ align-items:center; 
+ justify-content:center; 
+ align-self: flex-start; 
+ `;
+const ChatTimeText=styled.Text` 
+color:#848687; 
+font-size:10px; 
+font-family:PlusJakartaSans_300Light;
+ margin-left:3px; 
+ `;
+const ChattingRightContainer = styled.View` 
+margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
+ align-self: flex-end; max-width:280px;
+  flex-direction: row;
+   justify-content: flex-start; 
+   align-items: flex-end; 
+   margin-right:8px;
+    `;
+const MyChatTimeText=styled.Text` 
+color:#848687; 
+font-size:10px; 
+font-family:PlusJakartaSans_300Light;
+ margin-right:4px; `;
+
+const MyTextFirstBox=styled.View`
+ background-color: #02F59B;
+padding: 8px 12px;
+   max-width: 210px; 
+   border-top-left-radius: 16px;
+    border-top-right-radius: 16px; 
+    border-bottom-left-radius: 16px;
+     border-bottom-right-radius: 0px;
+      align-self: flex-end; 
+      align-items:center; 
+      justify-content:center; `;
+
+const MyTextNotFirstBox=styled.View` 
+background-color: #02F59B; 
+padding: 8px 12px; max-width: 210px; 
+border-radius: 16px; 
+align-self: flex-end;
+align-items:center; 
+justify-content:center; 
+`;
+const MyText=styled.Text` 
+color:#1D1E1F; 
+font-size:14px; 
+font-family:PlusJakartaSans_400Regular; 
+`;
+const TranslateButtonBox=styled.TouchableOpacity` 
+position: absolute; 
+bottom: ${height * 0.17}px;
+right:10px; width:50px;
+height:50px; 
+border-radius:30px; 
+z-index:999; 
+align-items:center; 
+justify-content:center; 
+flex-direction:row; 
+  `;
+const TranslateImage=styled.Image` 
+width:75px; 
+height:75px; 
+resize-mode:contain; 
+`;
+const TranslatingButtonBox=styled.TouchableOpacity` 
+position: absolute; 
+top: ${height * 0.1}px; 
+width:50px; 
+height:50px; 
+align-self:center; 
+border-radius:30px; 
+z-index:999; 
+align-items:center; 
+justify-content:center; 
+flex-direction:row; 
+`;
+const TranslatingImage=styled.Image`
+ width:130px; 
+ height:130px;
+  resize-mode:contain; 
+  `;
+const BottomContainer=styled.View` 
+background-color:#1D1E1F; 
+border-top-width:1px; 
+border-top-color:#353637; 
+flex-direction:row; 
+`;
+const BottomInputBox=styled.TextInput` 
+background-color:#353637; 
+color:#ffffff; 
+border-radius:8px; 
+width:85%; 
+height:45px; 
+margin-top:10px; 
+padding-left:10px; 
+`;
+const SendImageBox=styled.TouchableOpacity` 
+width:23px; 
+height:23px; 
+margin:20px; 
+`;
+const SendImage=styled.Image` 
+width:100%;
+ height:100%; 
+ resize-mode:contain; 
+ `;
