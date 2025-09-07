@@ -1,3 +1,4 @@
+// components/PostCard.tsx
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -10,6 +11,7 @@ const MAX_IMAGES = 5;
 export type Post = {
   id: string;
   author: string;
+  isAnonymous?: boolean;            // 🔹추가
   avatar?: any;
   category: string;
   createdAt: string;
@@ -22,8 +24,6 @@ export type Post = {
   bookmarked?: boolean;
   hotScore: number;
   viewCount?: number;
-  // 선택적: 부모가 관리한다면 여기에 likedByMe를 추가해도 됨
-  // likedByMe?: boolean;
 };
 
 type Props = {
@@ -34,6 +34,8 @@ type Props = {
 };
 
 export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark }: Props) {
+  const isAnon = Boolean(data.isAnonymous);
+
   const showUnit = typeof data.minutesAgo === 'number';
   const timeLabel = showUnit
     ? (data.minutesAgo! < 60 ? `${data.minutesAgo} min ago` : `${Math.floor(data.minutesAgo! / 60)} hours ago`)
@@ -42,14 +44,18 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
   const viewCount = data.viewCount ?? 0;
 
   const avatarUrl =
-    (data as any).avatarUrl ??
-    (data as any).userImageUrl ??
-    (typeof data.avatar === 'string' ? data.avatar : undefined);
+    isAnon
+      ? undefined
+      : ((data as any).avatarUrl ??
+        (data as any).userImageUrl ??
+        (typeof data.avatar === 'string' ? data.avatar : undefined));
 
   const avatarSource =
     typeof avatarUrl === 'string' && avatarUrl
       ? { uri: keyToUrl(avatarUrl) }
-      : (data.avatar as any);
+      : (isAnon ? undefined : (data.avatar as any));
+
+  const displayAuthor = isAnon ? 'Anonymous' : data.author;
 
   const rawImageKeysArr: string[] = Array.isArray(
     (data as any).contentImageUrls ?? (data as any).imageUrls ?? data.images
@@ -99,7 +105,6 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     }
   }).current;
 
-  // ✅ 좋아요 상태 유연 추출 (likedByMe | isLiked | liked)
   const liked = Boolean(
     (data as any).likedByMe ?? (data as any).isLiked ?? (data as any).liked ?? false
   );
@@ -107,12 +112,14 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
   return (
     <Wrap onPress={onPress}>
       <HeaderRow>
+        {/* 익명이면 회색 원만 보이도록 source 생략 */}
         <Avatar source={avatarSource} />
+
         <Meta>
-          <Author>{data.author}</Author>
+          <Author>{displayAuthor}</Author>
           <SubRow>
             <TimeText>{timeLabel}</TimeText>
-            <CatBadge><CatText>{data.category}</CatText></CatBadge>
+            <CatBadge><CatText>{String(data.category)}</CatText></CatBadge>
             <Dot>•</Dot>
             <AntDesign name="eyeo" size={12} color="#9aa0a6" />
             <SmallCount>{viewCount}</SmallCount>

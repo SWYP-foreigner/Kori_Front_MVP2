@@ -6,6 +6,7 @@ import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import { keyToUrl } from '@/utils/image';
+import { logName, probeDisplayName } from '@/utils/nameDebug';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -66,7 +67,6 @@ type PostsListResp = {
     timestamp?: string;
 };
 
-/* ===== date utils ===== */
 function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
 function parseDateFlexible(v?: unknown): Date | null {
     if (v == null) return null;
@@ -90,28 +90,9 @@ function toDateLabel(raw?: unknown, fallbackIso?: string): string {
     }
 }
 
-/* ===== name helper ===== */
-function pickDisplayName(row: any): string | undefined {
-    const isAnon = row?.isAnonymous ?? row?.anonymous ?? false;
-
-    const candidates = [
-        row?.authorName,
-        row?.memberName,
-        row?.nickname,
-        row?.userName,
-        row?.writerName,
-        row?.displayName,
-        row?.name,
-    ]
-        .map(v => (v == null ? undefined : String(v).trim()))
-        .filter(Boolean) as string[];
-
-    if (isAnon) return candidates[0] || 'Anonymous';
-    return candidates[0];
-}
-
 type PostEx = Post & {
     postId: number;
+    authorName?: string;
     hotScore?: number;
     minutesAgo?: number;
     bookmarked?: boolean;
@@ -132,33 +113,10 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
-    // 목록 디버그
-    if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.log('[LIST:sample]', {
-            postId: row.postId,
-            authorName: row.authorName,
-            userName: row.userName ?? null,
-            nickname: row.nickname,
-            memberName: row.memberName,
-            isAnonymous: row.isAnonymous,
-        });
-        if (!row.authorName && !row.nickname && !row.memberName && !row.userName) {
-            console.warn('[LIST] authorName missing', {
-                postId: row.postId,
-                isAnon: Boolean(row.isAnonymous),
-                keys: Object.keys(row || {}),
-            });
-        }
-    }
+    const probe = probeDisplayName(row);
+    logName('list-map', row.postId, probe, { rawIsAnonymous: row.isAnonymous, userName: row.userName });
 
-    // 이름 결정: 상세에서 머지되기 전 1차 표시
-    // - isAnonymous → Anonymous
-    // - userName === null → 탈퇴한 회원 (백엔드가 deactivated를 이렇게 표현하는 패턴 대응)
-    // - 완전 공란 → Unknown
-    let resolvedAuthor =
-        pickDisplayName(row) ??
-        (row.isAnonymous ? 'Anonymous' :
-            (row.userName === null ? '탈퇴한 회원' : 'Unknown'));
+    const display = probe.picked;
 
     const niceCategory =
         (row.boardCategory && typeof row.boardCategory === 'string')
@@ -168,7 +126,8 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     return {
         id: String(row.postId),
         postId: row.postId,
-        author: resolvedAuthor,
+        author: display,
+        authorName: display,
         avatar: AV,
         category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
@@ -243,13 +202,10 @@ export default function CommunityScreen() {
         try {
             const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
 
-            // 상세에서 받은 이름/아바타를 목록 아이템에 병합 (여기서 이름도 교정)
-            const detailName = pickDisplayName(detail);
-            console.log('[hydrate:name]', {
-                postId,
-                detailName,
-                isAnonymous: detail?.isAnonymous ?? detail?.anonymous,
+            const dProbe = probeDisplayName(detail);
+            logName('detail-hydrate', postId, dProbe, {
                 userImageUrl: detail?.userImageUrl,
+                contentImageUrls: detail?.contentImageUrls,
             });
 
             const mergedAvatarUrl =
@@ -266,12 +222,9 @@ export default function CommunityScreen() {
                     p.postId === postId
                         ? {
                             ...p,
-                            // 이미지 업데이트
                             ...(rawKeys && rawKeys.length > 0 ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
-                            // 이름/아바타 업데이트
-                            ...(detailName ? { author: detailName } :
-                                (detail?.isAnonymous ? { author: 'Anonymous' } :
-                                    (detail?.userName === null ? { author: '탈퇴한 회원' } : {}))),
+                            author: dProbe.picked,
+                            authorName: dProbe.picked,              // ← 둘 다 세팅
                             ...(mergedAvatarUrl ? { avatar: { uri: mergedAvatarUrl } } : {}),
                             ...(detail?.userImageUrl ? { userImageUrl: detail.userImageUrl } : {}),
                         }
@@ -283,7 +236,6 @@ export default function CommunityScreen() {
                 setImagesById(prev => ({ ...prev, [postId]: rawKeys.slice(0, MAX_IMAGES) }));
             }
         } catch (e: any) {
-            // 409/403 등은 접근 제한 → 그냥 스킵
             if (typeof __DEV__ !== 'undefined' && __DEV__) {
                 console.log('[hydrate:error]', postId, e?.response?.status, e?.response?.data);
             }
@@ -408,7 +360,6 @@ export default function CommunityScreen() {
     );
 }
 
-/* ===== styles ===== */
 const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
 const Header = styled.View`
   padding: 0 12px; margin-top: 12px;

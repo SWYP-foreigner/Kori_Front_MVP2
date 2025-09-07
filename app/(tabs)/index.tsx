@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, DeviceEventEmitter, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
 import FriendCard from '@/components/FriendCard';
@@ -23,6 +23,23 @@ export default function HomeScreen() {
   const sendDirectChat = useDirectChat();
 
   const [requested, setRequested] = useState<Set<number>>(new Set());
+  const [inFlight, setInFlight] = useState<Set<number>>(new Set());
+  const lock = (id: number) => setInFlight(s => new Set(s).add(id));
+  const unlock = (id: number) => setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
+
+  useEffect(() => {
+    const subCancel = DeviceEventEmitter.addListener('FOLLOW_REQUEST_CANCELLED', (p: { userId: number }) => {
+      if (p?.userId) {
+        setRequested(prev => { const n = new Set(prev); n.delete(p.userId); return n; });
+      }
+    });
+    const subSent = DeviceEventEmitter.addListener('FOLLOW_REQUEST_SENT', (p: { userId: number }) => {
+      if (p?.userId) {
+        setRequested(prev => { const n = new Set(prev); n.add(p.userId); return n; });
+      }
+    });
+    return () => { subCancel.remove(); subSent.remove(); };
+  }, []);
 
   const myId = useMemo(() => {
     const raw = (me as any)?.memberId ?? (me as any)?.id ?? (me as any)?.userId;
@@ -96,23 +113,37 @@ export default function HomeScreen() {
                   mode={isSent ? 'sent' : 'friend'}
 
                   onFollow={async (id) => {
-                    if (myId && id === myId) return;
+                    if ((myId && id === myId) || inFlight.has(id)) return;
                     try {
+                      lock(id);
                       await followMutation.mutateAsync(id);
+                      // UI 즉시 반영 + 다른 화면 동기화
                       markRequested(id);
-                    } catch (e) {
+                      DeviceEventEmitter.emit('FOLLOW_REQUEST_SENT', { userId: id });
+                    } catch (e: any) {
+                      Alert.alert('Failed', e?.response?.data?.message ?? 'Failed to send request.');
+                    } finally {
+                      unlock(id);
                     }
                   }}
 
                   onCancel={async (id) => {
-                    if (myId && id === myId) return;
+                    if ((myId && id === myId) || inFlight.has(id)) return;
                     const wasSent = requested.has(id);
-                    if (wasSent) unmarkRequested(id);
+                    if (wasSent) unmarkRequested(id); // 낙관적 제거
                     try {
+                      lock(id);
                       await cancelReqMutation.mutateAsync(id);
-                    } catch (e) {
+                      // 다른 화면(보낸목록 등)과 동기화
+                      DeviceEventEmitter.emit('FOLLOW_REQUEST_CANCELLED', { userId: id });
+                    } catch (e: any) {
+                      if (e?.response?.status !== 404) {
+                        Alert.alert('Failed', e?.response?.data?.message ?? 'Failed to cancel request.');
+                      }
                       // 롤백
                       if (wasSent) markRequested(id);
+                    } finally {
+                      unlock(id);
                     }
                   }}
                 />
@@ -131,45 +162,12 @@ export default function HomeScreen() {
   );
 }
 
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background-color: #1d1e1f;
-`;
-
-const Header = styled.View`
-  padding: 12px 18px 8px 18px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Title = styled.Text`
-  color: #ffffff;
-  font-size: 32px;
-  font-family: 'InstrumentSerif_400Regular';
-  letter-spacing: -0.2px;
-`;
-
-const IconImage = styled.Image`
-  margin-left: 4px;
-  width: 20px;
-  height: 20px;
-`;
-
-const LoaderWrap = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-`;
-
-const CardWrap = styled.View`
-  margin-top: 16px;
-`;
-
-const EmptyWrap = styled.View`
-  padding: 40px 16px;
-  align-items: center;
-`;
-
-const EmptyText = styled.Text`
-  color: #cfcfcf;
-`;
+/* styles */
+const Safe = styled.SafeAreaView`flex:1;background-color:#1d1e1f;`;
+const Header = styled.View`padding:12px 18px 8px 18px;flex-direction:row;align-items:center;`;
+const Title = styled.Text`color:#ffffff;font-size:32px;font-family:'InstrumentSerif_400Regular';letter-spacing:-0.2px;`;
+const IconImage = styled.Image`margin-left:4px;width:20px;height:20px;`;
+const LoaderWrap = styled.View`flex:1;align-items:center;justify-content:center;`;
+const CardWrap = styled.View`margin-top:16px;`;
+const EmptyWrap = styled.View`padding:40px 16px;align-items:center;`;
+const EmptyText = styled.Text`color:#cfcfcf;`;

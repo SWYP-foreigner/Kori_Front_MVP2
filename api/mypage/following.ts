@@ -13,7 +13,7 @@ export type AcceptedFriendRow = {
     email?: string;
     language?: string[];
     hobby?: string[];
-    imageKey?: string;
+    imageKey?: string | null;
 };
 
 export async function getAcceptedFollowing(): Promise<AcceptedFriendRow[]> {
@@ -21,4 +21,11 @@ export async function getAcceptedFollowing(): Promise<AcceptedFriendRow[]> {
         '/api/v1/mypage/follows/accepted'
     );
     return Array.isArray(data) ? data : [];
+}
+
+export async function unfollowAccepted(friendId: number) {
+    const { data } = await api.delete(
+        `/api/v1/mypage/users/follow/accepted/${friendId}`
+    );
+    return data as { message?: string; data?: unknown; timestamp?: string };
 }
