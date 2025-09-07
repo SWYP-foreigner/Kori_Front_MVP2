@@ -3,11 +3,28 @@ import api from '@/api/axiosInstance';
 export type RawComment = {
     commentId: number;
     parentId?: number | null;
-    userName?: string;
+
+    authorName?: string | null;
+    userName?: string | null;
+    nickname?: string | null;
+    writerName?: string | null;
+
+    anonymous?: boolean;
+    isAnonymous?: boolean;
+    likedByMe?: boolean;
+    isLiked?: boolean;
+
     userImageUrl?: string | null;
-    content: string;
-    likeCount?: number;
+    userImage?: string | null;
+    avatarUrl?: string | null;
+
+    content?: string;
+    comment?: string;
+    text?: string;
     createdAt?: string | number;
+    createdTime?: string | number;
+
+    likeCount?: number;
 };
 
 export type ListResp<T> = {
