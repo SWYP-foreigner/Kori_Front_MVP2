@@ -11,17 +11,15 @@ import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
 import api from '@/api/axiosInstance';
 
-
 type ChatRoom = {
   roomId: string;        // 채팅방 아이디
-  roomName: string;         // 채팅방 이름 (1:1: 상대방 이름, 그룹: 그룹 채팅방 이름)
-  lastMessageContent: string;   // 마지막 채팅 내용
-  lastMessageTime: string;      // 마지막 채팅 시간 
-  unreadCount: number;   // 안 읽은 메시지 수
-  roomImageUrl?: string; // 채팅방 사진 (1:1: 상대방 프로필, 그룹: 방 사진)
-  participantCount?: number; // 채팅방 인원수 (옵션)
+  roomName: string;      // 채팅방 이름
+  lastMessageContent: string;
+  lastMessageTime: string; 
+  unreadCount: number;
+  roomImageUrl?: string;
+  participantCount?: number;
 };
-
 
 export default function ChatScreen() {
   const router=useRouter();
@@ -29,16 +27,30 @@ export default function ChatScreen() {
   const stompClient =useRef<Client | null>(null);
   const [isGroupChat,setisGroupChat]=useState(false);
 
-    const changeTomyChat=()=>{
-      setisGroupChat(false);
-    };
-     const changeToGroupChat=()=>{
-      setisGroupChat(true);
-    };
-    const createNewSpace=()=>{
-      router.push('/chat/CreateSpaceScreen')
+  const changeTomyChat=()=> setisGroupChat(false);
+  const changeToGroupChat=()=> setisGroupChat(true);
+  const createNewSpace=()=> router.push('/chat/CreateSpaceScreen');
+
+  // 🔹 accessToken 재발급 함수
+  const refreshTokenIfNeeded = async (): Promise<string | null> => {
+    try {
+      const refresh = await SecureStore.getItemAsync("refresh");
+      if (!refresh) return null;
+      const res = await api.post("/api/v1/member/refresh", { refreshToken: refresh });
+      const newToken = res.data.accessToken;
+      if (newToken) {
+        await SecureStore.setItemAsync("jwt", newToken);
+        console.log("[AUTH] accessToken 재발급 성공");
+        return newToken;
+      }
+      return null;
+    } catch (err) {
+      console.error("[AUTH] 토큰 재발급 실패", err);
+      return null;
     }
-     
+  };
+
+  // 🔹 채팅방 목록 가져오기
   const fetchRooms = async () => {
     try {
       const res = await api.get('/api/v1/chat/rooms');
@@ -48,7 +60,7 @@ export default function ChatScreen() {
     }
   };
 
-   // ================== 🔹 화면 focus 될 때마다 채팅방 갱신 ==================
+  // 🔹 화면 focus 될 때마다 채팅방 갱신
   useFocusEffect(
     useCallback(() => {
       fetchRooms();
@@ -56,34 +68,29 @@ export default function ChatScreen() {
   );
 
   useEffect(() => {
-    // 1️⃣ STOMP 연결을 위한 async 함수 정의
     const connectStomp = async () => {
-      // 2️⃣ SecureStore에서 JWT 토큰과 유저 ID 불러오기
-      const token = await SecureStore.getItemAsync("jwt");       // 로그인 시 저장한 accessToken
-      const MyuserId = await SecureStore.getItemAsync("MyuserId"); // 로그인 시 저장한 userId
-      // 3️⃣ STOMP Client 생성
+      let token = await SecureStore.getItemAsync("jwt");
+      const MyuserId = await SecureStore.getItemAsync("MyuserId");
+
+      if (!token) {
+        token = await refreshTokenIfNeeded();
+        if (!token) return console.error("[AUTH] 토큰 없음, STOMP 연결 불가");
+      }
+
       stompClient.current = new Client({
-        webSocketFactory: () => new WebSocket('wss://dev.ko-ri.cloud/ws'), // HTTPS 서버 → wss 프로토콜 사용
+        webSocketFactory: () => new WebSocket('wss://dev.ko-ri.cloud/ws'),
         forceBinaryWSFrames: true,
-        connectHeaders: {
-          Authorization: `Bearer ${token}`, // JWT 토큰을 Authorization 헤더에 추가
-        },
-        reconnectDelay: 30000,       // 재연결 간격 30초
-        heartbeatIncoming: 60000,    // 서버 ping 1분
-        heartbeatOutgoing: 60000,    // 클라이언트 ping 1분
-        debug: (str) => console.log('[STOMP]', str), // 디버그 로그
+        connectHeaders: { Authorization: `Bearer ${token}` },
+        reconnectDelay: 30000,
+        heartbeatIncoming: 60000,
+        heartbeatOutgoing: 60000,
+        debug: (str) => console.log('[STOMP]', str),
       });
 
-      // 4️⃣ 연결 성공 시 콜백
       stompClient.current.onConnect = () => {
-        console.log('STOMP connected');
-
-        // 5️⃣ 채팅방 상태 변경 구독
-        // /topic/user/{userId}/rooms 경로로 메시지 구독 → 새 채팅방, 메시지, 읽음 등 실시간 반영
+        console.log('✅ STOMP connected');
         stompClient.current?.subscribe(`/topic/user/${MyuserId}/rooms`, (msg) => {
-          const updatedRoom: ChatRoom = JSON.parse(msg.body); // 메시지 JSON 파싱
-
-          // 6️⃣ 기존 배열에서 해당 채팅방 제거 후 맨 앞에 추가 → 최신 채팅방 위로
+          const updatedRoom: ChatRoom = JSON.parse(msg.body);
           setChatRooms((prev) => {
             const filtered = prev.filter((room) => room.roomId !== updatedRoom.roomId);
             return [updatedRoom, ...filtered];
@@ -91,75 +98,87 @@ export default function ChatScreen() {
         });
       };
 
-      // 7️⃣ STOMP 에러 처리
-      stompClient.current.onStompError = (frame) => {
-        console.error('STOMP ERROR', frame);
+      // 🔹 STOMP Error → 토큰 만료 시 refresh 후 재연결
+      stompClient.current.onStompError = async (frame) => {
+        console.error('❌ STOMP ERROR', frame.headers['message']);
+        if (frame.headers['message']?.includes("401")) {
+          console.log("[AUTH] 토큰 만료 감지 → refresh 시도");
+          const newToken = await refreshTokenIfNeeded();
+          if (!newToken) return console.error("[AUTH] 토큰 재발급 실패 → STOMP 재연결 불가");
+          stompClient.current?.deactivate();
+          connectStomp(); // 재연결 시도
+        }
       };
 
-      // 8️⃣ WebSocket 연결 활성화
+      stompClient.current.onWebSocketError = (evt) => console.error('WebSocket ERROR', evt);
+      stompClient.current.onWebSocketClose = (evt) => console.log('WebSocket CLOSE', evt);
+
+      console.log("🚀 STOMP 연결 시도...");
       stompClient.current.activate();
     };
 
-    // 9️⃣ STOMP 연결 함수 호출
     connectStomp();
 
-    // 10️⃣ 언마운트 시 cleanup
-    // 컴포넌트가 사라질 때 WebSocket 연결 종료 → 메모리 누수 방지
     return () => {
       stompClient.current?.deactivate();
     };
-    }, []); // 빈 배열 → 컴포넌트 마운트 시 한 번만 실행
+  }, []);
 
-    const goSearch = () => {
-      router.push({
-        pathname: "../../screens/chatscreen/SearchChatRoom",
-        params: { isGroupChat: String(isGroupChat) }, 
+  const goSearch = () => {
+    router.push({
+      pathname: "../../screens/chatscreen/SearchChatRoom",
+      params: { isGroupChat: String(isGroupChat) }, 
     });
-  }
-    return (
-        <Safe>
-        <Container>
+  };
+
+  return (
+    <Safe>
+      <Container>
         <Header>
-        <TitleWrapper>
+          <TitleWrapper>
             <Title>Chat</Title>
             <IconImage source={require('../../../assets/images/IsolationMode.png')} />
-        </TitleWrapper>
-        <SearchButton onPress={goSearch}>
+          </TitleWrapper>
+          <SearchButton onPress={goSearch}>
             <Feather name="search" size={25} color="#CCCFD0" />
-        </SearchButton>
-      </Header>
-      <ChatWrapper>
-        <ChatBox>
-        <MyChatBox isGroupChat={isGroupChat} onPress={changeTomyChat}>
-            <MyChatText isGroupChat={isGroupChat}>My chat</MyChatText>
-        </MyChatBox>
-        </ChatBox>
-        <ChatBox>
-        <GroupChatBox isGroupChat={isGroupChat}  onPress={changeToGroupChat}>
-             <GroupChatText  isGroupChat={isGroupChat}>Linked Space</GroupChatText>
-        </GroupChatBox>
-        </ChatBox>
-      </ChatWrapper>
-      {!isGroupChat ? (
-      <FlatList
-      data={chatrooms}
-      renderItem={({ item }) => <MyChatRoomBox data={item} />}
-      keyExtractor={item => item.roomId}
-      showsVerticalScrollIndicator={false} 
-      />
-      ) : (
-        <GroupChatRoomBox/>
-      )}
-      {isGroupChat&&
-        <CreateSpaceButton onPress={createNewSpace}>
-          <AntDesign name="plus" size={24} color="black" />
-        </CreateSpaceButton>}
-        
+          </SearchButton>
+        </Header>
+
+        <ChatWrapper>
+          <ChatBox>
+            <MyChatBox isGroupChat={isGroupChat} onPress={changeTomyChat}>
+              <MyChatText isGroupChat={isGroupChat}>My chat</MyChatText>
+            </MyChatBox>
+          </ChatBox>
+          <ChatBox>
+            <GroupChatBox isGroupChat={isGroupChat} onPress={changeToGroupChat}>
+              <GroupChatText isGroupChat={isGroupChat}>Linked Space</GroupChatText>
+            </GroupChatBox>
+          </ChatBox>
+        </ChatWrapper>
+
+        {!isGroupChat ? (
+          <FlatList
+            data={chatrooms}
+            renderItem={({ item }) => <MyChatRoomBox data={item} />}
+            keyExtractor={item => item.roomId}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <GroupChatRoomBox/>
+        )}
+
+        {isGroupChat && (
+          <CreateSpaceButton onPress={createNewSpace}>
+            <AntDesign name="plus" size={24} color="black" />
+          </CreateSpaceButton>
+        )}
       </Container>
-        </Safe>
-    );
+    </Safe>
+  );
 }
 
+// ================= styled-components =================
 const Safe = styled.SafeAreaView`
   flex: 1;
   background-color: #1d1e1f;
@@ -174,90 +193,74 @@ const Header = styled.View`
   justify-content:space-between;
   align-items: center;
 `;
-
-const SearchButton=styled.TouchableOpacity`
-    
-`;
-
+const SearchButton=styled.TouchableOpacity``;
 const TitleWrapper=styled.View`
-    flex-direction: row;
-    align-items: center;
-
+  flex-direction: row;
+  align-items: center;
 `;
-
 const Title = styled.Text`
   color: #ffffff;
   font-size: 32px;
   font-family: 'InstrumentSerif_400Regular';
 `;
-
 const IconImage = styled.Image`
   margin-left: 4px;
   width: 20px;
   height: 20px;
 `;
 const ChatWrapper=styled.View`
-    height:50px;
-    flex-direction:row;
-    border-bottom-width:1px;
-    border-bottom-color:#616262;
+  height:50px;
+  flex-direction:row;
+  border-bottom-width:1px;
+  border-bottom-color:#616262;
 `;
-
 const ChatBox=styled.View`
-    width:50%;
-    height:50px;
-    align-items:center;
-    justify-content:center;
-
+  width:50%;
+  height:50px;
+  align-items:center;
+  justify-content:center;
 `;
 const MyChatBox=styled.TouchableOpacity`
-   
-    width:70%;
-    height:50px;
-    margin:0px 100px;
-    border-bottom-color:${(props)=>(props.isGroupChat ? '#616262' :'#02F59B')};
-    border-bottom-width:${(props)=>(props.isGroupChat ? '1px' :'2px')};
-    align-items:center;
-    justify-content:center;
+  width:70%;
+  height:50px;
+  margin:0px 100px;
+  border-bottom-color:${(props)=> (props.isGroupChat ? '#616262' :'#02F59B')};
+  border-bottom-width:${(props)=> (props.isGroupChat ? '1px' :'2px')};
+  align-items:center;
+  justify-content:center;
 `;
 const GroupChatBox=styled.TouchableOpacity`
-     
-    width:70%;
-    height:50px;
-    border-bottom-color:${(props)=>(props.isGroupChat ? '#02F59B' :'#616262')};
-    border-bottom-width:${(props)=>(props.isGroupChat ? '2px' :'1px')};
-    align-items:center;
-    justify-content:center;
+  width:70%;
+  height:50px;
+  border-bottom-color:${(props)=> (props.isGroupChat ? '#02F59B' :'#616262')};
+  border-bottom-width:${(props)=> (props.isGroupChat ? '2px' :'1px')};
+  align-items:center;
+  justify-content:center;
 `;
-
 const MyChatText=styled.Text`
-
-    color:${(props)=>(props.isGroupChat ? '#616262' :'#02F59B')};
-    font-family:'PlusJakartaSans_500Medium';
-    font-size:16px;
+  color:${(props)=> (props.isGroupChat ? '#616262' :'#02F59B')};
+  font-family:'PlusJakartaSans_500Medium';
+  font-size:16px;
 `;
-
 const GroupChatText=styled.Text`
-
-    color:${(props)=>(props.isGroupChat ? '#02F59B' :'#616262')};
-    font-family:'PlusJakartaSans_500Medium';
-    font-size:16px;
+  color:${(props)=> (props.isGroupChat ? '#02F59B' :'#616262')};
+  font-family:'PlusJakartaSans_500Medium';
+  font-size:16px;
 `;
-
 const CreateSpaceButton=styled.TouchableOpacity`
-    position:absolute;
-    bottom:20px;
-    right:20px;
-    width:50px;
-    height:50px;
-    border-radius:30px;
-    background-color:#02F59B;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
-    elevation: 5;          /* Android 그림자 */
-    shadow-color: #000;    /* iOS 그림자 */
-    shadow-offset: 0px 2px;
-    shadow-opacity: 0.3;
-    shadow-radius: 3.84px;
+  position:absolute;
+  bottom:20px;
+  right:20px;
+  width:50px;
+  height:50px;
+  border-radius:30px;
+  background-color:#02F59B;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+  elevation: 5;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.3;
+  shadow-radius: 3.84px;
 `;

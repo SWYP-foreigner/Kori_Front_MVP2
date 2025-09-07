@@ -88,7 +88,7 @@ const LinkedSpaceDetail=()=>{
                     </MembersTextContainer>
                     <HostContainer>
                        <HostImageBox>
-                        <HostImage  source={{ uri: roomDetail?.ownerImageUrl }}/>
+                        <HostImage  source={roomDetail?.ownerImageUrl?{ uri: roomDetail?.ownerImageUrl }:require("@/assets/images/character3.png")}/>
                        </HostImageBox>
                        <HostNameText>{roomDetail?.ownerFirstName}</HostNameText>
                        <HostBox>

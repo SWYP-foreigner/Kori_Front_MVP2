@@ -6,10 +6,11 @@ import { useRouter } from 'expo-router';
 const AllSpaceRoomBox=({data})=>{
     const router = useRouter();
      const onhandleNext=()=>{
+     const roomId = data.roomId ?? data.chatRoomId;
       router.push({
       pathname: '/screens/chatscreen/LinkedSpaceDetail',
       params: { 
-        roomId: data.chatRoomId // props에서 바로 가져옴
+        roomId: roomId // props에서 바로 가져옴
       },
     });
     };

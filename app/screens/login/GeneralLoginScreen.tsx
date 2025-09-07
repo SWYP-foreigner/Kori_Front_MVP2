@@ -7,7 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from "axios";
 import { Config } from "@/src/lib/config";
 import * as SecureStore from 'expo-secure-store';
-import api from "@/api/axiosInstance";
+
 
 type AppLoginResponse = {
     accessToken: string;
