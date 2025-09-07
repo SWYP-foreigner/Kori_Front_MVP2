@@ -4,7 +4,6 @@ import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,Tou
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import Octicons from '@expo/vector-icons/Octicons';
-import MembersBox from "@/components/MembersBox";
 
 
 const GroupChatInsideMember=()=>{
@@ -39,16 +38,7 @@ const GroupChatInsideMember=()=>{
                  {/* FlatList로 변경예정 */}
                 <ScrollView>
                 <MembersScreen>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
-                    <MembersBox/>
+                    
                 </MembersScreen>
                 </ScrollView>
                 <LeaveChatButton>
