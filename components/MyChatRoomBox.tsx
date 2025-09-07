@@ -9,7 +9,6 @@ const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 const MyChatRoomBox = ({data}) => {
  
    const router = useRouter();
-
   
   //채팅방 진입
   const enterChattingRoom=async()=>{
@@ -50,7 +49,11 @@ const MyChatRoomBox = ({data}) => {
         <RoomBox activeOpacity={0.8} onPress={enterChattingRoom}>
           <RoomImageContainer>
             
-            <RoomImage source={{ uri: data.roomImageUrl  }}/>
+            <RoomImage source={
+                  data.roomImageUrl
+                    ? { uri: data.roomImageUrl }               // URL이 있으면 원격 이미지
+                    : require("@/assets/images/character1.png") // 없으면 로컬 디폴트 이미지
+                }/>
     
           </RoomImageContainer>
           <RoomWrapper>
@@ -140,12 +143,15 @@ const RoomBottom = styled.View`
 `;
 
 const ChatPeopleContainer = styled.View`
+  
+  height:30px;
   margin-top:5px;
   flex-direction: row;
   align-items: center;
 `;
 
 const ChatPerson = styled.Text`
+ 
   font-size: 16px;
   margin-left: 5px;
   font-family: "PlusJakartaSans_500Medium";

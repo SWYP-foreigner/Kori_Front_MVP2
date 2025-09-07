@@ -14,6 +14,18 @@ import { Stack } from 'expo-router';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
 import { ProfileProvider } from './contexts/ProfileContext';
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { View } from "react-native";
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={{ flex: 1, paddingTop: insets.top,  paddingBottom: insets.bottom,backgroundColor: "#1D1E1F" }}>
+      {children}
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -29,6 +41,8 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
+    <SafeAreaProvider>
+      <AppLayout>
     <ProfileProvider>
     <QueryClientProvider client={queryClient}>
       <Stack initialRouteName="login"
@@ -40,5 +54,7 @@ export default function RootLayout() {
       <Toast />
     </QueryClientProvider>
     </ProfileProvider>
+    </AppLayout>
+    </SafeAreaProvider>
   );
 }
