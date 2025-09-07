@@ -508,10 +508,10 @@ export default function PostDetailScreen() {
               blurOnSubmit
               onSubmitEditing={submit}
             />
-            <AnonToggle onPress={() => setAnonymous(v => !v)}>
+            {/* <AnonToggle onPress={() => setAnonymous(v => !v)}>
               <AnonLabel>Anonymous</AnonLabel>
               <Check $active={anonymous}>{anonymous && <AntDesign name="check" size={14} color="#ffffff" />}</Check>
-            </AnonToggle>
+            </AnonToggle> */}
           </Composer>
 
           <SendBtn onPress={submit} disabled={!canSend} hitSlop={8}>

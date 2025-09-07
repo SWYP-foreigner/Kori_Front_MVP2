@@ -18,7 +18,7 @@ import { Config } from '@/src/lib/config';
 import api from '@/api/axiosInstance';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Image as RNImage, Modal } from 'react-native';
+import { Alert, Image as RNImage } from 'react-native';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
@@ -450,7 +450,7 @@ export default function EditProfileScreen() {
         title="Select your interests"
       />
 
-      <Modal
+      {/* <Modal
         visible={showAvatarSheet}
         transparent
         animationType="slide"
@@ -513,7 +513,7 @@ export default function EditProfileScreen() {
             </ButtonRow>
           </Sheet>
         </SheetOverlay>
-      </Modal>
+      </Modal> */}
     </Safe>
   );
 }
