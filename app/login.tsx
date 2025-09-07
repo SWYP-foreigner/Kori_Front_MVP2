@@ -176,6 +176,8 @@ const LoginScreen = () => {
             count={onBoardingData.length} 
             current={animatedCurrent} 
             dashSize={14}  // 바 길이를 12px로 줄임
+            color="#02F59B"
+            activeColor="#02F59B"
           />
         </PageIndicatorWrapper>
       </OnBoardingContainer>
