@@ -205,12 +205,6 @@ export default function WriteScreen() {
         </SaveBtn>
       </Header>
 
-      <View style={{ paddingHorizontal: 12, paddingTop: 6 }}>
-        <DebugText>
-          boardId={String(boardId)} | anon(server)={String(serverAnonymousAllowed)} | anon(local)={String(canToggleAnon)}
-        </DebugText>
-      </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}

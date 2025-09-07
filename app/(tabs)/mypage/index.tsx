@@ -9,8 +9,7 @@ import {
   Alert,
   Image,
   Image as RNImage,
-  ImageSourcePropType,
-  Modal
+  ImageSourcePropType
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -351,66 +350,7 @@ export default function MyPageScreen() {
         </DeletePressable>
       </Scroll>
 
-      <Modal
-        visible={showAvatarSheet}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAvatarSheet(false)}
-      >
-        <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
-          <Sheet onStartShouldSetResponder={() => true}>
-            <Handle />
-            <SheetTitle>Select Profile</SheetTitle>
 
-            <AvatarRow>
-              {AVATARS.map((img, idx) => {
-                const selected = idx === tempIdx;
-                return (
-                  <AvatarItem
-                    key={idx}
-                    onPress={() => {
-                      setTempIdx(idx);
-                      setCustomPhotoUri(undefined);
-                    }}
-                  >
-                    <AvatarCircle selected={selected}>
-                      <AvatarImg source={img} />
-                      {selected && (
-                        <CheckBadge>
-                          <Ionicons name="checkmark" size={14} color="#0f1011" />
-                        </CheckBadge>
-                      )}
-                    </AvatarCircle>
-                  </AvatarItem>
-                );
-              })}
-
-              <AvatarItem onPress={pickFromCameraOrGallery}>
-                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
-                  {customPhotoUri ? (
-                    <AvatarImg source={{ uri: customPhotoUri }} />
-                  ) : (
-                    <CameraCircleInner>
-                      <Ionicons name="camera" size={22} color="#cfd4da" />
-                    </CameraCircleInner>
-                  )}
-                  {tempIdx === -1 && !!customPhotoUri && (
-                    <CheckBadge>
-                      <Ionicons name="checkmark" size={14} color="#0f1011" />
-                    </CheckBadge>
-                  )}
-                </AvatarCircle>
-              </AvatarItem>
-            </AvatarRow>
-
-            <ButtonRow>
-              <CustomButton label="Cancel" filled={false} onPress={() => setShowAvatarSheet(false)} />
-              <Gap />
-              <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
-            </ButtonRow>
-          </Sheet>
-        </SheetOverlay>
-      </Modal>
     </Safe>
   );
 }
@@ -556,86 +496,3 @@ const DeleteText = styled.Text`
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-/* Bottom Sheet */
-const SheetOverlay = styled.TouchableOpacity`
-  flex: 1;
-  background: rgba(0, 0, 0, 0.55);
-  justify-content: flex-end;
-`;
-const Sheet = styled.View`
-  background: #353637;
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  padding: 16px 16px 20px 16px;
-`;
-const Handle = styled.View`
-  align-self: center;
-  width: 54px;
-  height: 4px;
-  border-radius: 2px;
-  background: #9aa0a6;
-  margin-bottom: 10px;
-`;
-const SheetTitle = styled.Text`
-  color: #ffffff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
-  text-align: center;
-  margin-bottom: 16px;
-`;
-
-const AvatarRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
-  margin-bottom: 18px;
-`;
-const AvatarItem = styled.Pressable``;
-const AvatarCircle = styled.View<{ selected: boolean }>`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
-  position: relative;
-`;
-const AvatarImg = styled.Image`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-`;
-const CheckBadge = styled.View`
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #30F59B;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: #353637;
-`;
-const CameraCircleInner = styled.View`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-  align-items: center;
-  justify-content: center;
-  background: #1f2021;
-`;
-
-const ButtonRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 10px;
-  padding-bottom: 28px;
-`;
-const Gap = styled.View`
-  width: 12px;
-`;
