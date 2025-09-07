@@ -7,7 +7,6 @@ import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import { keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -26,7 +25,6 @@ const isMeaningfulName = (v?: any) => {
     return !['unknown', 'null', 'undefined', '-', '—'].includes(lower);
 };
 
-// 빈문자/공백을 건너뛰고 첫 유효 문자열을 고르는 헬퍼
 const pickNonEmpty = (...vals: any[]) => {
     for (const v of vals) {
         const s = String(v ?? '').trim();
@@ -128,7 +126,6 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
-    // 리스트 최초 매핑: 의미 있는 이름만 사용
     const pickedRaw = pickNonEmpty(
         row.authorName,
         row.userName,
@@ -224,7 +221,6 @@ export default function CommunityScreen() {
         try {
             const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
 
-            // 상세에서도 이름을 안전하게 뽑되, "의미있는 이름"일 때만 덮어씀
             const candidate = pickNonEmpty(
                 (detail as any)?.authorName,
                 (detail as any)?.userName,
@@ -350,9 +346,9 @@ export default function CommunityScreen() {
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
 
-                    <IconBtn onPress={() => router.push('/community/bookmarks')}>
+                    {/* <IconBtn onPress={() => router.push('/community/bookmarks')}>
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
-                    </IconBtn>
+                    </IconBtn> */}
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>

@@ -21,12 +21,11 @@ export type Comment = {
 };
 
 type Props = {
-  data: Comment | any;       // 서버 원본도 허용
+  data: Comment | any;
   onPressLike?: () => void;
   isFirst?: boolean;
 };
 
-/* ---------- 익명 판별 ---------- */
 function isAnon(row: any): boolean {
   const explicit =
     row?.anonymous ??
@@ -36,7 +35,6 @@ function isAnon(row: any): boolean {
     (typeof row?.anonymousYn === 'string' &&
       row.anonymousYn.toUpperCase() === 'Y');
 
-  // 이름이 '익명'/'anonymous'로 내려오는 경우도 익명으로 간주
   const label =
     row?.author ??
     row?.authorName ??
@@ -48,7 +46,6 @@ function isAnon(row: any): boolean {
     String(label).trim().toLowerCase() === '익명' ||
     String(label).trim().toLowerCase() === 'anonymous';
 
-  // 이름 후보가 하나도 없으면 익명으로
   const hasAnyName =
     [row?.author, row?.authorName, row?.nickname, row?.userName, row?.writerName]
       .filter((v) => !!String(v ?? '').trim()).length > 0;
@@ -56,7 +53,6 @@ function isAnon(row: any): boolean {
   return Boolean(explicit || labelAnon || !hasAnyName);
 }
 
-/* ---------- 필드 정규화 ---------- */
 function resolveAuthor(row: any): string {
   const cands = [
     row?.author,
@@ -95,7 +91,6 @@ function resolveLikedByMe(row: any): boolean {
   return Boolean(row?.likedByMe ?? row?.isLiked ?? row?.isLike ?? false);
 }
 
-/* ---------- 날짜 라벨 ---------- */
 function formatDate(rawIn: any): string {
   const raw = String(rawIn ?? '').trim();
   if (!raw) return '';
@@ -113,7 +108,6 @@ function formatDate(rawIn: any): string {
   return raw;
 }
 
-/* ---------- 컴포넌트 ---------- */
 export default function CommentItem({ data, onPressLike, isFirst }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
@@ -143,7 +137,6 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
           </Author>
           <Sub>{dateLabel}</Sub>
         </Meta>
-        <More>···</More>
       </Row>
 
       {!!bodyText && <Body>{bodyText}</Body>}
