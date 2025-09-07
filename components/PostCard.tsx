@@ -31,6 +31,8 @@ type Props = {
   onToggleBookmark?: () => void;
 };
 
+const AV = require('@/assets/images/character1.png'); // 기본 아바타
+
 export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark }: Props) {
   const isAnon =
     Boolean((data as any).isAnonymous) ||
@@ -42,6 +44,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     : data.createdAt.slice(5, 10).replace('-', '/');
 
   const viewCount = data.viewCount ?? 0;
+  const ANON_LABEL = '익명';
 
   const avatarUrl =
     isAnon
@@ -51,12 +54,14 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
         (typeof data.avatar === 'string' ? data.avatar : undefined));
 
   const avatarSource =
-    typeof avatarUrl === 'string' && avatarUrl
-      ? { uri: keyToUrl(avatarUrl) }
-      : (isAnon ? undefined : (data.avatar as any));
+    isAnon
+      ? AV
+      : (typeof avatarUrl === 'string' && avatarUrl
+        ? { uri: keyToUrl(avatarUrl) }
+        : (data.avatar as any) || AV);
 
   const displayAuthor = isAnon
-    ? 'Anonymous'
+    ? ANON_LABEL
     : (String(
       (data as any).author ??
       (data as any).authorName ??
