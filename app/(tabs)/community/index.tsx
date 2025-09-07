@@ -5,16 +5,13 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
-import { keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
-    ListRenderItem,
-    ViewToken,
-    type FlatListProps
+    ListRenderItem, type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -171,9 +168,6 @@ export default function CommunityScreen() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    const [imagesById, setImagesById] = useState<Record<number, string[]>>({});
-    const fetchedRef = useRef<Set<number>>(new Set());
-
     const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
     const boardId = CATEGORY_TO_BOARD_ID[cat];
 
@@ -193,8 +187,6 @@ export default function CommunityScreen() {
             setItems(prev => (after ? [...prev, ...list] : list));
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor);
-            setImagesById({});
-            fetchedRef.current.clear();
         } catch (e) {
             console.log('[community:list] error', e);
         } finally {
@@ -214,75 +206,6 @@ export default function CommunityScreen() {
         if (!hasNext || !cursor || loading) return;
         fetchPage(cursor);
     };
-
-    const hydrateImages = useCallback(async (postId: number) => {
-        if (fetchedRef.current.has(postId)) return;
-        fetchedRef.current.add(postId);
-        try {
-            const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
-
-            const candidate = pickNonEmpty(
-                (detail as any)?.authorName,
-                (detail as any)?.userName,
-                (detail as any)?.nickname,
-                (detail as any)?.memberName,
-                (detail as any)?.writerName
-            );
-            const newName = isMeaningfulName(candidate) ? candidate : null;
-
-            const mergedAvatarUrl =
-                (detail as any)?.userImageUrl ? keyToUrl((detail as any).userImageUrl) : undefined;
-
-            const rawKeys: string[] =
-                ((detail as any)?.contentImageUrls as string[] | undefined) ??
-                ((detail as any)?.imageUrls as string[] | undefined) ??
-                ((detail as any)?.contentImageUrl ? [String((detail as any).contentImageUrl)] :
-                    (detail as any)?.imageUrl ? [String((detail as any).imageUrl)] : []);
-
-            setItems(prev =>
-                prev.map(p =>
-                    p.postId === postId
-                        ? {
-                            ...p,
-                            ...(rawKeys?.length ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
-                            ...(newName ? { author: newName, authorName: newName } : {}), // ← 여기가 핵심: 의미 있을 때만 덮어씀
-                            ...(mergedAvatarUrl ? { avatar: { uri: mergedAvatarUrl } } : {}),
-                            ...((detail as any)?.userImageUrl ? { userImageUrl: (detail as any).userImageUrl } : {}),
-                        }
-                        : p
-                )
-            );
-
-            if (rawKeys?.length) {
-                setImagesById(prev => ({ ...prev, [postId]: rawKeys.slice(0, MAX_IMAGES) }));
-            }
-        } catch (e: any) {
-            if (typeof __DEV__ !== 'undefined' && __DEV__) {
-                console.log('[hydrate:error]', postId, e?.response?.status, e?.response?.data);
-            }
-        }
-    }, []);
-
-
-
-    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-        for (const v of viewableItems) {
-            const it = v.item as PostEx | undefined;
-            if (!it) continue;
-            const hasEnough = Array.isArray(it.images) && it.images.length >= 2;
-            if (!hasEnough) hydrateImages(it.postId);
-        }
-    }).current;
-    const viewConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
-
-    const visible: PostEx[] = useMemo(() => {
-        if (!items.length) return items;
-        return items.map(it =>
-            imagesById[it.postId]
-                ? { ...it, images: imagesById[it.postId] }
-                : it
-        );
-    }, [items, imagesById]);
 
     const handleToggleLike = async (postId: number) => {
         const target = items.find(p => p.postId === postId);
@@ -364,7 +287,7 @@ export default function CommunityScreen() {
             </SortWrap>
 
             <List
-                data={visible}
+                data={items}
                 keyExtractor={(it: PostEx) => String(it.postId)}
                 renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
@@ -374,8 +297,6 @@ export default function CommunityScreen() {
                 onRefresh={refresh}
                 ListFooterComponent={loading ? <FooterLoading><ActivityIndicator /></FooterLoading> : null}
                 contentContainerStyle={{ paddingBottom: 80 }}
-                onViewableItemsChanged={onViewableItemsChanged}
-                viewabilityConfig={viewConfig}
             />
 
             <WriteFab onPress={() => router.push('/community/write')} />
