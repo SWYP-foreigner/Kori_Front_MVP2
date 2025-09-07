@@ -437,13 +437,13 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
 
-                  <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
+                  {/* <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
                     <MaterialIcons
                       name="bookmark-border"
                       size={20}
                       color={bookmarked ? '#30F59B' : '#8a8a8a'}
                     />
-                  </BookmarkWrap>
+                  </BookmarkWrap> */}
                 </Row>
 
                 {imageUrls.length > 0 && (
