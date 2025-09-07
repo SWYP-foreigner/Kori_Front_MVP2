@@ -4,23 +4,21 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
   Image as RNImage,
-  ImageSourcePropType,
-  Modal
+  ImageSourcePropType
 } from 'react-native';
 import styled from 'styled-components/native';
 
+import api from '@/api/axiosInstance';
 import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
 import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
-import { usePendingFollowing } from '@/hooks/queries/useFollowing';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 import { Config } from '@/src/lib/config';
-import api from '@/api/axiosInstance';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -53,9 +51,56 @@ export default function MyPageScreen() {
   const deleteAccountMut = useDeleteAccount();
   const updateProfile = useUpdateProfile();
 
-  const { data: pendingReceived } = usePendingFollowing();
-  const receivedCount = Array.isArray(pendingReceived) ? pendingReceived.length : 0;
-  const sentCount = 0;
+  const [pendingReceived, setPendingReceived] = useState<number>(0);
+  const [pendingSent, setPendingSent] = useState<number>(0);
+  const pendingFetchOnce = useRef(false);
+
+  const extractCounts = (raw: any) => {
+    const obj = raw?.data?.data ?? raw?.data ?? raw;
+
+    const recv =
+      obj?.received ??
+      obj?.receivedCount ??
+      obj?.followers ??
+      obj?.incoming ??
+      obj?.toMe ??
+      obj?.requestReceived ??
+      0;
+
+    const sent =
+      obj?.sent ??
+      obj?.sentCount ??
+      obj?.followings ??
+      obj?.outgoing ??
+      obj?.fromMe ??
+      obj?.requestSent ??
+      0;
+
+    return {
+      received: Number.isFinite(Number(recv)) ? Number(recv) : 0,
+      sent: Number.isFinite(Number(sent)) ? Number(sent) : 0,
+    };
+  };
+
+  const fetchPendingCounts = async () => {
+    try {
+      const res = await api.get('/api/v1/mypage/follows/pending/count');
+      const { received, sent } = extractCounts(res);
+      setPendingReceived(received);
+      setPendingSent(sent);
+      console.log('[pending/count] received:', received, 'sent:', sent);
+    } catch (e: any) {
+      console.log('[pending/count] error', e?.response?.data || e?.message || e);
+      setPendingReceived(0);
+      setPendingSent(0);
+    }
+  };
+
+  useEffect(() => {
+    if (pendingFetchOnce.current) return;
+    pendingFetchOnce.current = true;
+    fetchPendingCounts();
+  }, []);
 
   const fullName = useMemo(() => {
     if (isLoading) return 'Loading...';
@@ -64,7 +109,6 @@ export default function MyPageScreen() {
   }, [me, isLoading]);
 
   const initialKeyOrUrl = (me as any)?.imageUrl || (me as any)?.imageKey || undefined;
-
   const [avatarKeyOrUrl, setAvatarKeyOrUrl] = useState<string | undefined>(initialKeyOrUrl);
   useEffect(() => {
     setAvatarKeyOrUrl((me as any)?.imageUrl || (me as any)?.imageKey || undefined);
@@ -202,36 +246,30 @@ export default function MyPageScreen() {
       { text: 'Cancel', style: 'cancel' },
     ]);
 
-    //로그아웃 로직
-    const AccountLogout = async () => {
-        // 로그아웃 확인 알림
-        Alert.alert(
-          "Log Out",
-          "Are you sure you want to log out?",
-          [
-            {
-              text: "Cancel",
-              style: "cancel",
-            },
-            {
-              text: "Log Out",
-              style: "destructive",
-              onPress: async () => {
-                try {
-                  await api.post(`${Config.SERVER_URL}/api/v1/member/logout`);
-                  await SecureStore.deleteItemAsync("jwt");
-                  await SecureStore.deleteItemAsync("refresh");
-                  console.log("로그아웃 완료");
-
-                  router.replace("/login"); // 로그인 화면으로 이동
-                } catch (error) {
-                  console.error("로그아웃 실패", error);
-                }
-              },
-            },
-          ]
-        );
-      };
+  // 로그아웃
+  const AccountLogout = async () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await api.post(`${Config.SERVER_URL}/api/v1/member/logout`);
+              await SecureStore.deleteItemAsync("jwt");
+              await SecureStore.deleteItemAsync("refresh");
+              router.replace("/login");
+            } catch (error) {
+              console.error("로그아웃 실패", error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <Safe>
@@ -243,7 +281,7 @@ export default function MyPageScreen() {
 
         <ProfileView>
           <AvatarPress onPress={openAvatarSheet}>
-            <Avatar uri={displayAvatarUrl} />
+            <Avatar uri={toUrl(avatarKeyOrUrl)} />
           </AvatarPress>
 
           <Name numberOfLines={1} ellipsizeMode="tail">
@@ -276,12 +314,12 @@ export default function MyPageScreen() {
         <CountCard>
           <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
             <CountLabel>Received</CountLabel>
-            <CountNumber>{receivedCount}</CountNumber>
+            <CountNumber>{pendingReceived}</CountNumber>
           </CountItem>
           <Divider />
           <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
             <CountLabel>Sent</CountLabel>
-            <CountNumber>{sentCount}</CountNumber>
+            <CountNumber>{pendingSent}</CountNumber>
           </CountItem>
         </CountCard>
 
@@ -312,71 +350,12 @@ export default function MyPageScreen() {
         </DeletePressable>
       </Scroll>
 
-      <Modal
-        visible={showAvatarSheet}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAvatarSheet(false)}
-      >
-        <SheetOverlay onPress={() => setShowAvatarSheet(false)} activeOpacity={1}>
-          <Sheet onStartShouldSetResponder={() => true}>
-            <Handle />
-            <SheetTitle>Select Profile</SheetTitle>
 
-            <AvatarRow>
-              {AVATARS.map((img, idx) => {
-                const selected = idx === tempIdx;
-                return (
-                  <AvatarItem
-                    key={idx}
-                    onPress={() => {
-                      setTempIdx(idx);
-                      setCustomPhotoUri(undefined);
-                    }}
-                  >
-                    <AvatarCircle selected={selected}>
-                      <AvatarImg source={img} />
-                      {selected && (
-                        <CheckBadge>
-                          <Ionicons name="checkmark" size={14} color="#0f1011" />
-                        </CheckBadge>
-                      )}
-                    </AvatarCircle>
-                  </AvatarItem>
-                );
-              })}
-
-              <AvatarItem onPress={pickFromCameraOrGallery}>
-                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
-                  {customPhotoUri ? (
-                    <AvatarImg source={{ uri: customPhotoUri }} />
-                  ) : (
-                    <CameraCircleInner>
-                      <Ionicons name="camera" size={22} color="#cfd4da" />
-                    </CameraCircleInner>
-                  )}
-                  {tempIdx === -1 && !!customPhotoUri && (
-                    <CheckBadge>
-                      <Ionicons name="checkmark" size={14} color="#0f1011" />
-                    </CheckBadge>
-                  )}
-                </AvatarCircle>
-              </AvatarItem>
-            </AvatarRow>
-
-            <ButtonRow>
-              <CustomButton label="Cancel" filled={false} onPress={() => setShowAvatarSheet(false)} />
-              <Gap />
-              <CustomButton label="Save" tone="mint" filled onPress={saveAvatar} />
-            </ButtonRow>
-          </Sheet>
-        </SheetOverlay>
-      </Modal>
     </Safe>
   );
 }
 
-
+// ===== 스타일 (기존 그대로) =====
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1D1E1F;
@@ -405,9 +384,7 @@ const ProfileView = styled.View`
   align-items: center;
   padding: 8px 16px 12px 16px;
 `;
-const AvatarPress = styled.Pressable`
-  position: relative;
-`;
+const AvatarPress = styled.Pressable`position: relative;`;
 const Name = styled.Text`
   margin-top: 10px;
   color: #ffffff;
@@ -435,27 +412,14 @@ const SectionTitleRow = styled.View`
   margin: 22px 16px 10px 16px;
 `;
 function SectionTitleIcon() {
-  return (
-    <Ionicons
-      name="person-outline"
-      size={12}
-      color="#9aa0a6"
-      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
-    />
-  );
+  return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />;
 }
 function SectionTitleIconGlobe() {
   return (
     <Image
       source={require('@/assets/icons/global.png')}
       resizeMode="contain"
-      style={{
-        width: 12,
-        height: 12,
-        marginRight: 6,
-        tintColor: '#9aa0a6',
-        transform: [{ translateY: 1 }],
-      }}
+      style={{ width: 12, height: 12, marginRight: 6, tintColor: '#9aa0a6', transform: [{ translateY: 1 }] }}
     />
   );
 }
@@ -532,86 +496,3 @@ const DeleteText = styled.Text`
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
 
-/* Bottom Sheet (Avatar 선택) */
-const SheetOverlay = styled.TouchableOpacity`
-  flex: 1;
-  background: rgba(0, 0, 0, 0.55);
-  justify-content: flex-end;
-`;
-const Sheet = styled.View`
-  background: #353637;
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  padding: 16px 16px 20px 16px;
-`;
-const Handle = styled.View`
-  align-self: center;
-  width: 54px;
-  height: 4px;
-  border-radius: 2px;
-  background: #9aa0a6;
-  margin-bottom: 10px;
-`;
-const SheetTitle = styled.Text`
-  color: #ffffff;
-  font-size: 18px;
-  font-family: 'PlusJakartaSans_700Bold';
-  text-align: center;
-  margin-bottom: 16px;
-`;
-
-const AvatarRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
-  margin-bottom: 18px;
-`;
-const AvatarItem = styled.Pressable``;
-const AvatarCircle = styled.View<{ selected: boolean }>`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
-  position: relative;
-`;
-const AvatarImg = styled.Image`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-`;
-const CheckBadge = styled.View`
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #30F59B;
-  align-items: center;
-  justify-content: center;
-  border-width: 2px;
-  border-color: #353637;
-`;
-const CameraCircleInner = styled.View`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-  align-items: center;
-  justify-content: center;
-  background: #1f2021;
-`;
-
-const ButtonRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  margin-top: 10px;
-  padding-bottom: 28px;
-`;
-const Gap = styled.View`
-  width: 12px;
-`;

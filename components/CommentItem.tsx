@@ -1,48 +1,152 @@
+// components/CommentItem.tsx
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import styled from 'styled-components/native';
 
+const DEFAULT_AV = require('@/assets/images/character1.png');
+
 export type Comment = {
   id: string | number;
-  author: string;
-  avatar: ImageSourcePropType;
+  author?: string;
+  avatar?: ImageSourcePropType;
   createdAt: string;
   body: string;
   likes: number;
   likedByMe?: boolean;
   isChild?: boolean;
-  hotScore: number;
+  hotScore?: number;
   anonymous?: boolean;
 };
 
 type Props = {
-  data: Comment;
+  data: Comment | any;       // 서버 원본도 허용
   onPressLike?: () => void;
-  isFirst?: boolean; // ✅ 첫 번째 댓글 여부
+  isFirst?: boolean;
 };
 
+/* ---------- 익명 판별 ---------- */
+function isAnon(row: any): boolean {
+  const explicit =
+    row?.anonymous ??
+    row?.isAnonymous ??
+    row?.isAnonymousWriter ??
+    row?.writerAnonymous ??
+    (typeof row?.anonymousYn === 'string' &&
+      row.anonymousYn.toUpperCase() === 'Y');
+
+  // 이름이 '익명'/'anonymous'로 내려오는 경우도 익명으로 간주
+  const label =
+    row?.author ??
+    row?.authorName ??
+    row?.nickname ??
+    row?.userName ??
+    row?.writerName ??
+    '';
+  const labelAnon =
+    String(label).trim().toLowerCase() === '익명' ||
+    String(label).trim().toLowerCase() === 'anonymous';
+
+  // 이름 후보가 하나도 없으면 익명으로
+  const hasAnyName =
+    [row?.author, row?.authorName, row?.nickname, row?.userName, row?.writerName]
+      .filter((v) => !!String(v ?? '').trim()).length > 0;
+
+  return Boolean(explicit || labelAnon || !hasAnyName);
+}
+
+/* ---------- 필드 정규화 ---------- */
+function resolveAuthor(row: any): string {
+  const cands = [
+    row?.author,
+    row?.authorName,
+    row?.memberName,
+    row?.nickname,
+    row?.userName,
+    row?.writerName,
+  ]
+    .map((v) => (v == null ? undefined : String(v).trim()))
+    .filter(Boolean) as string[];
+  return cands[0] ?? '익명';
+}
+
+function resolveAvatar(row: any): ImageSourcePropType | undefined {
+  const url =
+    row?.userImage ??
+    row?.userImageUrl ??
+    row?.avatarUrl ??
+    (typeof row?.avatar === 'string' ? row?.avatar : undefined);
+  if (typeof url === 'string' && url.trim()) return { uri: url };
+  if (row?.avatar) return row.avatar as ImageSourcePropType;
+  return undefined;
+}
+
+function resolveBody(row: any): string {
+  return String(row?.body ?? row?.content ?? row?.comment ?? '').trim();
+}
+
+function resolveLikes(row: any): number {
+  const n = Number(row?.likes ?? row?.likeCount ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function resolveLikedByMe(row: any): boolean {
+  return Boolean(row?.likedByMe ?? row?.isLiked ?? row?.isLike ?? false);
+}
+
+/* ---------- 날짜 라벨 ---------- */
+function formatDate(rawIn: any): string {
+  const raw = String(rawIn ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}(?!T)/.test(raw)) return raw.slice(5, 10).replace('-', '/');
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw.slice(5, 10).replace('-', '/');
+  const n = Number(raw);
+  if (Number.isFinite(n)) {
+    const d = new Date(n > 1e12 ? n : n * 1000);
+    if (!isNaN(d.getTime())) {
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${mm}/${dd}`;
+    }
+  }
+  return raw;
+}
+
+/* ---------- 컴포넌트 ---------- */
 export default function CommentItem({ data, onPressLike, isFirst }: Props) {
-  const isChild = !!data.isChild;
+  const child = !!data?.isChild;
+  const anon = isAnon(data);
+
+  const authorLabel = anon ? '익명' : resolveAuthor(data);
+  const avatarResolved = resolveAvatar(data);
+  const avatarSrc = anon ? DEFAULT_AV : (avatarResolved || DEFAULT_AV);
+  const dateLabel = useMemo(() => formatDate(data?.createdAt), [data?.createdAt]);
+
+  const bodyText = resolveBody(data);
+  const likeCount = resolveLikes(data);
+  const likedByMe = resolveLikedByMe(data);
 
   return (
-    <Wrap $child={isChild} $first={isFirst}>
+    <Wrap $child={child} $first={isFirst}>
       <Row>
-        {isChild && (
+        {child && (
           <ReplyIcon>
             <Feather name="corner-down-right" size={18} color="#9aa0a6" />
           </ReplyIcon>
         )}
-        <Avatar source={data.avatar} />
+        <Avatar source={avatarSrc} />
         <Meta>
-          <Author>{data.author}</Author>
-          <Sub>{data.createdAt.slice(5).replace('-', '/')}</Sub>
+          <Author>
+            {anon ? <AnonBadge>익명</AnonBadge> : null}
+            {authorLabel}
+          </Author>
+          <Sub>{dateLabel}</Sub>
         </Meta>
         <More>···</More>
       </Row>
 
-      <Body>{data.body}</Body>
+      {!!bodyText && <Body>{bodyText}</Body>}
 
       <Footer>
         <Act
@@ -52,11 +156,11 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
           accessibilityLabel="Like this comment"
         >
           <AntDesign
-            name={data.likedByMe ? 'like1' : 'like2'}
+            name={likedByMe ? 'like1' : 'like2'}
             size={14}
-            color={data.likedByMe ? '#30F59B' : '#cfd4da'}
+            color={likedByMe ? '#30F59B' : '#cfd4da'}
           />
-          <Count $active={!!data.likedByMe}>{data.likes}</Count>
+          <Count $active={likedByMe}>{likeCount}</Count>
         </Act>
 
         <Act disabled>
@@ -68,78 +172,30 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
   );
 }
 
+/* ---------- 스타일 ---------- */
 const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
   background: #171818;
   padding: 15px 17px 25px 20px;
-  border-top-width: ${({ $child, $first }) => ($first || $child ? 0 : 1)}px; /* ✅ 첫 댓글 or 대댓글은 top border 제거 */
+  border-top-width: ${({ $child, $first }) => ($first || $child ? 0 : 1)}px;
   border-top-color: #222426;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
-
-const Row = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const ReplyIcon = styled.View`
-  width: 22px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 6px;
-`;
-
-const Avatar = styled.Image`
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  background: #2a2b2c;
-`;
-
-const Meta = styled.View`
-  margin-left: 10px;
-  flex: 1;
-`;
-
-const Author = styled.Text`
-  color: #fff;
-  font-size: 13px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-
-const Sub = styled.Text`
-  color: #9aa0a6;
-  font-size: 11px;
-  margin-top: 2px;
-`;
-
-const More = styled.Text`
-  color: #9aa0a6;
-  font-size: 18px;
-  padding: 4px 6px;
-`;
-
-const Body = styled.Text`
-  color: #d9dcdf;
-  font-size: 13px;
-  line-height: 18px;
-  margin-top: 6px;
-`;
-
-const Footer = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const Act = styled.Pressable`
-  flex-direction: row;
-  align-items: center;
-  margin-right: 16px;
-`;
-
+const Row = styled.View`flex-direction: row; align-items: center;`;
+const ReplyIcon = styled.View`width: 22px; align-items: center; justify-content: center; margin-right: 6px;`;
+const Avatar = styled.Image`width: 28px; height: 28px; border-radius: 14px; background: #2a2b2c;`;
+const Meta = styled.View`margin-left: 10px; flex: 1;`;
+const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
+const Sub = styled.Text`color: #9aa0a6; font-size: 11px; margin-top: 2px;`;
+const More = styled.Text`color: #9aa0a6; font-size: 18px; padding: 4px 6px;`;
+const Body = styled.Text`color: #d9dcdf; font-size: 13px; line-height: 18px; margin-top: 6px;`;
+const Footer = styled.View`margin-top: 6px; flex-direction: row; align-items: center;`;
+const Act = styled.Pressable`flex-direction: row; align-items: center; margin-right: 16px;`;
 const Count = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
-  margin-left: 6px;
-  font-size: 12px;
+  margin-left: 6px; font-size: 12px;
+`;
+const AnonBadge = styled.Text`
+  color: #000; background: #30f59b; border-radius: 4px;
+  padding: 1px 6px; margin-right: 6px; font-size: 10px;
 `;

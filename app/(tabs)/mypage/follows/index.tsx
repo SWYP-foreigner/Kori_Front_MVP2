@@ -7,7 +7,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Dimensions,
+  DeviceEventEmitter, Dimensions,
   FlatList,
   FlatListProps,
   NativeScrollEvent,
@@ -28,75 +28,69 @@ type FriendItem = {
   personalities: string[];
   bio?: string;
   imageKey?: string;
-  imageUrl?: string; // 백엔드가 URL도 줄 수 있음
+  imageUrl?: string;
 };
 
-function HListBase(props: FlatListProps<FriendItem>) {
-  return <FlatList {...props} />;
-}
+function HListBase(props: FlatListProps<FriendItem>) { return <FlatList {...props} />; }
 const HList = styled(HListBase)``;
+
+/** helpers **/
+const toItem = (u: any): FriendItem | null => {
+  const idNum = Number(u?.userId ?? u?.id);
+  if (!Number.isFinite(idNum) || idNum <= 0) return null;
+  return {
+    id: idNum,
+    name: u?.name ?? 'Unknown',
+    country: u?.country ?? '-',
+    birth: u?.birthYear,
+    purpose: u?.purpose ?? '',
+    languages: Array.isArray(u?.languages) ? u.languages : [],
+    personalities: Array.isArray(u?.hobbies) ? u.hobbies : [],
+    bio: u?.bio ?? '',
+    imageKey: u?.imageKey,
+    imageUrl: u?.imageUrl,
+  };
+};
+const dedupById = (arr: any[]): FriendItem[] => {
+  const map = new Map<number, FriendItem>();
+  for (const raw of arr || []) {
+    const it = toItem(raw);
+    if (it) map.set(it.id, it);
+  }
+  return [...map.values()];
+};
+/** */
 
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
+  const [inFlight, setInFlight] = useState<Set<number>>(new Set());
+  const lock = (id: number) => setInFlight(s => new Set(s).add(id));
+  const unlock = (id: number) => setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
 
   const {
-    data: receivedData = [],
+    data: receivedRaw = [],
     isLoading: loadingReceived,
     isError: errorReceived,
     refetch: refetchReceived,
   } = useFollowList('PENDING', 'received');
 
   const {
-    data: sentData = [],
+    data: sentRaw = [],
     isLoading: loadingSent,
     isError: errorSent,
+    refetch: refetchSent,
   } = useFollowList('PENDING', 'sent');
 
-  // ─── Debug logs: raw from hook ──────────────────────────────────────────────
-  console.log('[FollowListScreen] receivedData len:', receivedData.length);
-  if (receivedData[0]) console.log('[FollowListScreen] receivedData[0]:', receivedData[0]);
+  // 다른 화면에서 Follow가 발생하면 sent를 갱신 (동기화)
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('FOLLOW_REQUEST_SENT', () => {
+      refetchSent();
+    });
+    return () => sub.remove();
+  }, [refetchSent]);
 
-  console.log('[FollowListScreen] sentData len:', sentData.length);
-  if (sentData[0]) console.log('[FollowListScreen] sentData[0]:', sentData[0]);
-
-  /* FriendCard에 맞게 경량 변환 */
-  const receivedList = useMemo<FriendItem[]>(
-    () =>
-      receivedData.map(u => ({
-        id: u.userId,
-        name: u.name,
-        country: u.country ?? '-',
-        birth: u.birthYear,
-        purpose: u.purpose ?? '',
-        languages: u.languages ?? [],
-        personalities: u.hobbies ?? [],
-        bio: u.bio ?? '',
-        imageKey: u.imageKey,
-        imageUrl: u.imageUrl,
-      })),
-    [receivedData]
-  );
-
-  const sentList = useMemo<FriendItem[]>(
-    () =>
-      sentData.map(u => ({
-        id: u.userId,
-        name: u.name,
-        country: u.country ?? '-',
-        birth: u.birthYear,
-        purpose: u.purpose ?? '',
-        languages: u.languages ?? [],
-        personalities: u.hobbies ?? [],
-        bio: u.bio ?? '',
-        imageKey: u.imageKey,
-        imageUrl: u.imageUrl,
-      })),
-    [sentData]
-  );
-
-  // ─── Debug logs: mapped results ─────────────────────────────────────────────
-  if (receivedList[0]) console.log('[FollowListScreen] receivedList[0]:', receivedList[0]);
-  if (sentList[0]) console.log('[FollowListScreen] sentList[0]:', sentList[0]);
+  const receivedList = useMemo(() => dedupById(receivedRaw), [receivedRaw]);
+  const sentList = useMemo(() => dedupById(sentRaw), [sentRaw]);
 
   const rRef = useRef<FlatList<FriendItem>>(null);
   const sRef = useRef<FlatList<FriendItem>>(null);
@@ -119,28 +113,39 @@ export default function FollowListScreen() {
   const cancelReqMutation = useCancelFollowRequest();
 
   const handleAccept = async (userId: number) => {
+    if (inFlight.has(userId)) return;
     try {
+      lock(userId);
       await acceptMutation.mutateAsync(userId);
       await refetchReceived();
-    } catch (e) {
-      console.log('[accept-follow] error', e);
+    } finally {
+      unlock(userId);
     }
   };
 
   const handleDecline = async (userId: number) => {
+    if (inFlight.has(userId)) return;
     try {
+      lock(userId);
       await declineMutation.mutateAsync(userId);
       await refetchReceived();
-    } catch (e) {
-      console.log('[decline-follow] error', e);
+    } finally {
+      unlock(userId);
     }
   };
 
+  // 보낸 팔로우 취소 → 홈에 알리고 sent 목록 새로고침
   const handleCancelSent = async (userId: number) => {
+    if (inFlight.has(userId)) return;
     try {
+      lock(userId);
       await cancelReqMutation.mutateAsync(userId);
+      DeviceEventEmitter.emit('FOLLOW_REQUEST_CANCELLED', { userId });
+      await refetchSent();
     } catch (e) {
       console.log('[cancel-follow-request] error', e);
+    } finally {
+      unlock(userId);
     }
   };
 
@@ -151,7 +156,7 @@ export default function FollowListScreen() {
   ) => {
     if (total === 0) return;
     const safe = Math.max(0, Math.min(total - 1, idx0));
-    ref.current?.scrollToIndex({ index: safe, animated: true });
+    ref.current?.scrollToIndex?.({ index: safe, animated: true });
   };
 
   const getLayout: FlatListProps<FriendItem>['getItemLayout'] =
@@ -162,6 +167,16 @@ export default function FollowListScreen() {
   };
   const onScrollSent = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setSPage(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1);
+  };
+
+  const onScrollToIndexFailed: FlatListProps<FriendItem>['onScrollToIndexFailed'] = (info) => {
+    setTimeout(() => {
+      info?.averageItemLength &&
+        (info as any).props?.ref?.current?.scrollToOffset?.({
+          offset: info.averageItemLength * info.index,
+          animated: true,
+        });
+    }, 0);
   };
 
   return (
@@ -190,8 +205,9 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={rRef}
+            listKey="received-list"
             data={receivedList}
-            keyExtractor={(i: FriendItem) => String(i.id)}
+            keyExtractor={(i) => `rec-${String(i?.id)}`}
             horizontal
             pagingEnabled
             decelerationRate="fast"
@@ -200,8 +216,9 @@ export default function FollowListScreen() {
             showsHorizontalScrollIndicator={false}
             getItemLayout={getLayout}
             onScroll={onScrollReceived}
+            onScrollToIndexFailed={onScrollToIndexFailed}
             scrollEventThrottle={16}
-            renderItem={({ item }: { item: FriendItem }) => (
+            renderItem={({ item }) => (
               <Page style={{ width: SCREEN_WIDTH }}>
                 <Inner>
                   <FriendCard
@@ -235,17 +252,11 @@ export default function FollowListScreen() {
           />
           {receivedList.length > 1 && (
             <Pager>
-              <PagerBtn
-                disabled={rPage <= 1}
-                onPress={() => goToIndex(rRef, receivedList.length, rPage - 2)}
-              >
+              <PagerBtn disabled={rPage <= 1} onPress={() => goToIndex(rRef, receivedList.length, rPage - 2)}>
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
               <PagerText>{`${rPage} / ${receivedList.length}`}</PagerText>
-              <PagerBtn
-                disabled={rPage >= receivedList.length}
-                onPress={() => goToIndex(rRef, receivedList.length, rPage)}
-              >
+              <PagerBtn disabled={rPage >= receivedList.length} onPress={() => goToIndex(rRef, receivedList.length, rPage)}>
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
             </Pager>
@@ -255,8 +266,9 @@ export default function FollowListScreen() {
         <>
           <HList
             ref={sRef}
+            listKey="sent-list"
             data={sentList}
-            keyExtractor={(i: FriendItem) => String(i.id)}
+            keyExtractor={(i) => `sent-${String(i?.id)}`}
             horizontal
             pagingEnabled
             decelerationRate="fast"
@@ -265,8 +277,9 @@ export default function FollowListScreen() {
             showsHorizontalScrollIndicator={false}
             getItemLayout={getLayout}
             onScroll={onScrollSent}
+            onScrollToIndexFailed={onScrollToIndexFailed}
             scrollEventThrottle={16}
-            renderItem={({ item }: { item: FriendItem }) => (
+            renderItem={({ item }) => (
               <Page style={{ width: SCREEN_WIDTH }}>
                 <Inner>
                   <FriendCard
@@ -300,17 +313,11 @@ export default function FollowListScreen() {
           />
           {sentList.length > 1 && (
             <Pager>
-              <PagerBtn
-                disabled={sPage <= 1}
-                onPress={() => goToIndex(sRef, sentList.length, sPage - 2)}
-              >
+              <PagerBtn disabled={sPage <= 1} onPress={() => goToIndex(sRef, sentList.length, sPage - 2)}>
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
               <PagerText>{`${sPage} / ${sentList.length}`}</PagerText>
-              <PagerBtn
-                disabled={sPage >= sentList.length}
-                onPress={() => goToIndex(sRef, sentList.length, sPage)}
-              >
+              <PagerBtn disabled={sPage >= sentList.length} onPress={() => goToIndex(sRef, sentList.length, sPage)}>
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
             </Pager>
@@ -321,7 +328,7 @@ export default function FollowListScreen() {
   );
 }
 
-/* styles */
+/* styles 그대로 */
 const Safe = styled.SafeAreaView`flex:1;background:#1d1e1f;`;
 const Header = styled.View`flex-direction:row;align-items:center;padding:12px 16px;`;
 const BackBtn = styled.Pressable`width:40px;align-items:flex-start;`;
@@ -330,13 +337,8 @@ const RightSlot = styled.View`width:40px;`;
 const Title = styled.Text`color:#fff;font-size:20px;font-family:'PlusJakartaSans_700Bold';`;
 const TabsWrap = styled.View`position:relative;padding:0 16px;margin-top:4px;`;
 const TabsRow = styled.View`flex-direction:row;`;
-const TabItem = styled.Pressable<{ active: boolean }>`
-  flex:1;align-items:center;padding:12px 6px;
-  border-bottom-width:2px;border-bottom-color:${p => p.active ? '#30F59B' : 'transparent'};
-`;
-const TabText = styled.Text<{ active: boolean }>`
-  color:${p => p.active ? '#30F59B' : '#cfcfcf'};font-size:16px;font-family:'PlusJakartaSans_600SemiBold';
-`;
+const TabItem = styled.Pressable<{ active: boolean }>`flex:1;align-items:center;padding:12px 6px;border-bottom-width:2px;border-bottom-color:${p => p.active ? '#30F59B' : 'transparent'};`;
+const TabText = styled.Text<{ active: boolean }>`color:${p => p.active ? '#30F59B' : '#cfcfcf'};font-size:16px;font-family:'PlusJakartaSans_600SemiBold';`;
 const TabsBottomLine = styled.View`position:absolute;left:16px;right:16px;bottom:0;height:1px;background:#212325;`;
 const Page = styled.View`justify-content:center;`;
 const Inner = styled.View`padding:0 16px;margin-top:-27px;`;

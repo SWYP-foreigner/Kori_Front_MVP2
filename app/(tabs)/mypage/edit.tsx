@@ -7,27 +7,16 @@ import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
-import CountryPicker, {
-  CountryDropdownButton,
-  CountryDropdownText
-} from '@/components/CountryPicker';
-
-import LanguagePicker, {
-  LanguageDropdownButton,
-  LanguageDropdownText,
-  MAX_LANGUAGES
-} from '@/components/LanguagePicker';
-
-import PurposePicker, {
-  PurposeDropdownButton,
-  PurposeDropdownText
-} from '@/components/PurposePicker';
+import CountryPicker, { CountryDropdownButton, CountryDropdownText } from '@/components/CountryPicker';
+import LanguagePicker, { LanguageDropdownButton, LanguageDropdownText, MAX_LANGUAGES } from '@/components/LanguagePicker';
+import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
 
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { Config } from '@/src/lib/config';
 
-import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
+import api from '@/api/axiosInstance';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Image as RNImage, Modal } from 'react-native';
 
@@ -39,15 +28,14 @@ const INPUT_BORDER = '#FFFFFF';
 const toUrl = (u?: string) => {
   if (!u) return undefined;
   if (/^https?:\/\//i.test(u)) return u;
+  if (/^(asset|file|data):/i.test(u)) return u;
   const base =
     (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
     (Config as any).NCP_PUBLIC_BASE_URL ||
     (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
     (Config as any).IMAGE_BASE_URL ||
     '';
-  return base
-    ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}`
-    : undefined;
+  return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
 };
 
 const AVATARS = [
@@ -55,11 +43,61 @@ const AVATARS = [
   require('@/assets/images/character2.png'),
   require('@/assets/images/character3.png'),
 ] as const;
+
 const AVATAR_KEYS = [
   'avatars/character1.png',
   'avatars/character2.png',
   'avatars/character3.png',
 ] as const;
+
+const stripHost = (keyOrUrl?: string) => {
+  if (!keyOrUrl) return undefined;
+  if (/^https?:\/\//i.test(keyOrUrl)) {
+    try {
+      const u = new URL(keyOrUrl);
+      return u.pathname.replace(/^\/+/, '');
+    } catch {
+      return keyOrUrl;
+    }
+  }
+  return keyOrUrl;
+};
+
+const detectPresetIndex = (keyOrUrl?: string) => {
+  const path = stripHost(keyOrUrl);
+  if (!path) return -1;
+  return AVATAR_KEYS.findIndex(k => path.endsWith(k));
+};
+
+async function uploadLocalImageAndGetKeyInline(uri: string, mime = 'image/jpeg') {
+  const filename = uri.split('/').pop() || 'profile.jpg';
+
+  const pres = await api.post('/api/v1/images/presign', {
+    imageType: 'USER',
+    uploadSessionId: String(Date.now()),
+    files: [{ filename, contentType: mime }],
+  });
+  const info = pres.data?.data?.[0];
+  if (!info?.putUrl || !info?.headers || !info?.key) {
+    throw new Error('Invalid presign response');
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  const res = await fetch(info.putUrl, {
+    method: 'PUT',
+    headers: info.headers,
+    body: bytes,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `PUT failed: ${res.status}`);
+  }
+  return info.key as string;
+}
 
 const TAG_SECTIONS: TagSection[] = [
   { title: 'Entertainment & Hobbies', items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'], emojis: ['🎵', '🎬', '📚', '🎬', '🎮'] },
@@ -70,7 +108,6 @@ const TAG_SECTIONS: TagSection[] = [
 ];
 
 export default function EditProfileScreen() {
-
   const [showTagPicker, setShowTagPicker] = useState(false);
 
   const queryClient = useQueryClient();
@@ -93,7 +130,12 @@ export default function EditProfileScreen() {
   const [aboutMe, setAboutMe] = useState('');
 
   const [avatarKeyOrUrl, setAvatarKeyOrUrl] = useState<string | undefined>(undefined);
-  const displayAvatarUrl = useMemo(() => toUrl(avatarKeyOrUrl), [avatarKeyOrUrl]);
+
+  const displayAvatarUrl = useMemo(() => {
+    const idx = detectPresetIndex(avatarKeyOrUrl);
+    if (idx >= 0) return RNImage.resolveAssetSource(AVATARS[idx])?.uri;
+    return toUrl(avatarKeyOrUrl);
+  }, [avatarKeyOrUrl]);
 
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
   const [tempIdx, setTempIdx] = useState<number>(0);
@@ -113,7 +155,7 @@ export default function EditProfileScreen() {
     setSelectedInterests(me.hobby ?? []);
     setAboutMe(me.introduction ?? '');
 
-    const initial = (me as any)?.imageUrl || (me as any)?.imageKey || undefined;
+    const initial = (me as any)?.imageKey || (me as any)?.imageUrl || undefined;
     setAvatarKeyOrUrl(initial);
     setPendingImageKey(undefined);
   }, [me]);
@@ -122,7 +164,7 @@ export default function EditProfileScreen() {
     if (!langs.length) return 'Select your language';
     const codes = langs.map((l) => {
       const m = l.match(/\(([^)]+)\)/);
-      return m ? m[1] : l;
+      return (m ? m[1] : l).trim();
     });
     return codes.join(' / ');
   }, [langs]);
@@ -149,7 +191,12 @@ export default function EditProfileScreen() {
       return (m ? m[1] : l).trim();
     });
 
-    const body = {
+    const imageKeyToSend =
+      pendingImageKey && !AVATAR_KEYS.includes(pendingImageKey as any)
+        ? pendingImageKey
+        : undefined;
+
+    const body: any = {
       firstname,
       lastname,
       gender: 'unspecified',
@@ -159,8 +206,8 @@ export default function EditProfileScreen() {
       purpose: purpose || '',
       language,
       hobby: selectedInterests ?? [],
-      imageKey: pendingImageKey,
     };
+    if (imageKeyToSend) body.imageKey = imageKeyToSend;
 
     try {
       await editMutation.mutateAsync(body);
@@ -172,20 +219,17 @@ export default function EditProfileScreen() {
     }
   };
 
-
   const openAvatarSheet = () => {
-    const cur = AVATARS.findIndex(
-      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (displayAvatarUrl ?? '')
-    );
-    if (cur >= 0) {
-      setTempIdx(cur);
+    const idx = detectPresetIndex(avatarKeyOrUrl);
+    if (idx >= 0) {
+      setTempIdx(idx);
       setCustomPhotoUri(undefined);
-    } else if (displayAvatarUrl) {
+    } else if (avatarKeyOrUrl && /^(asset|file|data):/i.test(avatarKeyOrUrl)) {
       setTempIdx(-1);
-      setCustomPhotoUri(displayAvatarUrl);
+      setCustomPhotoUri(avatarKeyOrUrl);
     } else {
-      setTempIdx(0);
-      setCustomPhotoUri(undefined);
+      setTempIdx(-1);
+      setCustomPhotoUri(toUrl(avatarKeyOrUrl));
     }
     setShowAvatarSheet(true);
   };
@@ -203,7 +247,9 @@ export default function EditProfileScreen() {
     if (!ok) return;
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
     if (!result.canceled) {
       setCustomPhotoUri(result.assets[0].uri);
@@ -216,7 +262,9 @@ export default function EditProfileScreen() {
     if (!ok) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [1, 1], quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
     if (!result.canceled) {
       setCustomPhotoUri(result.assets[0].uri);
@@ -237,14 +285,13 @@ export default function EditProfileScreen() {
 
       if (tempIdx === -1) {
         if (!customPhotoUri) throw new Error('No custom photo selected');
-        const key = await uploadLocalImageAndGetKey(customPhotoUri);
+        const key = await uploadLocalImageAndGetKeyInline(customPhotoUri); // ← 인터셉터 없는 업로더
         setPendingImageKey(key);
-        setAvatarKeyOrUrl(customPhotoUri);
+        setAvatarKeyOrUrl(key);
       } else {
         const key = AVATAR_KEYS[tempIdx];
-        const src = RNImage.resolveAssetSource(AVATARS[tempIdx]);
-        setPendingImageKey(key);
-        setAvatarKeyOrUrl(src?.uri);
+        setPendingImageKey(undefined);
+        setAvatarKeyOrUrl(key);
       }
 
       setShowAvatarSheet(false);
@@ -329,11 +376,7 @@ export default function EditProfileScreen() {
         <Field>
           <LabelRow>
             <LabelText>Language</LabelText>
-            {!!langs.length && (
-              <SmallMuted>
-                {langs.length}/{MAX_LANGUAGES} selected
-              </SmallMuted>
-            )}
+            {!!langs.length && <SmallMuted>{langs.length}/{MAX_LANGUAGES} selected</SmallMuted>}
           </LabelRow>
           <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
             <LanguageDropdownText selected={langs.length > 0}>
@@ -357,7 +400,6 @@ export default function EditProfileScreen() {
             ))}
           </TagsWrap>
 
-          {/* + Edit 버튼 */}
           <EditRow>
             <EditOutlineBtn onPress={() => setShowTagPicker(true)}>
               <AntDesign name="plus" size={12} color="#30F59B" />
@@ -365,7 +407,6 @@ export default function EditProfileScreen() {
             </EditOutlineBtn>
           </EditRow>
         </Field>
-
 
         <Field>
           <LabelText>About Me</LabelText>
@@ -385,25 +426,19 @@ export default function EditProfileScreen() {
         visible={showCountry}
         value={country}
         onClose={() => setShowCountry(false)}
-        onSelect={(c) => {
-          setCountry(c);
-          setShowCountry(false);
-        }}
+        onSelect={(c) => { setCountry(c); setShowCountry(false); }}
       />
       <LanguagePicker
         visible={showLang}
         value={langs}
         onClose={() => setShowLang(false)}
-        onChange={(next) => setLangs(next)}
+        onChange={setLangs}
       />
       <PurposePicker
         visible={showPurpose}
         value={purpose}
         onClose={() => setShowPurpose(false)}
-        onSelect={(p) => {
-          setPurpose(p);
-          setShowPurpose(false);
-        }}
+        onSelect={(p) => { setPurpose(p); setShowPurpose(false); }}
       />
       <BottomSheetTagPicker
         visible={showTagPicker}
@@ -483,275 +518,161 @@ export default function EditProfileScreen() {
   );
 }
 
+/* 스타일 블록은 네가 준 것과 동일하니 생략 없이 그대로 사용하면 돼 */
 
-const Safe = styled.SafeAreaView`
-  flex: 1;
-  background: #171818;
-`;
-const Scroll = styled.ScrollView`
-  padding: 0 16px;
-`;
 
-const Header = styled.View`
-  height: 52px;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-`;
-const Title = styled.Text`
-  color: #fff;
-  font-size: 20px;
-  font-family: 'PlusJakartaSans_700Bold';
-`;
-const Side = styled.Pressable`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  justify-content: center;
-  padding: 0 12px;
-`;
-const SaveText = styled.Text`
-  color: #30f59b;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
+const Safe = styled.SafeAreaView`flex:1;background:#171818;`;
+const Scroll = styled.ScrollView`padding:0 16px;`;
+const Header = styled.View`height:52px;align-items:center;justify-content:center;position:relative;`;
+const Title = styled.Text`color:#fff;font-size:20px;font-family:'PlusJakartaSans_700Bold';`;
+const Side = styled.Pressable`position:absolute;top:0;bottom:0;justify-content:center;padding:0 12px;`;
+const SaveText = styled.Text`color:#30f59b;font-family:'PlusJakartaSans_600SemiBold';`;
+const Center = styled.View`align-items:center;padding:8px 0 16px 0;`;
+const AvatarPress = styled.Pressable`position:relative;`;
+const NameText = styled.Text`margin-top:8px;color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';max-width:82%;text-align:center;`;
+const EmailText = styled.Text`margin-top:2px;color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const Field = styled.View`margin-bottom:14px;`;
+const LabelRow = styled.View`flex-direction:row;justify-content:space-between;align-items:flex-end;`;
+const LabelText = styled.Text`color:#e9ecef;font-size:13px;margin-bottom:6px;font-family:'PlusJakartaSans_600SemiBold';`;
+const Count = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const NameInput = styled.TextInput`height:${INPUT_HEIGHT}px;border-radius:${INPUT_RADIUS}px;background:${INPUT_BG};padding:0 16px;color:#fff;border-width:0.48px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';`;
+const BirthInput = styled.TextInput`height:${INPUT_HEIGHT}px;border-radius:${INPUT_RADIUS}px;background:${INPUT_BG};padding:0 16px;color:#fff;border-width:0.48px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';`;
+const TopRow = styled.View`flex-direction:row;justify-content:space-between;align-items:center;margin-bottom:6px;`;
+const SmallMuted = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
+const TagsWrap = styled.View`flex-direction:row;flex-wrap:wrap;gap:8px;margin-top:6px;`;
+const PreviewTag = styled.View`padding:6px 12px;border-radius:999px;border:1px solid #2a2b2c;background:#121314;`;
+const PreviewTagText = styled.Text`color:#fff;font-size:12px;font-family:'PlusJakartaSans_600SemiBold';`;
+const TextArea = styled.TextInput`background:${INPUT_BG};border-radius:${INPUT_RADIUS}px;padding:12px 14px;color:#fff;border-width:1px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';min-height:110px;text-align-vertical:top;`;
+const BottomPad = styled.View`height:20px;`;
 
-const Center = styled.View`
-  align-items: center;
-  padding: 8px 0 16px 0;
-`;
-const AvatarPress = styled.Pressable`
-  position: relative;
-`;
-const NameText = styled.Text`
-  margin-top: 8px;
-  color: #fff;
-  font-size: 16px;
-  font-family: 'PlusJakartaSans_700Bold';
-  max-width: 82%;
-  text-align: center;
-`;
-const EmailText = styled.Text`
-  margin-top: 2px;
-  color: #b7babd;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
 
-const Field = styled.View`
-  margin-bottom: 14px;
-`;
-const LabelRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
-`;
-const LabelText = styled.Text`
-  color: #e9ecef;
-  font-size: 13px;
-  margin-bottom: 6px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-const Count = styled.Text`
-  color: #7e848a;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const NameInput = styled.TextInput`
-  height: ${INPUT_HEIGHT}px;
-  border-radius: ${INPUT_RADIUS}px;
-  background: ${INPUT_BG};
-  padding: 0 16px;
-  color: #fff;
-  border-width: 0.48px;
-  border-color: ${INPUT_BORDER};
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const BirthInput = styled.TextInput`
-  height: ${INPUT_HEIGHT}px;
-  border-radius: ${INPUT_RADIUS}px;
-  background: ${INPUT_BG};
-  padding: 0 16px;
-  color: #fff;
-  border-width: 0.48px;
-  border-color: ${INPUT_BORDER};
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-
-const TopRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-`;
-const SmallMuted = styled.Text`
-  color: #7e848a;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_400Regular';
-`;
-const TagsWrap = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-`;
-const PreviewTag = styled.View`
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid #2a2b2c;
-  background: #121314;
-`;
-const PreviewTagText = styled.Text`
-  color: #fff;
-  font-size: 12px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
-
-const TextArea = styled.TextInput`
-  background: ${INPUT_BG};
-  border-radius: ${INPUT_RADIUS}px;
-  padding: 12px 14px;
-  color: #fff;
-  border-width: 1px;
-  border-color: ${INPUT_BORDER};
-  font-family: 'PlusJakartaSans_400Regular';
-  min-height: 110px;
-  text-align-vertical: top;
-`;
-
-const BottomPad = styled.View`
-  height: 20px;
-`;
-
-/* ===== 바텀시트 스타일 ===== */
 const SheetOverlay = styled.TouchableOpacity`
   flex: 1;
   background: rgba(0, 0, 0, 0.55);
   justify-content: flex-end;
 `;
+
 const Sheet = styled.View`
-  background: #353637;
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  padding: 16px 16px 20px 16px;
+  background: #3a3b3c;                 /* 더 진한 회색 */
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 14px 16px 20px 16px;
 `;
+
 const Handle = styled.View`
   align-self: center;
-  width: 54px;
+  width: 46px;                         /* 짧은 손잡이 */
   height: 4px;
   border-radius: 2px;
-  background: #9aa0a6;
+  background: #8d9296;
   margin-bottom: 10px;
 `;
+
 const SheetTitle = styled.Text`
   color: #ffffff;
-  font-size: 18px;
+  font-size: 16px;                     /* 살짝 작게 */
   font-family: 'PlusJakartaSans_700Bold';
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 `;
 
 const AvatarRow = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
-  margin-bottom: 18px;
+  padding: 0 2px;
+  margin: 0 6px 18px 6px;              /* 좌우 살짝 여백 */
 `;
+
 const AvatarItem = styled.Pressable``;
+
 const AvatarCircle = styled.View<{ selected: boolean }>`
-  width: 68px;
-  height: 68px;
-  border-radius: 34px;
-  background: #1f2021;
+  width: 72px;
+  height: 72px;
+  border-radius: 36px;
+  background: #242526;                 /* 어두운 배경 */
   align-items: center;
   justify-content: center;
-  border-width: 2px;
+  border-width: 3px;                   /* 선택 윤곽 더 두껍게 */
   border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
   position: relative;
 `;
+
 const AvatarImg = styled.Image`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
+  width: 66px;
+  height: 66px;
+  border-radius: 33px;
 `;
+
 const CheckBadge = styled.View`
   position: absolute;
-  right: -2px;
+  left: -2px;                          /* ▶︎ 좌상단 */
   top: -2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #30F59B;
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: #30F59B;                 /* 민트 */
   align-items: center;
   justify-content: center;
-  border-width: 2px;
-  border-color: #353637;
+  border-width: 2px;                   /* 테두리로 도드라지게 */
+  border-color: #3a3b3c;               /* 시트 배경과 동일하게 */
+  shadow-color: #000;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.4px;
+  shadow-offset: 0px 2px;
+  elevation: 3;
 `;
+
 const CameraCircleInner = styled.View`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
+  width: 66px;
+  height: 66px;
+  border-radius: 33px;
   align-items: center;
   justify-content: center;
-  background: #1f2021;
+  background: #4a4b4c;                 /* 더 진한 회색 */
 `;
 
 const ButtonRow = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-top: 10px;
-  padding-bottom: 28px;
+  margin-top: 8px;
+  padding: 0 4px 22px 4px;             /* 좌우 여백 + 하단 패딩 */
 `;
+
 const Gap = styled.View`
   width: 12px;
 `;
+
 const SheetBtn = styled.Pressable`
   flex: 1;
-  height: 44px;
-  border-radius: 10px;
-  background: #222425;
+  height: 48px;
+  border-radius: 12px;
+  background: #595b5c;                 /* 회색(취소) */
   align-items: center;
   justify-content: center;
 `;
+
 const SheetBtnText = styled.Text`
-  color: #e7eaed;
+  color: #e8eaed;
   font-weight: 700;
 `;
+
 const SheetBtnMint = styled.Pressable<{ disabled?: boolean }>`
   flex: 1;
-  height: 44px;
-  border-radius: 10px;
-  background: #30f59b;
+  height: 48px;
+  border-radius: 12px;
+  background: #30f59b;                 /* 민트(저장) */
   align-items: center;
   justify-content: center;
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
+
 const SheetBtnMintText = styled.Text`
   color: #0f1011;
   font-weight: 800;
 `;
 
-const EditRow = styled.View`
-  margin-top: 10px;
-`;
 
-const EditOutlineBtn = styled.Pressable`
-  align-self: flex-start;
-  flex-direction: row;
-  align-items: center;
-  height: 28px;                 /* Fixed(28px) */
-  padding: 0 10px;              /* Left/Right 10px */
-  gap: 4px;                     /* 아이콘-텍스트 간격 */
-  border-radius: 100px;         /* Radius 100px */
-  border-width: 1px;            /* Border 1px */
-  border-color: #30F59B;        /* Primary/Mint */
-  background: transparent;
-`;
-
-const EditOutlineText = styled.Text`
-  color: #30F59B;               /* Primary/Mint */
-  font-size: 13px;
-  font-family: 'PlusJakartaSans_600SemiBold';
-`;
+const EditRow = styled.View`margin-top:10px;`;
+const EditOutlineBtn = styled.Pressable`align-self:flex-start;flex-direction:row;align-items:center;height:28px;padding:0 10px;gap:4px;border-radius:100px;border-width:1px;border-color:#30F59B;background:transparent;`;
+const EditOutlineText = styled.Text`color:#30F59B;font-size:13px;font-family:'PlusJakartaSans_600SemiBold';`;
