@@ -21,17 +21,52 @@ function toYmd(raw?: unknown) {
     }
 }
 
+function isAnonRow(r: RawComment): boolean {
+    const yn =
+        (typeof (r as any).anonymousYn === 'string' &&
+            (r as any).anonymousYn.toUpperCase() === 'Y') ||
+        (r as any).anonymous ||
+        (r as any).isAnonymous ||
+        (r as any).isAnonymousWriter ||
+        (r as any).writerAnonymous;
+
+    const label =
+        (r as any).authorName ??
+        (r as any).userName ??
+        (r as any).nickname ??
+        (r as any).writerName ??
+        '';
+    const lab = String(label).trim().toLowerCase();
+
+    return Boolean(yn || lab === '익명' || lab === 'anonymous' || !String(label).trim());
+}
+
 function mapRow(r: RawComment): Comment {
+    const anon = isAnonRow(r);
+
+    const authorLabel =
+        (r as any).authorName ??
+        (r as any).userName ??
+        (r as any).nickname ??
+        (r as any).writerName ??
+        '익명';
+
+    const avatarUrl =
+        (r as any).userImage ??
+        (r as any).userImageUrl ??
+        (r as any).avatarUrl;
+
     return {
-        id: String(r.commentId),
-        author: r.userName ?? 'Unknown',
-        avatar: r.userImageUrl ? { uri: r.userImageUrl } : require('@/assets/images/character1.png'),
-        createdAt: toYmd(r.createdAt),
-        body: r.content,
-        likes: Number(r.likeCount ?? 0),
-        isChild: Boolean(r.parentId),
+        id: String((r as any).commentId ?? (r as any).id),
+        author: authorLabel,
+        avatar: avatarUrl ? { uri: avatarUrl } : require('@/assets/images/character1.png'),
+        createdAt: toYmd((r as any).createdAt),
+        body: String((r as any).content ?? (r as any).comment ?? ''),
+        likes: Number((r as any).likeCount ?? (r as any).likes ?? 0),
+        likedByMe: Boolean((r as any).likedByMe ?? (r as any).isLiked ?? (r as any).isLike ?? false),
+        isChild: Boolean((r as any).parentId ?? (r as any).isChild),
         hotScore: 0,
-        anonymous: false,
+        anonymous: anon,
     };
 }
 

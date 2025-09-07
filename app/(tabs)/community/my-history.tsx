@@ -177,37 +177,41 @@ export default function MyHistoryScreen() {
         router.push({ pathname: '/community/[id]', params: { id: postId } });
     };
 
-    const renderPost: ListRenderItem<PostRow> = ({ item }) => (
-        <RowPress onPress={() => goPostDetail(item.id)}>
-            <PostTopRow>
-                <Avatar source={item.avatar} />
-                <Meta>
-                    <Author>{item.author}</Author>
-                    <SubRow>
-                        <Sub>{item.createdAt}</Sub>
-                        <Dot>·</Dot>
+    const renderPost: ListRenderItem<PostRow> = ({ item }) => {
+        const hasDate = !!String(item.createdAt || '').trim();
+
+        return (
+            <RowPress onPress={() => goPostDetail(item.id)}>
+                <TopRow>
+                    <InlineRow>
+                        {hasDate && <PostDateText>{item.createdAt}</PostDateText>}
+                        {hasDate && <Dot>·</Dot>}
                         <AntDesign name="eyeo" size={12} color="#9aa0a6" />
                         <Sub style={{ marginLeft: 6 }}>{item.views}</Sub>
-                    </SubRow>
-                </Meta>
-                <MoreBtn
-                    onPress={(e: any) => {
-                        e?.stopPropagation?.();
-                        openSheet({ type: 'post', id: item.id });
-                    }}
-                >
-                    <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
-                </MoreBtn>
-            </PostTopRow>
+                    </InlineRow>
 
-            {item.body ? <Body numberOfLines={1}>{item.body}</Body> : null}
+                    <MoreBtn
+                        onPress={(e: any) => {
+                            e?.stopPropagation?.();
+                            openSheet({ type: 'post', id: item.id });
+                        }}
+                    >
+                        <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
+                    </MoreBtn>
+                </TopRow>
 
-            <ActionRow>
-                <Act><AntDesign name="like2" size={14} color="#30F59B" /><ActText>{item.likes}</ActText></Act>
-                <Act><AntDesign name="message1" size={14} color="#cfd4da" /><ActText>{item.comments}</ActText></Act>
-            </ActionRow>
-        </RowPress>
-    );
+                {item.body ? <PostTitle numberOfLines={1}>{item.body}</PostTitle> : null}
+
+                <ActionRow>
+                    <Act><AntDesign name="like2" size={14} color="#30F59B" /><ActText>{item.likes}</ActText></Act>
+                    <Act><AntDesign name="message1" size={14} color="#cfd4da" /><ActText>{item.comments}</ActText></Act>
+                </ActionRow>
+            </RowPress>
+        );
+    };
+
+
+
 
     const renderComment: ListRenderItem<CommentRow> = ({ item }) => (
         <RowPress onPress={() => router.push({ pathname: '/community/[id]', params: { id: item.postId } })}>
@@ -457,7 +461,7 @@ const CommentTitle = styled.Text`
   margin-top: 8px;
   color: #ffffff;
   font-size: 16px;
-  font-family: 'PlusJakartaSans_700Bold';
+  font-family: 'PlusJakartaSans_300Bold';
 `;
 
 const ParentSnippet = styled.Text`
@@ -545,3 +549,23 @@ const ToastText = styled.Text`
 `;
 
 const List = styled.FlatList<any>``;
+
+const InlineRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const PostDateText = styled.Text`
+  color: #9aa0a6;
+  font-size: 11px;
+  /* flex 없음: 내용만큼만 차지 */
+`;
+
+const PostTitle = styled.Text`
+  margin-top: 8px;
+  color: #ffffff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_300Bold';
+`;
+
+

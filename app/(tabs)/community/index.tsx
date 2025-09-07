@@ -5,21 +5,30 @@ import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
-import { keyToUrl } from '@/utils/image';
-import { logName, probeDisplayName } from '@/utils/nameDebug';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
-    ListRenderItem,
-    ViewToken,
-    type FlatListProps
+    ListRenderItem, type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
 
+const isMeaningfulName = (v?: any) => {
+    const s = String(v ?? '').trim();
+    if (!s) return false;
+    const lower = s.toLowerCase();
+    return !['unknown', 'null', 'undefined', '-', '—'].includes(lower);
+};
+
+const pickNonEmpty = (...vals: any[]) => {
+    for (const v of vals) {
+        const s = String(v ?? '').trim();
+        if (s) return s;
+    }
+    return '';
+};
 const ICON = require('@/assets/images/IsolationMode.png');
 const AV = require('@/assets/images/character1.png');
 
@@ -100,6 +109,7 @@ type PostEx = Post & {
     userImageUrl?: string;
 };
 
+
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     const createdRaw = row.createdAt ?? row.createdTime;
     const liked =
@@ -113,10 +123,14 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
-    const probe = probeDisplayName(row);
-    logName('list-map', row.postId, probe, { rawIsAnonymous: row.isAnonymous, userName: row.userName });
-
-    const display = probe.picked;
+    const pickedRaw = pickNonEmpty(
+        row.authorName,
+        row.userName,
+        row.nickname,
+        row.memberName,
+        row.writerName
+    );
+    const display = isMeaningfulName(pickedRaw) ? pickedRaw : '—';
 
     const niceCategory =
         (row.boardCategory && typeof row.boardCategory === 'string')
@@ -142,6 +156,8 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     };
 };
 
+
+
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
     const [sort, setSort] = useState<SortKey>('new');
@@ -151,9 +167,6 @@ export default function CommunityScreen() {
     const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-
-    const [imagesById, setImagesById] = useState<Record<number, string[]>>({});
-    const fetchedRef = useRef<Set<number>>(new Set());
 
     const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
     const boardId = CATEGORY_TO_BOARD_ID[cat];
@@ -174,8 +187,6 @@ export default function CommunityScreen() {
             setItems(prev => (after ? [...prev, ...list] : list));
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor);
-            setImagesById({});
-            fetchedRef.current.clear();
         } catch (e) {
             console.log('[community:list] error', e);
         } finally {
@@ -195,71 +206,6 @@ export default function CommunityScreen() {
         if (!hasNext || !cursor || loading) return;
         fetchPage(cursor);
     };
-
-    const hydrateImages = useCallback(async (postId: number) => {
-        if (fetchedRef.current.has(postId)) return;
-        fetchedRef.current.add(postId);
-        try {
-            const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
-
-            const dProbe = probeDisplayName(detail);
-            logName('detail-hydrate', postId, dProbe, {
-                userImageUrl: detail?.userImageUrl,
-                contentImageUrls: detail?.contentImageUrls,
-            });
-
-            const mergedAvatarUrl =
-                detail?.userImageUrl ? keyToUrl(detail.userImageUrl) : undefined;
-
-            const rawKeys: string[] =
-                (detail?.contentImageUrls as string[] | undefined) ??
-                (detail?.imageUrls as string[] | undefined) ??
-                (detail?.contentImageUrl ? [String(detail.contentImageUrl)] :
-                    detail?.imageUrl ? [String(detail.imageUrl)] : []);
-
-            setItems(prev =>
-                prev.map(p =>
-                    p.postId === postId
-                        ? {
-                            ...p,
-                            ...(rawKeys && rawKeys.length > 0 ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
-                            author: dProbe.picked,
-                            authorName: dProbe.picked,              // ← 둘 다 세팅
-                            ...(mergedAvatarUrl ? { avatar: { uri: mergedAvatarUrl } } : {}),
-                            ...(detail?.userImageUrl ? { userImageUrl: detail.userImageUrl } : {}),
-                        }
-                        : p
-                )
-            );
-
-            if (rawKeys && rawKeys.length > 0) {
-                setImagesById(prev => ({ ...prev, [postId]: rawKeys.slice(0, MAX_IMAGES) }));
-            }
-        } catch (e: any) {
-            if (typeof __DEV__ !== 'undefined' && __DEV__) {
-                console.log('[hydrate:error]', postId, e?.response?.status, e?.response?.data);
-            }
-        }
-    }, []);
-
-    const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-        for (const v of viewableItems) {
-            const it = v.item as PostEx | undefined;
-            if (!it) continue;
-            const hasEnough = Array.isArray(it.images) && it.images.length >= 2;
-            if (!hasEnough) hydrateImages(it.postId);
-        }
-    }).current;
-    const viewConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
-
-    const visible: PostEx[] = useMemo(() => {
-        if (!items.length) return items;
-        return items.map(it =>
-            imagesById[it.postId]
-                ? { ...it, images: imagesById[it.postId] }
-                : it
-        );
-    }, [items, imagesById]);
 
     const handleToggleLike = async (postId: number) => {
         const target = items.find(p => p.postId === postId);
@@ -323,9 +269,9 @@ export default function CommunityScreen() {
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
 
-                    <IconBtn onPress={() => router.push('/community/bookmarks')}>
+                    {/* <IconBtn onPress={() => router.push('/community/bookmarks')}>
                         <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
-                    </IconBtn>
+                    </IconBtn> */}
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>
@@ -341,7 +287,7 @@ export default function CommunityScreen() {
             </SortWrap>
 
             <List
-                data={visible}
+                data={items}
                 keyExtractor={(it: PostEx) => String(it.postId)}
                 renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
@@ -351,8 +297,6 @@ export default function CommunityScreen() {
                 onRefresh={refresh}
                 ListFooterComponent={loading ? <FooterLoading><ActivityIndicator /></FooterLoading> : null}
                 contentContainerStyle={{ paddingBottom: 80 }}
-                onViewableItemsChanged={onViewableItemsChanged}
-                viewabilityConfig={viewConfig}
             />
 
             <WriteFab onPress={() => router.push('/community/write')} />

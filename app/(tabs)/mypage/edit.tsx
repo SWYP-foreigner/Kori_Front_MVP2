@@ -518,9 +518,6 @@ export default function EditProfileScreen() {
   );
 }
 
-/* 스타일 블록은 네가 준 것과 동일하니 생략 없이 그대로 사용하면 돼 */
-
-
 const Safe = styled.SafeAreaView`flex:1;background:#171818;`;
 const Scroll = styled.ScrollView`padding:0 16px;`;
 const Header = styled.View`height:52px;align-items:center;justify-content:center;position:relative;`;
