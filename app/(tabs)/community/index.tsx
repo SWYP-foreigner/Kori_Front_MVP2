@@ -142,6 +142,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         postId: row.postId,
         author: display,
         authorName: display,
+        isAnonymous: isAnon,
         avatar: AV,
         category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
@@ -153,6 +154,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         likedByMe: Boolean(liked),
         ...(row.userImageUrl ? { userImageUrl: row.userImageUrl } : {}),
         viewCount: Number(row.viewCount ?? 0),
+        ...(isAnon ? {} : (row.userImageUrl ? { userImageUrl: row.userImageUrl } : {})),
     };
 };
 
