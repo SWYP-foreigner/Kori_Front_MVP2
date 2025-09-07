@@ -29,6 +29,7 @@ const pickNonEmpty = (...vals: any[]) => {
     }
     return '';
 };
+
 const ICON = require('@/assets/images/IsolationMode.png');
 const AV = require('@/assets/images/character1.png');
 
@@ -62,7 +63,7 @@ type PostsListItem = {
     imageUrl?: string | null;
 
     userImageUrl?: string;
-    boardCategory: Category;
+    boardCategory: Category | string;
     isAnonymous?: boolean;
 };
 
@@ -107,10 +108,16 @@ type PostEx = Post & {
     bookmarked?: boolean;
     likedByMe?: boolean;
     userImageUrl?: string;
+    isAnonymous?: boolean;
 };
 
-
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
+    // ✅ 여기서 안전하게 isAnon 계산
+    const isAnon =
+        (row as any)?.isAnonymous ??
+        (row as any)?.anonymous ??
+        false;
+
     const createdRaw = row.createdAt ?? row.createdTime;
     const liked =
         (row as any).likedByMe ??
@@ -130,7 +137,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         row.memberName,
         row.writerName
     );
-    const display = isMeaningfulName(pickedRaw) ? pickedRaw : '—';
+    const display = isMeaningfulName(pickedRaw) ? pickedRaw : (isAnon ? 'Anonymous' : '—');
 
     const niceCategory =
         (row.boardCategory && typeof row.boardCategory === 'string')
@@ -142,23 +149,20 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         postId: row.postId,
         author: display,
         authorName: display,
-        isAnonymous: isAnon,
-        avatar: AV,
+        isAnonymous: Boolean(isAnon),
+        avatar: AV, // PostCard에서 uri를 요구하면 그쪽에서 분기 처리
         category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
         likes: Number(row.likeCount ?? 0),
         comments: Number(row.commentCount ?? 0),
-        images: imageKeys.slice(0, MAX_IMAGES),
+        images: (imageKeys || []).filter(Boolean).slice(0, MAX_IMAGES),
         hotScore: typeof row.score === 'number' ? row.score : 0,
         likedByMe: Boolean(liked),
-        ...(row.userImageUrl ? { userImageUrl: row.userImageUrl } : {}),
         viewCount: Number(row.viewCount ?? 0),
-        ...(isAnon ? {} : (row.userImageUrl ? { userImageUrl: row.userImageUrl } : {})),
+        ...(row.userImageUrl ? { userImageUrl: row.userImageUrl } : {}),
     };
 };
-
-
 
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
@@ -188,7 +192,7 @@ export default function CommunityScreen() {
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
             setItems(prev => (after ? [...prev, ...list] : list));
             setHasNext(Boolean(data?.data?.hasNext));
-            setCursor(data?.data?.nextCursor);
+            setCursor(data?.data?.nextCursor ?? undefined);
         } catch (e) {
             console.log('[community:list] error', e);
         } finally {
@@ -271,9 +275,6 @@ export default function CommunityScreen() {
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
 
-                    {/* <IconBtn onPress={() => router.push('/community/bookmarks')}>
-                        <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
-                    </IconBtn> */}
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
                     </IconBtn>
