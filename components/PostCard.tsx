@@ -1,4 +1,3 @@
-// components/PostCard.tsx
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -11,7 +10,7 @@ const MAX_IMAGES = 5;
 export type Post = {
   id: string;
   author: string;
-  isAnonymous?: boolean;            // 🔹추가
+  isAnonymous?: boolean;
   avatar?: any;
   category: string;
   createdAt: string;
@@ -34,8 +33,10 @@ type Props = {
 };
 
 export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark }: Props) {
-  const isAnon = Boolean(data.isAnonymous);
-
+  const isAnon =
+    Boolean((data as any).isAnonymous) ||
+    String((data as any).authorName || (data as any).author || '')
+      .trim() === '익명';
   const showUnit = typeof data.minutesAgo === 'number';
   const timeLabel = showUnit
     ? (data.minutesAgo! < 60 ? `${data.minutesAgo} min ago` : `${Math.floor(data.minutesAgo! / 60)} hours ago`)
@@ -55,8 +56,14 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
       ? { uri: keyToUrl(avatarUrl) }
       : (isAnon ? undefined : (data.avatar as any));
 
-  const displayAuthor = isAnon ? 'Anonymous' : data.author;
-
+  const displayAuthor = isAnon
+    ? 'Anonymous'
+    : (String(
+      (data as any).author ??
+      (data as any).authorName ??
+      (data as any).userName ??
+      ''
+    ).trim() || '—');
   const rawImageKeysArr: string[] = Array.isArray(
     (data as any).contentImageUrls ?? (data as any).imageUrls ?? data.images
   )

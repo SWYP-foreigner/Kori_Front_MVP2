@@ -6,7 +6,6 @@ import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import { keyToUrl } from '@/utils/image';
-import { logName, probeDisplayName } from '@/utils/nameDebug';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -20,6 +19,21 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 
+const isMeaningfulName = (v?: any) => {
+    const s = String(v ?? '').trim();
+    if (!s) return false;
+    const lower = s.toLowerCase();
+    return !['unknown', 'null', 'undefined', '-', '—'].includes(lower);
+};
+
+// 빈문자/공백을 건너뛰고 첫 유효 문자열을 고르는 헬퍼
+const pickNonEmpty = (...vals: any[]) => {
+    for (const v of vals) {
+        const s = String(v ?? '').trim();
+        if (s) return s;
+    }
+    return '';
+};
 const ICON = require('@/assets/images/IsolationMode.png');
 const AV = require('@/assets/images/character1.png');
 
@@ -100,6 +114,7 @@ type PostEx = Post & {
     userImageUrl?: string;
 };
 
+
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     const createdRaw = row.createdAt ?? row.createdTime;
     const liked =
@@ -113,10 +128,15 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         (row.contentImageUrl ? [row.contentImageUrl] :
             row.imageUrl ? [row.imageUrl] : []);
 
-    const probe = probeDisplayName(row);
-    logName('list-map', row.postId, probe, { rawIsAnonymous: row.isAnonymous, userName: row.userName });
-
-    const display = probe.picked;
+    // 리스트 최초 매핑: 의미 있는 이름만 사용
+    const pickedRaw = pickNonEmpty(
+        row.authorName,
+        row.userName,
+        row.nickname,
+        row.memberName,
+        row.writerName
+    );
+    const display = isMeaningfulName(pickedRaw) ? pickedRaw : '—';
 
     const niceCategory =
         (row.boardCategory && typeof row.boardCategory === 'string')
@@ -141,6 +161,8 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         viewCount: Number(row.viewCount ?? 0),
     };
 };
+
+
 
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
@@ -202,37 +224,40 @@ export default function CommunityScreen() {
         try {
             const { data: detail } = await api.get(`/api/v1/posts/${postId}`);
 
-            const dProbe = probeDisplayName(detail);
-            logName('detail-hydrate', postId, dProbe, {
-                userImageUrl: detail?.userImageUrl,
-                contentImageUrls: detail?.contentImageUrls,
-            });
+            // 상세에서도 이름을 안전하게 뽑되, "의미있는 이름"일 때만 덮어씀
+            const candidate = pickNonEmpty(
+                (detail as any)?.authorName,
+                (detail as any)?.userName,
+                (detail as any)?.nickname,
+                (detail as any)?.memberName,
+                (detail as any)?.writerName
+            );
+            const newName = isMeaningfulName(candidate) ? candidate : null;
 
             const mergedAvatarUrl =
-                detail?.userImageUrl ? keyToUrl(detail.userImageUrl) : undefined;
+                (detail as any)?.userImageUrl ? keyToUrl((detail as any).userImageUrl) : undefined;
 
             const rawKeys: string[] =
-                (detail?.contentImageUrls as string[] | undefined) ??
-                (detail?.imageUrls as string[] | undefined) ??
-                (detail?.contentImageUrl ? [String(detail.contentImageUrl)] :
-                    detail?.imageUrl ? [String(detail.imageUrl)] : []);
+                ((detail as any)?.contentImageUrls as string[] | undefined) ??
+                ((detail as any)?.imageUrls as string[] | undefined) ??
+                ((detail as any)?.contentImageUrl ? [String((detail as any).contentImageUrl)] :
+                    (detail as any)?.imageUrl ? [String((detail as any).imageUrl)] : []);
 
             setItems(prev =>
                 prev.map(p =>
                     p.postId === postId
                         ? {
                             ...p,
-                            ...(rawKeys && rawKeys.length > 0 ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
-                            author: dProbe.picked,
-                            authorName: dProbe.picked,              // ← 둘 다 세팅
+                            ...(rawKeys?.length ? { images: rawKeys.slice(0, MAX_IMAGES) } : {}),
+                            ...(newName ? { author: newName, authorName: newName } : {}), // ← 여기가 핵심: 의미 있을 때만 덮어씀
                             ...(mergedAvatarUrl ? { avatar: { uri: mergedAvatarUrl } } : {}),
-                            ...(detail?.userImageUrl ? { userImageUrl: detail.userImageUrl } : {}),
+                            ...((detail as any)?.userImageUrl ? { userImageUrl: (detail as any).userImageUrl } : {}),
                         }
                         : p
                 )
             );
 
-            if (rawKeys && rawKeys.length > 0) {
+            if (rawKeys?.length) {
                 setImagesById(prev => ({ ...prev, [postId]: rawKeys.slice(0, MAX_IMAGES) }));
             }
         } catch (e: any) {
@@ -241,6 +266,8 @@ export default function CommunityScreen() {
             }
         }
     }, []);
+
+
 
     const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
         for (const v of viewableItems) {
