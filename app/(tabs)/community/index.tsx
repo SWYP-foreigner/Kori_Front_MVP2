@@ -1,7 +1,7 @@
 import api from '@/api/axiosInstance';
 import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
-import SortTabs, { SortKey } from '@/components/SortTabs';
+import SortTabs from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
@@ -112,7 +112,6 @@ type PostEx = Post & {
 };
 
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
-    // ✅ 여기서 안전하게 isAnon 계산
     const isAnon =
         (row as any)?.isAnonymous ??
         (row as any)?.anonymous ??
@@ -150,7 +149,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         author: display,
         authorName: display,
         isAnonymous: Boolean(isAnon),
-        avatar: AV, // PostCard에서 uri를 요구하면 그쪽에서 분기 처리
+        avatar: AV,
         category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
@@ -166,7 +165,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
 
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
-    const [sort, setSort] = useState<SortKey>('new');
+    const [sort, setSort] = useState<'new' | 'hot'>('new');
 
     const [items, setItems] = useState<PostEx[]>([]);
     const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -174,20 +173,20 @@ export default function CommunityScreen() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
-    const boardId = CATEGORY_TO_BOARD_ID[cat];
+    const sortServer = sort === 'new' ? 'LATEST' : 'POPULAR';
+    const boardId = Number(CATEGORY_TO_BOARD_ID[cat]);
 
     const likeMutation = useToggleLike();
 
-    useEffect(() => { refresh(); }, [boardId, sortParam]);
+    useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
         if (loading) return;
         setLoading(true);
         try {
-            const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, {
-                params: { sort: sortParam, size: 20, ...(after ? { cursor: after } : null) },
-            });
+            const params = { sort: sortServer, size: 20, ...(after ? { cursor: after } : {}) };
+            console.log('[community:list] GET', `/api/v1/boards/${boardId}/posts`, params);
+            const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
             setItems(prev => (after ? [...prev, ...list] : list));
@@ -203,13 +202,16 @@ export default function CommunityScreen() {
 
     const refresh = () => {
         setRefreshing(true);
+        setItems([]);
         setCursor(undefined);
         setHasNext(true);
         fetchPage(undefined);
     };
 
     const loadMore = () => {
-        if (!hasNext || !cursor || loading) return;
+        if (loading) return;
+        if (!hasNext) return;
+        if (!cursor) return;
         fetchPage(cursor);
     };
 
@@ -229,7 +231,6 @@ export default function CommunityScreen() {
         try {
             await likeMutation.mutateAsync({ postId, liked: prevLiked });
         } catch (e) {
-            // 롤백
             setItems(prev =>
                 prev.map(p =>
                     p.postId === postId
