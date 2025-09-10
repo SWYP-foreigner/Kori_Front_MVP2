@@ -29,6 +29,20 @@ import {
 } from 'react-native';
 import styled from 'styled-components/native';
 
+async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
+  const jobs = urls.map(
+    (uri) =>
+      new Promise<number>((resolve) => {
+        RNImage.getSize(
+          uri,
+          (w, h) => resolve(w > 0 && h > 0 ? w / h : fallback),
+          () => resolve(fallback)
+        );
+      }),
+  );
+  return Promise.all(jobs);
+}
+
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 32;
 const IMG_W = SCREEN_W - H_PADDING;
@@ -64,7 +78,6 @@ function ResponsiveImage({
 
 const AV = require('@/assets/images/character1.png');
 const DANGER = '#FF4D4F';
-const MAX_IMAGES = 5;
 
 function parseDateFlexible(v?: unknown): Date | null {
   if (v == null) return null;
@@ -103,7 +116,6 @@ const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => (
 EditInput.displayName = 'EditInput';
 
 export default function PostDetailScreen() {
-  const openedOnceRef = useRef(false);
 
   const { id, focusCommentId, intent } = useLocalSearchParams<{
     id: string; focusCommentId?: string; intent?: string;
@@ -113,6 +125,98 @@ export default function PostDetailScreen() {
   const { data, isLoading, isError } = usePostDetail(
     Number.isFinite(postId) ? postId : undefined,
   );
+
+
+  const DEFAULT_RATIO = 16 / 9;
+  const MAX_IMAGES = 5;
+  const IMG_W = Dimensions.get('window').width - 32; // (H_PADDING 고려)
+
+  const rawImageKeys: string[] = useMemo(() => {
+    const p: any = data ?? {};
+    return (
+      (p.contentImageUrls as string[] | undefined) ??
+      (p.imageUrls as string[] | undefined) ??
+      []
+    );
+  }, [data]);
+
+  const imageUrls: string[] = useMemo(
+    () => keysToUrls(rawImageKeys).slice(0, MAX_IMAGES),
+    [rawImageKeys]
+  );
+
+  const [ratios, setRatios] = useState<number[]>([]);
+  const heights = useMemo(
+    () => (ratios.length ? ratios : imageUrls.map(() => DEFAULT_RATIO)).map(r => IMG_W / r),
+    [ratios, imageUrls, IMG_W]
+  );
+
+  const [imgIndex, setImgIndex] = useState(0);
+  const heightAnim = useRef(new Animated.Value(IMG_W / DEFAULT_RATIO)).current;
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (!viewableItems?.length) return;
+      const i = viewableItems[0].index ?? 0;
+      syncHeightForIndex(i);
+    }
+  ).current;
+
+  const currentIndexRef = useRef(0);
+
+  const syncHeightForIndex = React.useCallback((i: number) => {
+    currentIndexRef.current = i;
+    setImgIndex(i);
+    const nextH = heights[i] ?? (IMG_W / DEFAULT_RATIO);
+    Animated.timing(heightAnim, {
+      toValue: nextH,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [heights, IMG_W, DEFAULT_RATIO, heightAnim]);
+
+  const onMomentumScrollEnd = (e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x ?? 0;
+    const i = Math.max(0, Math.round(x / IMG_W));
+    syncHeightForIndex(i);
+  };
+  const onScrollEndDrag = (e: any) => {
+    const x = e?.nativeEvent?.contentOffset?.x ?? 0;
+    const i = Math.max(0, Math.round(x / IMG_W));
+    syncHeightForIndex(i);
+  };
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!imageUrls.length) return;
+      const rs = await loadAspectRatios(imageUrls, DEFAULT_RATIO);
+      if (!alive) return;
+      setRatios(rs);
+
+      const i = currentIndexRef.current;
+      const r = rs[i] ?? DEFAULT_RATIO;
+      heightAnim.setValue(IMG_W / r);
+    })();
+    return () => { alive = false; };
+  }, [imageUrls, DEFAULT_RATIO, IMG_W, heightAnim]);
+
+
+  const syncHeightForOffset = React.useCallback((x: number) => {
+    const i = Math.max(0, Math.round(x / IMG_W));
+    setImgIndex(i);
+
+    const nextH = heights[i] ?? (IMG_W / DEFAULT_RATIO);
+    Animated.timing(heightAnim, {
+      toValue: nextH,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [heights, IMG_W, DEFAULT_RATIO, heightAnim]);
+
+  const openedOnceRef = useRef(false);
 
   const [bookmarked, setBookmarked] = useState(false);
   const [likesOverride, setLikesOverride] = useState<number | null>(null);
@@ -124,7 +228,7 @@ export default function PostDetailScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportTarget, setReportTarget] = useState<'post' | 'user'>('post'); // ← 추가: 어떤 이름으로 표시할지만 다름
+  const [reportTarget, setReportTarget] = useState<'post' | 'user'>('post');
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
@@ -153,30 +257,6 @@ export default function PostDetailScreen() {
 
   const { mutateAsync: updateCommentMut } = useUpdateComment();
   const likeBusyRef = useRef<Record<number, boolean>>({});
-
-  const rawImageKeys: string[] = useMemo(() => {
-    const p: any = data ?? {};
-    return (
-      (p.contentImageUrls as string[] | undefined) ??
-      (p.imageUrls as string[] | undefined) ??
-      []
-    );
-  }, [data]);
-
-  const imageUrls: string[] = useMemo(
-    () => keysToUrls(rawImageKeys).slice(0, MAX_IMAGES),
-    [rawImageKeys]
-  );
-
-  const [imgIndex, setImgIndex] = useState(0);
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems?.length) {
-        const i = viewableItems[0].index ?? 0;
-        setImgIndex(i);
-      }
-    }
-  ).current;
 
   useEffect(() => {
     if (!data) return;
@@ -391,7 +471,7 @@ export default function PostDetailScreen() {
             if (status === 400) {
               try {
                 console.log('[report] retry with { reason }');
-                const r2 = await api.post(reqUrl, { reason: text }); // ← 동일 엔드포인트, 바디만 추가
+                const r2 = await api.post(reqUrl, { reason: text });
                 console.log('[report] success (with-body)', { status: r2.status, target: reportTarget });
                 setReportOpen(false);
                 setReportText('');
@@ -489,20 +569,42 @@ export default function PostDetailScreen() {
 
                 {imageUrls.length > 0 && (
                   <View style={{ marginTop: 10 }}>
-                    <FlatList
-                      data={imageUrls}
-                      keyExtractor={(u, i) => `${u}#${i}`}
-                      renderItem={({ item }) => (
-                        <ResponsiveImage uri={item} width={IMG_W} />
-                      )}
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      onViewableItemsChanged={onViewableItemsChanged}
-                    />
+                    <Animated.View
+                      style={{
+                        height: heightAnim,
+                        overflow: 'hidden',
+                        borderRadius: 12,
+                        backgroundColor: '#111213',
+                      }}
+                    >
+                      <FlatList
+                        data={imageUrls}
+                        keyExtractor={(u, i) => `${u}#${i}`}
+                        horizontal
+                        pagingEnabled
+                        snapToInterval={IMG_W}
+                        decelerationRate="fast"
+                        removeClippedSubviews={false}
+                        scrollEventThrottle={16}
+                        onMomentumScrollEnd={onMomentumScrollEnd}
+                        onScrollEndDrag={onScrollEndDrag}
+                        onViewableItemsChanged={onViewableItemsChanged}
+
+                        renderItem={({ item }) => (
+                          <RNImage
+                            source={{ uri: item }}
+                            resizeMode="cover"
+                            style={{ width: IMG_W, height: '100%' }}
+                          />
+                        )}
+                      />
+                    </Animated.View>
+
                     <Counter>{` ${imgIndex + 1}/${imageUrls.length} `}</Counter>
                   </View>
                 )}
+
+
 
                 <Body>{body}</Body>
 
