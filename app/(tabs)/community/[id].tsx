@@ -71,6 +71,8 @@ const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => (
 EditInput.displayName = 'EditInput';
 
 export default function PostDetailScreen() {
+  const openedOnceRef = useRef(false);
+
   const { id, focusCommentId, intent } = useLocalSearchParams<{
     id: string; focusCommentId?: string; intent?: string;
   }>();
@@ -154,22 +156,29 @@ export default function PostDetailScreen() {
   }, [data]);
 
   useEffect(() => {
-    if (intent === 'edit' && focusCommentId) {
-      const target = commentList.find(
-        c => String((c as any).id ?? (c as any).commentId) === String(focusCommentId)
-      );
-      if (target) {
-        const body =
-          (target as any).content ??
-          (target as any).comment ??
-          (target as any).text ?? '';
-        setEditText(String(body));
-        setEditVisible(true);
-        const t = setTimeout(() => editInputRef.current?.focus(), 350);
-        return () => clearTimeout(t);
-      }
-    }
-  }, [intent, focusCommentId, commentList]);
+    if (openedOnceRef.current) return;
+    if (intent !== 'edit' || !focusCommentId) return;
+    if (!Array.isArray(commentList) || commentList.length === 0) return;
+
+    const target = commentList.find(
+      c => String((c as any).id ?? (c as any).commentId) === String(focusCommentId)
+    );
+    if (!target) return;
+
+    const body =
+      (target as any).content ??
+      (target as any).comment ??
+      (target as any).text ?? '';
+
+    setEditText(String(body));
+    setEditVisible(true);
+    openedOnceRef.current = true;
+
+    const t = setTimeout(() => editInputRef.current?.focus(), 350);
+    return () => clearTimeout(t);
+
+  }, [intent, focusCommentId, commentList.length]);
+
 
   if (isLoading) {
     return (
