@@ -29,6 +29,10 @@ const CATS: Category[] = ['News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'
 const GREEN = '#30F59B';
 
 export default function WriteScreen() {
+
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
+
   const params = useLocalSearchParams<{ mode?: string; postId?: string; initial?: string }>();
   const isEdit = params.mode === 'edit';
   const postIdNum = params.postId ? Number(params.postId) : undefined;
@@ -108,6 +112,11 @@ export default function WriteScreen() {
 
   const onSave = async () => {
     if (!canSave) return;
+    if (savingRef.current || presignMutation.isPending || createMutation.isPending || updateMutation.isPending) {
+      return;
+    }
+    savingRef.current = true;
+    setSaving(true);
     const content = body.trim();
 
     try {
@@ -130,13 +139,18 @@ export default function WriteScreen() {
 
         console.log('[presign:response]', presignRes);
 
-        for (let i = 0; i < presignRes.length; i++) {
-          const { key, putUrl, headers } = presignRes[i];
-          const fileUri = images[i];
-          console.log('[upload:put]', { idx: i, key, fileUri, hasPutUrl: !!putUrl, headers });
-          await uploadImageToPresignedUrl({ putUrl, headers: headers ?? {}, fileUri });
-          uploadedKeys.push(key);
-        }
+        await Promise.all(
+          presignRes.map((p, i) =>
+            uploadImageToPresignedUrl({
+              putUrl: p.putUrl,
+              headers: p.headers ?? {},
+              fileUri: images[i],
+            })
+          )
+        );
+        uploadedKeys = presignRes.map(p => p.key);
+
+
 
         console.log('[upload:done]', { uploadedKeys });
       }
@@ -169,6 +183,7 @@ export default function WriteScreen() {
           payload,
         });
 
+
         const res = await createMutation.mutateAsync(payload);
         console.log('[post:create:response]', res);
 
@@ -183,6 +198,9 @@ export default function WriteScreen() {
         message: e?.message,
       });
       Alert.alert('Error', isEdit ? 'Failed to update post.' : 'Failed to create post.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
   };
 
@@ -195,7 +213,7 @@ export default function WriteScreen() {
         <HeaderTitle>{isEdit ? 'Edit Post' : 'Write'}</HeaderTitle>
         <SaveBtn
           onPress={onSave}
-          disabled={!canSave || updateMutation.isPending || createMutation.isPending}
+          disabled={!canSave || saving || updateMutation.isPending || createMutation.isPending}
         >
           <SaveText $enabled={canSave && !updateMutation.isPending && !createMutation.isPending}>
             {isEdit

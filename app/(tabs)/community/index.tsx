@@ -7,7 +7,7 @@ import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -189,7 +189,12 @@ export default function CommunityScreen() {
             const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
-            setItems(prev => (after ? [...prev, ...list] : list));
+            setItems(prev => {
+                if (!after) return list;
+                const seen = new Set(prev.map(p => p.postId));
+                const appended = list.filter(p => !seen.has(p.postId));
+                return [...prev, ...appended];
+            });
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor ?? undefined);
         } catch (e) {
@@ -208,11 +213,15 @@ export default function CommunityScreen() {
         fetchPage(undefined);
     };
 
+    //다중 호출 방지 (테스트 필요함)
+    const onEndCalledRef = useRef(false);
+
     const loadMore = () => {
-        if (loading) return;
-        if (!hasNext) return;
-        if (!cursor) return;
-        fetchPage(cursor);
+        if (loading || onEndCalledRef.current || !hasNext || !cursor) return;
+        onEndCalledRef.current = true;
+        fetchPage(cursor).finally(() => {
+
+        });
     };
 
     const handleToggleLike = async (postId: number) => {
@@ -297,6 +306,9 @@ export default function CommunityScreen() {
                 showsVerticalScrollIndicator={false}
                 onEndReachedThreshold={0.4}
                 onEndReached={loadMore}
+                onMomentumScrollBegin={() => {
+                    onEndCalledRef.current = false;
+                }}
                 refreshing={refreshing}
                 onRefresh={refresh}
                 ListFooterComponent={loading ? <FooterLoading><ActivityIndicator /></FooterLoading> : null}
