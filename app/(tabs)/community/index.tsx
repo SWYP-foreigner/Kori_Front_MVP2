@@ -1,13 +1,13 @@
 import api from '@/api/axiosInstance';
 import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
-import SortTabs, { SortKey } from '@/components/SortTabs';
+import SortTabs from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -112,7 +112,6 @@ type PostEx = Post & {
 };
 
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
-    // ✅ 여기서 안전하게 isAnon 계산
     const isAnon =
         (row as any)?.isAnonymous ??
         (row as any)?.anonymous ??
@@ -150,7 +149,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
         author: display,
         authorName: display,
         isAnonymous: Boolean(isAnon),
-        avatar: AV, // PostCard에서 uri를 요구하면 그쪽에서 분기 처리
+        avatar: AV,
         category: niceCategory,
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
@@ -166,7 +165,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
 
 export default function CommunityScreen() {
     const [cat, setCat] = useState<Category>('All');
-    const [sort, setSort] = useState<SortKey>('new');
+    const [sort, setSort] = useState<'new' | 'hot'>('new');
 
     const [items, setItems] = useState<PostEx[]>([]);
     const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -174,23 +173,28 @@ export default function CommunityScreen() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    const sortParam = sort === 'new' ? 'LATEST' : 'POPULAR';
-    const boardId = CATEGORY_TO_BOARD_ID[cat];
+    const sortServer = sort === 'new' ? 'LATEST' : 'POPULAR';
+    const boardId = Number(CATEGORY_TO_BOARD_ID[cat]);
 
     const likeMutation = useToggleLike();
 
-    useEffect(() => { refresh(); }, [boardId, sortParam]);
+    useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
         if (loading) return;
         setLoading(true);
         try {
-            const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, {
-                params: { sort: sortParam, size: 20, ...(after ? { cursor: after } : null) },
-            });
+            const params = { sort: sortServer, size: 20, ...(after ? { cursor: after } : {}) };
+            console.log('[community:list] GET', `/api/v1/boards/${boardId}/posts`, params);
+            const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
-            setItems(prev => (after ? [...prev, ...list] : list));
+            setItems(prev => {
+                if (!after) return list;
+                const seen = new Set(prev.map(p => p.postId));
+                const appended = list.filter(p => !seen.has(p.postId));
+                return [...prev, ...appended];
+            });
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor ?? undefined);
         } catch (e) {
@@ -203,14 +207,21 @@ export default function CommunityScreen() {
 
     const refresh = () => {
         setRefreshing(true);
+        setItems([]);
         setCursor(undefined);
         setHasNext(true);
         fetchPage(undefined);
     };
 
+    //다중 호출 방지 (테스트 필요함)
+    const onEndCalledRef = useRef(false);
+
     const loadMore = () => {
-        if (!hasNext || !cursor || loading) return;
-        fetchPage(cursor);
+        if (loading || onEndCalledRef.current || !hasNext || !cursor) return;
+        onEndCalledRef.current = true;
+        fetchPage(cursor).finally(() => {
+
+        });
     };
 
     const handleToggleLike = async (postId: number) => {
@@ -229,7 +240,6 @@ export default function CommunityScreen() {
         try {
             await likeMutation.mutateAsync({ postId, liked: prevLiked });
         } catch (e) {
-            // 롤백
             setItems(prev =>
                 prev.map(p =>
                     p.postId === postId
@@ -296,6 +306,9 @@ export default function CommunityScreen() {
                 showsVerticalScrollIndicator={false}
                 onEndReachedThreshold={0.4}
                 onEndReached={loadMore}
+                onMomentumScrollBegin={() => {
+                    onEndCalledRef.current = false;
+                }}
                 refreshing={refreshing}
                 onRefresh={refresh}
                 ListFooterComponent={loading ? <FooterLoading><ActivityIndicator /></FooterLoading> : null}
