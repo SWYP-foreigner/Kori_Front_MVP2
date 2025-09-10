@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Kori_Front",
+    "name": "Kori",
     "slug": "Kori_Front",
     "splash": {
       "image": "./assets/images/character_02.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F0F10"
+      "backgroundColor": "#0f0f10"
     },
     "owner": "koriapp",
     "version": "1.0.0",
@@ -16,16 +16,13 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.SWYP.kori",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.SWYP.kori",
       "permissions": ["INTERNET"],
       "usesCleartextTraffic": false,
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "softwareKeyboardLayoutMode":"pan",
       "edgeToEdgeEnabled": true
     },
@@ -36,13 +33,14 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/AppLogo.png",
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#0f0f10"
         }
       ],
       [
