@@ -17,11 +17,10 @@ import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   Alert,
-  Animated,
-  Easing,
-  FlatList, ImageErrorEventData, Keyboard,
+  Animated, Dimensions, Easing,
+  FlatList, Image as RNImage, Keyboard,
   KeyboardAvoidingView,
-  Modal, NativeSyntheticEvent, Platform,
+  Modal, Platform,
   Pressable,
   TextInput as RNTextInput,
   TextInputProps,
@@ -29,6 +28,39 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
+
+const SCREEN_W = Dimensions.get('window').width;
+const H_PADDING = 32;
+const IMG_W = SCREEN_W - H_PADDING;
+
+function ResponsiveImage({
+  uri,
+  width,
+  radius = 12,
+}: { uri: string; width: number; radius?: number }) {
+  const [ratio, setRatio] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    RNImage.getSize(
+      uri,
+      (w, h) => { if (mounted) setRatio(w > 0 && h > 0 ? w / h : 16 / 9); },
+      () => { if (mounted) setRatio(16 / 9); }
+    );
+    return () => { mounted = false; };
+  }, [uri]);
+
+  if (!ratio) {
+    return <View style={{ width, height: width / (16 / 9), borderRadius: radius, backgroundColor: '#111213' }} />;
+  }
+
+  return (
+    <RNImage
+      source={{ uri }}
+      resizeMode="cover"
+      style={{ width, aspectRatio: ratio, borderRadius: radius, backgroundColor: '#111213' }} />
+  );
+}
 
 const AV = require('@/assets/images/character1.png');
 const DANGER = '#FF4D4F';
@@ -461,11 +493,7 @@ export default function PostDetailScreen() {
                       data={imageUrls}
                       keyExtractor={(u, i) => `${u}#${i}`}
                       renderItem={({ item }) => (
-                        <Img source={{ uri: item }} resizeMode="cover"
-                          onError={(e: NativeSyntheticEvent<ImageErrorEventData>) =>
-                            console.log('[detail:image:error]', item, e.nativeEvent?.error)
-                          }
-                        />
+                        <ResponsiveImage uri={item} width={IMG_W} />
                       )}
                       horizontal
                       pagingEnabled
@@ -671,7 +699,6 @@ const BookmarkWrap = styled.Pressable<{ $active?: boolean }>`
   background: transparent;
 `;
 
-const Img = styled.Image`width: 360px; height: 200px; border-radius: 12px; margin-right: 8px;`;
 const Counter = styled.Text`
   position: absolute; right: 14px; bottom: 14px; color: #fff;
   background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 10px; font-size: 12px;
