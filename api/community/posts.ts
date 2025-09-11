@@ -1,8 +1,6 @@
-// src/lib/community/api.ts
 import api from '@/api/axiosInstance';
 import type { Category } from '@/components/CategoryChips';
 
-/** ---- boards / sort ---- */
 export type BoardId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type SortParam = 'LATEST' | 'POPULAR';
 
@@ -31,7 +29,6 @@ export function categoryIdToCategory(id: number): Category {
     }
 }
 
-/** ---- name helpers (목록/상세 공통) ---- */
 export function pickDisplayName(row: any): string | undefined {
     const isAnon = row?.isAnonymous ?? row?.anonymous ?? false;
 
@@ -64,27 +61,22 @@ export function pickAuthorId(row: any): string | undefined {
     return id != null ? String(id) : undefined;
 }
 
-/** ---- 목록 타입 ---- */
 export type PostListItem = {
     postId: number;
 
-    // 텍스트/메타
     title?: string | null;
     contentPreview?: string | null;
     content?: string | null;
 
-    // 작성자 이름 후보들 (optional + null 허용)
     authorName?: string | null;
     userName?: string | null;
     nickname?: string | null;
     memberName?: string | null;
     writerName?: string | null;
 
-    // 작성자/익명/아바타
     isAnonymous?: boolean;
     userImageUrl?: string | null;
 
-    // 카테고리/시간/지표
     boardCategory?: string | Category;
     categoryId?: number;
     createdAt?: string | number | null;
@@ -94,18 +86,15 @@ export type PostListItem = {
     viewCount?: number | null;
     score?: number | null;
 
-    // 좋아요 상태
     likedByMe?: boolean;
     isLike?: boolean;
     isLiked?: boolean;
 
-    // 이미지
     contentImageUrls?: string[] | null;
     imageUrls?: string[] | null;
     contentImageUrl?: string | null;
     imageUrl?: string | null;
 
-    // (서버가 줄 수도 있는) 기타
     imageCount?: number | null;
 };
 
@@ -117,7 +106,6 @@ export type PostsCursorPage = {
 
 type PostsListServerResp = { success: boolean; data: PostsCursorPage; timestamp?: string };
 
-/** 목록 페이지 API (원본 그대로 전달) */
 export async function getPostsPage(
     boardId: BoardId,
     params: { sort?: SortParam; size?: number; cursor?: string }
@@ -129,15 +117,12 @@ export async function getPostsPage(
     return data.data;
 }
 
-/** ---- 상세 타입 ---- */
 export type PostDetail = {
     postId: number;
 
-    // 본문/링크
     content: string;
     link?: string | null;
 
-    // 작성자 식별자 + 이름 후보들
     authorId?: string | number | null;
     userId?: string | number | null;
     memberId?: string | number | null;
@@ -148,20 +133,16 @@ export type PostDetail = {
     memberName?: string | null;
     writerName?: string | null;
 
-    // 표시용
     userImageUrl?: string | null;
     isAnonymous?: boolean;
 
-    // 카테고리/시간
     boardCategory?: string;
     createdTime: number | string | null; // 서버가 epoch(초/밀리초) 또는 ISO 문자열 줄 수 있음
 
-    // 지표
     likeCount: number;
     commentCount: number;
     viewCount: number;
 
-    // 이미지
     contentImageUrls?: string[] | null;
     imageUrls?: string[] | null;
     contentImageUrl?: string | null;
@@ -170,7 +151,6 @@ export type PostDetail = {
 
 type PostDetailServerResp = { message?: string; data: PostDetail; timestamp?: string };
 
-/** 상세 API (래퍼: data.data 또는 data 형태 모두 수용) */
 export async function getPostDetail(
     postId: number
 ): Promise<PostDetail & { timestamp?: string }> {
@@ -188,7 +168,6 @@ export async function getPostDetail(
     return data as PostDetail & { timestamp?: string };
 }
 
-/** 작성 API */
 export type CreatePostBody = {
     content: string;
     isAnonymous: boolean;

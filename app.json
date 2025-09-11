@@ -16,13 +16,14 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.SWYP.kori",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.SWYP.kori",
       "permissions": ["INTERNET"],
       "usesCleartextTraffic": false,
-      "softwareKeyboardLayoutMode":"pan",
+      "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -32,11 +33,12 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/AppLogo.png",
-          "imageWidth": 200,
+          "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#0f0f10"
         }

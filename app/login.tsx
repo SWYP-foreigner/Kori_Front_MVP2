@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Dimensions, FlatList, ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal} from "react-native";
+import { Dimensions, FlatList, ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform} from "react-native";
 import styled from "styled-components/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
@@ -13,6 +13,7 @@ import axios from 'axios';
 import { PageIndicator } from 'react-native-page-indicator';
 import EmailSignButton from "@/components/EmailSignButton";
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AppleSignInButton from "@/components/AppleSignInButton";
 import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
@@ -184,7 +185,7 @@ const LoginScreen = () => {
 
       {/* 로그인 버튼 영역 */}
       <ButtonContainer>
-        <GoogleSignInButton onPress={signIn} />
+        {Platform.OS==='ios'?(<AppleSignInButton/>):(<GoogleSignInButton onPress={signIn} />)}
         <EmailSignButton onPress={goEmailLoginScreen}/>
         <SmallText>By singing up, you agree to our Terms.{'\n'} 
           See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>

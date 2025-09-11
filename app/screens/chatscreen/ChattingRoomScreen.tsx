@@ -45,9 +45,8 @@ const ChattingRoomScreen=()=>{
     const [inputText, setInputText] = useState("");
     const [myUserId,setMyUserId]=useState('');
     const [isTranslate,setIsTranslate]=useState(false);
-    const [stompConnected, setStompConnected] = useState(false);    
+    const [stompConnected, setStompConnected] = useState(false);  
     const stompClient = useRef<Client | null>(null);
-    const scrollViewRef = useRef<ScrollView>(null);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -64,6 +63,7 @@ const ChattingRoomScreen=()=>{
             return null;
         }
     };
+    
 
     // ---------------------- STOMP 연결 함수 ----------------------
     const connectStomp = async () => {
@@ -200,6 +200,7 @@ const ChattingRoomScreen=()=>{
         });
     };
 
+    // 시간 변환 함수
     const formatTime = (sentAt: string | number) => {
         const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
         const date = new Date(ts);
@@ -207,6 +208,20 @@ const ChattingRoomScreen=()=>{
         const minutes = date.getMinutes().toString().padStart(2, "0");
         return `${hours}:${minutes}`;
     };
+    const formatDate=(utcSeconds: number): string=> {
+    // 초 단위이므로 밀리초로 변환
+    const date = new Date(utcSeconds * 1000);
+
+    // 요일 배열
+    const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const weekday = weekdays[date.getUTCDay()];
+
+    return `${year}.${month}.${day} (${weekday})`;
+    }
 
     return (
         <SafeArea>
@@ -228,7 +243,11 @@ const ChattingRoomScreen=()=>{
                         </TouchableOpacity>
                     </Right>
                 </HeaderContainer>
-
+                  <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 50 : 30}
+                    >
                 {/* 채팅 화면 */}
                 <ChattingScreen>
                     <FlatList
@@ -246,25 +265,47 @@ const ChattingRoomScreen=()=>{
                             const isMyMessage = item.senderId.toString() === myUserId;
                             // 프로필 표시 로직
                             const showProfile = index === messages.length - 1 || (messages[index + 1] && messages[index + 1].senderFirstName !== item.senderFirstName);
-
+                            const isSameUser= ((index>0)&&(messages[index-1].senderFirstName === messages[index].senderFirstName));
+                            const showTime=(index===0) ||
+                                ((index>0)&&(formatTime(messages[index-1].sentAt)!==formatTime(messages[index].sentAt))&&(isSameUser))
+                                || !isSameUser;
+                            const showDate=(index === messages.length - 1) || (messages[index + 1] && formatDate(messages[index + 1].sentAt) !== formatDate(item.sentAt));
+                            
+                            console.log(index,item);
+                            console.log(formatDate(item.sentAt))
                             if (isMyMessage) {
                                 return showProfile ? (
+                                    <>
                                     <ChattingRightContainer showProfile={showProfile}>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                        {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextFirstBox>
-                                    </ChattingRightContainer>
+                                    </ChattingRightContainer>  
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>} 
+                                    </>
                                 ) : (
+                                    <>
                                     <ChattingRightContainer>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                          {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextNotFirstBox>
                                     </ChattingRightContainer>
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 );
                             } else {
                                 return showProfile ? (
+                                    <>
                                     <ChattingLeftContainer showProfile={showProfile}>
                                         <ProfileContainer>
                                             <ProfileBox>
@@ -277,11 +318,18 @@ const ChattingRoomScreen=()=>{
                                                 <OtherFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
+                                    {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 ) : (
+                                    <>
                                     <ChattingLeftContainer>
                                         <ProfileContainer></ProfileContainer>
                                         <OtherContainer>
@@ -289,16 +337,22 @@ const ChattingRoomScreen=()=>{
                                                 <OtherNotFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherNotFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 );
                             }
                         }}
                     />
 
-                    <BottomContainer style={{ paddingBottom: insets.bottom + 5 }}>
+                    <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox
                             value={inputText}
                             onChangeText={setInputText}
@@ -321,6 +375,7 @@ const ChattingRoomScreen=()=>{
                         </TranslatingButtonBox>
                     )}
                 </ChattingScreen>
+                </KeyboardAvoidingView>
             </Container>
         </SafeArea>
     );
@@ -336,7 +391,10 @@ const Container=styled.View`
  flex:1; background-color:#1D1E1F; padding:0px 15px; 
  `;
 const HeaderContainer=styled.View` 
-flex-direction:row; height:10%; align-items:center; justify-content: center; 
+flex-direction:row; 
+height:70px; 
+align-items:center; 
+justify-content: center; 
 `;
 const HeaderTitleText=styled.Text` 
 color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; 
@@ -460,8 +518,9 @@ font-family:PlusJakartaSans_400Regular;
 `;
 const TranslateButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-bottom: ${height * 0.17}px;
-right:10px; width:50px;
+bottom: ${height * 0.12}px;
+right:10px; 
+width:50px;
 height:50px; 
 border-radius:30px; 
 z-index:999; 
@@ -476,7 +535,6 @@ resize-mode:contain;
 `;
 const TranslatingButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-top: ${height * 0.1}px; 
 width:50px; 
 height:50px; 
 align-self:center; 
@@ -491,8 +549,10 @@ const TranslatingImage=styled.Image`
  height:130px;
   resize-mode:contain; 
   `;
-const BottomContainer=styled.View` 
-background-color:#1D1E1F; 
+const BottomContainer=styled.View`
+background-color:#1D1E1F;
+height:50px; 
+
 border-top-width:1px; 
 border-top-color:#353637; 
 flex-direction:row; 
@@ -515,4 +575,17 @@ const SendImage=styled.Image`
 width:100%;
  height:100%; 
  resize-mode:contain; 
+ `;
+
+ const DateTimeView=styled.View`
+    margin:20px 0px 10px 0px;
+    height:20px;
+    justify-content:center;
+    align-items:center;
+ `;
+
+ const DateTimeText=styled.Text`
+    color:#848687;
+    font-size:12px;
+    font-family:PlusJakartaSans_600SemiBold;
  `;
