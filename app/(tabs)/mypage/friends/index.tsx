@@ -1,4 +1,5 @@
 import FriendCard from '@/components/FriendCard';
+import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useUnfollowAccepted from '@/hooks/mutations/useUnfollowAccepted'; // ✅ 변경
 import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -51,6 +52,8 @@ export default function FriendsOnlyScreen() {
         () => (data ?? []).map(toFriendItem).filter(v => Number.isFinite(v.id) && v.id > 0),
         [data]
     );
+
+    const { mutateAsync: createRoom } = useCreateOneToOneRoom();
 
     const totalPages = list.length;
     const [page, setPage] = useState(1);
@@ -134,8 +137,21 @@ export default function FriendsOnlyScreen() {
                                 bio={item.bio}
                                 imageKey={item.imageKey}
                                 isFollowed
-                                onChat={() => { }}
-                                onUnfollow={() => confirmUnfollow(item.id)}
+                                onChat={async () => {
+                                    try {
+                                        const roomId = await createRoom({ otherUserId: item.id });
+                                        router.push({
+                                            pathname: '/screens/chatscreen/ChattingRoomScreen',
+                                            params: {
+                                                userId: String(item.id),
+                                                roomName: encodeURIComponent(item.name || 'Unknown'),
+                                                roomId,
+                                            },
+                                        });
+                                    } catch (e: any) {
+                                        console.log('[chat]', e?.message ?? '채팅방 생성 실패');
+                                    }
+                                }} onUnfollow={() => confirmUnfollow(item.id)}
                                 collapsible={false}
                             />
                         </Inner>

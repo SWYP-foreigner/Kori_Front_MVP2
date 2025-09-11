@@ -1,6 +1,7 @@
 import FriendCard from '@/components/FriendCard';
 import useAcceptFollow from '@/hooks/mutations/useAcceptFollow';
 import useCancelFollowRequest from '@/hooks/mutations/useCancelFollowRequest';
+import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useDeclineFollow from '@/hooks/mutations/useDeclineFollow';
 import { useFollowList } from '@/hooks/queries/useFollowList';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -34,7 +35,6 @@ type FriendItem = {
 function HListBase(props: FlatListProps<FriendItem>) { return <FlatList {...props} />; }
 const HList = styled(HListBase)``;
 
-/** helpers **/
 const toItem = (u: any): FriendItem | null => {
   const idNum = Number(u?.userId ?? u?.id);
   if (!Number.isFinite(idNum) || idNum <= 0) return null;
@@ -59,7 +59,6 @@ const dedupById = (arr: any[]): FriendItem[] => {
   }
   return [...map.values()];
 };
-/** */
 
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
@@ -81,7 +80,8 @@ export default function FollowListScreen() {
     refetch: refetchSent,
   } = useFollowList('PENDING', 'sent');
 
-  // 다른 화면에서 Follow가 발생하면 sent를 갱신 (동기화)
+  const { mutateAsync: createRoom } = useCreateOneToOneRoom();
+
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('FOLLOW_REQUEST_SENT', () => {
       refetchSent();
@@ -134,7 +134,6 @@ export default function FollowListScreen() {
     }
   };
 
-  // 보낸 팔로우 취소 → 홈에 알리고 sent 목록 새로고침
   const handleCancelSent = async (userId: number) => {
     if (inFlight.has(userId)) return;
     try {
@@ -297,7 +296,21 @@ export default function FollowListScreen() {
                     mode="sent"
                     onAccept={() => { }}
                     onCancel={() => handleCancelSent(item.id)}
-                    onChat={() => { }}
+                    onChat={async () => {
+                      try {
+                        const roomId = await createRoom({ otherUserId: item.id });
+                        router.push({
+                          pathname: '/screens/chatscreen/ChattingRoomScreen',
+                          params: {
+                            userId: String(item.id),
+                            roomName: encodeURIComponent(item.name || 'Unknown'),
+                            roomId,
+                          },
+                        });
+                      } catch (e: any) {
+                        console.log('[chat]', e?.message ?? '채팅방 생성 실패');
+                      }
+                    }}
                     isFollowed={false}
                   />
                 </Inner>
