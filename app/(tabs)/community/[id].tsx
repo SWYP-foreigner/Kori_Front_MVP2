@@ -5,8 +5,10 @@ import { useCreateComment } from '@/hooks/mutations/useCreateComment';
 import { useLikeComment } from '@/hooks/mutations/useLikeComment';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { useUpdateComment } from '@/hooks/mutations/useUpdateComment';
+import { useCommentWriteOptions } from '@/hooks/queries/useCommentWriteOptions';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
+import { LOCAL_ALLOW_ANON, resolvePostCategory } from '@/utils/category';
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
@@ -28,6 +30,8 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
+
+
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
   const jobs = urls.map(
@@ -125,6 +129,34 @@ export default function PostDetailScreen() {
   const { data, isLoading, isError } = usePostDetail(
     Number.isFinite(postId) ? postId : undefined,
   );
+
+  const post = data as any;
+
+  const category = React.useMemo(() => resolvePostCategory(post), [post]);
+
+  const { data: cmtOpts } = useCommentWriteOptions(
+    Number.isFinite(postId) ? postId : undefined
+  );
+
+  const serverAnonymousAllowed = Boolean(
+    (cmtOpts as any)?.isAnonymousAvailable ?? (cmtOpts as any)?.isAnonymousAvaliable
+  );
+
+  const anonAllowed = React.useMemo(() => {
+    const local = category ? LOCAL_ALLOW_ANON.has(category) : false;
+    return serverAnonymousAllowed || local;
+  }, [serverAnonymousAllowed, category]);
+
+  React.useEffect(() => {
+    console.log('[comment:write-options]', {
+      postId,
+      category,
+      serverAnonymousAllowed,
+      anonAllowed,
+      raw: cmtOpts,
+    });
+  }, [postId, category, serverAnonymousAllowed, anonAllowed, cmtOpts]);
+
 
 
   const DEFAULT_RATIO = 16 / 9;
@@ -315,7 +347,6 @@ export default function PostDetailScreen() {
     );
   }
 
-  const post = data as any;
 
   const authorId: string = String(
     post.userId ?? post.authorId ?? post.memberId ?? post.writerId ??
@@ -329,9 +360,11 @@ export default function PostDetailScreen() {
   const isBlocked = Boolean(post.blocked ?? post.isBlocked);
   const isDeleted = Boolean(post.deleted ?? post.isDeleted ?? post.status === 'DELETED');
 
-  const author = authorName;
+  const author = isAnonymous ? '익명' : authorName;
   const avatarUrl = post.userImageUrl ? keyToUrl(post.userImageUrl) : undefined;
-  const avatarSrc = avatarUrl ? { uri: avatarUrl } : AV;
+  const avatarSrc = isAnonymous
+    ? AV
+    : (avatarUrl ? { uri: avatarUrl } : AV);
 
   const createdRaw = post.createdTime ?? post.createdAt ?? post.timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
@@ -372,7 +405,10 @@ export default function PostDetailScreen() {
     const text = value.trim();
     if (!text || !Number.isFinite(postId)) return;
     createCmt.mutate(
-      { anonymous, comment: text },
+      {
+        comment: text,
+        anonymous: anonAllowed ? !!anonymous : false,
+      },
       {
         onSuccess: () => {
           setValue('');
@@ -647,10 +683,20 @@ export default function PostDetailScreen() {
               blurOnSubmit
               onSubmitEditing={submit}
             />
-            {/* <AnonToggle onPress={() => setAnonymous(v => !v)}>
-              <AnonLabel>Anonymous</AnonLabel>
-              <Check $active={anonymous}>{anonymous && <AntDesign name="check" size={14} color="#ffffff" />}</Check>
-            </AnonToggle> */}
+            {anonAllowed && (
+              <AnonToggle
+                onPress={() => {
+                  const next = !anonymous;
+                  console.log('[comment:anon:toggle]', { category, anonAllowed, before: anonymous, after: next });
+                  setAnonymous(next);
+                }}
+              >
+                <AnonLabel>Anonymous</AnonLabel>
+                <Check $active={anonymous}>
+                  {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
+                </Check>
+              </AnonToggle>
+            )}
           </Composer>
 
           <SendBtn onPress={submit} disabled={!canSend} hitSlop={8}>

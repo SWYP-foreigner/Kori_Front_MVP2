@@ -1,4 +1,3 @@
-// components/CommentItem.tsx
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import React, { useMemo } from 'react';
@@ -112,7 +111,7 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
 
-  const authorLabel = anon ? '익명' : resolveAuthor(data);
+  const authorLabel = resolveAuthor(data);
   const avatarResolved = resolveAvatar(data);
   const avatarSrc = anon ? DEFAULT_AV : (avatarResolved || DEFAULT_AV);
   const dateLabel = useMemo(() => formatDate(data?.createdAt), [data?.createdAt]);
