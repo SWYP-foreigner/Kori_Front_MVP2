@@ -9,7 +9,8 @@ import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions } from 'react-native';
+import { Dimensions ,Image} from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 type ChatHistory = {
     id: number,
@@ -49,6 +50,9 @@ const ChattingRoomScreen=()=>{
     const stompClient = useRef<Client | null>(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [searchText,setSearchText]=useState('');
+    const [searchBox,setSearchBox]=useState(false);
+    const [isSearching,setIsSearching]=useState(false);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -226,6 +230,18 @@ const ChattingRoomScreen=()=>{
         });
     };
 
+    // SearchBox 보여주는 함수
+    const showSearchBox=()=>{
+        setSearchBox(!searchBox);
+        setIsSearching(false);
+        setSearchText('');
+    }
+
+    //검색시 호출되는 함수
+    const search=async()=>{
+       setIsSearching(true);
+    }
+
     // 시간 변환 함수
     const formatTime = (sentAt: string | number) => {
         const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
@@ -255,7 +271,29 @@ const ChattingRoomScreen=()=>{
             <Container>
                 {/* 헤더 */}
                 <HeaderContainer>
-                    <Left>
+                    {searchBox ?( 
+                        <>
+                            <TouchableOpacity onPress={showSearchBox}>
+                            <Feather name="arrow-left" size={27} color="#CCCFD0" />
+                </TouchableOpacity>
+                <SearchContainer>
+                    <Feather name="search" size={23} color="#CCCFD0" style={{ marginLeft: 8 }}  />
+                    <SearchInputText
+                        value={searchText}
+                        onChangeText={setSearchText}
+                        placeholder="Search Chat"
+                        placeholderTextColor='#616262'
+                        onSubmitEditing={search}
+
+                    />
+                {searchText&&
+                <TouchableOpacity onPress={() => setSearchText('')}>
+                    <AntDesign name="closecircle" size={23} color="#CCCFD0" style={{ marginRight: 8 }}  />
+                </TouchableOpacity>}
+                </SearchContainer>
+                </>):(
+                    <>
+                        <Left>
                         <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
                         </TouchableOpacity>
@@ -264,10 +302,19 @@ const ChattingRoomScreen=()=>{
                         <HeaderTitleText>{roomName}</HeaderTitleText>
                     </Center>
                     <Right>
-                        <TouchableOpacity onPress={onhandleNext}>
-                            <SimpleLineIcons name="menu" size={23} color="#CCCFD0" style={{ marginLeft: 10 }} />
+
+                        <TouchableOpacity onPress={showSearchBox} >
+                            <Feather name="search" size={23} color="#CCCFD0" />
                         </TouchableOpacity>
+                        <TouchableOpacity onPress={onhandleNext}>
+                            <SimpleLineIcons name="menu" size={23} color="#CCCFD0" style={{ marginLeft: 20 }} />
+                        </TouchableOpacity>
+                        
                     </Right>
+                    </>
+
+                )}
+                   
                 </HeaderContainer>
                   <KeyboardAvoidingView
                     style={{ flex: 1 }}
@@ -288,7 +335,7 @@ const ChattingRoomScreen=()=>{
                             paddingBottom: 10
                         }}
                         onEndReached={fetchMoreHistory} // 스크롤 상단에서 이전 메시지 로딩
-                        onEndReachedThreshold={0.1}
+                        onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
                             // 프로필 표시 로직
@@ -379,7 +426,25 @@ const ChattingRoomScreen=()=>{
                             }
                         }}
                     />
-
+                    {searchBox?(
+                    <FindSearchTextContainer>
+                        <TouchableOpacity disabled={!isSearching}>
+                        <Image
+                            source={require("@/assets/images/UpArrow.png")}
+                            style={{ width: 17, height: 17 , marginLeft:10}}  
+                            resizeMode="contain"                
+                            />
+                        </TouchableOpacity>
+                         <TouchableOpacity disabled={!isSearching}>
+                        <Image
+                        source={require("@/assets/images/DownArrow.png")}
+                        style={{ width: 17, height: 17 ,marginLeft:18}}  
+                        resizeMode="contain"                
+                        />
+                        </TouchableOpacity>
+                       
+                        <FindResultText>3/3</FindResultText>
+                    </FindSearchTextContainer>):(
                     <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox
                             value={inputText}
@@ -390,7 +455,7 @@ const ChattingRoomScreen=()=>{
                         <SendImageBox onPress={sendMessage}>
                             <SendImage source={require("@/assets/images/Send.png")}/>
                         </SendImageBox>
-                    </BottomContainer>
+                    </BottomContainer>)}
 
                     {!isTranslate && (
                         <TranslateButtonBox onPress={updateTranslateScreen}>
@@ -427,12 +492,19 @@ justify-content: center;
 const HeaderTitleText=styled.Text` 
 color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; 
 `;
-const Left=styled.View``;
+const Left=styled.View`
+  width: 60px; 
+  align-items: flex-start;
+`;
 const Center=styled.View` 
-flex:1; justify-content:center; align-items:center;
+flex:1; 
+justify-content:center; 
+align-items:center;
  `;
 const Right=styled.View`
- margin-right:5px; flex-direction:row; justify-content:center;
+  width: 60px; 
+  flex-direction: row;
+  justify-content: flex-end;
   `;
 const ChattingScreen=styled.View` 
 flex:1; flex-direction: column; padding-bottom:10px; 
@@ -623,4 +695,45 @@ width:100%;
   text-align: center;
   padding: 10px;
   font-size: 12px;
+`;
+
+
+const SearchContainer=styled.View`
+    width:85%;
+    height:45px;
+    background-color:#353637;
+    flex-direction:row;
+    margin-left:10px;
+    align-items:center;
+    justify-content:center;
+    padding: 0px 3px;
+    border-radius:8px;
+`;
+const SearchInputText=styled.TextInput`
+    background-color:#353637;
+    height:45px;
+    flex:1;
+    padding-left:10px;
+    color:#FFFFFF;
+    font-size:14px;
+    font-family:PlusJakartaSans_400Regular;
+`;
+
+const FindSearchTextContainer=styled.View`
+   background-color:#1D1E1F;
+   height:45px; 
+   border-top-width:1px; 
+   border-top-color:#353637; 
+   flex-direction:row; 
+   align-items:center;
+   
+`;
+
+
+const FindResultText=styled.Text`
+    position:absolute;
+    left: 50%;
+    color:#ffffff;
+    font-size:14px;
+    font-family:PlusJakartaSans_300Light;
 `;
