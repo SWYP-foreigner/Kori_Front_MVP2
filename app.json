@@ -23,7 +23,7 @@
       "package": "com.SWYP.kori",
       "permissions": ["INTERNET"],
       "usesCleartextTraffic": false,
-      "softwareKeyboardLayoutMode":"pan",
+      "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true
     },
     "web": {
