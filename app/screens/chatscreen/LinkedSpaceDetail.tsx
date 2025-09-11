@@ -216,6 +216,7 @@ const HostContainer=styled.View`
     align-items:center;
 `;
 const HostImageBox=styled.View`
+    border-radius:50px;
     width:50px;
     height:50px;
     overflow:hidden;
@@ -275,6 +276,8 @@ const MemberImageContainer=styled.View`
 const MembersBox=styled.View`
     height:30px;
     flex-direction:row;
+    overflow:hidden;
+    border-radius:50px;
 `;
 const MemberImageBox=styled.View`
     width:30px;

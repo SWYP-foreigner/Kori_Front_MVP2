@@ -47,7 +47,6 @@ const ChattingRoomScreen=()=>{
     const [isTranslate,setIsTranslate]=useState(false);
     const [stompConnected, setStompConnected] = useState(false);    
     const stompClient = useRef<Client | null>(null);
-    const scrollViewRef = useRef<ScrollView>(null);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -64,6 +63,7 @@ const ChattingRoomScreen=()=>{
             return null;
         }
     };
+    
 
     // ---------------------- STOMP 연결 함수 ----------------------
     const connectStomp = async () => {
@@ -200,6 +200,7 @@ const ChattingRoomScreen=()=>{
         });
     };
 
+    // 시간 변환 함수
     const formatTime = (sentAt: string | number) => {
         const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
         const date = new Date(ts);
@@ -228,7 +229,11 @@ const ChattingRoomScreen=()=>{
                         </TouchableOpacity>
                     </Right>
                 </HeaderContainer>
-
+                  <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 50 : 30}
+                    >
                 {/* 채팅 화면 */}
                 <ChattingScreen>
                     <FlatList
@@ -298,7 +303,7 @@ const ChattingRoomScreen=()=>{
                         }}
                     />
 
-                    <BottomContainer style={{ paddingBottom: insets.bottom + 5 }}>
+                    <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox
                             value={inputText}
                             onChangeText={setInputText}
@@ -321,6 +326,7 @@ const ChattingRoomScreen=()=>{
                         </TranslatingButtonBox>
                     )}
                 </ChattingScreen>
+                </KeyboardAvoidingView>
             </Container>
         </SafeArea>
     );
@@ -336,7 +342,10 @@ const Container=styled.View`
  flex:1; background-color:#1D1E1F; padding:0px 15px; 
  `;
 const HeaderContainer=styled.View` 
-flex-direction:row; height:10%; align-items:center; justify-content: center; 
+flex-direction:row; 
+height:70px; 
+align-items:center; 
+justify-content: center; 
 `;
 const HeaderTitleText=styled.Text` 
 color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; 
@@ -460,8 +469,9 @@ font-family:PlusJakartaSans_400Regular;
 `;
 const TranslateButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-bottom: ${height * 0.17}px;
-right:10px; width:50px;
+bottom: ${height * 0.12}px;
+right:10px; 
+width:50px;
 height:50px; 
 border-radius:30px; 
 z-index:999; 
@@ -476,7 +486,6 @@ resize-mode:contain;
 `;
 const TranslatingButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-top: ${height * 0.1}px; 
 width:50px; 
 height:50px; 
 align-self:center; 
@@ -491,8 +500,10 @@ const TranslatingImage=styled.Image`
  height:130px;
   resize-mode:contain; 
   `;
-const BottomContainer=styled.View` 
-background-color:#1D1E1F; 
+const BottomContainer=styled.View`
+background-color:#1D1E1F;
+height:50px; 
+
 border-top-width:1px; 
 border-top-color:#353637; 
 flex-direction:row; 
