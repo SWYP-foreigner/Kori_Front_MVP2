@@ -47,6 +47,8 @@ const ChattingRoomScreen=()=>{
     const [isTranslate,setIsTranslate]=useState(false);
     const [stompConnected, setStompConnected] = useState(false);  
     const stompClient = useRef<Client | null>(null);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -193,6 +195,30 @@ const ChattingRoomScreen=()=>{
         }
     };
 
+    // 무한 스크롤
+   const fetchMoreHistory = async () => {
+        if ( !hasMore) return;
+
+        setIsFetchingMore(true);
+
+        try {
+            const lastMessageId = messages[messages.length - 1]?.id;
+            const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId}`);
+
+            const olderMessages: ChatHistory[] = res.data.data;
+
+            if (olderMessages.length === 0) {
+            setHasMore(false);
+            } else {
+            setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
+            }
+        } catch (err) {
+            console.log("이전 메시지 불러오기 실패", err);
+        } finally {
+            setIsFetchingMore(false);
+        }
+};
+
     const onhandleNext = () => {
         router.push({
             pathname: './ChatInsideMember',  
@@ -261,6 +287,8 @@ const ChattingRoomScreen=()=>{
                             paddingTop: 10,
                             paddingBottom: 10
                         }}
+                        onEndReached={fetchMoreHistory} // 스크롤 상단에서 이전 메시지 로딩
+                        onEndReachedThreshold={0.1}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
                             // 프로필 표시 로직
@@ -589,3 +617,10 @@ width:100%;
     font-size:12px;
     font-family:PlusJakartaSans_600SemiBold;
  `;
+
+ const LoadingText = styled.Text`
+  color: #ccc;
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+`;
