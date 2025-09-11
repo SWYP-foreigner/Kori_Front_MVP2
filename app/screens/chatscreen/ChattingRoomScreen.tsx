@@ -45,7 +45,7 @@ const ChattingRoomScreen=()=>{
     const [inputText, setInputText] = useState("");
     const [myUserId,setMyUserId]=useState('');
     const [isTranslate,setIsTranslate]=useState(false);
-    const [stompConnected, setStompConnected] = useState(false);    
+    const [stompConnected, setStompConnected] = useState(false);  
     const stompClient = useRef<Client | null>(null);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
@@ -251,18 +251,25 @@ const ChattingRoomScreen=()=>{
                             const isMyMessage = item.senderId.toString() === myUserId;
                             // 프로필 표시 로직
                             const showProfile = index === messages.length - 1 || (messages[index + 1] && messages[index + 1].senderFirstName !== item.senderFirstName);
-
+                            const isSameUser= ((index>0)&&(messages[index-1].senderFirstName === messages[index].senderFirstName));
+                            const showTime=(index===0) ||
+                                ((index>0)&&(formatTime(messages[index-1].sentAt)!==formatTime(messages[index].sentAt))&&(isSameUser))
+                                || !isSameUser;
+                          
+                            console.log(index,item);
                             if (isMyMessage) {
                                 return showProfile ? (
                                     <ChattingRightContainer showProfile={showProfile}>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                        {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextFirstBox>
                                     </ChattingRightContainer>
                                 ) : (
                                     <ChattingRightContainer>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                          {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextNotFirstBox>
@@ -282,7 +289,8 @@ const ChattingRoomScreen=()=>{
                                                 <OtherFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
@@ -294,7 +302,8 @@ const ChattingRoomScreen=()=>{
                                                 <OtherNotFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherNotFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
