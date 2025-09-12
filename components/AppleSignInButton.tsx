@@ -8,7 +8,7 @@ export default function AppleSignInButton() {
       <AppleAuthentication.AppleAuthenticationButton
         buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
         buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-        cornerRadius={5}
+        cornerRadius={8}
         style={styles.button}
         onPress={async () => {
           try {
@@ -22,7 +22,7 @@ export default function AppleSignInButton() {
             });
             
              console.log("인증코드",credential.authorizationCode);
-            
+           
           } catch (e:any) {
             if (e.code === 'ERR_REQUEST_CANCELED') {
               console.log("사용자가 취소함");
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    width: 200,
-    height: 44,
+    width: '100%', 
+    height: 50,
   },
 });

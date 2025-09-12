@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Dimensions, FlatList, ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform} from "react-native";
+import { Dimensions,  
+  ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform,StatusBar ,ActivityIndicator} from "react-native";
 import styled from "styled-components/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
@@ -17,8 +18,7 @@ import AppleSignInButton from "@/components/AppleSignInButton";
 import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
-import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
-import api from "@/api/axiosInstance";
+
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
   iosClientId: `${Config.GOOGLE_IOS_CLIENT_ID}`,
@@ -53,6 +53,7 @@ const LoginScreen = () => {
   const [check1,setCheck1]=useState(false);
   const [check2,setCheck2]=useState(false);
   const [check3,setCheck3]=useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const onBoardingData: OnBoardingItem[] = [
     { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText:"Connect with people abroad in Korea for\nstudy, work, travel, or more."},
@@ -98,6 +99,7 @@ const LoginScreen = () => {
   // 구글 로그인
   const signIn = async () => {
     try {
+      setGoogleLoading(true); // 로딩 시작
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
@@ -105,6 +107,7 @@ const LoginScreen = () => {
         setUserInfo({ userInfo: response.data });
         const code = response.data.serverAuthCode;
         if (!code) {
+          setGoogleLoading(false); // 로딩 끝
           console.log('serverAuthCode 없음 (Google 설정 확인 필요)');
           return;
         }
@@ -128,6 +131,9 @@ const LoginScreen = () => {
         console.log('Google Sign-In 이외 오류', error);
       }
     }
+    finally{
+      setGoogleLoading(false); // 로딩 끝
+    }
   };
   
   const goEmailLoginScreen=async()=>{
@@ -148,6 +154,8 @@ const LoginScreen = () => {
   };
 
   return (
+     <SafeArea>
+    <StatusBar barStyle="light-content" />
     <Container>
       {/* 온보딩 이미지 영역 */}
       <OnBoardingContainer>
@@ -161,6 +169,7 @@ const LoginScreen = () => {
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
             { useNativeDriver: true }
           )}
+          
           renderItem={({ item }) => (
             <Slide source={item.image} resizeMode="cover" style={{ width, height:height*0.55 }}>
               <Overlay>
@@ -185,7 +194,8 @@ const LoginScreen = () => {
 
       {/* 로그인 버튼 영역 */}
       <ButtonContainer>
-        {Platform.OS==='ios'?(<AppleSignInButton/>):(<GoogleSignInButton onPress={signIn} />)}
+        {Platform.OS==='ios'?(<AppleSignInButton/>):(<GoogleSignInButton onPress={signIn} loading={googleLoading} />)}
+       
         <EmailSignButton onPress={goEmailLoginScreen}/>
         <SmallText>By singing up, you agree to our Terms.{'\n'} 
           See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
@@ -253,12 +263,19 @@ const LoginScreen = () => {
                   </ModalOverlay>
                 </Modal>
     </Container>
+    </SafeArea>
   );
 };
 
 export default LoginScreen;
 
 // ---------------- Styled Components ----------------
+
+
+const SafeArea = styled.SafeAreaView`
+  flex: 1;
+  background-color: #1D1E1F;
+`;
 
 const Container = styled.View`
   flex: 1;

@@ -3,7 +3,7 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Redirect } from 'expo-router';
 import CustomSplashScreen from './screens/splash/CustomSplashScreen';
-
+import LoginScreen from './login';
 SplashScreen.preventAutoHideAsync(); // 자동 숨김 방지
 
 export default function Index() {
