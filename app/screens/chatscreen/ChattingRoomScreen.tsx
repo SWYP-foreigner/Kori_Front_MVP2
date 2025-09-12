@@ -53,6 +53,7 @@ const ChattingRoomScreen=()=>{
     const [searchText,setSearchText]=useState('');
     const [searchBox,setSearchBox]=useState(false);
     const [isSearching,setIsSearching]=useState(false);
+    const [searchMessages,setSearchMessages]=useState<any[]>([]);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -239,7 +240,15 @@ const ChattingRoomScreen=()=>{
 
     //검색시 호출되는 함수
     const search=async()=>{
-       setIsSearching(true);
+       try{
+         setIsSearching(true);
+         const res=await api.get(`/api/v1/chat/search?roomId=${roomId}&keyword=${searchText}`);
+         const SearchResult: ChatHistory[] = res.data.data;
+         setSearchMessages(SearchResult);
+         console.log("메시지 검색 결과",SearchResult);
+       }catch(err){
+             console.log("검색 결과 불러오기 실패", err);
+       }
     }
 
     // 시간 변환 함수
