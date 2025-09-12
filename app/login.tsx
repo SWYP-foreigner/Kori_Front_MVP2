@@ -140,11 +140,11 @@ const LoginScreen = () => {
   };
 
   const showTermsAndConditions=()=>{
-      router.push("./TermsAndConditionsScreen");
+      router.push("/screens/login/TermsAndConditionsScreen");
   };
   
   const showPrivacyPolicy=()=>{
-    router.push("./PrivacyPolicyScreen");
+    router.push("/screens/login/PrivacyPolicyScreen");
   };
 
   return (

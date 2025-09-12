@@ -1,4 +1,5 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { randomUUID } from 'expo-crypto';
 import { View, StyleSheet } from 'react-native';
 
 export default function AppleSignInButton() {
@@ -11,15 +12,17 @@ export default function AppleSignInButton() {
         style={styles.button}
         onPress={async () => {
           try {
+            const rawNonce=randomUUID();
             const credential = await AppleAuthentication.signInAsync({
               requestedScopes: [
                 AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
                 AppleAuthentication.AppleAuthenticationScope.EMAIL,
               ],
+              nonce:rawNonce,
             });
-             console.log("App 응답값",credential);
+            
              console.log("인증코드",credential.authorizationCode);
-
+            
           } catch (e:any) {
             if (e.code === 'ERR_REQUEST_CANCELED') {
               console.log("사용자가 취소함");
