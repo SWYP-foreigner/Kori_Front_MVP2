@@ -9,7 +9,8 @@ import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions } from 'react-native';
+import { Dimensions ,Image} from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 type ChatHistory = {
     id: number,
@@ -45,9 +46,14 @@ const ChattingRoomScreen=()=>{
     const [inputText, setInputText] = useState("");
     const [myUserId,setMyUserId]=useState('');
     const [isTranslate,setIsTranslate]=useState(false);
-    const [stompConnected, setStompConnected] = useState(false);    
+    const [stompConnected, setStompConnected] = useState(false);  
     const stompClient = useRef<Client | null>(null);
-    const scrollViewRef = useRef<ScrollView>(null);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [searchText,setSearchText]=useState('');
+    const [searchBox,setSearchBox]=useState(false);
+    const [isSearching,setIsSearching]=useState(false);
+    const [searchMessages,setSearchMessages]=useState<any[]>([]);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -64,6 +70,7 @@ const ChattingRoomScreen=()=>{
             return null;
         }
     };
+    
 
     // ---------------------- STOMP 연결 함수 ----------------------
     const connectStomp = async () => {
@@ -193,6 +200,30 @@ const ChattingRoomScreen=()=>{
         }
     };
 
+    // 무한 스크롤
+   const fetchMoreHistory = async () => {
+        if ( !hasMore) return;
+
+        setIsFetchingMore(true);
+
+        try {
+            const lastMessageId = messages[messages.length - 1]?.id;
+            const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId}`);
+
+            const olderMessages: ChatHistory[] = res.data.data;
+
+            if (olderMessages.length === 0) {
+            setHasMore(false);
+            } else {
+            setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
+            }
+        } catch (err) {
+            console.log("이전 메시지 불러오기 실패", err);
+        } finally {
+            setIsFetchingMore(false);
+        }
+};
+
     const onhandleNext = () => {
         router.push({
             pathname: './ChatInsideMember',  
@@ -200,6 +231,27 @@ const ChattingRoomScreen=()=>{
         });
     };
 
+    // SearchBox 보여주는 함수
+    const showSearchBox=()=>{
+        setSearchBox(!searchBox);
+        setIsSearching(false);
+        setSearchText('');
+    }
+
+    //검색시 호출되는 함수
+    const search=async()=>{
+       try{
+         setIsSearching(true);
+         const res=await api.get(`/api/v1/chat/search?roomId=${roomId}&keyword=${searchText}`);
+         const SearchResult: ChatHistory[] = res.data.data;
+         setSearchMessages(SearchResult);
+         console.log("메시지 검색 결과",SearchResult);
+       }catch(err){
+             console.log("검색 결과 불러오기 실패", err);
+       }
+    }
+
+    // 시간 변환 함수
     const formatTime = (sentAt: string | number) => {
         const ts = typeof sentAt === "string" ? Date.parse(sentAt) : sentAt * 1000;
         const date = new Date(ts);
@@ -207,6 +259,20 @@ const ChattingRoomScreen=()=>{
         const minutes = date.getMinutes().toString().padStart(2, "0");
         return `${hours}:${minutes}`;
     };
+    const formatDate=(utcSeconds: number): string=> {
+    // 초 단위이므로 밀리초로 변환
+    const date = new Date(utcSeconds * 1000);
+
+    // 요일 배열
+    const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const weekday = weekdays[date.getUTCDay()];
+
+    return `${year}.${month}.${day} (${weekday})`;
+    }
 
     return (
         <SafeArea>
@@ -214,7 +280,29 @@ const ChattingRoomScreen=()=>{
             <Container>
                 {/* 헤더 */}
                 <HeaderContainer>
-                    <Left>
+                    {searchBox ?( 
+                        <>
+                            <TouchableOpacity onPress={showSearchBox}>
+                            <Feather name="arrow-left" size={27} color="#CCCFD0" />
+                </TouchableOpacity>
+                <SearchContainer>
+                    <Feather name="search" size={23} color="#CCCFD0" style={{ marginLeft: 8 }}  />
+                    <SearchInputText
+                        value={searchText}
+                        onChangeText={setSearchText}
+                        placeholder="Search Chat"
+                        placeholderTextColor='#616262'
+                        onSubmitEditing={search}
+
+                    />
+                {searchText&&
+                <TouchableOpacity onPress={() => setSearchText('')}>
+                    <AntDesign name="closecircle" size={23} color="#CCCFD0" style={{ marginRight: 8 }}  />
+                </TouchableOpacity>}
+                </SearchContainer>
+                </>):(
+                    <>
+                        <Left>
                         <TouchableOpacity onPress={() => router.back()}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
                         </TouchableOpacity>
@@ -223,12 +311,25 @@ const ChattingRoomScreen=()=>{
                         <HeaderTitleText>{roomName}</HeaderTitleText>
                     </Center>
                     <Right>
-                        <TouchableOpacity onPress={onhandleNext}>
-                            <SimpleLineIcons name="menu" size={23} color="#CCCFD0" style={{ marginLeft: 10 }} />
-                        </TouchableOpacity>
-                    </Right>
-                </HeaderContainer>
 
+                        <TouchableOpacity onPress={showSearchBox} >
+                            <Feather name="search" size={23} color="#CCCFD0" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={onhandleNext}>
+                            <SimpleLineIcons name="menu" size={23} color="#CCCFD0" style={{ marginLeft: 20 }} />
+                        </TouchableOpacity>
+                        
+                    </Right>
+                    </>
+
+                )}
+                   
+                </HeaderContainer>
+                  <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 50 : 30}
+                    >
                 {/* 채팅 화면 */}
                 <ChattingScreen>
                     <FlatList
@@ -242,29 +343,53 @@ const ChattingRoomScreen=()=>{
                             paddingTop: 10,
                             paddingBottom: 10
                         }}
+                        onEndReached={fetchMoreHistory} // 스크롤 상단에서 이전 메시지 로딩
+                        onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
                             const isMyMessage = item.senderId.toString() === myUserId;
                             // 프로필 표시 로직
                             const showProfile = index === messages.length - 1 || (messages[index + 1] && messages[index + 1].senderFirstName !== item.senderFirstName);
-
+                            const isSameUser= ((index>0)&&(messages[index-1].senderFirstName === messages[index].senderFirstName));
+                            const showTime=(index===0) ||
+                                ((index>0)&&(formatTime(messages[index-1].sentAt)!==formatTime(messages[index].sentAt))&&(isSameUser))
+                                || !isSameUser;
+                            const showDate=(index === messages.length - 1) || (messages[index + 1] && formatDate(messages[index + 1].sentAt) !== formatDate(item.sentAt));
+                            
+                            console.log(index,item);
+                            console.log(formatDate(item.sentAt))
                             if (isMyMessage) {
                                 return showProfile ? (
+                                    <>
                                     <ChattingRightContainer showProfile={showProfile}>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                        {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextFirstBox>
-                                    </ChattingRightContainer>
+                                    </ChattingRightContainer>  
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>} 
+                                    </>
                                 ) : (
+                                    <>
                                     <ChattingRightContainer>
-                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>
+                                          {showTime&&
+                                        <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
                                             <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
                                         </MyTextNotFirstBox>
                                     </ChattingRightContainer>
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 );
                             } else {
                                 return showProfile ? (
+                                    <>
                                     <ChattingLeftContainer showProfile={showProfile}>
                                         <ProfileContainer>
                                             <ProfileBox>
@@ -277,11 +402,18 @@ const ChattingRoomScreen=()=>{
                                                 <OtherFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
+                                    {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 ) : (
+                                    <>
                                     <ChattingLeftContainer>
                                         <ProfileContainer></ProfileContainer>
                                         <OtherContainer>
@@ -289,16 +421,40 @@ const ChattingRoomScreen=()=>{
                                                 <OtherNotFirstTextBox>
                                                     <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
                                                 </OtherNotFirstTextBox>
-                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>
+                                                  {showTime&&
+                                                <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
                                             </LeftMessageBox>
                                         </OtherContainer>
                                     </ChattingLeftContainer>
+                                      {showDate&&
+                                    <DateTimeView>
+                                        <DateTimeText>{formatDate(item.sentAt)}</DateTimeText>
+                                    </DateTimeView>}
+                                    </>
                                 );
                             }
                         }}
                     />
-
-                    <BottomContainer style={{ paddingBottom: insets.bottom + 5 }}>
+                    {searchBox?(
+                    <FindSearchTextContainer>
+                        <TouchableOpacity disabled={!isSearching}>
+                        <Image
+                            source={require("@/assets/images/UpArrow.png")}
+                            style={{ width: 17, height: 17 , marginLeft:10}}  
+                            resizeMode="contain"                
+                            />
+                        </TouchableOpacity>
+                         <TouchableOpacity disabled={!isSearching}>
+                        <Image
+                        source={require("@/assets/images/DownArrow.png")}
+                        style={{ width: 17, height: 17 ,marginLeft:18}}  
+                        resizeMode="contain"                
+                        />
+                        </TouchableOpacity>
+                       
+                        <FindResultText>3/3</FindResultText>
+                    </FindSearchTextContainer>):(
+                    <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox
                             value={inputText}
                             onChangeText={setInputText}
@@ -308,7 +464,7 @@ const ChattingRoomScreen=()=>{
                         <SendImageBox onPress={sendMessage}>
                             <SendImage source={require("@/assets/images/Send.png")}/>
                         </SendImageBox>
-                    </BottomContainer>
+                    </BottomContainer>)}
 
                     {!isTranslate && (
                         <TranslateButtonBox onPress={updateTranslateScreen}>
@@ -321,6 +477,7 @@ const ChattingRoomScreen=()=>{
                         </TranslatingButtonBox>
                     )}
                 </ChattingScreen>
+                </KeyboardAvoidingView>
             </Container>
         </SafeArea>
     );
@@ -336,17 +493,27 @@ const Container=styled.View`
  flex:1; background-color:#1D1E1F; padding:0px 15px; 
  `;
 const HeaderContainer=styled.View` 
-flex-direction:row; height:10%; align-items:center; justify-content: center; 
+flex-direction:row; 
+height:70px; 
+align-items:center; 
+justify-content: center; 
 `;
 const HeaderTitleText=styled.Text` 
 color:#FFFFFF; font-family:PlusJakartaSans_500Medium; font-size:18px; 
 `;
-const Left=styled.View``;
+const Left=styled.View`
+  width: 60px; 
+  align-items: flex-start;
+`;
 const Center=styled.View` 
-flex:1; justify-content:center; align-items:center;
+flex:1; 
+justify-content:center; 
+align-items:center;
  `;
 const Right=styled.View`
- margin-right:5px; flex-direction:row; justify-content:center;
+  width: 60px; 
+  flex-direction: row;
+  justify-content: flex-end;
   `;
 const ChattingScreen=styled.View` 
 flex:1; flex-direction: column; padding-bottom:10px; 
@@ -460,8 +627,9 @@ font-family:PlusJakartaSans_400Regular;
 `;
 const TranslateButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-bottom: ${height * 0.17}px;
-right:10px; width:50px;
+bottom: ${height * 0.12}px;
+right:10px; 
+width:50px;
 height:50px; 
 border-radius:30px; 
 z-index:999; 
@@ -476,7 +644,6 @@ resize-mode:contain;
 `;
 const TranslatingButtonBox=styled.TouchableOpacity` 
 position: absolute; 
-top: ${height * 0.1}px; 
 width:50px; 
 height:50px; 
 align-self:center; 
@@ -491,8 +658,10 @@ const TranslatingImage=styled.Image`
  height:130px;
   resize-mode:contain; 
   `;
-const BottomContainer=styled.View` 
-background-color:#1D1E1F; 
+const BottomContainer=styled.View`
+background-color:#1D1E1F;
+height:50px; 
+
 border-top-width:1px; 
 border-top-color:#353637; 
 flex-direction:row; 
@@ -516,3 +685,64 @@ width:100%;
  height:100%; 
  resize-mode:contain; 
  `;
+
+ const DateTimeView=styled.View`
+    margin:20px 0px 10px 0px;
+    height:20px;
+    justify-content:center;
+    align-items:center;
+ `;
+
+ const DateTimeText=styled.Text`
+    color:#848687;
+    font-size:12px;
+    font-family:PlusJakartaSans_600SemiBold;
+ `;
+
+ const LoadingText = styled.Text`
+  color: #ccc;
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+`;
+
+
+const SearchContainer=styled.View`
+    width:85%;
+    height:45px;
+    background-color:#353637;
+    flex-direction:row;
+    margin-left:10px;
+    align-items:center;
+    justify-content:center;
+    padding: 0px 3px;
+    border-radius:8px;
+`;
+const SearchInputText=styled.TextInput`
+    background-color:#353637;
+    height:45px;
+    flex:1;
+    padding-left:10px;
+    color:#FFFFFF;
+    font-size:14px;
+    font-family:PlusJakartaSans_400Regular;
+`;
+
+const FindSearchTextContainer=styled.View`
+   background-color:#1D1E1F;
+   height:45px; 
+   border-top-width:1px; 
+   border-top-color:#353637; 
+   flex-direction:row; 
+   align-items:center;
+   
+`;
+
+
+const FindResultText=styled.Text`
+    position:absolute;
+    left: 50%;
+    color:#ffffff;
+    font-size:14px;
+    font-family:PlusJakartaSans_300Light;
+`;

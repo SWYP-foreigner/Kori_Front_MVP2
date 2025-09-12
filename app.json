@@ -29,7 +29,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "usesCleartextTraffic": false,
-      "softwareKeyboardLayoutMode": "pan",
+      "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -44,7 +44,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/AppLogo.png",
-          "imageWidth": 180,
+          "imageWidth": 150,
           "resizeMode": "contain",
           "backgroundColor": "#0f0f10"
         }

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Dimensions, FlatList, ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform} from "react-native";
+import { Dimensions,  
+  ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform,StatusBar } from "react-native";
 import styled from "styled-components/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
@@ -17,8 +18,9 @@ import AppleSignInButton from "@/components/AppleSignInButton";
 import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
-import { ACCESS_KEY, isRefreshBlocked, REFRESH_KEY } from "@/src/lib/auth/session";
-import api from "@/api/axiosInstance";
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { randomUUID } from 'expo-crypto';
+
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
   iosClientId: `${Config.GOOGLE_IOS_CLIENT_ID}`,
@@ -43,6 +45,8 @@ type OnBoardingItem = {
   SubTitleText: string;   // 부제목 텍스트
 };
 
+
+
 const { width } = Dimensions.get("window");
 
 const LoginScreen = () => {
@@ -53,6 +57,8 @@ const LoginScreen = () => {
   const [check1,setCheck1]=useState(false);
   const [check2,setCheck2]=useState(false);
   const [check3,setCheck3]=useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading,setAppleLoading]=useState(false);
 
   const onBoardingData: OnBoardingItem[] = [
     { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText:"Connect with people abroad in Korea for\nstudy, work, travel, or more."},
@@ -70,7 +76,7 @@ const LoginScreen = () => {
 
 
   // 서버로 구글 로그인 토큰 전송
-  const sendTokenToServer = async (code: string) => {
+  const sendGoogleTokenToServer = async (code: string) => {
     try {
       const res = await axios.post<AppLoginResponse>(
         `${Config.SERVER_URL}/api/v1/member/google/app-login`,
@@ -96,8 +102,9 @@ const LoginScreen = () => {
   };
   
   // 구글 로그인
-  const signIn = async () => {
+  const googleSignIn = async () => {
     try {
+      setGoogleLoading(true); // 로딩 시작
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
@@ -105,10 +112,11 @@ const LoginScreen = () => {
         setUserInfo({ userInfo: response.data });
         const code = response.data.serverAuthCode;
         if (!code) {
+          setGoogleLoading(false); // 로딩 끝
           console.log('serverAuthCode 없음 (Google 설정 확인 필요)');
           return;
         }
-        await sendTokenToServer(code);
+        await sendGoogleTokenToServer(code);
       } else {
         console.log('사용자가 로그인 취소');
       }
@@ -128,26 +136,89 @@ const LoginScreen = () => {
         console.log('Google Sign-In 이외 오류', error);
       }
     }
+    finally{
+      setGoogleLoading(false); // 로딩 끝
+    }
   };
   
+  
+    // 애플 로그인
+    const appleSignIn=async () => {
+            try {
+              setAppleLoading(true);
+              const rawNonce=randomUUID();
+              const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                  AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                  AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce:rawNonce,
+              });
+
+        const res = await axios.post<AppLoginResponse>(
+          // 애플 로그인 API 주소로 바꿔야함
+          `${Config.SERVER_URL}/api/v1/member/apple/app-login`,
+            {
+              identityToken: credential.identityToken,
+              authorizationCode: credential.authorizationCode,
+              nonce: rawNonce,
+              email: credential.email,
+              fullName: {
+                givenNam:credential.fullName?.givenName ,
+                familyName: credential.fullName?.familyName
+              }
+            }
+        );
+            
+            const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
+            await SecureStore.setItemAsync('jwt', accessToken);
+            await SecureStore.setItemAsync('refresh', refreshToken);
+            await SecureStore.setItemAsync('MyuserId', userId.toString());
+
+              if(isNewUser)
+              {
+                showModal();
+              }
+              else{
+                router.replace('/(tabs)');
+              }
+            } catch (e:any) {
+              if (e.code === 'ERR_REQUEST_CANCELED') {
+                console.log("사용자가 취소함");
+              } else {
+                 console.error("에러코드",e);
+              }
+            }
+            finally{
+              setAppleLoading(false);
+            }
+          }
+
+
+  // 이메일 로그인 화면으로 이동
   const goEmailLoginScreen=async()=>{
    
     router.push("./screens/login/GeneralLoginScreen");
   };
   
+  // 약관 동의 화면 보여줌
   const showModal = () => {
     setModalVisible(true); 
   };
 
+  // TermsAndConditions 상세 페이지 
   const showTermsAndConditions=()=>{
-      router.push("./TermsAndConditionsScreen");
+      router.push("/screens/login/TermsAndConditionsScreen");
   };
   
+  // PrivacyPolicy 상세 페이지 
   const showPrivacyPolicy=()=>{
-    router.push("./PrivacyPolicyScreen");
+    router.push("/screens/login/PrivacyPolicyScreen");
   };
 
   return (
+     <SafeArea>
+    <StatusBar barStyle="light-content" />
     <Container>
       {/* 온보딩 이미지 영역 */}
       <OnBoardingContainer>
@@ -161,6 +232,7 @@ const LoginScreen = () => {
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
             { useNativeDriver: true }
           )}
+          
           renderItem={({ item }) => (
             <Slide source={item.image} resizeMode="cover" style={{ width, height:height*0.55 }}>
               <Overlay>
@@ -185,7 +257,8 @@ const LoginScreen = () => {
 
       {/* 로그인 버튼 영역 */}
       <ButtonContainer>
-        {Platform.OS==='ios'?(<AppleSignInButton/>):(<GoogleSignInButton onPress={signIn} />)}
+        {Platform.OS==='ios'?(<AppleSignInButton onPress={appleSignIn} loading={appleLoading} />):(<GoogleSignInButton onPress={googleSignIn} loading={googleLoading} />)}
+       
         <EmailSignButton onPress={goEmailLoginScreen}/>
         <SmallText>By singing up, you agree to our Terms.{'\n'} 
           See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
@@ -253,12 +326,19 @@ const LoginScreen = () => {
                   </ModalOverlay>
                 </Modal>
     </Container>
+    </SafeArea>
   );
 };
 
 export default LoginScreen;
 
 // ---------------- Styled Components ----------------
+
+
+const SafeArea = styled.SafeAreaView`
+  flex: 1;
+  background-color: #1D1E1F;
+`;
 
 const Container = styled.View`
   flex: 1;

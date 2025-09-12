@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, StatusBar} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
@@ -8,19 +8,15 @@ import { useRouter } from 'expo-router';
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation}) {
+export default function NameStepScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [FirstNameSubmitted,setFirstNameSubmitted]=useState(false);
-  const [LastNameSubmitted,setLastNameSubmitted]=useState(false);
-  const canProceed = FirstNameSubmitted && LastNameSubmitted;
+  const canProceed = firstName&&lastName;
   const router=useRouter();
   const { profileData, updateProfile } = useProfile();
+  
   const handleNext=()=>{
-  //  router.push({
-  //     pathname: './GenderStepScreen',
-  //     params: { firstName, lastName }, // userData 대신 개별 필드
-  //   });
+
     updateProfile('firstname',firstName);
     updateProfile('lastname',lastName);
     router.push('./GenderStepScreen')
@@ -47,13 +43,9 @@ export default function NameStepScreen({ navigation}) {
               placeholder="First Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
-              onFocus={() => setFirstNameSubmitted(false)}
-              onSubmitEditing={()=>{
-               setFirstNameSubmitted(true);
-    
-              }}
+              
             />
-            {FirstNameSubmitted&&firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {firstName&&firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
           <InputWrapper>
              <Input
@@ -62,12 +54,8 @@ export default function NameStepScreen({ navigation}) {
               placeholder="Last Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
-              onFocus={() => setLastNameSubmitted(false)}
-              onSubmitEditing={()=>{
-               setLastNameSubmitted(true);
-              }}
             />
-            {LastNameSubmitted&&lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {lastName&&lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
         
           </Form>
