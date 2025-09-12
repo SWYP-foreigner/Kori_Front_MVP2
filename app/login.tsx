@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Dimensions,  
-  ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform,StatusBar ,ActivityIndicator} from "react-native";
+  ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform,StatusBar } from "react-native";
 import styled from "styled-components/native";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
@@ -18,6 +18,8 @@ import AppleSignInButton from "@/components/AppleSignInButton";
 import { Config } from '@/src/lib/config';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Entypo from '@expo/vector-icons/Entypo';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { randomUUID } from 'expo-crypto';
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -43,6 +45,8 @@ type OnBoardingItem = {
   SubTitleText: string;   // 부제목 텍스트
 };
 
+
+
 const { width } = Dimensions.get("window");
 
 const LoginScreen = () => {
@@ -54,6 +58,7 @@ const LoginScreen = () => {
   const [check2,setCheck2]=useState(false);
   const [check3,setCheck3]=useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading,setAppleLoading]=useState(false);
 
   const onBoardingData: OnBoardingItem[] = [
     { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText:"Connect with people abroad in Korea for\nstudy, work, travel, or more."},
@@ -71,7 +76,7 @@ const LoginScreen = () => {
 
 
   // 서버로 구글 로그인 토큰 전송
-  const sendTokenToServer = async (code: string) => {
+  const sendGoogleTokenToServer = async (code: string) => {
     try {
       const res = await axios.post<AppLoginResponse>(
         `${Config.SERVER_URL}/api/v1/member/google/app-login`,
@@ -97,7 +102,7 @@ const LoginScreen = () => {
   };
   
   // 구글 로그인
-  const signIn = async () => {
+  const googleSignIn = async () => {
     try {
       setGoogleLoading(true); // 로딩 시작
       await GoogleSignin.hasPlayServices();
@@ -111,7 +116,7 @@ const LoginScreen = () => {
           console.log('serverAuthCode 없음 (Google 설정 확인 필요)');
           return;
         }
-        await sendTokenToServer(code);
+        await sendGoogleTokenToServer(code);
       } else {
         console.log('사용자가 로그인 취소');
       }
@@ -136,19 +141,77 @@ const LoginScreen = () => {
     }
   };
   
+  
+    // 애플 로그인
+    const appleSignIn=async () => {
+            try {
+              setAppleLoading(true);
+              const rawNonce=randomUUID();
+              const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                  AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                  AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce:rawNonce,
+              });
+
+        const res = await axios.post<AppLoginResponse>(
+          // 애플 로그인 API 주소로 바꿔야함
+          `${Config.SERVER_URL}/api/v1/member/google/app-login`,
+            {
+              identityToken: credential.identityToken,
+              authorizationCode: credential.authorizationCode,
+              nonce: rawNonce,
+              email: credential.email,
+              fullName: {
+                givenNam:credential.fullName?.givenName ,
+                familyName: credential.fullName?.familyName
+              }
+            }
+        );
+            
+            const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
+            await SecureStore.setItemAsync('jwt', accessToken);
+            await SecureStore.setItemAsync('refresh', refreshToken);
+            await SecureStore.setItemAsync('MyuserId', userId.toString());
+
+              if(isNewUser)
+              {
+                showModal();
+              }
+              else{
+                router.replace('/(tabs)');
+              }
+            } catch (e:any) {
+              if (e.code === 'ERR_REQUEST_CANCELED') {
+                console.log("사용자가 취소함");
+              } else {
+                 console.error("에러코드",e);
+              }
+            }
+            finally{
+              setAppleLoading(false);
+            }
+          }
+
+
+  // 이메일 로그인 화면으로 이동
   const goEmailLoginScreen=async()=>{
    
     router.push("./screens/login/GeneralLoginScreen");
   };
   
+  // 약관 동의 화면 보여줌
   const showModal = () => {
     setModalVisible(true); 
   };
 
+  // TermsAndConditions 상세 페이지 
   const showTermsAndConditions=()=>{
       router.push("/screens/login/TermsAndConditionsScreen");
   };
   
+  // PrivacyPolicy 상세 페이지 
   const showPrivacyPolicy=()=>{
     router.push("/screens/login/PrivacyPolicyScreen");
   };
@@ -194,7 +257,7 @@ const LoginScreen = () => {
 
       {/* 로그인 버튼 영역 */}
       <ButtonContainer>
-        {Platform.OS==='ios'?(<AppleSignInButton/>):(<GoogleSignInButton onPress={signIn} loading={googleLoading} />)}
+        {Platform.OS==='ios'?(<AppleSignInButton onPress={appleSignIn} loading={appleLoading} />):(<GoogleSignInButton onPress={googleSignIn} loading={googleLoading} />)}
        
         <EmailSignButton onPress={goEmailLoginScreen}/>
         <SmallText>By singing up, you agree to our Terms.{'\n'} 
