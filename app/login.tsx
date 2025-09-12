@@ -164,7 +164,7 @@ const LoginScreen = () => {
               nonce: rawNonce,
               email: credential.email,
               fullName: {
-                givenNam:credential.fullName?.givenName ,
+                givenName:credential.fullName?.givenName ,
                 familyName: credential.fullName?.familyName
               }
             }
