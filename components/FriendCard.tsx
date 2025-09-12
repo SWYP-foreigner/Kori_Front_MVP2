@@ -1,10 +1,8 @@
-import api from '@/api/axiosInstance';
 import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
@@ -83,36 +81,36 @@ const toUrl = (u?: string) => {
   return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
 };
 
-export default function FriendCard({
-  userId,
-  name,
-  country,
-  birth,
-  gender = 'unspecified',
-  purpose,
-  languages,
-  personalities,
-  bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
+export default function FriendCard(props: Props) {
+  const {
+    userId,
+    name,
+    country,
+    birth,
+    gender = 'unspecified',
+    purpose,
+    languages,
+    personalities,
+    bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
 
-  imageUrl,       // ✅ 추가
-  imageKey,       // ✅ 추가
+    imageUrl,       // ✅ 추가
+    imageKey,       // ✅ 추가
 
-  isFollowed = false,
-  onFollow,
-  onUnfollow,
+    isFollowed = false,
+    onFollow,
+    onUnfollow,
 
-  mode = 'friend',
-  onAccept,
-  onCancel,
+    mode = 'friend',
+    onAccept,
+    onCancel,
 
-  collapsible = true,
-  onChat,
-  footerSlot,
-}: Props) {
+    collapsible = true,
+    onChat,
+    footerSlot,
+  } = props;
+
   const [expanded, setExpanded] = useState(true);
-  const router = useRouter();
-
-  const finalAvatarUrl = imageUrl || toUrl(imageKey); // ✅ 최종 아바타 URL
+  const finalAvatarUrl = imageUrl || toUrl(imageKey);
 
   const handlePrimaryPress = () => {
     if (mode === 'received') {
@@ -125,26 +123,6 @@ export default function FriendCard({
     }
     if (isFollowed) onUnfollow?.(userId);
     else onFollow?.(userId);
-  };
-
-  const handleChat = async () => {
-    try {
-      const res = await api.post(
-        `${Config.SERVER_URL}/api/v1/chat/rooms/oneTone`,
-        { otherUserId: userId }
-      );
-      const data = res.data;
-      router.push({
-        pathname: '/screens/chatscreen/ChattingRoomScreen',
-        params: {
-          userId: String(userId),
-          roomName: encodeURIComponent(name),
-          roomId: data.id,
-        },
-      });
-    } catch (error) {
-      console.error('채팅방 생성 실패', error);
-    }
   };
 
   return (
@@ -244,7 +222,7 @@ export default function FriendCard({
           ) : mode === 'sent' ? (
             <>
               <CustomButton label="Following" tone="muted" filled={false} leftIcon="check" onPress={handlePrimaryPress} />
-              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={handleChat} />
+              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={() => onChat?.()} />
             </>
           ) : (
             <>
@@ -254,12 +232,12 @@ export default function FriendCard({
                   tone="black"
                   filled={false}
                   leftIcon="check"
-                  onPress={() => onUnfollow?.(userId)}
+                  onPress={onChat}
                 />
               ) : (
                 <CustomButton label="Follow" tone="mint" filled leftIcon="add" onPress={() => onFollow?.(userId)} />
               )}
-              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={handleChat} />
+              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={() => onChat?.()} />
             </>
           )}
         </Actions>

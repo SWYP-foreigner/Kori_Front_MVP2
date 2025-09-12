@@ -4,10 +4,11 @@ import styled from 'styled-components/native';
 
 import FriendCard from '@/components/FriendCard';
 import useCancelFollowRequest from '@/hooks/mutations/useCancelFollowRequest';
+import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
-import useDirectChat from '@/hooks/mutations/useSendChat';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
+import { router } from 'expo-router';
 
 const toBirthNumber = (v: unknown): number | undefined => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
@@ -20,7 +21,8 @@ export default function HomeScreen() {
   const followMutation = useFollowUser();
   const cancelReqMutation = useCancelFollowRequest();
   const { data: me } = useMyProfile();
-  const sendDirectChat = useDirectChat();
+
+  const { mutateAsync: createRoom, isPending: creatingRoom } = useCreateOneToOneRoom();
 
   const [requested, setRequested] = useState<Set<number>>(new Set());
   const [inFlight, setInFlight] = useState<Set<number>>(new Set());
@@ -145,6 +147,14 @@ export default function HomeScreen() {
                     } finally {
                       unlock(id);
                     }
+                  }}
+
+                  onChat={async () => {
+                    const roomId = await createRoom({ otherUserId: uid });
+                    router.push({
+                      pathname: '/screens/chatscreen/ChattingRoomScreen',
+                      params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId }
+                    });
                   }}
                 />
               </CardWrap>
