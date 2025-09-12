@@ -54,6 +54,8 @@ const ChattingRoomScreen=()=>{
     const [searchBox,setSearchBox]=useState(false);
     const [isSearching,setIsSearching]=useState(false);
     const [searchMessages,setSearchMessages]=useState<any[]>([]);
+    const [pointer,setPointer]=useState(0);
+    
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
