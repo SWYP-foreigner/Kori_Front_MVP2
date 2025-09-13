@@ -8,6 +8,7 @@ import { useUpdateComment } from '@/hooks/mutations/useUpdateComment';
 import { useCommentWriteOptions } from '@/hooks/queries/useCommentWriteOptions';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
+import { usePostUI } from '@/src/store/usePostUI';
 import { LOCAL_ALLOW_ANON, resolvePostCategory } from '@/utils/category';
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -30,7 +31,6 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
-
 
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
@@ -126,6 +126,9 @@ export default function PostDetailScreen() {
   }>();
   const postId = Number(id);
 
+  const { bookmarked: bmMap, toggleBookmarked, hydrateFromServer, setBookmarked } = usePostUI();
+  const postBookmarked = bmMap[postId] ?? false;
+
   const { data, isLoading, isError } = usePostDetail(
     Number.isFinite(postId) ? postId : undefined,
   );
@@ -161,7 +164,7 @@ export default function PostDetailScreen() {
 
   const DEFAULT_RATIO = 16 / 9;
   const MAX_IMAGES = 5;
-  const IMG_W = Dimensions.get('window').width - 32; // (H_PADDING 고려)
+  const IMG_W = Dimensions.get('window').width - 32;
 
   const rawImageKeys: string[] = useMemo(() => {
     const p: any = data ?? {};
@@ -250,7 +253,6 @@ export default function PostDetailScreen() {
 
   const openedOnceRef = useRef(false);
 
-  const [bookmarked, setBookmarked] = useState(false);
   const [likesOverride, setLikesOverride] = useState<number | null>(null);
   const [likedByMe, setLikedByMe] = useState(false);
 
@@ -298,6 +300,12 @@ export default function PostDetailScreen() {
       (data as any).isLiked ?? false;
     setLikedByMe(Boolean(liked));
   }, [data]);
+
+  useEffect(() => {
+    const serverVal = (post as any)?.bookmarked;
+    hydrateFromServer(postId, typeof serverVal === 'boolean' ? serverVal : undefined);
+  }, [postId, post, hydrateFromServer]);
+
 
   useEffect(() => {
     if (openedOnceRef.current) return;
@@ -594,11 +602,16 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
 
-                  <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
+                  <BookmarkWrap onPress={() => {
+                    toggleBookmarked(postId);
+                  }}
+                    $active={postBookmarked}
+                    hitSlop={8}
+                  >
                     <MaterialIcons
-                      name="bookmark-border"
+                      name={postBookmarked ? 'bookmark' : 'bookmark-border'}
                       size={20}
-                      color={bookmarked ? '#30F59B' : '#8a8a8a'}
+                      color={postBookmarked ? '#30F59B' : '#8a8a8a'}
                     />
                   </BookmarkWrap>
                 </Row>

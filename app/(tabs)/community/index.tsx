@@ -5,6 +5,7 @@ import SortTabs from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { usePostUI } from '@/src/store/usePostUI';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -178,6 +179,8 @@ export default function CommunityScreen() {
 
     const likeMutation = useToggleLike();
 
+    const { bookmarked, toggleBookmarked, setBookmarked } = usePostUI();
+
     useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
@@ -189,12 +192,31 @@ export default function CommunityScreen() {
             const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
+
+
             setItems(prev => {
-                if (!after) return list;
-                const seen = new Set(prev.map(p => p.postId));
-                const appended = list.filter(p => !seen.has(p.postId));
-                return [...prev, ...appended];
+                // 중복 제거하며 base 리스트 구성
+                if (!after) {
+                    // 첫 페이지
+                    return list.map(p => ({
+                        ...p,
+                        // 전역값이 있으면 우선 적용
+                        bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
+                    }));
+                } else {
+                    // 다음 페이지
+                    const seen = new Set(prev.map(p => p.postId));
+                    const appended = list.filter(p => !seen.has(p.postId));
+                    const merged = [...prev, ...appended];
+
+                    // 병합 후 전역값 반영
+                    return merged.map(p => ({
+                        ...p,
+                        bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
+                    }));
+                }
             });
+
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor ?? undefined);
         } catch (e) {
@@ -213,7 +235,6 @@ export default function CommunityScreen() {
         fetchPage(undefined);
     };
 
-    //다중 호출 방지 (테스트 필요함)
     const onEndCalledRef = useRef(false);
 
     const loadMore = () => {
@@ -251,10 +272,15 @@ export default function CommunityScreen() {
         }
     };
 
-    const toggleBookmark = (postId: number) =>
+    const handleToggleBookmark = (postId: number) => {
+        toggleBookmarked(postId);
+
         setItems(prev =>
-            prev.map(p => (p.postId === postId ? { ...p, bookmarked: !p.bookmarked } : p))
+            prev.map(p =>
+                p.postId === postId ? { ...p, bookmarked: !(p.bookmarked ?? false) } : p
+            )
         );
+    };
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
@@ -263,7 +289,7 @@ export default function CommunityScreen() {
                 router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
             }
             onToggleLike={() => handleToggleLike(item.postId)}
-            onToggleBookmark={() => toggleBookmark(item.postId)}
+            onToggleBookmark={() => handleToggleBookmark(item.postId)}
         />
     );
 
