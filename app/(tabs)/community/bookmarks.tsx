@@ -134,11 +134,6 @@ export default function BookmarksScreen() {
     fetchPage(undefined);
   }, [fetchPage]);
 
-  const openPost = (row: Row) => {
-    if (!row.postId) return;
-    router.push({ pathname: '/community/[id]', params: { id: String(row.postId) } });
-  };
-
   const removeOne = async (row: Row) => {
     if (!row.postId) return;
     const key = row.displayId;
@@ -160,8 +155,13 @@ export default function BookmarksScreen() {
     }
   };
 
+  const goPostDetail = (postId?: number | string) => {
+    if (postId == null || postId === '') return;
+    router.push({ pathname: '/community/[id]', params: { id: String(postId) } });
+  };
+
   const renderItem: ListRenderItem<Row> = ({ item }) => (
-    <Cell activeOpacity={item.postId ? 0.8 : 1} onPress={() => openPost(item)}>
+    <Cell activeOpacity={item.postId ? 0.8 : 1} onPress={() => goPostDetail(item.postId)}>
       <RowTop>
         <RowLeft>
           <Avatar source={item.avatar} />
