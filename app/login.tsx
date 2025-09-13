@@ -71,6 +71,7 @@ const LoginScreen = () => {
   const animatedCurrent = useRef(Animated.divide(scrollX, width)).current;
 
   const goSetProfilePage=()=>{
+       setModalVisible(false);
        router.push('/screens/makeprofile/NameStepScreen');
   };
 

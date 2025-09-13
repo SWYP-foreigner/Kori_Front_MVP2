@@ -55,10 +55,8 @@ const ChattingRoomScreen=()=>{
     const [searchBox,setSearchBox]=useState(false);
     const [isSearching,setIsSearching]=useState(false);
     const [searchMessages,setSearchMessages]=useState<any[]>([]);
-    
-    const [showSearchMessages , setShowSearchMessages]=useState<any[]>([]);
     const pointerRef=useRef(0);
-
+    const flatListRef = useRef<FlatList>(null);
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
         try {
@@ -251,7 +249,64 @@ const ChattingRoomScreen=()=>{
         // 원래 메시지 복원
         await fetchHistory(); // 기존 메시지 다시 불러오기
     }
+// 검색어 색칠 하는 함수
+const HighlightMyText = ({ text, keyword }: { text: string; keyword: string }) => {
+  if (!keyword) return <MyText>{text}</MyText>;
 
+  // 정규식으로 split (검색어 부분도 배열에 포함됨)
+  const parts = text.split(new RegExp(`(${keyword})`, "gi"));
+
+  return (
+    <MyText>
+      {parts.map((part, index) =>
+        part.toLowerCase() === keyword.toLowerCase() ? ( // 검색어랑 같으면 하이라이트
+          <MyText key={index} style={{ backgroundColor: 'rgba(255,255,0,0.8)'}}>
+            {part}
+          </MyText>
+        ) : (
+          <MyText key={index}>{part}</MyText>
+        )
+      )}
+    </MyText>
+  );
+};
+    const scrollToHighlightMessage = (messageId: number) => {
+    if (!flatListRef.current) return;
+    
+    const index = messages.findIndex(msg => msg.id === messageId);
+    if (index !== -1) {
+        flatListRef.current.scrollToIndex({
+            index,
+            animated: true,
+            
+        });
+    }
+};
+
+// 검색어 색칠 하는 함수
+const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }) => {
+  if (!keyword) return <OtherText>{text}</OtherText>;
+
+  // 정규식으로 split (검색어 부분도 배열에 포함됨)
+  const parts = text.split(new RegExp(`(${keyword})`, "gi"));
+
+  return (
+    <OtherText>
+      {parts.map((part, index) =>
+        part.toLowerCase() === keyword.toLowerCase() ? ( // 검색어랑 같으면 하이라이트
+          <OtherText key={index} style={{ backgroundColor: 'rgba(255,255,0,0.3)'}}>
+            {part}
+          </OtherText>
+        ) : (
+          <OtherText key={index}>{part}</OtherText>
+        )
+      )}
+    </OtherText>
+  );
+};
+
+
+     // 채팅방 검색시 위 화살표 
     const UpFindText=async()=>{
         
         if( pointerRef.current+1===searchMessages.length)
@@ -266,11 +321,14 @@ const ChattingRoomScreen=()=>{
             const resultMessages: ChatHistory[] = res.data.data;
             console.log("위로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
         }catch(err){
              console.log("위로 이동 후 메시지 불러오기 실패", err);
         }
     }
-
+    
+    // 채팅방 검색시 아래 화살표 
     const DownFindText=async()=>{
          if((pointerRef.current-1)<0)
             return;
@@ -284,6 +342,8 @@ const ChattingRoomScreen=()=>{
             const resultMessages: ChatHistory[] = res.data.data;
             console.log("아래로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
         }catch(err){
              console.log("아래로 이동 후 메시지 불러오기 실패", err);
         }
@@ -305,6 +365,8 @@ const ChattingRoomScreen=()=>{
             const resultMessages: ChatHistory[] = res.data.data;
             console.log("검색 버튼 누른 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
         }catch(err){
              console.log("검색 버튼 누른 후 메시지 불러오기 실패", err);
         }
@@ -396,6 +458,7 @@ const ChattingRoomScreen=()=>{
                 {/* 채팅 화면 */}
                 <ChattingScreen>
                     <FlatList
+                        ref={flatListRef} 
                         data={messages}
                         keyExtractor={(item, index) => `${item.id}-${index}`}
                         inverted
@@ -427,7 +490,18 @@ const ChattingRoomScreen=()=>{
                                         {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
-                                            <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                            {isSearching?(                        
+                                                searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                    (<HighlightMyText 
+                                                    text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                    keyword={searchText}
+                                                    />)
+                                                    :(<MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>)
+                                                
+                                                ):(
+                                                <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                                )}
+
                                         </MyTextFirstBox>
                                     </ChattingRightContainer>  
                                       {showDate&&
@@ -441,7 +515,18 @@ const ChattingRoomScreen=()=>{
                                           {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
-                                            <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                            {isSearching?(                        
+                                                searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                    (<HighlightMyText 
+                                                    text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                    keyword={searchText}
+                                                    />)
+                                                    :(<MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>)
+                                                
+                                                ):(
+                                                <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                                )}
+
                                         </MyTextNotFirstBox>
                                     </ChattingRightContainer>
                                       {showDate&&
@@ -463,7 +548,16 @@ const ChattingRoomScreen=()=>{
                                             <OtherNameText>{item.senderLastName}</OtherNameText>
                                             <LeftMessageBox>
                                                 <OtherFirstTextBox>
-                                                    <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                    {isSearching?(                        
+                                                        searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                            (<HighlightOtherText 
+                                                            text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                            keyword={searchText}
+                                                            />)
+                                                            :(<OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>)                                                        
+                                                        ):(
+                                                        <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                        )}
                                                 </OtherFirstTextBox>
                                                   {showTime&&
                                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
@@ -482,7 +576,17 @@ const ChattingRoomScreen=()=>{
                                         <OtherContainer>
                                             <LeftMessageBox>
                                                 <OtherNotFirstTextBox>
-                                                    <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                    {isSearching?(                        
+                                                        searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                            (<HighlightOtherText 
+                                                            text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                            keyword={searchText}
+                                                            />)
+                                                            :(<OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>)
+                                                        
+                                                        ):(
+                                                        <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                        )}
                                                 </OtherNotFirstTextBox>
                                                   {showTime&&
                                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
