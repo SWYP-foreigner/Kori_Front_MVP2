@@ -179,8 +179,10 @@ export default function CommunityScreen() {
 
     const likeMutation = useToggleLike();
 
-    const { bookmarked, toggleBookmarked, setBookmarked } = usePostUI();
-
+    const {
+        bookmarked, toggleBookmarked, setBookmarked,
+        liked, likeCount, setLiked, toggleLiked, setLikeCount, bumpLike, hydrateLikeFromServer
+    } = usePostUI();
     useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
@@ -195,21 +197,19 @@ export default function CommunityScreen() {
 
 
             setItems(prev => {
-                // 중복 제거하며 base 리스트 구성
                 if (!after) {
-                    // 첫 페이지
                     return list.map(p => ({
                         ...p,
-                        // 전역값이 있으면 우선 적용
                         bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
+                        likedByMe: liked[p.postId] ?? p.likedByMe ?? false,
+                        likes: (likeCount[p.postId] ?? p.likes ?? 0),
+
                     }));
                 } else {
-                    // 다음 페이지
                     const seen = new Set(prev.map(p => p.postId));
                     const appended = list.filter(p => !seen.has(p.postId));
                     const merged = [...prev, ...appended];
 
-                    // 병합 후 전역값 반영
                     return merged.map(p => ({
                         ...p,
                         bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
@@ -248,12 +248,18 @@ export default function CommunityScreen() {
     const handleToggleLike = async (postId: number) => {
         const target = items.find(p => p.postId === postId);
         const prevLiked = Boolean(target?.likedByMe);
+        const prevCount = (likeCount[postId] ?? target?.likes ?? 0);
+        const nextLiked = !prevLiked;
         const delta = prevLiked ? -1 : +1;
+        const nextCount = Math.max(0, prevCount + delta);
+
+        toggleLiked(postId);
+        setLikeCount(postId, nextCount);
 
         setItems(prev =>
             prev.map(p =>
                 p.postId === postId
-                    ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta), likedByMe: !prevLiked }
+                    ? { ...p, likedByMe: nextLiked, likes: nextCount }
                     : p
             )
         );
@@ -261,10 +267,12 @@ export default function CommunityScreen() {
         try {
             await likeMutation.mutateAsync({ postId, liked: prevLiked });
         } catch (e) {
+            setLiked(postId, prevLiked);
+            setLikeCount(postId, prevCount);
             setItems(prev =>
                 prev.map(p =>
                     p.postId === postId
-                        ? { ...p, likes: Math.max(0, (p.likes ?? 0) - delta), likedByMe: prevLiked }
+                        ? { ...p, likedByMe: prevLiked, likes: prevCount }
                         : p
                 )
             );

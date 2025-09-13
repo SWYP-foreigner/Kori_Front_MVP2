@@ -126,7 +126,11 @@ export default function PostDetailScreen() {
   }>();
   const postId = Number(id);
 
-  const { bookmarked: bmMap, toggleBookmarked, hydrateFromServer, setBookmarked } = usePostUI();
+  const {
+    bookmarked: bmMap, toggleBookmarked, hydrateFromServer, setBookmarked,
+    liked, likeCount, setLiked, toggleLiked, setLikeCount, hydrateLikeFromServer
+  } = usePostUI();
+
   const postBookmarked = bmMap[postId] ?? false;
 
   const { data, isLoading, isError } = usePostDetail(
@@ -253,9 +257,6 @@ export default function PostDetailScreen() {
 
   const openedOnceRef = useRef(false);
 
-  const [likesOverride, setLikesOverride] = useState<number | null>(null);
-  const [likedByMe, setLikedByMe] = useState(false);
-
   const [menuVisible, setMenuVisible] = useState(false);
   const slideY = useRef(new Animated.Value(300)).current;
 
@@ -292,20 +293,23 @@ export default function PostDetailScreen() {
   const { mutateAsync: updateCommentMut } = useUpdateComment();
   const likeBusyRef = useRef<Record<number, boolean>>({});
 
-  useEffect(() => {
-    if (!data) return;
-    const liked =
-      (data as any).likedByMe ??
-      (data as any).isLike ??
-      (data as any).isLiked ?? false;
-    setLikedByMe(Boolean(liked));
-  }, [data]);
+
 
   useEffect(() => {
     const serverVal = (post as any)?.bookmarked;
     hydrateFromServer(postId, typeof serverVal === 'boolean' ? serverVal : undefined);
   }, [postId, post, hydrateFromServer]);
 
+  useEffect(() => {
+    if (!Number.isFinite(postId) || !post) return;
+
+    const liked = Boolean(
+      (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
+    );
+    const count = post.likeCount ?? 0;
+
+    hydrateLikeFromServer(postId, liked, count);
+  }, [postId, post, hydrateLikeFromServer]);
 
   useEffect(() => {
     if (openedOnceRef.current) return;
@@ -378,10 +382,16 @@ export default function PostDetailScreen() {
   const createdLabel = formatCreatedYMD(createdRaw);
 
   const serverLikeCount = post.likeCount ?? 0;
-  const likeCount = likesOverride ?? serverLikeCount;
   const commentCount = post.commentCount ?? 0;
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
+
+  const serverLiked = Boolean(
+    (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
+  );
+
+  const likedByMe = liked[postId] ?? serverLiked;
+  const likeCountUI = likeCount[postId] ?? serverLikeCount;
 
   try {
     console.groupCollapsed('[post-meta]');
@@ -432,17 +442,24 @@ export default function PostDetailScreen() {
 
   const handleToggleLike = async () => {
     if (!Number.isFinite(postId) || likeMutation.isPending) return;
+
     const prevLiked = likedByMe;
-    const delta = prevLiked ? -1 : +1;
-    const prevCount = likesOverride ?? serverLikeCount;
-    setLikesOverride(Math.max(0, prevCount + delta));
-    setLikedByMe(!prevLiked);
+    const prevCount = likeCountUI;
+    const nextLiked = !prevLiked;
+    const delta = nextLiked ? +1 : -1;
+    const nextCount = Math.max(0, prevCount + delta);
+
+    // 전역 먼저 반영
+    toggleLiked(postId);
+    setLikeCount(postId, nextCount);
+
     try {
       await likeMutation.mutateAsync({ postId, liked: prevLiked });
     } catch (e) {
-      setLikesOverride(prevCount);
-      setLikedByMe(prevLiked);
-      console.log('[like error]', e);
+      // 롤백
+      setLiked(postId, prevLiked);
+      setLikeCount(postId, prevCount);
+      console.log('[like detail] error', e);
     }
   };
 
@@ -664,7 +681,7 @@ export default function PostDetailScreen() {
                       size={16}
                       color={likedByMe ? '#30F59B' : '#cfd4da'}
                     />
-                    <ActText>{likeCount}</ActText>
+                    <ActText>{likeCountUI}</ActText>
                   </Act>
                   <Act>
                     <AntDesign name="message1" size={16} color="#cfd4da" />
