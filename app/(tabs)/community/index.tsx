@@ -8,6 +8,7 @@ import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import { usePostUI } from '@/src/store/usePostUI';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -185,6 +186,9 @@ export default function CommunityScreen() {
         bookmarked, toggleBookmarked, setBookmarked,
         liked, likeCount, setLiked, toggleLiked, setLikeCount, bumpLike, hydrateLikeFromServer
     } = usePostUI();
+
+    const hasAnyBookmark = Object.values(bookmarked).some(Boolean);
+
     useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
@@ -342,6 +346,19 @@ export default function CommunityScreen() {
                     >
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
+
+                    <IconBtn
+                        onPress={() => {
+                            router.push('/community/bookmarks');
+                        }}
+                    >
+                        <MaterialIcons
+                            name='bookmark-border'
+                            size={20}
+                            color='#cfd4da'
+                        />
+                    </IconBtn>
+
 
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
