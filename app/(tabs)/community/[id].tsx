@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -292,6 +293,7 @@ export default function PostDetailScreen() {
 
   const { mutateAsync: updateCommentMut } = useUpdateComment();
   const likeBusyRef = useRef<Record<number, boolean>>({});
+  const bmBusyRef = useRef<Record<number, boolean>>({});
 
 
 
@@ -619,9 +621,31 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
 
-                  <BookmarkWrap onPress={() => {
-                    toggleBookmarked(postId);
-                  }}
+                  <BookmarkWrap
+                    onPress={async () => {
+                      if (bmBusyRef.current[postId]) return;
+                      bmBusyRef.current[postId] = true;
+
+                      const before = postBookmarked;
+                      const next = !before;
+
+                      // 1) 전역 즉시 토글
+                      toggleBookmarked(postId);
+
+                      try {
+                        if (next) {
+                          await addBookmark(postId);
+                        } else {
+                          await removeBookmark(postId);
+                        }
+                      } catch (e) {
+                        // 2) 실패 롤백
+                        setBookmarked(postId, before);
+                        console.log('[bookmark:detail] error', e);
+                      } finally {
+                        bmBusyRef.current[postId] = false;
+                      }
+                    }}
                     $active={postBookmarked}
                     hitSlop={8}
                   >
@@ -631,6 +655,7 @@ export default function PostDetailScreen() {
                       color={postBookmarked ? '#30F59B' : '#8a8a8a'}
                     />
                   </BookmarkWrap>
+
                 </Row>
 
                 {imageUrls.length > 0 && (

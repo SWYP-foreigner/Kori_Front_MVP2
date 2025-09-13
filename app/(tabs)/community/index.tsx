@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs from '@/components/SortTabs';
@@ -15,6 +16,7 @@ import {
     ListRenderItem, type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
+
 
 const isMeaningfulName = (v?: any) => {
     const s = String(v ?? '').trim();
@@ -280,15 +282,37 @@ export default function CommunityScreen() {
         }
     };
 
-    const handleToggleBookmark = (postId: number) => {
-        toggleBookmarked(postId);
+    const bmBusyRef = useRef<Record<number, boolean>>({});
 
+    const handleToggleBookmark = async (postId: number) => {
+        if (bmBusyRef.current[postId]) return;
+        bmBusyRef.current[postId] = true;
+
+        const before = items.find(p => p.postId === postId)?.bookmarked ?? false;
+        const next = !before;
+
+        toggleBookmarked(postId);
         setItems(prev =>
-            prev.map(p =>
-                p.postId === postId ? { ...p, bookmarked: !(p.bookmarked ?? false) } : p
-            )
+            prev.map(p => (p.postId === postId ? { ...p, bookmarked: next } : p)),
         );
+
+        try {
+            if (next) {
+                await addBookmark(postId);
+            } else {
+                await removeBookmark(postId);
+            }
+        } catch (e) {
+            setBookmarked(postId, before);
+            setItems(prev =>
+                prev.map(p => (p.postId === postId ? { ...p, bookmarked: before } : p)),
+            );
+            console.log('[bookmark:list] error', e);
+        } finally {
+            bmBusyRef.current[postId] = false;
+        }
     };
+
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
