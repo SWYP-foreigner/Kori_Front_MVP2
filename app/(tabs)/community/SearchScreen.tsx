@@ -92,6 +92,15 @@ type PostEx = Post & {
     userImageUrl?: string;
 };
 
+function resolveAuthor(row: any): string {
+    const isAnon = row?.isAnonymous ?? row?.anonymous ?? false;
+    const cands = [
+        row?.authorName, row?.memberName, row?.nickname,
+        row?.userName, row?.writerName, row?.displayName, row?.name,
+    ].map(v => (v == null ? undefined : String(v).trim())).filter(Boolean) as string[];
+    return (isAnon ? cands[0] || '익명' : cands[0]) || '익명';
+}
+
 const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     const createdRaw = row.createdAt ?? row.createdTime;
     const liked =
@@ -108,8 +117,8 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
     return {
         id: String(row.postId),
         postId: row.postId,
-        author: row.authorName || 'Unknown',
-        avatar: AV,
+        author: resolveAuthor(row),
+        avatar: row.userImageUrl ? { uri: row.userImageUrl } : AV,
         category: 'Free talk',
         createdAt: toDateLabel(createdRaw, respTimestamp),
         body: row.contentPreview ?? row.content ?? '',
