@@ -166,6 +166,30 @@ export default function CommunityScreen() {
         });
     }, [items, canQuery, effectiveQ]);
 
+    const resultsOnly: PostEx[] = useMemo(() => {
+        if (!canQuery) return [];
+        const normalize = (x: PostEx | PostExFromSearch): PostEx => ({
+            ...x,
+            postId: Number(x.postId),
+            id: String(x.postId),
+        });
+
+        const seen = new Set<number>();
+        const out: PostEx[] = [];
+
+        const pushUnique = (arr: (PostEx | PostExFromSearch)[]) => {
+            for (const raw of arr) {
+                const p = normalize(raw as any);
+                if (!seen.has(p.postId)) { seen.add(p.postId); out.push(p); }
+            }
+        };
+
+        pushUnique(remoteHits as any);
+        pushUnique(localMatches as any);
+        return out; // visible은 더하지 않음
+    }, [canQuery, remoteHits, localMatches]);
+
+
     const [visible, setVisible] = useState<PostEx[]>([]);
     useEffect(() => {
         setVisible(
@@ -383,7 +407,7 @@ export default function CommunityScreen() {
             </SortWrap>
 
             <List
-                data={canQuery ? composed : visible} // ✅ 검색 중이면 composed, 아니면 기존 visible
+                data={canQuery ? resultsOnly : visible}
                 keyExtractor={(it: PostEx) => String(it.postId)}
                 renderItem={renderPost}
                 showsVerticalScrollIndicator={false}
@@ -398,7 +422,15 @@ export default function CommunityScreen() {
                         </FooterLoading>
                     ) : null
                 }
-                contentContainerStyle={{ paddingBottom: 80 }}
+                ListEmptyComponent={
+                    canQuery && !searching ? (
+                        <EmptyWrap>
+                            <EmptyTitle>Ooops..</EmptyTitle>
+                            <EmptySub>There is no Search Results.</EmptySub>
+                        </EmptyWrap>
+                    ) : null
+                }
+                contentContainerStyle={{ paddingBottom: 80, flexGrow: 1 }}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewConfig}
             />
@@ -480,4 +512,23 @@ const CancelBtn = styled.Pressable`
 `;
 const CancelText = styled.Text`
   color: #cfd4da;
+`;
+const EmptyWrap = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+`;
+
+const EmptyTitle = styled.Text`
+  color: #ffffff;
+  font-size: 40px;
+  font-family: 'InstrumentSerif_400Regular';
+  line-height: 44px;
+  margin-bottom: 8px;
+`;
+
+const EmptySub = styled.Text`
+  color: #9aa0a6;
+  font-size: 14px;
 `;
