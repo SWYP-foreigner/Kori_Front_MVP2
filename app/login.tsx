@@ -154,7 +154,7 @@ const LoginScreen = () => {
                 ],
                 nonce:rawNonce,
               });
-
+        
         const res = await axios.post<AppLoginResponse>(
           // 애플 로그인 API 주소로 바꿔야함
           `${Config.SERVER_URL}/api/v1/member/apple/app-login`,

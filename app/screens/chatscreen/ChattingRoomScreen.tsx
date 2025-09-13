@@ -11,6 +11,7 @@ import api from "@/api/axiosInstance";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Dimensions ,Image} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { Config } from "@/src/lib/config";
 
 type ChatHistory = {
     id: number,
@@ -54,6 +55,9 @@ const ChattingRoomScreen=()=>{
     const [searchBox,setSearchBox]=useState(false);
     const [isSearching,setIsSearching]=useState(false);
     const [searchMessages,setSearchMessages]=useState<any[]>([]);
+    
+    const [showSearchMessages , setShowSearchMessages]=useState<any[]>([]);
+    const pointerRef=useRef(0);
 
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -233,19 +237,78 @@ const ChattingRoomScreen=()=>{
 
     // SearchBox 보여주는 함수
     const showSearchBox=()=>{
-        setSearchBox(!searchBox);
-        setIsSearching(false);
+        setSearchBox(true);
         setSearchText('');
+        pointerRef.current=0;
     }
 
+    // SearchBox 닫는 함수
+    const closeSearchBox=async()=>{
+        setSearchBox(false);
+        setIsSearching(false);
+        pointerRef.current=0;
+
+        // 원래 메시지 복원
+        await fetchHistory(); // 기존 메시지 다시 불러오기
+    }
+
+    const UpFindText=async()=>{
+        
+        if( pointerRef.current+1===searchMessages.length)
+            return;
+        pointerRef.current+=1;
+        const messageId=searchMessages[pointerRef.current]?.id;
+        console.log("포인터",pointerRef.current);
+        console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+           
+            const resultMessages: ChatHistory[] = res.data.data;
+            console.log("위로 이동 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+        }catch(err){
+             console.log("위로 이동 후 메시지 불러오기 실패", err);
+        }
+    }
+
+    const DownFindText=async()=>{
+         if((pointerRef.current-1)<0)
+            return;
+        pointerRef.current-=1;
+        const messageId=searchMessages[pointerRef.current]?.id;
+        console.log("포인터",pointerRef.current);
+        console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+             console.log("res",res.data.data);
+            const resultMessages: ChatHistory[] = res.data.data;
+            console.log("아래로 이동 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+        }catch(err){
+             console.log("아래로 이동 후 메시지 불러오기 실패", err);
+        }
+    }
     //검색시 호출되는 함수
     const search=async()=>{
        try{
+         pointerRef.current=0;
          setIsSearching(true);
          const res=await api.get(`/api/v1/chat/search?roomId=${roomId}&keyword=${searchText}`);
          const SearchResult: ChatHistory[] = res.data.data;
          setSearchMessages(SearchResult);
          console.log("메시지 검색 결과",SearchResult);
+        const messageId=SearchResult[pointerRef.current]?.id;
+        console.log("포인터",pointerRef.current);
+        console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+            const resultMessages: ChatHistory[] = res.data.data;
+            console.log("검색 버튼 누른 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+        }catch(err){
+             console.log("검색 버튼 누른 후 메시지 불러오기 실패", err);
+        }
+       
        }catch(err){
              console.log("검색 결과 불러오기 실패", err);
        }
@@ -282,7 +345,7 @@ const ChattingRoomScreen=()=>{
                 <HeaderContainer>
                     {searchBox ?( 
                         <>
-                            <TouchableOpacity onPress={showSearchBox}>
+                            <TouchableOpacity onPress={closeSearchBox}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
                 </TouchableOpacity>
                 <SearchContainer>
@@ -296,7 +359,7 @@ const ChattingRoomScreen=()=>{
 
                     />
                 {searchText&&
-                <TouchableOpacity onPress={() => setSearchText('')}>
+                <TouchableOpacity onPress={() => {setSearchText('') , setIsSearching(false)}}>
                     <AntDesign name="closecircle" size={23} color="#CCCFD0" style={{ marginRight: 8 }}  />
                 </TouchableOpacity>}
                 </SearchContainer>
@@ -334,7 +397,7 @@ const ChattingRoomScreen=()=>{
                 <ChattingScreen>
                     <FlatList
                         data={messages}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={(item, index) => `${item.id}-${index}`}
                         inverted
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{
@@ -355,8 +418,8 @@ const ChattingRoomScreen=()=>{
                                 || !isSameUser;
                             const showDate=(index === messages.length - 1) || (messages[index + 1] && formatDate(messages[index + 1].sentAt) !== formatDate(item.sentAt));
                             
-                            console.log(index,item);
-                            console.log(formatDate(item.sentAt))
+                            // console.log(index,item);
+                            // console.log(formatDate(item.sentAt))
                             if (isMyMessage) {
                                 return showProfile ? (
                                     <>
@@ -437,22 +500,22 @@ const ChattingRoomScreen=()=>{
                     />
                     {searchBox?(
                     <FindSearchTextContainer>
-                        <TouchableOpacity disabled={!isSearching}>
+                        <TouchableOpacity disabled={!isSearching} onPress={UpFindText}>
                         <Image
                             source={require("@/assets/images/UpArrow.png")}
                             style={{ width: 17, height: 17 , marginLeft:10}}  
                             resizeMode="contain"                
                             />
                         </TouchableOpacity>
-                         <TouchableOpacity disabled={!isSearching}>
+                         <TouchableOpacity disabled={!isSearching} onPress={DownFindText} >
                         <Image
                         source={require("@/assets/images/DownArrow.png")}
                         style={{ width: 17, height: 17 ,marginLeft:18}}  
                         resizeMode="contain"                
                         />
                         </TouchableOpacity>
-                       
-                        <FindResultText>3/3</FindResultText>
+                        {isSearching&&searchText&&( <FindResultText>{pointerRef.current+1}/{searchMessages.length}</FindResultText>)}
+                      
                     </FindSearchTextContainer>):(
                     <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox

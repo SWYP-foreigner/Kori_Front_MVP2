@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,Keyboard} from 'react-native';
 import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
 
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation}) {
+export default function NameStepScreen() {
   const [AboutMe, setAboutMe] = useState('');
   const { profileData, updateProfile } = useProfile();
   const router = useRouter();
@@ -47,6 +47,7 @@ export default function NameStepScreen({ navigation}) {
               multiline
               textAlignVertical="top"
               maxLength={70} // 소프트 리미트보다 약간 높게 설정
+              onSubmitEditing={() => Keyboard.dismiss()} // done 버튼 눌렀을 때 키보드 닫기
             />
             
             <CharacterCountWrapper>
