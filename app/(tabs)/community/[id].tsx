@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -8,6 +9,7 @@ import { useUpdateComment } from '@/hooks/mutations/useUpdateComment';
 import { useCommentWriteOptions } from '@/hooks/queries/useCommentWriteOptions';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
+import { usePostUI } from '@/src/store/usePostUI';
 import { LOCAL_ALLOW_ANON, resolvePostCategory } from '@/utils/category';
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -30,7 +32,6 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
-
 
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
@@ -126,6 +127,13 @@ export default function PostDetailScreen() {
   }>();
   const postId = Number(id);
 
+  const {
+    bookmarked: bmMap, toggleBookmarked, hydrateFromServer, setBookmarked,
+    liked, likeCount, setLiked, toggleLiked, setLikeCount, hydrateLikeFromServer
+  } = usePostUI();
+
+  const postBookmarked = bmMap[postId] ?? false;
+
   const { data, isLoading, isError } = usePostDetail(
     Number.isFinite(postId) ? postId : undefined,
   );
@@ -161,7 +169,7 @@ export default function PostDetailScreen() {
 
   const DEFAULT_RATIO = 16 / 9;
   const MAX_IMAGES = 5;
-  const IMG_W = Dimensions.get('window').width - 32; // (H_PADDING 고려)
+  const IMG_W = Dimensions.get('window').width - 32;
 
   const rawImageKeys: string[] = useMemo(() => {
     const p: any = data ?? {};
@@ -250,10 +258,6 @@ export default function PostDetailScreen() {
 
   const openedOnceRef = useRef(false);
 
-  const [bookmarked, setBookmarked] = useState(false);
-  const [likesOverride, setLikesOverride] = useState<number | null>(null);
-  const [likedByMe, setLikedByMe] = useState(false);
-
   const [menuVisible, setMenuVisible] = useState(false);
   const slideY = useRef(new Animated.Value(300)).current;
 
@@ -289,15 +293,25 @@ export default function PostDetailScreen() {
 
   const { mutateAsync: updateCommentMut } = useUpdateComment();
   const likeBusyRef = useRef<Record<number, boolean>>({});
+  const bmBusyRef = useRef<Record<number, boolean>>({});
+
+
 
   useEffect(() => {
-    if (!data) return;
-    const liked =
-      (data as any).likedByMe ??
-      (data as any).isLike ??
-      (data as any).isLiked ?? false;
-    setLikedByMe(Boolean(liked));
-  }, [data]);
+    const serverVal = (post as any)?.bookmarked;
+    hydrateFromServer(postId, typeof serverVal === 'boolean' ? serverVal : undefined);
+  }, [postId, post, hydrateFromServer]);
+
+  useEffect(() => {
+    if (!Number.isFinite(postId) || !post) return;
+
+    const liked = Boolean(
+      (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
+    );
+    const count = post.likeCount ?? 0;
+
+    hydrateLikeFromServer(postId, liked, count);
+  }, [postId, post, hydrateLikeFromServer]);
 
   useEffect(() => {
     if (openedOnceRef.current) return;
@@ -370,10 +384,16 @@ export default function PostDetailScreen() {
   const createdLabel = formatCreatedYMD(createdRaw);
 
   const serverLikeCount = post.likeCount ?? 0;
-  const likeCount = likesOverride ?? serverLikeCount;
   const commentCount = post.commentCount ?? 0;
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
+
+  const serverLiked = Boolean(
+    (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
+  );
+
+  const likedByMe = liked[postId] ?? serverLiked;
+  const likeCountUI = likeCount[postId] ?? serverLikeCount;
 
   try {
     console.groupCollapsed('[post-meta]');
@@ -424,17 +444,24 @@ export default function PostDetailScreen() {
 
   const handleToggleLike = async () => {
     if (!Number.isFinite(postId) || likeMutation.isPending) return;
+
     const prevLiked = likedByMe;
-    const delta = prevLiked ? -1 : +1;
-    const prevCount = likesOverride ?? serverLikeCount;
-    setLikesOverride(Math.max(0, prevCount + delta));
-    setLikedByMe(!prevLiked);
+    const prevCount = likeCountUI;
+    const nextLiked = !prevLiked;
+    const delta = nextLiked ? +1 : -1;
+    const nextCount = Math.max(0, prevCount + delta);
+
+    // 전역 먼저 반영
+    toggleLiked(postId);
+    setLikeCount(postId, nextCount);
+
     try {
       await likeMutation.mutateAsync({ postId, liked: prevLiked });
     } catch (e) {
-      setLikesOverride(prevCount);
-      setLikedByMe(prevLiked);
-      console.log('[like error]', e);
+      // 롤백
+      setLiked(postId, prevLiked);
+      setLikeCount(postId, prevCount);
+      console.log('[like detail] error', e);
     }
   };
 
@@ -594,13 +621,41 @@ export default function PostDetailScreen() {
                     </MetaRow>
                   </Meta>
 
-                  {/* <BookmarkWrap onPress={() => setBookmarked(v => !v)} $active={bookmarked} hitSlop={8}>
+                  <BookmarkWrap
+                    onPress={async () => {
+                      if (bmBusyRef.current[postId]) return;
+                      bmBusyRef.current[postId] = true;
+
+                      const before = postBookmarked;
+                      const next = !before;
+
+                      // 1) 전역 즉시 토글
+                      toggleBookmarked(postId);
+
+                      try {
+                        if (next) {
+                          await addBookmark(postId);
+                        } else {
+                          await removeBookmark(postId);
+                        }
+                      } catch (e) {
+                        // 2) 실패 롤백
+                        setBookmarked(postId, before);
+                        console.log('[bookmark:detail] error', e);
+                      } finally {
+                        bmBusyRef.current[postId] = false;
+                      }
+                    }}
+                    $active={postBookmarked}
+                    hitSlop={8}
+                  >
                     <MaterialIcons
-                      name="bookmark-border"
+                      name={postBookmarked ? 'bookmark' : 'bookmark-border'}
                       size={20}
-                      color={bookmarked ? '#30F59B' : '#8a8a8a'}
+                      color={postBookmarked ? '#30F59B' : '#8a8a8a'}
                     />
-                  </BookmarkWrap> */}
+                  </BookmarkWrap>
+
                 </Row>
 
                 {imageUrls.length > 0 && (
@@ -651,7 +706,7 @@ export default function PostDetailScreen() {
                       size={16}
                       color={likedByMe ? '#30F59B' : '#cfd4da'}
                     />
-                    <ActText>{likeCount}</ActText>
+                    <ActText>{likeCountUI}</ActText>
                   </Act>
                   <Act>
                     <AntDesign name="message1" size={16} color="#cfd4da" />

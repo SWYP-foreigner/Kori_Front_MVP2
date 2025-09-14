@@ -170,7 +170,7 @@ const LoginScreen = () => {
               }
             }
         );
-            
+            console.log("데이터",res.data.data);
             const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
             await SecureStore.setItemAsync('jwt', accessToken);
             await SecureStore.setItemAsync('refresh', refreshToken);

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export type SearchPostItem = {
     postId: number;
+    authorName?: string;
     contentPreview?: string;
     content?: string;
     userName?: string;
@@ -62,6 +63,18 @@ function toDateLabel(raw?: unknown): string {
     }
 }
 
+function resolveAuthorName(row: any): string {
+    const isAnon = row?.isAnonymous ?? row?.anonymous ?? false;
+    const cands = [
+        row?.authorName, row?.userName, row?.memberName, row?.nickname,
+        row?.writerName, row?.displayName, row?.name,
+    ].map(v => (v == null ? undefined : String(v).trim()))
+        .filter(Boolean) as string[];
+    const name = cands[0] || '익명';
+    return isAnon ? '익명' : name;
+}
+
+
 function mapHit(hit: SearchPostHit): PostExFromSearch {
     const row = hit.item;
 
@@ -79,8 +92,8 @@ function mapHit(hit: SearchPostHit): PostExFromSearch {
     return {
         id: String(row.postId),
         postId: row.postId,
-        author: row.userName || 'Unknown',
-        avatar: AV,
+        author: resolveAuthorName(row),
+        avatar: row.userImageUrl ? { uri: row.userImageUrl } : AV,
         category: row.boardCategory ?? 'All',
         createdAt: toDateLabel(row.createdAt),
         body: row.contentPreview ?? row.content ?? '',
