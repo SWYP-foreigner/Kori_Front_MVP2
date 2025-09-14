@@ -1,24 +1,23 @@
-import React, { useMemo, useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
-import {useProfile} from '../../contexts/ProfileContext'
 import { useRouter } from 'expo-router';
-
+import React, { useState } from 'react';
+import { Keyboard, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
+import { useProfile } from '../../contexts/ProfileContext';
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation}) {
+export default function NameStepScreen({ navigation }) {
   const [AboutMe, setAboutMe] = useState('');
   const { profileData, updateProfile } = useProfile();
   const router = useRouter();
   const maxLength = 70;
-  
-  const isOverLimit = AboutMe.length ==70;
+
+  const isOverLimit = AboutMe.length == 70;
   const canProceed = AboutMe.trim().length > 0 && !isOverLimit;
-  
+
   const handleNext = () => {
     if (canProceed) {
-      updateProfile('introduction',AboutMe);
+      updateProfile('introduction', AboutMe);
       router.push('./BirthStepScreen');
     }
   };
@@ -34,7 +33,7 @@ export default function NameStepScreen({ navigation}) {
         </TitleWrapper>
 
         <Subtitle>Tell us about your short story.</Subtitle>
-        
+
         <Form>
           <InputWrapper >
             <Input
@@ -47,8 +46,10 @@ export default function NameStepScreen({ navigation}) {
               multiline
               textAlignVertical="top"
               maxLength={70} // 소프트 리미트보다 약간 높게 설정
+              blurOnSubmit={true} // 포커스 해제 → 키보드 내려감
+              onSubmitEditing={() => Keyboard.dismiss()} // done 버튼 눌렀을 때 키보드 닫기
             />
-            
+
             <CharacterCountWrapper>
               <CharacterCount isError={isOverLimit}>
                 {AboutMe.length}/{maxLength} limit
@@ -58,7 +59,7 @@ export default function NameStepScreen({ navigation}) {
         </Form>
 
         <Spacer />
-        
+
         <NextButton
           onPress={handleNext}
           disabled={!canProceed}

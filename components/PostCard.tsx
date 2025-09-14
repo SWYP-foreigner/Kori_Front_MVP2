@@ -1,5 +1,6 @@
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useMemo, useRef, useState } from 'react';
 import { FlatList, Image, LayoutChangeEvent, ViewabilityConfig, ViewToken } from 'react-native';
 import styled from 'styled-components/native';
@@ -137,13 +138,13 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
           </SubRow>
         </Meta>
 
-        {/* <BookBtn onPress={onToggleBookmark} hitSlop={8}>
+        <BookBtn onPress={onToggleBookmark} hitSlop={8}>
           <MaterialIcons
             name={data.bookmarked ? 'bookmark' : 'bookmark-border'}
             size={20}
             color={data.bookmarked ? '#30F59B' : '#8a8a8a'}
           />
-        </BookBtn> */}
+        </BookBtn>
       </HeaderRow>
 
       {imageUrls.length > 0 ? (

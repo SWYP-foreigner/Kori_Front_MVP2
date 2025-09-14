@@ -1,11 +1,14 @@
 import api from '@/api/axiosInstance';
+import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import CategoryChips, { Category } from '@/components/CategoryChips';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { usePostUI } from '@/src/store/usePostUI';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -14,6 +17,7 @@ import {
     ListRenderItem, type FlatListProps
 } from 'react-native';
 import styled from 'styled-components/native';
+
 
 const isMeaningfulName = (v?: any) => {
     const s = String(v ?? '').trim();
@@ -178,6 +182,13 @@ export default function CommunityScreen() {
 
     const likeMutation = useToggleLike();
 
+    const {
+        bookmarked, toggleBookmarked, setBookmarked,
+        liked, likeCount, setLiked, toggleLiked, setLikeCount, bumpLike, hydrateLikeFromServer
+    } = usePostUI();
+
+    const hasAnyBookmark = Object.values(bookmarked).some(Boolean);
+
     useEffect(() => { refresh(); }, [boardId, sort]);
 
     const fetchPage = async (after?: string) => {
@@ -189,12 +200,29 @@ export default function CommunityScreen() {
             const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
             const respTimestamp = data?.timestamp;
             const list = (data?.data?.items ?? []).map(item => mapItem(item, respTimestamp));
+
+
             setItems(prev => {
-                if (!after) return list;
-                const seen = new Set(prev.map(p => p.postId));
-                const appended = list.filter(p => !seen.has(p.postId));
-                return [...prev, ...appended];
+                if (!after) {
+                    return list.map(p => ({
+                        ...p,
+                        bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
+                        likedByMe: liked[p.postId] ?? p.likedByMe ?? false,
+                        likes: (likeCount[p.postId] ?? p.likes ?? 0),
+
+                    }));
+                } else {
+                    const seen = new Set(prev.map(p => p.postId));
+                    const appended = list.filter(p => !seen.has(p.postId));
+                    const merged = [...prev, ...appended];
+
+                    return merged.map(p => ({
+                        ...p,
+                        bookmarked: bookmarked[p.postId] ?? p.bookmarked ?? false,
+                    }));
+                }
             });
+
             setHasNext(Boolean(data?.data?.hasNext));
             setCursor(data?.data?.nextCursor ?? undefined);
         } catch (e) {
@@ -213,7 +241,6 @@ export default function CommunityScreen() {
         fetchPage(undefined);
     };
 
-    //다중 호출 방지 (테스트 필요함)
     const onEndCalledRef = useRef(false);
 
     const loadMore = () => {
@@ -227,12 +254,18 @@ export default function CommunityScreen() {
     const handleToggleLike = async (postId: number) => {
         const target = items.find(p => p.postId === postId);
         const prevLiked = Boolean(target?.likedByMe);
+        const prevCount = (likeCount[postId] ?? target?.likes ?? 0);
+        const nextLiked = !prevLiked;
         const delta = prevLiked ? -1 : +1;
+        const nextCount = Math.max(0, prevCount + delta);
+
+        toggleLiked(postId);
+        setLikeCount(postId, nextCount);
 
         setItems(prev =>
             prev.map(p =>
                 p.postId === postId
-                    ? { ...p, likes: Math.max(0, (p.likes ?? 0) + delta), likedByMe: !prevLiked }
+                    ? { ...p, likedByMe: nextLiked, likes: nextCount }
                     : p
             )
         );
@@ -240,10 +273,12 @@ export default function CommunityScreen() {
         try {
             await likeMutation.mutateAsync({ postId, liked: prevLiked });
         } catch (e) {
+            setLiked(postId, prevLiked);
+            setLikeCount(postId, prevCount);
             setItems(prev =>
                 prev.map(p =>
                     p.postId === postId
-                        ? { ...p, likes: Math.max(0, (p.likes ?? 0) - delta), likedByMe: prevLiked }
+                        ? { ...p, likedByMe: prevLiked, likes: prevCount }
                         : p
                 )
             );
@@ -251,10 +286,37 @@ export default function CommunityScreen() {
         }
     };
 
-    const toggleBookmark = (postId: number) =>
+    const bmBusyRef = useRef<Record<number, boolean>>({});
+
+    const handleToggleBookmark = async (postId: number) => {
+        if (bmBusyRef.current[postId]) return;
+        bmBusyRef.current[postId] = true;
+
+        const before = items.find(p => p.postId === postId)?.bookmarked ?? false;
+        const next = !before;
+
+        toggleBookmarked(postId);
         setItems(prev =>
-            prev.map(p => (p.postId === postId ? { ...p, bookmarked: !p.bookmarked } : p))
+            prev.map(p => (p.postId === postId ? { ...p, bookmarked: next } : p)),
         );
+
+        try {
+            if (next) {
+                await addBookmark(postId);
+            } else {
+                await removeBookmark(postId);
+            }
+        } catch (e) {
+            setBookmarked(postId, before);
+            setItems(prev =>
+                prev.map(p => (p.postId === postId ? { ...p, bookmarked: before } : p)),
+            );
+            console.log('[bookmark:list] error', e);
+        } finally {
+            bmBusyRef.current[postId] = false;
+        }
+    };
+
 
     const renderPost: ListRenderItem<PostEx> = ({ item }) => (
         <PostCard
@@ -263,7 +325,7 @@ export default function CommunityScreen() {
                 router.push({ pathname: '/community/[id]', params: { id: String(item.postId) } })
             }
             onToggleLike={() => handleToggleLike(item.postId)}
-            onToggleBookmark={() => toggleBookmark(item.postId)}
+            onToggleBookmark={() => handleToggleBookmark(item.postId)}
         />
     );
 
@@ -284,6 +346,19 @@ export default function CommunityScreen() {
                     >
                         <AntDesign name="search1" size={18} color="#cfd4da" />
                     </IconBtn>
+
+                    <IconBtn
+                        onPress={() => {
+                            router.push('/community/bookmarks');
+                        }}
+                    >
+                        <MaterialIcons
+                            name='bookmark-border'
+                            size={20}
+                            color='#cfd4da'
+                        />
+                    </IconBtn>
+
 
                     <IconBtn onPress={() => router.push('/community/my-history')}>
                         <AntDesign name="user" size={18} color="#cfd4da" />
