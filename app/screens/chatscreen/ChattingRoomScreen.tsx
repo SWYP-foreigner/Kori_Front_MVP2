@@ -9,7 +9,7 @@ import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions ,Image} from 'react-native';
+import { Dimensions ,Image, InteractionManager} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from "@/src/lib/config";
 
@@ -225,7 +225,7 @@ const ChattingRoomScreen=()=>{
             setIsFetchingMore(false);
         }
 };
-
+    // 햄버거 버튼 눌렀을때 이동
     const onhandleNext = () => {
         router.push({
             pathname: './ChatInsideMember',  
@@ -249,6 +249,29 @@ const ChattingRoomScreen=()=>{
         // 원래 메시지 복원
         await fetchHistory(); // 기존 메시지 다시 불러오기
     }
+
+   const scrollToHighlightMessage = (messageId: number) => {
+  if (!flatListRef.current) return;
+
+  const index = messages.findIndex(msg => msg.id === messageId);
+  if (index === -1) return;
+   console.log("포인터",pointerRef.current);
+    console.log("index",index);
+  if (index === 0 && index===messages.length-1) {
+    // 첫 메시지면 viewPosition 없이 스크롤
+    flatListRef.current.scrollToIndex({
+      index,
+      animated: true,
+    });
+  } else {
+    // 나머지는 중앙 정렬
+    flatListRef.current.scrollToIndex({
+      index,
+      animated: true,
+    });
+  }
+};
+
 // 검색어 색칠 하는 함수
 const HighlightMyText = ({ text, keyword }: { text: string; keyword: string }) => {
   if (!keyword) return <MyText>{text}</MyText>;
@@ -269,18 +292,6 @@ const HighlightMyText = ({ text, keyword }: { text: string; keyword: string }) =
       )}
     </MyText>
   );
-};
-    const scrollToHighlightMessage = (messageId: number) => {
-    if (!flatListRef.current) return;
-    
-    const index = messages.findIndex(msg => msg.id === messageId);
-    if (index !== -1) {
-        flatListRef.current.scrollToIndex({
-            index,
-            animated: true,
-            
-        });
-    }
 };
 
 // 검색어 색칠 하는 함수
@@ -313,16 +324,19 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
             return;
         pointerRef.current+=1;
         const messageId=searchMessages[pointerRef.current]?.id;
-        console.log("포인터",pointerRef.current);
-        console.log("보내는 메세지 ID ",messageId);
+        // console.log("포인터",pointerRef.current);
+        // console.log("보내는 메세지 ID ",messageId);
         try{
             const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
            
             const resultMessages: ChatHistory[] = res.data.data;
-            console.log("위로 이동 후 메시지",resultMessages);
+            // console.log("위로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
             // 중앙으로 스크롤
-        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
+        // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
         }catch(err){
              console.log("위로 이동 후 메시지 불러오기 실패", err);
         }
@@ -334,16 +348,19 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
             return;
         pointerRef.current-=1;
         const messageId=searchMessages[pointerRef.current]?.id;
-        console.log("포인터",pointerRef.current);
-        console.log("보내는 메세지 ID ",messageId);
+        // console.log("포인터",pointerRef.current);
+        // console.log("보내는 메세지 ID ",messageId);
         try{
             const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
-             console.log("res",res.data.data);
+            //  console.log("res",res.data.data);
             const resultMessages: ChatHistory[] = res.data.data;
-            console.log("아래로 이동 후 메시지",resultMessages);
+            // console.log("아래로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
             // 중앙으로 스크롤
-        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
+            // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
         }catch(err){
              console.log("아래로 이동 후 메시지 불러오기 실패", err);
         }
@@ -366,7 +383,10 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
             console.log("검색 버튼 누른 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
             // 중앙으로 스크롤
-        setTimeout(() => scrollToHighlightMessage(messageId), 100); // 메시지 렌더링 후
+                    // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
         }catch(err){
              console.log("검색 버튼 누른 후 메시지 불러오기 실패", err);
         }
@@ -469,6 +489,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
                             paddingTop: 10,
                             paddingBottom: 10
                         }}
+                        
                         onEndReached={fetchMoreHistory} // 스크롤 상단에서 이전 메시지 로딩
                         onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
