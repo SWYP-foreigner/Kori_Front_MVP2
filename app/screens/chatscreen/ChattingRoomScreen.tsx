@@ -106,6 +106,7 @@ const ChattingRoomScreen=()=>{
             console.log('✅ STOMP 연결 성공');
             setStompConnected(true);
             subscribeToMessages(myId);
+           subscribeDeleteMessages();
         };
 
         // STOMP 오류 처리
@@ -130,10 +131,24 @@ const ChattingRoomScreen=()=>{
     const subscribeToMessages = (myId: string) => {
         stompClient.current?.subscribe(`/topic/user/${myId}/messages`, (message) => {
             const body = JSON.parse(message.body);
+           // 일반 메시지라면 추가
             setMessages((prev) => [body, ...prev]);
         });
     };
 
+   const subscribeDeleteMessages = () => {
+        stompClient.current?.subscribe(`/topic/rooms/${roomId}`, (message) => {
+            const body = JSON.parse(message.body);
+            console.log("삭제 바디", body);
+
+            if (body.type === "delete") {
+            setMessages((prev) =>
+                prev.filter((m) => m.id.toString() !== body.id.toString())
+            );
+            console.log("메시지 삭제 성공:", body.id);
+            }
+        });
+        };
     useEffect(() => {
         fetchHistory();
         connectStomp();
@@ -186,6 +201,30 @@ const ChattingRoomScreen=()=>{
                     body: JSON.stringify(msg),
                 });
                 setInputText("");
+            }
+        }
+    };
+    // ---------------------- 메시지 전송 ----------------------
+    const deleteMessage= async (messageId:string) => {
+        if (!stompConnected) return console.warn('STOMP 미연결');
+
+        const msg = {  messageId:messageId, senderId: myUserId } 
+        try {
+            stompClient.current?.publish({
+                destination: "/app/chat.deleteMessage",
+                body: JSON.stringify(msg),
+            });
+           console.log("메세지 삭제 성공");
+        } catch (err: any) {
+            console.error("메시지 삭제 실패", err);
+            if (err.message?.includes("401")) {
+                const newToken = await refreshTokenIfNeeded();
+                if (!newToken) return console.error("[AUTH] 토큰 재발급 실패");
+                connectStomp();
+                stompClient.current?.publish({
+                    destination: "/app/chat.deleteMessage",
+                    body: JSON.stringify(msg),
+                });
             }
         }
     };
@@ -320,24 +359,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
   );
 };
 
-    // 메세지 삭제 함수
-   const deleteMessage = async (messageId: string) => {
-  try {
-    const res = await api.delete(
-      `${Config.SERVER_URL}/api/v1/chat/messages?messageId=${messageId}`
-    );
-    if (res.status === 200) {
-      // 메시지 목록에서 해당 messageId만 제거
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== messageId)
-      );
-      console.log("메시지 삭제 성공");
-      // TODO: 삭제 후 UI 업데이트 (예: setMessages로 상태 갱신)
-    }
-  } catch (error) {
-    console.error("메시지 삭제 실패", error);
-  }
-};
+    
 
 const confirmDeleteMessage = (messageId: string) => {
   Alert.alert(
@@ -591,7 +613,7 @@ const confirmDeleteMessage = (messageId: string) => {
                             } else {
                                 return showProfile ? (
                                     <>
-                                    <ChattingLeftContainer showProfile={showProfile} onLongPress={()=>confirmDeleteMessage(item.id)}>
+                                    <ChattingLeftContainer showProfile={showProfile} >
                                         <ProfileContainer>
                                             <ProfileBox>
                                                 <ProfileImage source={{ uri: item.senderImageUrl }} />
@@ -624,7 +646,7 @@ const confirmDeleteMessage = (messageId: string) => {
                                     </>
                                 ) : (
                                     <>
-                                    <ChattingLeftContainer onLongPress={()=>confirmDeleteMessage(item.id)}>
+                                    <ChattingLeftContainer >
                                         <ProfileContainer></ProfileContainer>
                                         <OtherContainer>
                                             <LeftMessageBox>
