@@ -1,4 +1,5 @@
 import React,{useState,useRef,useEffect} from "react";
+import { Alert } from "react-native";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
@@ -254,22 +255,23 @@ const ChattingRoomScreen=()=>{
   if (!flatListRef.current) return;
 
   const index = messages.findIndex(msg => msg.id === messageId);
-  if (index === -1) return;
-   console.log("포인터",pointerRef.current);
+    if (index === -1) return;
+    console.log("포인터",pointerRef.current);
     console.log("index",index);
-  if (index === 0 && index===messages.length-1) {
-    // 첫 메시지면 viewPosition 없이 스크롤
-    flatListRef.current.scrollToIndex({
-      index,
-      animated: true,
-    });
-  } else {
-    // 나머지는 중앙 정렬
-    flatListRef.current.scrollToIndex({
-      index,
-      animated: true,
-    });
-  }
+    if (index === 0 && index===messages.length-1) {
+        // 첫 메시지면 viewPosition 없이 스크롤
+        flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        });
+    } else {
+        // 나머지는 중앙 정렬
+        flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition:0.5
+        });
+    }
 };
 
 // 검색어 색칠 하는 함수
@@ -316,7 +318,32 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
   );
 };
 
+    // 메세지 삭제 함수
+   const deleteMessage = async (messageId: string) => {
+  try {
+    const res = await api.delete(
+      `${Config.SERVER_URL}/api/v1/chat/messages?messageId=${messageId}`
+    );
+    if (res.status === 200) {
+      await fetchHistory();
+      console.log("메시지 삭제 성공");
+      // TODO: 삭제 후 UI 업데이트 (예: setMessages로 상태 갱신)
+    }
+  } catch (error) {
+    console.error("메시지 삭제 실패", error);
+  }
+};
 
+const confirmDeleteMessage = (messageId: string) => {
+  Alert.alert(
+    "Message Delete", // 제목
+    "Do you really want to delete this message?", // 내용
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteMessage(messageId) },
+    ]
+  );
+};
      // 채팅방 검색시 위 화살표 
     const UpFindText=async()=>{
         
@@ -383,7 +410,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
             console.log("검색 버튼 누른 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
             // 중앙으로 스크롤
-                    // FlatList 렌더링 후 스크롤
+            // FlatList 렌더링 후 스크롤
             InteractionManager.runAfterInteractions(() => {
             scrollToHighlightMessage(messageId);
             });
@@ -507,7 +534,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
                             if (isMyMessage) {
                                 return showProfile ? (
                                     <>
-                                    <ChattingRightContainer showProfile={showProfile}>
+                                    <ChattingRightContainer showProfile={showProfile} onLongPress={()=>confirmDeleteMessage(item.id)}>
                                         {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
@@ -532,7 +559,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
                                     </>
                                 ) : (
                                     <>
-                                    <ChattingRightContainer>
+                                    <ChattingRightContainer onLongPress={()=>confirmDeleteMessage(item.id)}>
                                           {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
@@ -559,7 +586,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
                             } else {
                                 return showProfile ? (
                                     <>
-                                    <ChattingLeftContainer showProfile={showProfile}>
+                                    <ChattingLeftContainer showProfile={showProfile} onLongPress={()=>confirmDeleteMessage(item.id)}>
                                         <ProfileContainer>
                                             <ProfileBox>
                                                 <ProfileImage source={{ uri: item.senderImageUrl }} />
@@ -592,7 +619,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
                                     </>
                                 ) : (
                                     <>
-                                    <ChattingLeftContainer>
+                                    <ChattingLeftContainer onLongPress={()=>confirmDeleteMessage(item.id)}>
                                         <ProfileContainer></ProfileContainer>
                                         <OtherContainer>
                                             <LeftMessageBox>
@@ -706,7 +733,9 @@ const Right=styled.View`
 const ChattingScreen=styled.View` 
 flex:1; flex-direction: column; padding-bottom:10px; 
 `;
-const ChattingLeftContainer = styled.View`
+const ChattingLeftContainer = styled.TouchableOpacity.attrs({
+    activeOpacity:0.9
+})`
  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
   align-self: flex-start; max-width:280px; 
   flex-direction: row; 
@@ -774,7 +803,9 @@ font-size:10px;
 font-family:PlusJakartaSans_300Light;
  margin-left:3px; 
  `;
-const ChattingRightContainer = styled.View` 
+const ChattingRightContainer = styled.TouchableOpacity.attrs({
+    activeOpacity:0.9
+})` 
 margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
  align-self: flex-end; max-width:280px;
   flex-direction: row;
