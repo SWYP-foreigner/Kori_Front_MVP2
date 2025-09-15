@@ -219,7 +219,8 @@ const ChattingRoomScreen=()=>{
             setHasMore(false);
             } else {
             setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
-            }
+            console.log("무한 스크롤 발생");
+        }
         } catch (err) {
             console.log("이전 메시지 불러오기 실패", err);
         } finally {
@@ -245,6 +246,7 @@ const ChattingRoomScreen=()=>{
     const closeSearchBox=async()=>{
         setSearchBox(false);
         setIsSearching(false);
+        setHasMore(true);
         pointerRef.current=0;
 
         // 원래 메시지 복원
@@ -325,7 +327,10 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
       `${Config.SERVER_URL}/api/v1/chat/messages?messageId=${messageId}`
     );
     if (res.status === 200) {
-      await fetchHistory();
+      // 메시지 목록에서 해당 messageId만 제거
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== messageId)
+      );
       console.log("메시지 삭제 성공");
       // TODO: 삭제 후 UI 업데이트 (예: setMessages로 상태 갱신)
     }
