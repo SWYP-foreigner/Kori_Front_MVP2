@@ -22,9 +22,8 @@ type Props = {
   personalities: string[];
   bio?: string;
 
-  /** 🔥 추가: 이미지 */
-  imageUrl?: string;      // 완전한 URL이 오면 그대로 사용
-  imageKey?: string;      // 키가 오면 base + key로 URL 구성
+  imageUrl?: string;
+  imageKey?: string;
 
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
@@ -37,6 +36,7 @@ type Props = {
   onChat?: () => void;
   footerSlot?: React.ReactNode;
   collapsible?: boolean;
+  defaultExpanded?: boolean;
 };
 
 const CARD_RADIUS = 22;
@@ -93,8 +93,8 @@ export default function FriendCard(props: Props) {
     personalities,
     bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
 
-    imageUrl,       // ✅ 추가
-    imageKey,       // ✅ 추가
+    imageUrl,
+    imageKey,
 
     isFollowed = false,
     onFollow,
@@ -107,9 +107,10 @@ export default function FriendCard(props: Props) {
     collapsible = true,
     onChat,
     footerSlot,
+    defaultExpanded = true,
   } = props;
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(Boolean(defaultExpanded));
   const finalAvatarUrl = imageUrl || toUrl(imageKey);
 
   const handlePrimaryPress = () => {
@@ -142,7 +143,6 @@ export default function FriendCard(props: Props) {
           <MetaLine>
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth ?? '-'}</MetaStrong>
-
             <GenderIconSpacer>
               <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
             </GenderIconSpacer>

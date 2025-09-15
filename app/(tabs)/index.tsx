@@ -111,7 +111,7 @@ export default function HomeScreen() {
                   bio={item.bio || undefined}
                   imageUrl={(item as any).imageUrl}
                   imageKey={(item as any).imageKey}
-
+                  defaultExpanded={false}
                   mode={isSent ? 'sent' : 'friend'}
 
                   onFollow={async (id) => {
