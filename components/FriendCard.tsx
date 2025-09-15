@@ -2,10 +2,14 @@ import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
+import { getEmojiFor } from '@/src/lib/interests';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
+
+
+
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -24,6 +28,9 @@ type Props = {
 
   imageUrl?: string;
   imageKey?: string;
+
+  personalityEmojis?: string[];
+
 
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
@@ -68,7 +75,6 @@ const genderIconByType: Record<
   unspecified: 'help-circle-outline',
 };
 
-// 🔥 키→URL 간단 변환 (이미 URL이면 그대로)
 const toUrl = (u?: string) => {
   if (!u) return undefined;
   if (/^https?:\/\//i.test(u)) return u;
@@ -91,6 +97,7 @@ export default function FriendCard(props: Props) {
     purpose,
     languages,
     personalities,
+    personalityEmojis = [],
     bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
 
     imageUrl,
@@ -200,9 +207,10 @@ export default function FriendCard(props: Props) {
             </InterestHeader>
 
             <TagsWrap>
-              {personalities.map((p) => (
-                <Tag key={p} label={p} />
-              ))}
+              {personalities.map((p, i) => {
+                const emoji = personalityEmojis[i] ?? getEmojiFor(p);
+                const label = emoji ? `${emoji} ${p}` : p; return <Tag key={`${p}-${i}`} label={label} />;
+              })}
             </TagsWrap>
           </>
         )}
