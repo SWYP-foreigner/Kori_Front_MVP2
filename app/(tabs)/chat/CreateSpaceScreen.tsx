@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
-import {StatusBar,TouchableOpacity, Alert, Image as RNImage, ImageSourcePropType, Modal} from 'react-native';
+import {StatusBar,TouchableOpacity, Alert, Image as RNImage, ImageSourcePropType, Modal, KeyboardAvoidingView,Platform,ScrollView} from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import CustomButton from '@/components/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Asset } from "expo-asset";
+
 
 const MOCK_ME = {
   name: 'Alice Kori, Kim',
@@ -139,7 +140,12 @@ const CreateSpaceScreen = () => {
             <SaveText>Save</SaveText>
           </TouchableOpacity>
         </HeaderContainer>
-
+      
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0} // 네비게이션 헤더 있으면 조정
+          >
         <ProfileContainer>
           <ProfileBox onPress={openAvatarSheet}>
             <ProfileImage source={
@@ -180,7 +186,8 @@ const CreateSpaceScreen = () => {
             <LimitCount>0/200 limit</LimitCount>
           </LimitWrapper>
         </EnterDecContainer>
-
+        </KeyboardAvoidingView>
+       
         {/* Avatar Modal */}
         <Modal
           visible={showAvatarSheet}
@@ -257,7 +264,7 @@ const Container=styled.View`
 `;
 const HeaderContainer=styled.View`
     flex-direction:row;
-    height:10%;
+    height:70px;
     align-items:center;
     justify-content:space-between;
 `;
@@ -268,7 +275,7 @@ const HeaderTitleText=styled.Text`
 
 `;
 const SaveText=styled.Text`
-    color:#848687;
+    color:#02F59B;
     font-family:PlusJakartaSans_500Medium;
     font-size:15px;
 `;

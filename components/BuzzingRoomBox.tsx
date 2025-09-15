@@ -10,7 +10,7 @@ const BuzzingRoomBox=({data})=>{
       router.push({
       pathname: '../screens/chatscreen/LinkedSpaceDetail',
       params: { 
-        roomId: data.roomId,       // props에서 바로 가져옴
+        roomId: data.roomId,    // props에서 바로 가져옴
       },
     });
     };

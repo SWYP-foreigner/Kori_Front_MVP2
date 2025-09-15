@@ -16,7 +16,7 @@ const MyChatRoomBox = ({data}) => {
       const res=await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${data.roomId}/read-all`);
       if(res.status===200)
       {
-            router.push({
+          router.push({
           pathname: '/screens/chatscreen/ChattingRoomScreen',
           params: { 
             roomId: data.roomId,       // props에서 바로 가져옴
