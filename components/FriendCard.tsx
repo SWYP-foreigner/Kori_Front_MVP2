@@ -2,10 +2,14 @@ import Avatar from '@/components/Avatar';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
+import { getEmojiFor } from '@/src/lib/interests';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
+
+
+
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -22,9 +26,11 @@ type Props = {
   personalities: string[];
   bio?: string;
 
-  /** 🔥 추가: 이미지 */
-  imageUrl?: string;      // 완전한 URL이 오면 그대로 사용
-  imageKey?: string;      // 키가 오면 base + key로 URL 구성
+  imageUrl?: string;
+  imageKey?: string;
+
+  personalityEmojis?: string[];
+
 
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
@@ -37,6 +43,7 @@ type Props = {
   onChat?: () => void;
   footerSlot?: React.ReactNode;
   collapsible?: boolean;
+  defaultExpanded?: boolean;
 };
 
 const CARD_RADIUS = 22;
@@ -68,7 +75,6 @@ const genderIconByType: Record<
   unspecified: 'help-circle-outline',
 };
 
-// 🔥 키→URL 간단 변환 (이미 URL이면 그대로)
 const toUrl = (u?: string) => {
   if (!u) return undefined;
   if (/^https?:\/\//i.test(u)) return u;
@@ -91,10 +97,11 @@ export default function FriendCard(props: Props) {
     purpose,
     languages,
     personalities,
+    personalityEmojis = [],
     bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
 
-    imageUrl,       // ✅ 추가
-    imageKey,       // ✅ 추가
+    imageUrl,
+    imageKey,
 
     isFollowed = false,
     onFollow,
@@ -107,9 +114,10 @@ export default function FriendCard(props: Props) {
     collapsible = true,
     onChat,
     footerSlot,
+    defaultExpanded = true,
   } = props;
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(Boolean(defaultExpanded));
   const finalAvatarUrl = imageUrl || toUrl(imageKey);
 
   const handlePrimaryPress = () => {
@@ -142,7 +150,6 @@ export default function FriendCard(props: Props) {
           <MetaLine>
             <MetaDim>Birth </MetaDim>
             <MetaStrong>{birth ?? '-'}</MetaStrong>
-
             <GenderIconSpacer>
               <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
             </GenderIconSpacer>
@@ -200,9 +207,10 @@ export default function FriendCard(props: Props) {
             </InterestHeader>
 
             <TagsWrap>
-              {personalities.map((p) => (
-                <Tag key={p} label={p} />
-              ))}
+              {personalities.map((p, i) => {
+                const emoji = personalityEmojis[i] ?? getEmojiFor(p);
+                const label = emoji ? `${emoji} ${p}` : p; return <Tag key={`${p}-${i}`} label={label} />;
+              })}
             </TagsWrap>
           </>
         )}
