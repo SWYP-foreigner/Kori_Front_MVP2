@@ -137,6 +137,8 @@ export default function FriendsOnlyScreen() {
                                 bio={item.bio}
                                 imageKey={item.imageKey}
                                 isFollowed
+                                collapsible={false}
+                                onUnfollow={() => confirmUnfollow(item.id)}
                                 onChat={async () => {
                                     try {
                                         const roomId = await createRoom({ otherUserId: item.id });
@@ -151,8 +153,7 @@ export default function FriendsOnlyScreen() {
                                     } catch (e: any) {
                                         console.log('[chat]', e?.message ?? '채팅방 생성 실패');
                                     }
-                                }} onUnfollow={() => confirmUnfollow(item.id)}
-                                collapsible={false}
+                                }}
                             />
                         </Inner>
                     </Page>
