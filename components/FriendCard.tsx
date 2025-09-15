@@ -240,6 +240,8 @@ export default function FriendCard(props: Props) {
                   tone="black"
                   filled={false}
                   leftIcon="check"
+                  borderColor="#949899"
+                  labelColor="#949899"
                   onPress={() => onUnfollow?.(userId)}
                 />
               ) : (

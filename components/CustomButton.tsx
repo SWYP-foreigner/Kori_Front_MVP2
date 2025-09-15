@@ -14,6 +14,9 @@ type ButtonProps = {
     leftIcon?: keyof typeof MaterialIcons.glyphMap;
     rightIcon?: keyof typeof MaterialIcons.glyphMap;
     iconSize?: number;
+    borderColor?: string;
+    labelColor?: string;
+    backgroundColor?: string;
 };
 
 const PALETTE = {
@@ -34,11 +37,11 @@ export default function CustomButton({
     leftIcon,
     rightIcon,
     iconSize = 18,
+    borderColor, labelColor, backgroundColor,
 }: ButtonProps) {
-    const contentColor =
-        filled
-            ? (tone === 'mint' ? '#000000' : PALETTE.white)
-            : PALETTE[tone];
+    const defaultText = filled ? (tone === 'mint' ? '#000000' : PALETTE.white) : PALETTE[tone];
+    const contentColor = labelColor ?? defaultText;
+
 
     return (
         <Btn
@@ -46,6 +49,10 @@ export default function CustomButton({
             filled={filled}
             disabled={disabled || isLoading}
             onPress={onPress}
+            style={{
+                borderColor: borderColor ?? PALETTE[tone],
+                backgroundColor: filled ? (backgroundColor ?? PALETTE[tone]) : 'transparent',
+            }}
         >
             {isLoading ? (
                 <Spinner color={contentColor} />
@@ -54,7 +61,7 @@ export default function CustomButton({
                     {leftIcon && (
                         <MaterialIcons name={leftIcon} size={iconSize} color={contentColor} />
                     )}
-                    <BtnText tone={tone} filled={filled}>{label}</BtnText>
+                    <BtnText tone={tone} filled={filled} style={{ color: contentColor }}>{label}</BtnText>
                     {rightIcon && (
                         <MaterialIcons name={rightIcon} size={iconSize} color={contentColor} />
                     )}
