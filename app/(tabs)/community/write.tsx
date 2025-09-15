@@ -3,14 +3,11 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Image as RNImage,
-  KeyboardAvoidingView,
-  Modal,
+  Image as RNImage, Keyboard, KeyboardAvoidingView, Modal,
   Platform,
   Pressable,
   ScrollView,
-  TextInput as RNTextInput,
-  View
+  TextInput as RNTextInput, TouchableWithoutFeedback, View
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -228,88 +225,93 @@ export default function WriteScreen() {
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-        <CatRow onPress={() => !isEdit && setCatOpen(true)} disabled={isEdit}>
-          <CatLabel>Category</CatLabel>
-          <CatChip style={isEdit ? { opacity: 0.5 } : undefined}>
-            <CatText>{category}</CatText>
-            <AntDesign name="down" size={10} color="#9aa0a6" />
-          </CatChip>
-        </CatRow>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
 
-        <Divider />
+            <CatRow onPress={() => !isEdit && setCatOpen(true)} disabled={isEdit}>
+              <CatLabel>Category</CatLabel>
+              <CatChip style={isEdit ? { opacity: 0.5 } : undefined}>
+                <CatText>{category}</CatText>
+                <AntDesign name="down" size={10} color="#9aa0a6" />
+              </CatChip>
+            </CatRow>
 
-        <BodyWrap onPress={() => inputRef.current?.focus()}>
-          <Input
-            ref={inputRef}
-            value={body}
-            onChangeText={setBody}
-            multiline
-            textAlignVertical="top"
-            placeholder="Feel free to talk to others."
-            placeholderTextColor="#8a8a8a"
-            returnKeyType="default"
-          />
-        </BodyWrap>
+            <Divider />
 
-        {images.length > 0 && (
-          <PreviewWrap>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {images.map(uri => (
-                <Thumb key={uri}>
-                  <ThumbImage source={{ uri }} />
-                  <RemoveBtn onPress={() => removeImage(uri)}>
-                    <AntDesign name="close" size={12} color="#fff" />
-                  </RemoveBtn>
-                </Thumb>
-              ))}
-            </ScrollView>
-          </PreviewWrap>
-        )}
-
-        <BottomBar>
-          <BarLeft>
-            <BarIcon onPress={() => setPickerOpen(true)}>
-              <AntDesign name="picture" size={18} color="#cfd4da" />
-            </BarIcon>
-          </BarLeft>
-
-          <BarRight>
-            <Anon
-              $active={anonymous}
-              $disabled={!canToggleAnon}
-              onPress={() => {
-                if (!canToggleAnon) {
-                  console.log('[anon:blocked]', { category, boardId });
-                  Alert.alert('Anonymous not available', 'Only Free talk and Q&A support anonymous posts.');
-                  return;
-                }
-                const next = !anonymous;
-                console.log('[anon:toggle]', {
-                  before: anonymous,
-                  after: next,
-                  category,
-                  boardId,
-                  serverAnonymousAllowed,
-                });
-                setAnonymous(next);
-              }}
-            >
-              <AnonText $active={anonymous}>
-                {loadingOpt
-                  ? 'Anonymous (checking...)'
-                  : canToggleAnon
-                    ? 'Anonymous'
-                    : 'Anonymous (only Free talk & Q&A)'}
-              </AnonText>
-              <AntDesign
-                name={anonymous ? 'checksquare' : 'checksquareo'}
-                size={16}
-                color={anonymous ? GREEN : '#8a8a8a'}
-                style={{ marginLeft: 6 }}
+            <BodyWrap>
+              <Input
+                ref={inputRef}
+                value={body}
+                onChangeText={setBody}
+                multiline
+                textAlignVertical="top"
+                placeholder="Feel free to talk to others."
+                placeholderTextColor="#8a8a8a"
+                returnKeyType="default"
               />
-            </Anon>
-          </BarRight>
-        </BottomBar>
+            </BodyWrap>
+
+            {images.length > 0 && (
+              <PreviewWrap>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {images.map(uri => (
+                    <Thumb key={uri}>
+                      <ThumbImage source={{ uri }} />
+                      <RemoveBtn onPress={() => removeImage(uri)}>
+                        <AntDesign name="close" size={12} color="#fff" />
+                      </RemoveBtn>
+                    </Thumb>
+                  ))}
+                </ScrollView>
+              </PreviewWrap>
+            )}
+
+            <BottomBar>
+              <BarLeft>
+                <BarIcon onPress={() => setPickerOpen(true)}>
+                  <AntDesign name="picture" size={18} color="#cfd4da" />
+                </BarIcon>
+              </BarLeft>
+
+              <BarRight>
+                <Anon
+                  $active={anonymous}
+                  $disabled={!canToggleAnon}
+                  onPress={() => {
+                    if (!canToggleAnon) {
+                      console.log('[anon:blocked]', { category, boardId });
+                      Alert.alert('Anonymous not available', 'Only Free talk and Q&A support anonymous posts.');
+                      return;
+                    }
+                    const next = !anonymous;
+                    console.log('[anon:toggle]', {
+                      before: anonymous,
+                      after: next,
+                      category,
+                      boardId,
+                      serverAnonymousAllowed,
+                    });
+                    setAnonymous(next);
+                  }}
+                >
+                  <AnonText $active={anonymous}>
+                    {loadingOpt
+                      ? 'Anonymous (checking...)'
+                      : canToggleAnon
+                        ? 'Anonymous'
+                        : 'Anonymous (only Free talk & Q&A)'}
+                  </AnonText>
+                  <AntDesign
+                    name={anonymous ? 'checksquare' : 'checksquareo'}
+                    size={16}
+                    color={anonymous ? GREEN : '#8a8a8a'}
+                    style={{ marginLeft: 6 }}
+                  />
+                </Anon>
+              </BarRight>
+            </BottomBar>
+          </View>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
       <Modal
@@ -375,7 +377,7 @@ const CatLabel = styled.Text`color:#9aa0a6;font-size:13px;font-family:'PlusJakar
 const CatChip = styled.View`height:24px;padding:0 10px;flex-direction:row;align-items:center;gap:6px;`;
 const CatText = styled.Text`color:#cfd4da;font-size:16px;`;
 const Divider = styled.View`height:1px;background:#222426;`;
-const BodyWrap = styled.Pressable`flex:1;padding:10px 12px 0;`;
+const BodyWrap = styled.View`flex:1;padding:10px 12px 0;`;
 const StyledRNInput = styled(RNTextInput)`flex:1;min-height:150px;color:#e6e9ec;font-size:14px;line-height:20px;padding:0;`;
 const Input = React.forwardRef<RNTextInput, any>((p, ref) => <StyledRNInput ref={ref} {...p} />);
 Input.displayName = 'Input';
