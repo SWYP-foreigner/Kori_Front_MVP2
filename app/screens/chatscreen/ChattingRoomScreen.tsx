@@ -1,4 +1,5 @@
 import React,{useState,useRef,useEffect} from "react";
+import { Alert } from "react-native";
 import styled from "styled-components/native";
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
@@ -9,8 +10,9 @@ import { Client } from "@stomp/stompjs";
 import * as SecureStore from 'expo-secure-store';
 import api from "@/api/axiosInstance";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions ,Image} from 'react-native';
+import { Dimensions ,Image, InteractionManager} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { Config } from "@/src/lib/config";
 
 type ChatHistory = {
     id: number,
@@ -54,9 +56,8 @@ const ChattingRoomScreen=()=>{
     const [searchBox,setSearchBox]=useState(false);
     const [isSearching,setIsSearching]=useState(false);
     const [searchMessages,setSearchMessages]=useState<any[]>([]);
-    const [pointer,setPointer]=useState(0);
-    
-
+    const pointerRef=useRef(0);
+    const flatListRef = useRef<FlatList>(null);
     // ---------------------- 토큰 refresh 함수 ----------------------
     const refreshTokenIfNeeded = async (): Promise<string | null> => {
         try {
@@ -105,6 +106,7 @@ const ChattingRoomScreen=()=>{
             console.log('✅ STOMP 연결 성공');
             setStompConnected(true);
             subscribeToMessages(myId);
+           subscribeDeleteMessages();
         };
 
         // STOMP 오류 처리
@@ -129,10 +131,24 @@ const ChattingRoomScreen=()=>{
     const subscribeToMessages = (myId: string) => {
         stompClient.current?.subscribe(`/topic/user/${myId}/messages`, (message) => {
             const body = JSON.parse(message.body);
+           // 일반 메시지라면 추가
             setMessages((prev) => [body, ...prev]);
         });
     };
 
+   const subscribeDeleteMessages = () => {
+        stompClient.current?.subscribe(`/topic/rooms/${roomId}`, (message) => {
+            const body = JSON.parse(message.body);
+            console.log("삭제 바디", body);
+
+            if (body.type === "delete") {
+            setMessages((prev) =>
+                prev.filter((m) => m.id.toString() !== body.id.toString())
+            );
+            console.log("메시지 삭제 성공:", body.id);
+            }
+        });
+        };
     useEffect(() => {
         fetchHistory();
         connectStomp();
@@ -188,6 +204,30 @@ const ChattingRoomScreen=()=>{
             }
         }
     };
+    // ---------------------- 메시지 전송 ----------------------
+    const deleteMessage= async (messageId:string) => {
+        if (!stompConnected) return console.warn('STOMP 미연결');
+
+        const msg = {  messageId:messageId, senderId: myUserId } 
+        try {
+            stompClient.current?.publish({
+                destination: "/app/chat.deleteMessage",
+                body: JSON.stringify(msg),
+            });
+           console.log("메세지 삭제 성공");
+        } catch (err: any) {
+            console.error("메시지 삭제 실패", err);
+            if (err.message?.includes("401")) {
+                const newToken = await refreshTokenIfNeeded();
+                if (!newToken) return console.error("[AUTH] 토큰 재발급 실패");
+                connectStomp();
+                stompClient.current?.publish({
+                    destination: "/app/chat.deleteMessage",
+                    body: JSON.stringify(msg),
+                });
+            }
+        }
+    };
     
     // ---------------------- 번역 업데이트 ----------------------
     const updateTranslateScreen = async () => {
@@ -218,14 +258,15 @@ const ChattingRoomScreen=()=>{
             setHasMore(false);
             } else {
             setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
-            }
+            console.log("무한 스크롤 발생");
+        }
         } catch (err) {
             console.log("이전 메시지 불러오기 실패", err);
         } finally {
             setIsFetchingMore(false);
         }
 };
-
+    // 햄버거 버튼 눌렀을때 이동
     const onhandleNext = () => {
         router.push({
             pathname: './ChatInsideMember',  
@@ -235,19 +276,175 @@ const ChattingRoomScreen=()=>{
 
     // SearchBox 보여주는 함수
     const showSearchBox=()=>{
-        setSearchBox(!searchBox);
-        setIsSearching(false);
+        setSearchBox(true);
         setSearchText('');
+        pointerRef.current=0;
     }
 
+    // SearchBox 닫는 함수
+    const closeSearchBox=async()=>{
+        setSearchBox(false);
+        setIsSearching(false);
+        setHasMore(true);
+        pointerRef.current=0;
+
+        // 원래 메시지 복원
+        await fetchHistory(); // 기존 메시지 다시 불러오기
+    }
+
+   const scrollToHighlightMessage = (messageId: number) => {
+  if (!flatListRef.current) return;
+
+  const index = messages.findIndex(msg => msg.id === messageId);
+    if (index === -1) return;
+    console.log("포인터",pointerRef.current);
+    console.log("index",index);
+    if (index === 0 && index===messages.length-1) {
+        // 첫 메시지면 viewPosition 없이 스크롤
+        flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        });
+    } else {
+        // 나머지는 중앙 정렬
+        flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition:0.5
+        });
+    }
+};
+
+// 검색어 색칠 하는 함수
+const HighlightMyText = ({ text, keyword }: { text: string; keyword: string }) => {
+  if (!keyword) return <MyText>{text}</MyText>;
+
+  // 정규식으로 split (검색어 부분도 배열에 포함됨)
+  const parts = text.split(new RegExp(`(${keyword})`, "gi"));
+
+  return (
+    <MyText>
+      {parts.map((part, index) =>
+        part.toLowerCase() === keyword.toLowerCase() ? ( // 검색어랑 같으면 하이라이트
+          <MyText key={index} style={{ backgroundColor: 'rgba(255,255,0,0.8)'}}>
+            {part}
+          </MyText>
+        ) : (
+          <MyText key={index}>{part}</MyText>
+        )
+      )}
+    </MyText>
+  );
+};
+
+// 검색어 색칠 하는 함수
+const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }) => {
+  if (!keyword) return <OtherText>{text}</OtherText>;
+
+  // 정규식으로 split (검색어 부분도 배열에 포함됨)
+  const parts = text.split(new RegExp(`(${keyword})`, "gi"));
+
+  return (
+    <OtherText>
+      {parts.map((part, index) =>
+        part.toLowerCase() === keyword.toLowerCase() ? ( // 검색어랑 같으면 하이라이트
+          <OtherText key={index} style={{ backgroundColor: 'rgba(255,255,0,0.3)'}}>
+            {part}
+          </OtherText>
+        ) : (
+          <OtherText key={index}>{part}</OtherText>
+        )
+      )}
+    </OtherText>
+  );
+};
+
+    
+
+const confirmDeleteMessage = (messageId: string) => {
+  Alert.alert(
+    "Message Delete", // 제목
+    "Do you really want to delete this message?", // 내용
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteMessage(messageId) },
+    ]
+  );
+};
+     // 채팅방 검색시 위 화살표 
+    const UpFindText=async()=>{
+        
+        if( pointerRef.current+1===searchMessages.length)
+            return;
+        pointerRef.current+=1;
+        const messageId=searchMessages[pointerRef.current]?.id;
+        // console.log("포인터",pointerRef.current);
+        // console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+           
+            const resultMessages: ChatHistory[] = res.data.data;
+            // console.log("위로 이동 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+        // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
+        }catch(err){
+             console.log("위로 이동 후 메시지 불러오기 실패", err);
+        }
+    }
+    
+    // 채팅방 검색시 아래 화살표 
+    const DownFindText=async()=>{
+         if((pointerRef.current-1)<0)
+            return;
+        pointerRef.current-=1;
+        const messageId=searchMessages[pointerRef.current]?.id;
+        // console.log("포인터",pointerRef.current);
+        // console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+            //  console.log("res",res.data.data);
+            const resultMessages: ChatHistory[] = res.data.data;
+            // console.log("아래로 이동 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+            // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
+        }catch(err){
+             console.log("아래로 이동 후 메시지 불러오기 실패", err);
+        }
+    }
     //검색시 호출되는 함수
     const search=async()=>{
        try{
+         pointerRef.current=0;
          setIsSearching(true);
          const res=await api.get(`/api/v1/chat/search?roomId=${roomId}&keyword=${searchText}`);
          const SearchResult: ChatHistory[] = res.data.data;
          setSearchMessages(SearchResult);
          console.log("메시지 검색 결과",SearchResult);
+        const messageId=SearchResult[pointerRef.current]?.id;
+        console.log("포인터",pointerRef.current);
+        console.log("보내는 메세지 ID ",messageId);
+        try{
+            const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
+            const resultMessages: ChatHistory[] = res.data.data;
+            console.log("검색 버튼 누른 후 메시지",resultMessages);
+            setMessages([...resultMessages].reverse());
+            // 중앙으로 스크롤
+            // FlatList 렌더링 후 스크롤
+            InteractionManager.runAfterInteractions(() => {
+            scrollToHighlightMessage(messageId);
+            });
+        }catch(err){
+             console.log("검색 버튼 누른 후 메시지 불러오기 실패", err);
+        }
+       
        }catch(err){
              console.log("검색 결과 불러오기 실패", err);
        }
@@ -284,7 +481,7 @@ const ChattingRoomScreen=()=>{
                 <HeaderContainer>
                     {searchBox ?( 
                         <>
-                            <TouchableOpacity onPress={showSearchBox}>
+                            <TouchableOpacity onPress={closeSearchBox}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
                 </TouchableOpacity>
                 <SearchContainer>
@@ -298,7 +495,7 @@ const ChattingRoomScreen=()=>{
 
                     />
                 {searchText&&
-                <TouchableOpacity onPress={() => setSearchText('')}>
+                <TouchableOpacity onPress={() => {setSearchText('') , setIsSearching(false)}}>
                     <AntDesign name="closecircle" size={23} color="#CCCFD0" style={{ marginRight: 8 }}  />
                 </TouchableOpacity>}
                 </SearchContainer>
@@ -335,8 +532,9 @@ const ChattingRoomScreen=()=>{
                 {/* 채팅 화면 */}
                 <ChattingScreen>
                     <FlatList
+                        ref={flatListRef} 
                         data={messages}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={(item, index) => `${item.id}-${index}`}
                         inverted
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{
@@ -345,6 +543,7 @@ const ChattingRoomScreen=()=>{
                             paddingTop: 10,
                             paddingBottom: 10
                         }}
+                        
                         onEndReached={fetchMoreHistory} // 스크롤 상단에서 이전 메시지 로딩
                         onEndReachedThreshold={0.2}
                         renderItem={({ item, index }) => {
@@ -357,16 +556,27 @@ const ChattingRoomScreen=()=>{
                                 || !isSameUser;
                             const showDate=(index === messages.length - 1) || (messages[index + 1] && formatDate(messages[index + 1].sentAt) !== formatDate(item.sentAt));
                             
-                            console.log(index,item);
-                            console.log(formatDate(item.sentAt))
+                            // console.log(index,item);
+                            // console.log(formatDate(item.sentAt))
                             if (isMyMessage) {
                                 return showProfile ? (
                                     <>
-                                    <ChattingRightContainer showProfile={showProfile}>
+                                    <ChattingRightContainer showProfile={showProfile} onLongPress={()=>confirmDeleteMessage(item.id)}>
                                         {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextFirstBox>
-                                            <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                            {isSearching?(                        
+                                                searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                    (<HighlightMyText 
+                                                    text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                    keyword={searchText}
+                                                    />)
+                                                    :(<MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>)
+                                                
+                                                ):(
+                                                <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                                )}
+
                                         </MyTextFirstBox>
                                     </ChattingRightContainer>  
                                       {showDate&&
@@ -376,11 +586,22 @@ const ChattingRoomScreen=()=>{
                                     </>
                                 ) : (
                                     <>
-                                    <ChattingRightContainer>
+                                    <ChattingRightContainer onLongPress={()=>confirmDeleteMessage(item.id)}>
                                           {showTime&&
                                         <MyChatTimeText>{formatTime(item.sentAt)}</MyChatTimeText>}
                                         <MyTextNotFirstBox>
-                                            <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                            {isSearching?(                        
+                                                searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                    (<HighlightMyText 
+                                                    text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                    keyword={searchText}
+                                                    />)
+                                                    :(<MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>)
+                                                
+                                                ):(
+                                                <MyText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</MyText>
+                                                )}
+
                                         </MyTextNotFirstBox>
                                     </ChattingRightContainer>
                                       {showDate&&
@@ -392,7 +613,7 @@ const ChattingRoomScreen=()=>{
                             } else {
                                 return showProfile ? (
                                     <>
-                                    <ChattingLeftContainer showProfile={showProfile}>
+                                    <ChattingLeftContainer showProfile={showProfile} >
                                         <ProfileContainer>
                                             <ProfileBox>
                                                 <ProfileImage source={{ uri: item.senderImageUrl }} />
@@ -402,7 +623,16 @@ const ChattingRoomScreen=()=>{
                                             <OtherNameText>{item.senderLastName}</OtherNameText>
                                             <LeftMessageBox>
                                                 <OtherFirstTextBox>
-                                                    <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                    {isSearching?(                        
+                                                        searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                            (<HighlightOtherText 
+                                                            text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                            keyword={searchText}
+                                                            />)
+                                                            :(<OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>)                                                        
+                                                        ):(
+                                                        <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                        )}
                                                 </OtherFirstTextBox>
                                                   {showTime&&
                                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
@@ -416,12 +646,22 @@ const ChattingRoomScreen=()=>{
                                     </>
                                 ) : (
                                     <>
-                                    <ChattingLeftContainer>
+                                    <ChattingLeftContainer >
                                         <ProfileContainer></ProfileContainer>
                                         <OtherContainer>
                                             <LeftMessageBox>
                                                 <OtherNotFirstTextBox>
-                                                    <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                    {isSearching?(                        
+                                                        searchMessages[pointerRef.current] && searchMessages[pointerRef.current].id === item.id? 
+                                                            (<HighlightOtherText 
+                                                            text={isTranslate ? item.targetContent : (item.content || item.originContent)} 
+                                                            keyword={searchText}
+                                                            />)
+                                                            :(<OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>)
+                                                        
+                                                        ):(
+                                                        <OtherText>{isTranslate ? item.targetContent : (item.content || item.originContent)}</OtherText>
+                                                        )}
                                                 </OtherNotFirstTextBox>
                                                   {showTime&&
                                                 <ChatTimeText>{formatTime(item.sentAt)}</ChatTimeText>}
@@ -439,22 +679,22 @@ const ChattingRoomScreen=()=>{
                     />
                     {searchBox?(
                     <FindSearchTextContainer>
-                        <TouchableOpacity disabled={!isSearching}>
+                        <TouchableOpacity disabled={!isSearching} onPress={UpFindText}>
                         <Image
                             source={require("@/assets/images/UpArrow.png")}
                             style={{ width: 17, height: 17 , marginLeft:10}}  
                             resizeMode="contain"                
                             />
                         </TouchableOpacity>
-                         <TouchableOpacity disabled={!isSearching}>
+                         <TouchableOpacity disabled={!isSearching} onPress={DownFindText} >
                         <Image
                         source={require("@/assets/images/DownArrow.png")}
                         style={{ width: 17, height: 17 ,marginLeft:18}}  
                         resizeMode="contain"                
                         />
                         </TouchableOpacity>
-                       
-                        <FindResultText>3/3</FindResultText>
+                        {isSearching&&searchText&&( <FindResultText>{pointerRef.current+1}/{searchMessages.length}</FindResultText>)}
+                      
                     </FindSearchTextContainer>):(
                     <BottomContainer style={{ paddingBottom: insets.bottom}}>
                         <BottomInputBox
@@ -520,7 +760,9 @@ const Right=styled.View`
 const ChattingScreen=styled.View` 
 flex:1; flex-direction: column; padding-bottom:10px; 
 `;
-const ChattingLeftContainer = styled.View`
+const ChattingLeftContainer = styled.TouchableOpacity.attrs({
+    activeOpacity:0.9
+})`
  margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
   align-self: flex-start; max-width:280px; 
   flex-direction: row; 
@@ -588,7 +830,9 @@ font-size:10px;
 font-family:PlusJakartaSans_300Light;
  margin-left:3px; 
  `;
-const ChattingRightContainer = styled.View` 
+const ChattingRightContainer = styled.TouchableOpacity.attrs({
+    activeOpacity:0.9
+})` 
 margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
  align-self: flex-end; max-width:280px;
   flex-direction: row;

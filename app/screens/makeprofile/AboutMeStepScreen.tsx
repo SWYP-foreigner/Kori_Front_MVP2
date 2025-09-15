@@ -6,7 +6,7 @@ import { useProfile } from '../../contexts/ProfileContext';
 // ------------------------
 // NameStepScreen
 // ------------------------
-export default function NameStepScreen({ navigation }) {
+export default function NameStepScreen() {
   const [AboutMe, setAboutMe] = useState('');
   const { profileData, updateProfile } = useProfile();
   const router = useRouter();
@@ -46,7 +46,6 @@ export default function NameStepScreen({ navigation }) {
               multiline
               textAlignVertical="top"
               maxLength={70} // 소프트 리미트보다 약간 높게 설정
-              blurOnSubmit={true} // 포커스 해제 → 키보드 내려감
               onSubmitEditing={() => Keyboard.dismiss()} // done 버튼 눌렀을 때 키보드 닫기
             />
 
