@@ -415,6 +415,10 @@ const Name = styled.Text`
 const EditButtonWrap = styled.View`
   align-self: stretch;
   padding: 12px 16px 0 16px;
+  height: 48px;
+  justify-content: center;
+  position: relative; 
+  z-index: 1;
 `;
 
 const SectionTitle = styled.Text`
@@ -427,7 +431,7 @@ const SectionTitle = styled.Text`
 const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
-  margin: 22px 16px 10px 16px;
+  margin: 28px 16px 10px 16px;
 `;
 function SectionTitleIcon() {
   return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />;
