@@ -159,7 +159,7 @@ const CreateSpaceScreen = () => {
 
         <SpaceNameContainer>
           <SpaceNameText>Space Name</SpaceNameText>
-          <SpaceNamelengthText>0/20</SpaceNamelengthText>
+          <SpaceNamelengthText>{text.length}/20</SpaceNamelengthText>
         </SpaceNameContainer>
 
         <EnterSpaceNameContainer
@@ -184,7 +184,7 @@ const CreateSpaceScreen = () => {
             maxLength={200}
           />
           <LimitWrapper>
-            <LimitCount>0/200 limit</LimitCount>
+            <LimitCount>{explainText.length}/200 limit</LimitCount>
           </LimitWrapper>
         </EnterDecContainer>
         </KeyboardAvoidingView>
