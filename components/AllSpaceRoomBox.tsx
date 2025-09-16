@@ -19,7 +19,8 @@ const AllSpaceRoomBox=({data})=>{
         <AllSpacesBox onPress={onhandleNext}>
         <AllSpaceTitleContainer>
             <AllSpaceTitle>{data.roomName}</AllSpaceTitle>
-            <AllSpaceTitleContent>{data.description}</AllSpaceTitleContent>
+            <AllSpaceTitleContent>{data.description?data.description.length>25?
+                                          data.description.slice(0,25)+"...":data.description:""}</AllSpaceTitleContent>
             <AllSpaceMemberContainer>
              <MaterialIcons name="person-outline" size={16} color='#949899' />
             <AllSpaceMemberCount>{data.userCount ?? data.participantCount} members</AllSpaceMemberCount>

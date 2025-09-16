@@ -1,11 +1,12 @@
 import React,{useState,useEffect} from "react";
 import styled from "styled-components/native";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView ,FlatList } from "react-native";
+import { ScrollView ,FlatList,TouchableOpacity } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import api from "@/api/axiosInstance";
 import { useRouter } from 'expo-router';
 import Toast from "react-native-toast-message";
+import Feather from '@expo/vector-icons/Feather';
 
 type RoomDetail = {
   chatRoomId: number;
@@ -90,6 +91,9 @@ const LinkedSpaceDetail=()=>{
                 <Background
                     source={require("@/assets/images/background1.png")}
                     resizeMode="cover"> 
+                     <BackButton onPress={() => router.back()}>
+                        <Feather name="arrow-left" size={27} color="#CCCFD0" />
+                    </BackButton>
                     <ProfileBox>    
                         <ProfileImage source={
                   roomDetail?.roomImageUrl
@@ -137,7 +141,7 @@ const LinkedSpaceDetail=()=>{
                                     )}
                                 />
                             </MembersBox>
-                            <MemberCountText>+{roomDetail ? roomDetail.participantCount + 1 : 0}</MemberCountText>
+                            <MemberCountText>+{roomDetail ? roomDetail.participantCount : 0}</MemberCountText>
                         </MemberImageContainer>
                     </MembersContainer>
                 </DetailTopContainer>
@@ -365,3 +369,9 @@ const BottomSpacer = styled.View`
   height: 25px;
 `;
 
+const BackButton = styled.TouchableOpacity`
+  position: absolute;
+  top: 20px;  
+  left: 16px;
+  z-index: 10;
+`;

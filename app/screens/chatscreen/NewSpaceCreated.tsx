@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState} from "react";
 import styled from "styled-components/native";
 import { useLocalSearchParams } from "expo-router";
 import api from "@/api/axiosInstance";
@@ -7,12 +7,15 @@ import { Buffer } from "buffer";
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { ActivityIndicator } from "react-native";
+import Toast from "react-native-toast-message";
 
 
 const NewSpaceCreated=()=>{
 
     const { spaceName, spaceDescription,spaceImageUrl } = useLocalSearchParams<{ spaceName: string; spaceDescription: string;spaceImageUrl:string }>();
     const {index}=useLocalSearchParams<{index:string}>();
+    const [Loading,setLoading]=useState(false);
     const router = useRouter();
     console.log("spaceName",spaceName);
     console.log("spaceDescription",spaceDescription);
@@ -20,6 +23,7 @@ const NewSpaceCreated=()=>{
     console.log("index",index);
 
     const doneCreateSpace=async()=>{
+        setLoading(true);
         const isIcon=Number(index);
         if(isIcon===-1)
         {
@@ -44,7 +48,10 @@ const NewSpaceCreated=()=>{
                 // 프로필 등록 완료 
                 await CompleteCreateNewSpace(presignedInfo.key);
                 }catch (err) {
-                    console.error('API 요청 실패:', err);
+                    Toast.show({
+                      type: 'error',
+                      text1: 'Try Again',
+                    });
                 }
         }
         else{
@@ -63,6 +70,7 @@ const NewSpaceCreated=()=>{
             }
              await CompleteCreateNewSpace(url);
         }
+        setLoading(false);
     }
 
     const SendImage = async (presignedInfo, spaceImageUrl) => {
@@ -83,9 +91,12 @@ const NewSpaceCreated=()=>{
             },
             });
 
-            console.log("✅ 업로드 성공");
         } catch (err) {
-            console.error("❌ 업로드 실패:", err);
+             Toast.show({
+                      type: 'error',
+                      text1: 'Upload Fail',
+                    });
+            
         }
     };
  
@@ -102,10 +113,12 @@ const NewSpaceCreated=()=>{
 
       // 서버로 전송
       const res = await api.post('/api/v1/chat/rooms/group', payload);
-      console.log('New Spaces Created', res);
       router.replace('/(tabs)/chat');
     } catch (err) {
-      console.error('Fail New Spaces Created', err);
+      Toast.show({
+                      type: 'error',
+                      text1: 'Fail New Space Created',
+                    });
       throw err;
     }
   };
@@ -121,7 +134,7 @@ const NewSpaceCreated=()=>{
                     <SmallText>Bring people together and share your interests</SmallText>
                 </TextBox>
                  <NextButton onPress={doneCreateSpace}>
-                    <ButtonText>Done</ButtonText>
+                    {Loading?(<ActivityIndicator size="large" color="#000000" />):(<ButtonText>Done</ButtonText>)}
                     </NextButton>
 
                 <BottomSpacer/>

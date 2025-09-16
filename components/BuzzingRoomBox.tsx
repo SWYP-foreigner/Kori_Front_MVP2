@@ -27,7 +27,9 @@ const BuzzingRoomBox=({data})=>{
                 </BuzzingImageContainer>
                 <BuzzingTitleContainer>
                     <BuzzingTitle>{data.roomName}</BuzzingTitle>
-                    <BuzzingTitleContent>{data.description}</BuzzingTitleContent>
+                    <BuzzingTitleContent>{data.description?data.description.length>25?
+                                          data.description.slice(0,25)+"...":data.description:""}
+                    </BuzzingTitleContent>
                 </BuzzingTitleContainer>
                 <BuzzingMemberContainer>
                     <MaterialIcons name="person-outline" size={18} color='#ffffff' />
