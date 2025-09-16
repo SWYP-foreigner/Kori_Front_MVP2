@@ -249,7 +249,7 @@ const LoginScreen = () => {
           <PageIndicator 
             count={onBoardingData.length} 
             current={animatedCurrent} 
-            dashSize={14}  // 바 길이를 12px로 줄임
+            dashSize={14}  
             color="#02F59B"
             activeColor="#02F59B"
           />
@@ -259,7 +259,6 @@ const LoginScreen = () => {
       {/* 로그인 버튼 영역 */}
       <ButtonContainer>
         {Platform.OS==='ios'?(<AppleSignInButton onPress={appleSignIn} loading={appleLoading} />):(<GoogleSignInButton onPress={googleSignIn} loading={googleLoading} />)}
-       
         <EmailSignButton onPress={goEmailLoginScreen}/>
         <SmallText>By singing up, you agree to our Terms.{'\n'} 
           See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
@@ -381,7 +380,7 @@ const OnBoardingSubText = styled.Text`
 
 const PageIndicatorWrapper = styled.View`
   position: absolute;
-  bottom: 0px;
+  bottom: ${Platform.OS === "ios" ? "-30px" : "0px"};
   left: 0;
   right: 0;
   align-items: center;
