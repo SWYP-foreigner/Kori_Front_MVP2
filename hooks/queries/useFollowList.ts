@@ -1,5 +1,7 @@
 import api from '@/api/axiosInstance';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
 
 export type FollowStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 export type Tab = 'sent' | 'received';
@@ -91,6 +93,15 @@ const adapt = (u: RawFollowUser): FollowUserItem => {
         raw: u,
     };
 };
+
+export function useSentFollowRequestsSet() {
+    const q = useFollowList('PENDING', 'sent'); // 보낸 요청 목록
+    const set = useMemo(
+        () => new Set((q.data ?? []).map((u) => Number(u.userId)).filter(Number.isFinite)),
+        [q.data]
+    );
+    return { ...q, set }; // q.set 으로 사용
+}
 
 export function useFollowList(status: FollowStatus, tab: Tab) {
     const isFollowers = tab === 'received';
