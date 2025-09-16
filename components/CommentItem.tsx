@@ -155,9 +155,6 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
           <Count $active={likedByMe}>{likeCount}</Count>
         </Act>
 
-        <Act disabled>
-          <AntDesign name="message1" size={14} color="#cfd4da" />
-        </Act>
       </Footer>
     </Wrap>
   );

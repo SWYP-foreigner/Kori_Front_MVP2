@@ -1,5 +1,7 @@
 import api from '@/api/axiosInstance';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
 
 export type FollowStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 export type Tab = 'sent' | 'received';
@@ -42,10 +44,19 @@ export type FollowUserItem = {
     raw: RawFollowUser;
 };
 
-const toYear = (v?: string): number | undefined => {
-    const y = (v ?? '').toString().match(/^\d{4}/)?.[0];
-    return y ? Number(y) : undefined;
+const toYear = (v?: unknown): number | undefined => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+    const s = (v ?? '').toString().trim();
+    if (!s) return undefined;
+
+    const matches = s.match(/\b(19|20)\d{2}\b/g);
+    if (matches && matches.length) return Number(matches[matches.length - 1]);
+
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? undefined : d.getUTCFullYear();
+
 };
+
 
 const adapt = (u: RawFollowUser): FollowUserItem => {
     const userId = Number(u?.id ?? u?.userId);
@@ -91,6 +102,15 @@ const adapt = (u: RawFollowUser): FollowUserItem => {
         raw: u,
     };
 };
+
+export function useSentFollowRequestsSet() {
+    const q = useFollowList('PENDING', 'sent'); // 보낸 요청 목록
+    const set = useMemo(
+        () => new Set((q.data ?? []).map((u) => Number(u.userId)).filter(Number.isFinite)),
+        [q.data]
+    );
+    return { ...q, set }; // q.set 으로 사용
+}
 
 export function useFollowList(status: FollowStatus, tab: Tab) {
     const isFollowers = tab === 'received';

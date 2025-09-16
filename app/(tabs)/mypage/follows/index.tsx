@@ -35,14 +35,28 @@ type FriendItem = {
 function HListBase(props: FlatListProps<FriendItem>) { return <FlatList {...props} />; }
 const HList = styled(HListBase)``;
 
+const yearFromAny = (v?: unknown): number | undefined => {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  const s = (v ?? '').toString().trim();
+  const matches = s.match(/\b(19|20)\d{2}\b/g);
+  if (matches && matches.length) return Number(matches[matches.length - 1]);
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? undefined : d.getUTCFullYear();
+};
+
 const toItem = (u: any): FriendItem | null => {
   const idNum = Number(u?.userId ?? u?.id);
   if (!Number.isFinite(idNum) || idNum <= 0) return null;
+
+  const birth =
+    yearFromAny(u?.birthYear) ??
+    yearFromAny(u?.birthday ?? u?.birth ?? u?.birthDate ?? u?.dateOfBirth ?? u?.birth_year);
+
   return {
     id: idNum,
     name: u?.name ?? 'Unknown',
     country: u?.country ?? '-',
-    birth: u?.birthYear,
+    birth,
     purpose: u?.purpose ?? '',
     languages: Array.isArray(u?.languages) ? u.languages : [],
     personalities: Array.isArray(u?.hobbies) ? u.hobbies : [],

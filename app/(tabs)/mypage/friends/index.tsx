@@ -22,8 +22,10 @@ type FriendItem = {
     imageKey?: string;
 };
 
-const yearFromBirthday = (b?: string) => {
-    const m = (b ?? '').toString().match(/^\d{4}/)?.[0];
+const yearFromBirthday = (b?: string | number) => {
+    if (typeof b === 'number') return Number.isFinite(b) ? b : undefined;
+    const s = (b ?? '').toString();
+    const m = s.match(/\d{4}/)?.[0];
     return m ? Number(m) : undefined;
 };
 
@@ -32,6 +34,11 @@ const toFriendItem = (row: any): FriendItem => {
     const first = (row?.firstname ?? '').trim();
     const last = (row?.lastname ?? '').trim();
     const name = [first, last].filter(Boolean).join(' ') || row?.email || 'Unknown';
+
+    const birth =
+        row?.birthYear ??
+        yearFromBirthday(row?.birthday ?? row?.birth ?? row?.birthDate ?? row?.dateOfBirth);
+
 
     return {
         id,
@@ -44,7 +51,9 @@ const toFriendItem = (row: any): FriendItem => {
         bio: row?.introduction ?? '',
         imageKey: row?.imageKey ?? undefined,
     };
+
 };
+
 
 export default function FriendsOnlyScreen() {
     const { data, isLoading, isError, refetch } = useAcceptedFollowing();

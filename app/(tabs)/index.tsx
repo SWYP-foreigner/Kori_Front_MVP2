@@ -6,6 +6,8 @@ import FriendCard from '@/components/FriendCard';
 import useCancelFollowRequest from '@/hooks/mutations/useCancelFollowRequest';
 import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useFollowUser from '@/hooks/mutations/useFollowUser';
+import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
+import { useSentFollowRequestsSet } from '@/hooks/queries/useFollowList';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
 import { router } from 'expo-router';
@@ -21,13 +23,23 @@ export default function HomeScreen() {
   const followMutation = useFollowUser();
   const cancelReqMutation = useCancelFollowRequest();
   const { data: me } = useMyProfile();
-
   const { mutateAsync: createRoom, isPending: creatingRoom } = useCreateOneToOneRoom();
 
   const [requested, setRequested] = useState<Set<number>>(new Set());
   const [inFlight, setInFlight] = useState<Set<number>>(new Set());
   const lock = (id: number) => setInFlight(s => new Set(s).add(id));
   const unlock = (id: number) => setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
+
+
+  const { data: accepted } = useAcceptedFollowing(); // [{ id: number, ... }]
+  const followingSet = useMemo(
+    () => new Set((accepted ?? [])
+      .map(u => Number((u as any)?.id ?? (u as any)?.userId))
+      .filter(Number.isFinite)),
+    [accepted]
+  );
+
+  const { set: sentSet } = useSentFollowRequestsSet();
 
   useEffect(() => {
     const subCancel = DeviceEventEmitter.addListener('FOLLOW_REQUEST_CANCELLED', (p: { userId: number }) => {
@@ -49,10 +61,21 @@ export default function HomeScreen() {
     return Number.isFinite(n) ? n : undefined;
   }, [me]);
 
+
+
   const list = useMemo(() => {
     const arr = friends ?? [];
-    return arr.filter(u => Number(u.id) > 0 && Number(u.id) !== myId);
-  }, [friends, myId]);
+    return arr.filter(u => {
+      const id = Number((u as any)?.id);
+      if (!Number.isFinite(id)) return false;
+      if (myId && id === myId) return false;
+      if (followingSet.has(id)) return false;
+      if (sentSet.has(id)) return false;
+      if (requested.has(id)) return false;
+      return true;
+    });
+  }, [friends, myId, followingSet, sentSet, requested]);
+
 
   const onRefresh = useCallback(() => {
     refetch();
@@ -95,7 +118,7 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           renderItem={({ item }) => {
             const uid = Number(item.id);
-            const isSent = requested.has(uid);
+            const isSent = requested.has(uid) || requested.has(uid);
 
             return (
               <CardWrap>
@@ -116,6 +139,10 @@ export default function HomeScreen() {
 
                   onFollow={async (id) => {
                     if ((myId && id === myId) || inFlight.has(id)) return;
+
+                    const already = requested.has(id);
+                    if (!already) markRequested(id);
+
                     try {
                       lock(id);
                       await followMutation.mutateAsync(id);
@@ -133,6 +160,7 @@ export default function HomeScreen() {
                     if ((myId && id === myId) || inFlight.has(id)) return;
                     const wasSent = requested.has(id);
                     if (wasSent) unmarkRequested(id); // 낙관적 제거
+
                     try {
                       lock(id);
                       await cancelReqMutation.mutateAsync(id);
