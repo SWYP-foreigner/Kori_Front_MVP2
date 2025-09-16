@@ -136,6 +136,7 @@ const ChattingRoomScreen=()=>{
         });
     };
 
+  // 실시간 메세지 삭제를 위한 구독
    const subscribeDeleteMessages = () => {
         stompClient.current?.subscribe(`/topic/rooms/${roomId}`, (message) => {
             const body = JSON.parse(message.body);
@@ -204,7 +205,7 @@ const ChattingRoomScreen=()=>{
             }
         }
     };
-    // ---------------------- 메시지 전송 ----------------------
+    // ---------------------- 메세지 삭제 ----------------------
     const deleteMessage= async (messageId:string) => {
         if (!stompConnected) return console.warn('STOMP 미연결');
 
@@ -266,6 +267,11 @@ const ChattingRoomScreen=()=>{
             setIsFetchingMore(false);
         }
 };
+
+    const goBack=async()=>{
+      await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
+      router.back();
+    }
     // 햄버거 버튼 눌렀을때 이동
     const onhandleNext = () => {
         router.push({
@@ -360,7 +366,7 @@ const HighlightOtherText = ({ text, keyword }: { text: string; keyword: string }
 };
 
     
-
+// 채팅방 삭제할때 확인차 알림 
 const confirmDeleteMessage = (messageId: string) => {
   Alert.alert(
     "Message Delete", // 제목
@@ -502,7 +508,7 @@ const confirmDeleteMessage = (messageId: string) => {
                 </>):(
                     <>
                         <Left>
-                        <TouchableOpacity onPress={() => router.back()}>
+                        <TouchableOpacity onPress={goBack}>
                             <Feather name="arrow-left" size={27} color="#CCCFD0" />
                         </TouchableOpacity>
                     </Left>

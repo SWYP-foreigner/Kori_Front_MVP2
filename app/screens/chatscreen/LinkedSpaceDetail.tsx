@@ -5,6 +5,7 @@ import { ScrollView ,FlatList } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import api from "@/api/axiosInstance";
 import { useRouter } from 'expo-router';
+import Toast from "react-native-toast-message";
 
 type RoomDetail = {
   chatRoomId: number;
@@ -21,6 +22,7 @@ type RoomDetail = {
 
 const LinkedSpaceDetail=()=>{
     const { roomId }= useLocalSearchParams<{ roomId : string }>();
+    
     const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
     console.log("roomId",roomId);
     const router = useRouter();
@@ -31,13 +33,34 @@ const LinkedSpaceDetail=()=>{
     return res.data.data
   };
 
-  const JoinRoom=async()=>{
-    const res=await api.post(`/api/v1/chat/rooms/group/${roomId}/join`)
+  const JoinRoom = async () => {
+  console.log("Join 함");
+  try {
+    const res = await api.post(`/api/v1/chat/rooms/group/${roomId}/join`);
+     router.push({
+          pathname: '/screens/chatscreen/ChattingRoomScreen',
+          params: { 
+            roomId: roomId,       // props에서 바로 가져옴
+            roomName: roomDetail?.roomName,  // props에서 바로 가져옴
+            },
+          });
 
-    console.log("방 가입 여부",res);
-    router.back();
+  } catch (error: any) {
+    if (error.response) {
+      const message = error.response.data?.message;
+      console.log("서버 응답 에러:", message);
 
-  };
+      if (message === "이미 현재의 그룹채팅방에 참여하고 있습니다.") {
+        Toast.show({
+          type: 'error',
+          text1: 'You are already in the current group chat.',
+        });
+      }
+    } else {
+      console.error("네트워크 에러:", error.message);
+    }
+  }
+};
 
    // 컴포넌트가 화면에 나타날 때 한 번만 서버에서 채팅방 리스트를 가져옴
       useEffect(() => {
@@ -63,7 +86,6 @@ const LinkedSpaceDetail=()=>{
 
             >
 
-            
             <BackgroundContainer>
                 <Background
                     source={require("@/assets/images/background1.png")}
