@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -19,6 +19,8 @@ import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 import { Config } from '@/src/lib/config';
+import { useFocusEffect } from 'expo-router';
+import { DeviceEventEmitter } from 'react-native';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -96,10 +98,26 @@ export default function MyPageScreen() {
     }
   };
 
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPendingCounts();
+      return undefined;
+    }, [])
+  );
+
   useEffect(() => {
-    if (pendingFetchOnce.current) return;
-    pendingFetchOnce.current = true;
-    fetchPendingCounts();
+    const refresh = () => fetchPendingCounts();
+
+    const subs = [
+      DeviceEventEmitter.addListener('FOLLOW_REQUEST_SENT', refresh),
+      DeviceEventEmitter.addListener('FOLLOW_REQUEST_CANCELLED', refresh),
+      DeviceEventEmitter.addListener('FOLLOW_REQUEST_ACCEPTED', refresh),
+      DeviceEventEmitter.addListener('FOLLOW_REQUEST_DECLINED', refresh),
+      DeviceEventEmitter.addListener('UNFOLLOW_ACCEPTED', refresh),
+    ];
+
+    return () => subs.forEach(s => s.remove());
   }, []);
 
   const fullName = useMemo(() => {

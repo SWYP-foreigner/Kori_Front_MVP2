@@ -157,7 +157,6 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
 
         <Act disabled>
           <AntDesign name="message1" size={14} color="#cfd4da" />
-          <Count>999</Count>
         </Act>
       </Footer>
     </Wrap>
