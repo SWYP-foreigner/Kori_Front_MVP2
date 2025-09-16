@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Dimensions ,Image, InteractionManager} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from "@/src/lib/config";
-
+import { useNavigation } from 'expo-router';
 type ChatHistory = {
     id: number,
     roomId: number,
@@ -40,6 +40,7 @@ type TranslatedChatMessage = {
 const { height } = Dimensions.get('window');
 
 const ChattingRoomScreen=()=>{
+    const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { userId, roomName } = useLocalSearchParams<{ userId: string; roomName: string }>();
@@ -267,6 +268,21 @@ const ChattingRoomScreen=()=>{
             setIsFetchingMore(false);
         }
 };
+    useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      callApiOnExit();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const callApiOnExit = async () => {
+    try {
+      await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
+    } catch (error) {
+      console.log('뒤로가기 실패', error);
+    }
+  };;      
 
     const goBack=async()=>{
       await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
