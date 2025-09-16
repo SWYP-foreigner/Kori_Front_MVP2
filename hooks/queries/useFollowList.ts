@@ -44,10 +44,19 @@ export type FollowUserItem = {
     raw: RawFollowUser;
 };
 
-const toYear = (v?: string): number | undefined => {
-    const y = (v ?? '').toString().match(/^\d{4}/)?.[0];
-    return y ? Number(y) : undefined;
+const toYear = (v?: unknown): number | undefined => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+    const s = (v ?? '').toString().trim();
+    if (!s) return undefined;
+
+    const matches = s.match(/\b(19|20)\d{2}\b/g);
+    if (matches && matches.length) return Number(matches[matches.length - 1]);
+
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? undefined : d.getUTCFullYear();
+
 };
+
 
 const adapt = (u: RawFollowUser): FollowUserItem => {
     const userId = Number(u?.id ?? u?.userId);
