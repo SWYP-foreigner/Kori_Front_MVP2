@@ -70,7 +70,7 @@ const ChattingRoomScreen=()=>{
             console.log("[AUTH] 토큰 재발급 성공");
             return newToken;
         } catch (err) {
-            console.error("[AUTH] 토큰 재발급 실패", err);
+            console.log("[AUTH] 토큰 재발급 실패", err);
             return null;
         }
     };
@@ -81,12 +81,12 @@ const ChattingRoomScreen=()=>{
         let token = await SecureStore.getItemAsync("jwt");
         const myId = await SecureStore.getItemAsync('MyuserId');
 
-        if (!myId) return console.error("[AUTH] 유저ID 없음");
+        if (!myId) return console.log("[AUTH] 유저ID 없음");
 
         // token 없으면 refresh
         if (!token) {
             token = await refreshTokenIfNeeded();
-            if (!token) return console.error("[AUTH] 유효한 토큰 없음, 연결 실패");
+            if (!token) return console.log("[AUTH] 유효한 토큰 없음, 연결 실패");
         }
 
         setMyUserId(myId);
@@ -112,17 +112,17 @@ const ChattingRoomScreen=()=>{
 
         // STOMP 오류 처리
         stompClient.current.onStompError = async (frame) => {
-            console.error('❌ STOMP 오류', frame.headers['message']);
+            console.log('❌ STOMP 오류', frame.headers['message']);
             if (frame.headers['message']?.includes('401')) {
                 console.log("[AUTH] 토큰 만료 감지, refresh 시도");
                 const newToken = await refreshTokenIfNeeded();
-                if (!newToken) return console.error("[AUTH] 토큰 재발급 실패");
+                if (!newToken) return console.log("[AUTH] 토큰 재발급 실패");
                 stompClient.current?.deactivate();
                 connectStomp();
             }
         };
 
-        stompClient.current.onWebSocketError = (evt) => console.error('WebSocket 오류', evt);
+        stompClient.current.onWebSocketError = (evt) => console.log('WebSocket 오류', evt);
         stompClient.current.onWebSocketClose = (evt) => console.log('WebSocket 종료', evt);
 
         console.log("🚀 STOMP 연결 시도...");
@@ -193,10 +193,10 @@ const ChattingRoomScreen=()=>{
             });
             setInputText("");
         } catch (err: any) {
-            console.error("메시지 전송 실패", err);
+            console.log("메시지 전송 실패", err);
             if (err.message?.includes("401")) {
                 const newToken = await refreshTokenIfNeeded();
-                if (!newToken) return console.error("[AUTH] 토큰 재발급 실패");
+                if (!newToken) return console.log("[AUTH] 토큰 재발급 실패");
                 connectStomp();
                 stompClient.current?.publish({
                     destination: "/app/chat.sendMessage",
@@ -218,10 +218,10 @@ const ChattingRoomScreen=()=>{
             });
            console.log("메세지 삭제 성공");
         } catch (err: any) {
-            console.error("메시지 삭제 실패", err);
+            console.log("메시지 삭제 실패", err);
             if (err.message?.includes("401")) {
                 const newToken = await refreshTokenIfNeeded();
-                if (!newToken) return console.error("[AUTH] 토큰 재발급 실패");
+                if (!newToken) return console.log("[AUTH] 토큰 재발급 실패");
                 connectStomp();
                 stompClient.current?.publish({
                     destination: "/app/chat.deleteMessage",
