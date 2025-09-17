@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Keyboard, SafeAreaView, StatusBar } from 'react-native';
+import { SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
 import { useProfile } from '../../contexts/ProfileContext';
 // ------------------------
@@ -41,12 +41,11 @@ export default function NameStepScreen() {
               onChangeText={setAboutMe}
               placeholder="Describe myself here"
               placeholderTextColor="#616262"
-              autoCapitalize="sentences"
               returnKeyType="done"
               multiline
               textAlignVertical="top"
               maxLength={70} // 소프트 리미트보다 약간 높게 설정
-              onSubmitEditing={() => Keyboard.dismiss()} // done 버튼 눌렀을 때 키보드 닫기
+              submitBehavior="blurAndSubmit"
             />
 
             <CharacterCountWrapper>

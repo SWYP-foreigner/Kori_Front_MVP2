@@ -180,7 +180,10 @@ const CreateSpaceScreen = () => {
             onChangeText={onChangeExplainText}
             placeholder="Describe space here"
             placeholderTextColor="#848687"
+            returnKeyType="done"
             multiline
+            submitBehavior="blurAndSubmit"
+            textAlignVertical="top"
             maxLength={200}
           />
           <LimitWrapper>

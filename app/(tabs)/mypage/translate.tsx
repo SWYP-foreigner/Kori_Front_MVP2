@@ -55,7 +55,7 @@ export default function TranslateScreen() {
         const code: string = res?.data?.data?.language || 'EN';
         if (mounted) setSelected(code);
       } catch {
-
+        
       }
     })();
     return () => {
