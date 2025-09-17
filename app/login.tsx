@@ -357,11 +357,13 @@ const Slide = styled(ImageBackground)`
 `;
 
 const Overlay = styled.View`
+ 
   position: absolute;
-  bottom: -45;
+  bottom: -40;
   padding: 16px 24px;
   border-radius: 12px;
   align-items: center;
+  width: 100%;
 `;
 
 const OnBoardingText = styled.Text`
@@ -371,14 +373,17 @@ const OnBoardingText = styled.Text`
 `;
 
 const OnBoardingSubText = styled.Text`
+  
   color: #949899;
   font-size: 13px;
   text-align: center;
   font-family: PlusJakartaSans_400Regular;
   margin-top:10px;
+  flex-wrap: wrap;
 `;
 
 const PageIndicatorWrapper = styled.View`
+  
   position: absolute;
   bottom: ${Platform.OS === "ios" ? "-30px" : "0px"};
   left: 0;

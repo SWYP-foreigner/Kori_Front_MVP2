@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert } from 'react-native';
+import { SafeAreaView, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Fontisto from '@expo/vector-icons/Fontisto';
@@ -16,7 +16,8 @@ import * as FileSystem from 'expo-file-system';
 // ------------------------
 // AddPhotoStepScreen
 // ------------------------
-export default function AddPhotoStepScreen({ navigation }) {
+export default function AddPhotoStepScreen({  }) {
+  const [Loading,setLoading]=useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(-1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const { profileData, updateProfile } = useProfile();
@@ -135,7 +136,7 @@ export default function AddPhotoStepScreen({ navigation }) {
 
   // 프로필 등록 
   const doneProfile=async()=>{
-
+    setLoading(true);
     if(selectedPhoto !== null){
         const filename=profileData.photo.name;
         const uploadSessionId = Crypto.randomUUID();
@@ -162,7 +163,9 @@ export default function AddPhotoStepScreen({ navigation }) {
       await SendImage(presignedInfo,photo);
       // 프로필 등록 완료 
        await CompleteProfile(presignedInfo.key);
+       setLoading(false);
     }catch (err) {
+        setLoading(false);
         console.error('API 요청 실패:', err);
     }
   }
@@ -181,6 +184,7 @@ export default function AddPhotoStepScreen({ navigation }) {
           url="https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png"
       }
       await CompleteProfile(url);
+      setLoading(false);
   }
   };
 
@@ -290,7 +294,8 @@ export default function AddPhotoStepScreen({ navigation }) {
           disabled={!canProceed}
           canProceed={canProceed}
         >
-          <ButtonText>Done</ButtonText>
+        {Loading?(<ActivityIndicator size="large" color="#000000" />):(<ButtonText>Done</ButtonText>)}
+          
         </NextButton>
 
         <BottomSpacer />

@@ -7,7 +7,6 @@ import api from "@/api/axiosInstance";
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
 const MyChatRoomBox = ({data}) => {
- 
    const router = useRouter();
   
   //채팅방 진입

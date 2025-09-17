@@ -54,6 +54,7 @@ export default function ChatScreen() {
   const fetchRooms = async () => {
     try {
       const res = await api.get('/api/v1/chat/rooms');
+      
       setChatRooms(res.data.data);
     } catch (err) {
       console.error('채팅방 불러오기 실패:', err);

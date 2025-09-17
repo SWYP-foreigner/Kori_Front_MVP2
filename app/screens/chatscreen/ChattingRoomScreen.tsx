@@ -400,16 +400,12 @@ const confirmDeleteMessage = (messageId: string) => {
             return;
         pointerRef.current+=1;
         const messageId=searchMessages[pointerRef.current]?.id;
-        // console.log("포인터",pointerRef.current);
-        // console.log("보내는 메세지 ID ",messageId);
+      
         try{
             const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
            
             const resultMessages: ChatHistory[] = res.data.data;
-            // console.log("위로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
-            // 중앙으로 스크롤
-        // FlatList 렌더링 후 스크롤
             InteractionManager.runAfterInteractions(() => {
             scrollToHighlightMessage(messageId);
             });
@@ -424,13 +420,9 @@ const confirmDeleteMessage = (messageId: string) => {
             return;
         pointerRef.current-=1;
         const messageId=searchMessages[pointerRef.current]?.id;
-        // console.log("포인터",pointerRef.current);
-        // console.log("보내는 메세지 ID ",messageId);
         try{
             const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`);
-            //  console.log("res",res.data.data);
             const resultMessages: ChatHistory[] = res.data.data;
-            // console.log("아래로 이동 후 메시지",resultMessages);
             setMessages([...resultMessages].reverse());
             // 중앙으로 스크롤
             // FlatList 렌더링 후 스크롤
@@ -726,7 +718,7 @@ const confirmDeleteMessage = (messageId: string) => {
                             placeholderTextColor="#888"
                         />
                         <SendImageBox onPress={sendMessage}>
-                            <SendImage source={require("@/assets/images/Send.png")}/>
+                            <SendImage tintColor={inputText ? "#02F59B" : "#ffffff"} source={require("@/assets/images/Send.png")}/>
                         </SendImageBox>
                     </BottomContainer>)}
 
