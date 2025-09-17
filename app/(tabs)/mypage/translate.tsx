@@ -47,7 +47,6 @@ export default function TranslateScreen() {
   const [selected, setSelected] = useState<string>('EN');
   const [saving, setSaving] = useState<boolean>(false);
 
-  // 초기값: /api/v1/member/profile/setting 사용 (language: string[])
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -62,7 +61,6 @@ export default function TranslateScreen() {
           const ui = (typeof raw === 'string' && raw.trim() ? raw : 'en').toUpperCase();
           setSelected(ui);
         } else {
-          // 실패해도 기본 'EN' 유지
           console.warn('[lang:init] non-200', res.status);
         }
       } catch (e) {
@@ -72,7 +70,6 @@ export default function TranslateScreen() {
     return () => { mounted = false; };
   }, []);
 
-  // 저장: 서버엔 소문자, UI는 대문자 유지
   const saveLanguage = async (raw: string) => {
     const uiCode = String(raw).trim().toUpperCase();
     const serverCode = uiCode.toLowerCase();
@@ -83,7 +80,7 @@ export default function TranslateScreen() {
       console.log('[lang:save] res', res.status, res.data);
 
       if (res.status === 200 || res.status === 204) {
-        setSelected(uiCode); // 화면 즉시 반영
+        setSelected(uiCode);
         return;
       }
       throw new Error(res.data?.message || `HTTP ${res.status}`);
@@ -98,15 +95,14 @@ export default function TranslateScreen() {
 
   const onPick = async (code: string) => {
     if (saving) return;
-    // 대소문자 무시 비교
     if (selected.toUpperCase() === code.toUpperCase()) return;
 
     const prev = selected;
-    setSelected(code.toUpperCase());     // 낙관적 반영
+    setSelected(code.toUpperCase());
     try {
       await saveLanguage(code);
     } catch {
-      setSelected(prev);                 // 실패 시 롤백
+      setSelected(prev);
     }
   };
 
