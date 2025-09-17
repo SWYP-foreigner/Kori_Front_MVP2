@@ -47,36 +47,48 @@ export default function TranslateScreen() {
   const [selected, setSelected] = useState<string>('EN');
   const [saving, setSaving] = useState<boolean>(false);
 
+  // 초기값: /api/v1/member/profile/setting 사용 (language: string[])
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await api.get('/api/v1/mypage/profile');
-        const code: string = res?.data?.data?.language || 'EN';
-        if (mounted) setSelected(code);
-      } catch {
+        console.log('[lang:init] GET /api/v1/member/profile/setting');
+        const res = await api.get('/api/v1/member/profile/setting', { validateStatus: () => true });
+        console.log('[lang:init] res', res.status, res.data);
+        if (!mounted) return;
 
+        if (res.status === 200) {
+          const raw = (res.data as any)?.language?.[0];
+          const ui = (typeof raw === 'string' && raw.trim() ? raw : 'en').toUpperCase();
+          setSelected(ui);
+        } else {
+          // 실패해도 기본 'EN' 유지
+          console.warn('[lang:init] non-200', res.status);
+        }
+      } catch (e) {
+        console.warn('[lang:init] failed', e);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  const saveLanguage = async (code: string) => {
+  // 저장: 서버엔 소문자, UI는 대문자 유지
+  const saveLanguage = async (raw: string) => {
+    const uiCode = String(raw).trim().toUpperCase();
+    const serverCode = uiCode.toLowerCase();
     setSaving(true);
     try {
-      const res = await api.put('/api/v1/mypage/user/language', { language: code });
+      console.log('[lang:save] PUT /api/v1/mypage/user/language', { language: serverCode });
+      const res = await api.put('/api/v1/mypage/user/language', { language: serverCode }, { validateStatus: () => true });
+      console.log('[lang:save] res', res.status, res.data);
 
-      const ct = (res.headers as any)['content-type'] || '';
-      if (ct.includes('text/html')) {
-        throw new Error('Received HTML from API. Check Config.SERVER_URL or path.');
+      if (res.status === 200 || res.status === 204) {
+        setSelected(uiCode); // 화면 즉시 반영
+        return;
       }
+      throw new Error(res.data?.message || `HTTP ${res.status}`);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Please try again.';
+      const msg = err?.response?.data?.message || err?.message || 'Please try again.';
       Alert.alert('Save failed', String(msg));
       throw err;
     } finally {
@@ -85,13 +97,16 @@ export default function TranslateScreen() {
   };
 
   const onPick = async (code: string) => {
-    if (saving || code === selected) return;
+    if (saving) return;
+    // 대소문자 무시 비교
+    if (selected.toUpperCase() === code.toUpperCase()) return;
+
     const prev = selected;
-    setSelected(code);
+    setSelected(code.toUpperCase());     // 낙관적 반영
     try {
       await saveLanguage(code);
     } catch {
-      setSelected(prev);
+      setSelected(prev);                 // 실패 시 롤백
     }
   };
 
@@ -113,7 +128,7 @@ export default function TranslateScreen() {
 
       <Body>
         {OPTIONS.map(({ label, code }) => {
-          const active = selected === code;
+          const active = selected.toUpperCase() === code.toUpperCase();
           return (
             <Row
               key={code}
@@ -180,7 +195,7 @@ const Row = styled.Pressable<{ active: boolean; disabled?: boolean }>`
   margin-bottom: 10px;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between; /* ⬅️ 오타 수정 */
+  justify-content: space-between;
   background: ${({ active }) => (active ? '#2A2B2C' : 'transparent')};
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
