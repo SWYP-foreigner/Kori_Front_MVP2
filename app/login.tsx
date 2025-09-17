@@ -1,9 +1,9 @@
-import React, { useState, useRef } from "react";
-import { Dimensions,  
-  ImageBackground, Animated, useWindowDimensions, TouchableOpacity ,Modal,Platform,StatusBar } from "react-native";
-import styled from "styled-components/native";
-import { useRouter } from "expo-router";
-import * as SecureStore from 'expo-secure-store';
+import AppleSignInButton from "@/components/AppleSignInButton";
+import EmailSignButton from "@/components/EmailSignButton";
+import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { Config } from '@/src/lib/config';
+import Entypo from '@expo/vector-icons/Entypo';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {
   GoogleSignin,
   isErrorWithCode,
@@ -11,15 +11,17 @@ import {
   statusCodes
 } from '@react-native-google-signin/google-signin';
 import axios from 'axios';
-import { PageIndicator } from 'react-native-page-indicator';
-import EmailSignButton from "@/components/EmailSignButton";
-import GoogleSignInButton from '@/components/GoogleSignInButton';
-import AppleSignInButton from "@/components/AppleSignInButton";
-import { Config } from '@/src/lib/config';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import Entypo from '@expo/vector-icons/Entypo';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { randomUUID } from 'expo-crypto';
+import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import React, { useRef, useState } from "react";
+import {
+  Animated, Dimensions,
+  ImageBackground, Modal, Platform, StatusBar, TouchableOpacity, useWindowDimensions
+} from "react-native";
+import { PageIndicator } from 'react-native-page-indicator';
+import styled from "styled-components/native";
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -32,7 +34,7 @@ type AppLoginResponse = {
     accessToken: string;
     refreshToken: string;
     userId: number;
-    isNewUser:boolean;
+    isNewUser: boolean;
   };
   message: string;
   timestamp: string;
@@ -53,26 +55,26 @@ const LoginScreen = () => {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [allCheck,setAllCheck]=useState(false);
-  const [check1,setCheck1]=useState(false);
-  const [check2,setCheck2]=useState(false);
-  const [check3,setCheck3]=useState(false);
+  const [allCheck, setAllCheck] = useState(false);
+  const [check1, setCheck1] = useState(false);
+  const [check2, setCheck2] = useState(false);
+  const [check3, setCheck3] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading,setAppleLoading]=useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const onBoardingData: OnBoardingItem[] = [
-    { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText:"Connect with people abroad in Korea for\nstudy, work, travel, or more."},
-    { id: "2", image: require("@/assets/images/onboarding2.png"), TitleText: "Chat Without Barriers", SubTitleText:"Chat in your own language.\nJust hit the translate button to read theirs."},
-    { id: "3", image: require("@/assets/images/onboarding3.png"), TitleText: "Connect in our community", SubTitleText:"Have questions or stories to tell?\nJoin in and talk freely with everyone."},
+    { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText: "Connect with people abroad in Korea for\nstudy, work, travel, or more." },
+    { id: "2", image: require("@/assets/images/onboarding2.png"), TitleText: "Chat Without Barriers", SubTitleText: "Chat in your own language.\nJust hit the translate button to read theirs." },
+    { id: "3", image: require("@/assets/images/onboarding3.png"), TitleText: "Connect in our community", SubTitleText: "Have questions or stories to tell?\nJoin in and talk freely with everyone." },
   ];
 
   const { width, height } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
   const animatedCurrent = useRef(Animated.divide(scrollX, width)).current;
 
-  const goSetProfilePage=()=>{
-       setModalVisible(false);
-       router.push('/screens/makeprofile/NameStepScreen');
+  const goSetProfilePage = () => {
+    setModalVisible(false);
+    router.push('/screens/makeprofile/NameStepScreen');
   };
 
 
@@ -84,16 +86,15 @@ const LoginScreen = () => {
         { code }
       );
 
-      const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
+      const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
 
-      if(isNewUser)
-      {
+      if (isNewUser) {
         showModal();
       }
-      else{
+      else {
         router.replace('/(tabs)');
       }
 
@@ -101,7 +102,7 @@ const LoginScreen = () => {
       console.error('서버 요청 실패', error);
     }
   };
-  
+
   // 구글 로그인
   const googleSignIn = async () => {
     try {
@@ -137,195 +138,194 @@ const LoginScreen = () => {
         console.log('Google Sign-In 이외 오류', error);
       }
     }
-    finally{
+    finally {
       setGoogleLoading(false); // 로딩 끝
     }
   };
-  
-  
-    // 애플 로그인
-    const appleSignIn=async () => {
-            try {
-              setAppleLoading(true);
-              const rawNonce=randomUUID();
-              const credential = await AppleAuthentication.signInAsync({
-                requestedScopes: [
-                  AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-                  AppleAuthentication.AppleAuthenticationScope.EMAIL,
-                ],
-                nonce:rawNonce,
-              });
-        
-        const res = await axios.post<AppLoginResponse>(
-          // 애플 로그인 API 주소로 바꿔야함
-          `${Config.SERVER_URL}/api/v1/member/apple/app-login`,
-            {
-              identityToken: credential.identityToken,
-              authorizationCode: credential.authorizationCode,
-              nonce: rawNonce,
-              email: credential.email,
-              fullName: {
-                givenName:credential.fullName?.givenName ,
-                familyName: credential.fullName?.familyName
-              }
-            }
-        );
-            console.log("데이터",res.data.data);
-            const { accessToken, refreshToken, userId ,isNewUser} = res.data.data;
-            await SecureStore.setItemAsync('jwt', accessToken);
-            await SecureStore.setItemAsync('refresh', refreshToken);
-            await SecureStore.setItemAsync('MyuserId', userId.toString());
 
-              if(isNewUser)
-              {
-                showModal();
-              }
-              else{
-                router.replace('/(tabs)');
-              }
-            } catch (e:any) {
-              if (e.code === 'ERR_REQUEST_CANCELED') {
-                console.log("사용자가 취소함");
-              } else {
-                 console.error("에러코드",e);
-              }
-            }
-            finally{
-              setAppleLoading(false);
-            }
+
+  // 애플 로그인
+  const appleSignIn = async () => {
+    try {
+      setAppleLoading(true);
+      const rawNonce = randomUUID();
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: rawNonce,
+      });
+
+      const res = await axios.post<AppLoginResponse>(
+        // 애플 로그인 API 주소로 바꿔야함
+        `${Config.SERVER_URL}/api/v1/member/apple/app-login`,
+        {
+          identityToken: credential.identityToken,
+          authorizationCode: credential.authorizationCode,
+          nonce: rawNonce,
+          email: credential.email,
+          fullName: {
+            givenName: credential.fullName?.givenName,
+            familyName: credential.fullName?.familyName
           }
+        }
+      );
+      console.log("데이터", res.data.data);
+      const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
+      await SecureStore.setItemAsync('jwt', accessToken);
+      await SecureStore.setItemAsync('refresh', refreshToken);
+      await SecureStore.setItemAsync('MyuserId', userId.toString());
+
+      if (isNewUser) {
+        showModal();
+      }
+      else {
+        router.replace('/(tabs)');
+      }
+    } catch (e: any) {
+      if (e.code === 'ERR_REQUEST_CANCELED') {
+        console.log("사용자가 취소함");
+      } else {
+        console.error("에러코드", e);
+      }
+    }
+    finally {
+      setAppleLoading(false);
+    }
+  }
 
 
   // 이메일 로그인 화면으로 이동
-  const goEmailLoginScreen=async()=>{
-   
+  const goEmailLoginScreen = async () => {
+
     router.push("./screens/login/GeneralLoginScreen");
   };
-  
+
   // 약관 동의 화면 보여줌
   const showModal = () => {
-    setModalVisible(true); 
+    setModalVisible(true);
   };
 
   // TermsAndConditions 상세 페이지 
-  const showTermsAndConditions=()=>{
-      router.push("/screens/login/TermsAndConditionsScreen");
+  const showTermsAndConditions = () => {
+    router.push("/screens/login/TermsAndConditionsScreen");
   };
-  
+
   // PrivacyPolicy 상세 페이지 
-  const showPrivacyPolicy=()=>{
+  const showPrivacyPolicy = () => {
     router.push("/screens/login/PrivacyPolicyScreen");
   };
 
   return (
-     <SafeArea>
-    <StatusBar barStyle="light-content" />
-    <Container>
-      {/* 온보딩 이미지 영역 */}
-      <OnBoardingContainer>
-        <AnimatedFlatList
-          data={onBoardingData}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: true }
-          )}
-          
-          renderItem={({ item }) => (
-            <Slide source={item.image} resizeMode="cover" style={{ width, height:height*0.55 }}>
-              <Overlay>
-                <OnBoardingText>{item.TitleText}</OnBoardingText>
-                <OnBoardingSubText>{item.SubTitleText}</OnBoardingSubText>
-              </Overlay>
-            </Slide>
-          )}
-        />
-        
-        {/* 페이지 인디케이터 */}
-        <PageIndicatorWrapper>
-          <PageIndicator 
-            count={onBoardingData.length} 
-            current={animatedCurrent} 
-            dashSize={14}  
-            color="#02F59B"
-            activeColor="#02F59B"
+    <SafeArea>
+      <StatusBar barStyle="light-content" />
+      <Container>
+        {/* 온보딩 이미지 영역 */}
+        <OnBoardingContainer>
+          <AnimatedFlatList
+            data={onBoardingData}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              { useNativeDriver: true }
+            )}
+
+            renderItem={({ item }) => (
+              <Slide source={item.image} resizeMode="cover" style={{ width, height: height * 0.55 }}>
+                <Overlay>
+                  <OnBoardingText>{item.TitleText}</OnBoardingText>
+                  <OnBoardingSubText>{item.SubTitleText}</OnBoardingSubText>
+                </Overlay>
+              </Slide>
+            )}
           />
-        </PageIndicatorWrapper>
-      </OnBoardingContainer>
 
-      {/* 로그인 버튼 영역 */}
-      <ButtonContainer>
-        {Platform.OS==='ios'?(<AppleSignInButton onPress={appleSignIn} loading={appleLoading} />):(<GoogleSignInButton onPress={googleSignIn} loading={googleLoading} />)}
-        <EmailSignButton onPress={goEmailLoginScreen}/>
-        <SmallText>By singing up, you agree to our Terms.{'\n'} 
-          See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
-      </ButtonContainer>
-           <Modal
-                  visible={modalVisible}
-                  transparent
-                  animationType="slide"
-                  onRequestClose={() => setModalVisible(false)}
+          {/* 페이지 인디케이터 */}
+          <PageIndicatorWrapper>
+            <PageIndicator
+              count={onBoardingData.length}
+              current={animatedCurrent}
+              dashSize={14}
+              color="#02F59B"
+              activeColor="#02F59B"
+            />
+          </PageIndicatorWrapper>
+        </OnBoardingContainer>
+
+        {/* 로그인 버튼 영역 */}
+        <ButtonContainer>
+          {Platform.OS === 'ios' ? (<AppleSignInButton onPress={appleSignIn} loading={appleLoading} />) : (<GoogleSignInButton onPress={googleSignIn} loading={googleLoading} />)}
+          <EmailSignButton onPress={goEmailLoginScreen} />
+          <SmallText>By singing up, you agree to our Terms.{'\n'}
+            See how we use your data in our <HighlightText> Privacy Policy.</HighlightText></SmallText>
+        </ButtonContainer>
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <ModalOverlay activeOpacity={1}>
+            <BottomSheetContent>
+              <BottomSheetHeader>
+                <BottomSheetHandle />
+              </BottomSheetHeader>
+              <BottomSheetTitle>Please agree to the terms to continue.</BottomSheetTitle>
+              <AllCheckBoxContainer>
+                <CheckBox
+                  onPress={() => {
+                    const newValue = !allCheck; // 토글 후 값
+                    setAllCheck(newValue);
+                    setCheck1(newValue);
+                    setCheck2(newValue);
+                    setCheck3(newValue);
+
+                  }}
+                  check={allCheck}
+                >{allCheck && <Entypo name="check" size={15} color="#02F59B" />}</CheckBox><AllCheckText>I agree to all.</AllCheckText>
+
+              </AllCheckBoxContainer>
+              <Divider />
+              <CheckBoxContainer>
+                <CheckBox
+                  onPress={() => setCheck1(!check1)}
+                  check={check1}
+                >{check1 && <Entypo name="check" size={15} color="#02F59B" />}</CheckBox><CheckText>(Required) I am over 14 years old.</CheckText>
+
+              </CheckBoxContainer>
+              <CheckBoxContainer>
+                <CheckBox onPress={() => setCheck2(!check2)}
+                  check={check2}
                 >
-                <ModalOverlay  activeOpacity={1}>
-                    <BottomSheetContent>
-                      <BottomSheetHeader>
-                        <BottomSheetHandle />
-                      </BottomSheetHeader>
-                       <BottomSheetTitle>Please agree to the terms to continue.</BottomSheetTitle>
-                        <AllCheckBoxContainer>
-                          <CheckBox
-                            onPress={() => {
-                              const newValue = !allCheck; // 토글 후 값
-                              setAllCheck(newValue);
-                              setCheck1(newValue);
-                              setCheck2(newValue);
-                              setCheck3(newValue);
-                              
-                            }}
-                            check={allCheck}
-                          >{allCheck&&<Entypo name="check" size={15} color="#02F59B" />}</CheckBox><AllCheckText>I agree to all.</AllCheckText>
-
-                        </AllCheckBoxContainer>
-                        <Divider/>
-                        <CheckBoxContainer>
-                          <CheckBox
-                             onPress={() =>setCheck1(!check1)}
-                            check={check1}
-                          >{check1&&<Entypo name="check" size={15} color="#02F59B" />}</CheckBox><CheckText>(Required) I am over 14 years old.</CheckText>
-
-                        </CheckBoxContainer>
-                        <CheckBoxContainer>
-                           <CheckBox onPress={() =>setCheck2(!check2)}
-                             check={check2}
-                            >
-                            {check2&&<Entypo name="check" size={15} color="#02F59B" />}
-                            </CheckBox><CheckText>(Required) Terms & Conditions</CheckText>
-                            <TouchableOpacity onPress={showTermsAndConditions}>
-                            <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
-                        </CheckBoxContainer>
-                        <CheckBoxContainer>
-                           <CheckBox onPress={() =>setCheck3(!check3)}
-                            check={check3}
-                            >
-                            {check3&&<Entypo name="check" size={15} color="#02F59B" />}
-                            </CheckBox><CheckText>(Required) Privacy Policy</CheckText>
-                            <TouchableOpacity onPress={showPrivacyPolicy}>
-                            <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
-                        </CheckBoxContainer>
-                     <ConfirmButton 
-                      disabled={!allCheck}
-                      allCheck={allCheck}
-                      onPress={goSetProfilePage}
-                      >
-                      <ConfirmText>Confirm</ConfirmText>
-                     </ConfirmButton>
-                    </BottomSheetContent>
-                  </ModalOverlay>
-                </Modal>
-    </Container>
+                  {check2 && <Entypo name="check" size={15} color="#02F59B" />}
+                </CheckBox><CheckText>(Required) Terms & Conditions</CheckText>
+                <TouchableOpacity onPress={showTermsAndConditions}>
+                  <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+              </CheckBoxContainer>
+              <CheckBoxContainer>
+                <CheckBox onPress={() => setCheck3(!check3)}
+                  check={check3}
+                >
+                  {check3 && <Entypo name="check" size={15} color="#02F59B" />}
+                </CheckBox><CheckText>(Required) Privacy Policy</CheckText>
+                <TouchableOpacity onPress={showPrivacyPolicy}>
+                  <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+              </CheckBoxContainer>
+              <ConfirmButton
+                disabled={!allCheck}
+                allCheck={allCheck}
+                onPress={goSetProfilePage}
+              >
+                <ConfirmText>Confirm</ConfirmText>
+              </ConfirmButton>
+            </BottomSheetContent>
+          </ModalOverlay>
+        </Modal>
+      </Container>
     </SafeArea>
   );
 };
@@ -359,7 +359,7 @@ const Slide = styled(ImageBackground)`
 const Overlay = styled.View`
  
   position: absolute;
-  bottom: -40;
+  bottom: -25;
   padding: 16px 24px;
   border-radius: 12px;
   align-items: center;
@@ -399,7 +399,7 @@ const ButtonContainer = styled.View`
   padding: 20px;
 `;
 
-const SmallText=styled.Text`
+const SmallText = styled.Text`
   color:#848687;
   font-family:PlusJakartaSans_300Light;
   font-size:11px;
@@ -448,7 +448,7 @@ const BottomSheetTitle = styled.Text`
   margin-left:30px;
 `;
 
-  const AllCheckBoxContainer=styled.View`
+const AllCheckBoxContainer = styled.View`
     height:60px;
     margin:20px 5px 10px 5px;
     flex-direction:row;
@@ -456,7 +456,7 @@ const BottomSheetTitle = styled.Text`
     align-items:center;
 
   `;
-  const AllCheckText=styled.Text`
+const AllCheckText = styled.Text`
     color: #FFFFFF;
     font-size:15px;
     font-family:PlusJakartaSans_600SemiBold;
@@ -464,7 +464,7 @@ const BottomSheetTitle = styled.Text`
     
   `;
 
-  const Divider=styled.View`
+const Divider = styled.View`
     width: 90%;
     align-self:center;
     height: 2px;
@@ -472,7 +472,7 @@ const BottomSheetTitle = styled.Text`
     margin-bottom:10px;
   `;
 
-  const CheckBoxContainer=styled.View`
+const CheckBoxContainer = styled.View`
    
     height:50px;
     margin:5px;
@@ -482,7 +482,7 @@ const BottomSheetTitle = styled.Text`
     padding-right: 15px;
   `;
 
-const CheckBox=styled.TouchableOpacity`
+const CheckBox = styled.TouchableOpacity`
     border-color: ${(props) => (props.check ? "#02F59B" : "#CCCFD0")};
     border-width:1.25px;
     width:20px;
@@ -491,7 +491,7 @@ const CheckBox=styled.TouchableOpacity`
     justify-content:center;
 
 `;
-const CheckText=styled.Text`
+const CheckText = styled.Text`
     color: #FFFFFF;
     font-size:13px;
     font-family:PlusJakartaSans_500Medium;
@@ -499,8 +499,8 @@ const CheckText=styled.Text`
     flex:1;
 `;
 
-const ConfirmButton=styled.TouchableOpacity`
-    opacity:${(props)=>(props.allCheck? 1 : 0.5)};
+const ConfirmButton = styled.TouchableOpacity`
+    opacity:${(props) => (props.allCheck ? 1 : 0.5)};
     background-color:#02F59B;
     height:50px;
     width:90%;
@@ -511,7 +511,7 @@ const ConfirmButton=styled.TouchableOpacity`
     margin:20px 0px;
 `;
 
-const ConfirmText=styled.Text`
+const ConfirmText = styled.Text`
     color:#1D1E1F;
     font-size:15px;
     font-family:PlusJakartaSans_500Medium;
