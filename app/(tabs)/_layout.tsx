@@ -3,7 +3,7 @@ import React from 'react';
 import { SafeAreaView,Image ,Text,StatusBar,Platform} from "react-native";
 import { Dimensions } from "react-native";
 const { height: screenHeight } = Dimensions.get("window");
-const TAB_BAR_HEIGHT = screenHeight * 0.12; // 화면 높이의 15%
+const TAB_BAR_HEIGHT = screenHeight * 0.117; // 화면 높이의 15%
 
 
 
