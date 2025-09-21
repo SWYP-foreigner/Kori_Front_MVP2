@@ -17,6 +17,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
@@ -33,7 +34,6 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
-
 
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
@@ -196,6 +196,10 @@ export default function PostDetailScreen() {
   const [imgIndex, setImgIndex] = useState(0);
   const heightAnim = useRef(new Animated.Value(IMG_W / DEFAULT_RATIO)).current;
 
+  //댓글 바로 숨기기 (임시로 )
+  const [hiddenCommentIds, setHiddenCommentIds] = useState<Set<number>>(new Set());
+
+
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (!viewableItems?.length) return;
@@ -270,6 +274,10 @@ export default function PostDetailScreen() {
   type ReportTarget = 'post' | 'user' | 'comment';
   const [reportTarget, setReportTarget] = useState<ReportTarget>('post');
 
+  //댓글 신고랑 차단
+  type SheetCtx = { type: 'post' | 'comment' | null; commentId?: number };
+  const [sheetCtx, setSheetCtx] = useState<SheetCtx>({ type: null });
+
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
 
@@ -290,6 +298,13 @@ export default function PostDetailScreen() {
   const commentList: Comment[] = Array.isArray(commentsRaw)
     ? (commentsRaw as Comment[])
     : ((commentsRaw as any)?.items ?? []);
+
+  //리스트 보이도록
+  const getCmtId = (c: any) => Number((c?.id ?? c?.commentId));
+  const visibleComments: Comment[] = useMemo(
+    () => commentList.filter(c => !hiddenCommentIds.has(getCmtId(c))),
+    [commentList, hiddenCommentIds]
+  );
 
   const [editVisible, setEditVisible] = useState(false);
   const [editText, setEditText] = useState('');
@@ -455,7 +470,6 @@ export default function PostDetailScreen() {
     const delta = nextLiked ? +1 : -1;
     const nextCount = Math.max(0, prevCount + delta);
 
-    // 전역 먼저 반영
     toggleLiked(postId);
     setLikeCount(postId, nextCount);
 
@@ -469,13 +483,21 @@ export default function PostDetailScreen() {
     }
   };
 
-  const openMenu = () => {
-    console.groupCollapsed('[menu] open');
-    console.log('postId', postId);
-    console.log('authorId', authorId, 'authorName', authorName);
-    console.log('createdRaw', createdRaw, 'createdLabel', createdLabel);
-    console.groupEnd();
+  //게시글에서 열ㄹ기
+  const openPostSheet = () => {
+    setSheetCtx({ type: 'post' });
+    setMenuVisible(true);
+    slideY.setValue(300);
+    Animated.timing(slideY, {
+      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+    }).start();
+  };
 
+  //댓글에서 열기
+  const openCommentSheet = (c: Comment) => {
+    const cid = Number((c as any).id ?? (c as any).commentId);
+    if (!Number.isFinite(cid)) return;
+    setSheetCtx({ type: 'comment', commentId: cid });
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, {
@@ -521,8 +543,11 @@ export default function PostDetailScreen() {
           setReportLoading(true);
           try {
             if (reportTarget === 'comment') {
-              if (!Number.isFinite(reportCommentId)) throw new Error('commentId missing');
-              await blockComment(reportCommentId!, reason); // ✅ 댓글 차단
+              if (!reportText.trim()) throw new Error('reason required');
+              await api.post('/api/v1/chat/declaration', {
+                ignored: reportText.trim(),
+                // commentId: reportCommentId
+              });
             } else if (reportTarget === 'user') {
               await api.post(`/api/v1/posts/${postId}/block`, { reason });
             } else {
@@ -556,6 +581,7 @@ export default function PostDetailScreen() {
   };
 
 
+
   const onSaveEdit = async () => {
     const text = editText.trim();
     if (!text) { Alert.alert('Edit', 'Please enter your comment.'); return; }
@@ -569,6 +595,58 @@ export default function PostDetailScreen() {
       Alert.alert('Edit', 'Failed to save changes.');
     }
   };
+
+  const qc = useQueryClient?.() as any;
+
+  const hideCommentLocal = (cid: number) => {
+    setHiddenCommentIds(prev => {
+      const next = new Set(prev);
+      next.add(cid);
+      return next;
+    });
+  };
+  const unhideCommentLocal = (cid: number) => {
+    setHiddenCommentIds(prev => {
+      if (!prev.has(cid)) return prev;
+      const next = new Set(prev);
+      next.delete(cid);
+      return next;
+    });
+  };
+
+
+  const blockCommentFromSheet = () => {
+    if (sheetCtx.type !== 'comment' || !Number.isFinite(sheetCtx.commentId!)) return;
+    const cid = sheetCtx.commentId!;
+    setMenuVisible(false);
+
+    Alert.alert('Block', 'Are you sure you want to block this comment?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Block',
+        style: 'destructive',
+        onPress: async () => {
+          hideCommentLocal(cid);
+
+          try {
+            await blockComment(cid, 'Blocked from comment sheet');
+            Alert.alert('Block', 'This comment has been blocked.');
+          } catch (e: any) {
+            const s = e?.response?.status;
+            const msg =
+              s === 401 ? 'Authentication required. Please log in again.' :
+                s === 403 ? 'You do not have permission.' :
+                  s === 404 ? 'Comment not found.' :
+                    'Failed to block this comment.';
+            Alert.alert('Block', msg);
+            console.log('[block comment] error', { status: s, commentId: cid, e });
+          }
+        },
+      },
+    ]);
+  };
+
+
 
   const reportTitle =
     reportTarget === 'user' ? 'Report This User'
@@ -589,14 +667,14 @@ export default function PostDetailScreen() {
       >
         <FlatList<Comment>
           ref={listRef}
-          data={commentList}
+          data={visibleComments}
           keyExtractor={(it) => String((it as any).id ?? (it as any).commentId)}
           renderItem={({ item, index }) => (
             <CommentItem
               data={item}
               isFirst={index === 0}
               onPressLike={() => toggleCommentLike(item)}
-              onPressMore={(c) => openCommentReport(c)}
+              onPressMore={(c) => openCommentSheet(c)}
             />
           )}
           keyboardShouldPersistTaps="handled"
@@ -626,7 +704,6 @@ export default function PostDetailScreen() {
                       const before = postBookmarked;
                       const next = !before;
 
-                      // 1) 전역 즉시 토글
                       toggleBookmarked(postId);
 
                       try {
@@ -636,7 +713,6 @@ export default function PostDetailScreen() {
                           await removeBookmark(postId);
                         }
                       } catch (e) {
-                        // 2) 실패 롤백
                         setBookmarked(postId, before);
                         console.log('[bookmark:detail] error', e);
                       } finally {
@@ -710,7 +786,7 @@ export default function PostDetailScreen() {
                     <ActText>{commentCount}</ActText>
                   </Act>
                   <Grow />
-                  <MoreBtn onPress={openMenu} hitSlop={8}>
+                  <MoreBtn onPress={openPostSheet} hitSlop={8}>
                     <Feather name="more-horizontal" size={22} color="#8a8a8a" />
                   </MoreBtn>
                 </Footer>
@@ -771,29 +847,61 @@ export default function PostDetailScreen() {
             }}
           >
             <SheetHandle />
-            <SheetItem
-              onPress={() => {
-                setMenuVisible(false);
-                setReportTarget('post');
-                setReportText('');
-                setReportOpen(true);
-              }}
-            >
-              <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
-              <SheetLabel $danger>Report This Post</SheetLabel>
-            </SheetItem>
 
-            <SheetItem
-              onPress={() => {
-                setMenuVisible(false);
-                setReportTarget('user');
-                setReportText('');
-                setReportOpen(true);
-              }}
-            >
-              <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
-              <SheetLabel $danger>Report This User</SheetLabel>
-            </SheetItem>
+            {sheetCtx.type === 'post' && (
+              <>
+                <SheetItem
+                  onPress={() => {
+                    setMenuVisible(false);
+                    setReportTarget('post');
+                    setReportText('');
+                    setReportOpen(true);
+                  }}
+                >
+                  <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
+                  <SheetLabel $danger>Report This Post</SheetLabel>
+                </SheetItem>
+
+                <SheetItem
+                  onPress={() => {
+                    setMenuVisible(false);
+                    setReportTarget('user');
+                    setReportText('');
+                    setReportOpen(true);
+                  }}
+                >
+                  <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
+                  <SheetLabel $danger>Report This User</SheetLabel>
+                </SheetItem>
+              </>
+            )}
+
+            {sheetCtx.type === 'comment' && (
+              <>
+                <SheetItem
+                  onPress={() => {
+                    setMenuVisible(false);
+                    setReportTarget('comment');
+                    setReportCommentId(sheetCtx.commentId!);
+                    setReportText('');
+                    setReportOpen(true);
+                  }}
+                >
+                  <SheetIcon>
+                    <MaterialIcons name="outlined-flag" size={18} color={DANGER} />
+                  </SheetIcon>
+                  <SheetLabel $danger>Report This Comment</SheetLabel>
+                </SheetItem>
+
+                <SheetItem onPress={blockCommentFromSheet}>
+                  <SheetIcon>
+                    <MaterialIcons name="block" size={18} color={DANGER} />
+                  </SheetIcon>
+                  <SheetLabel $danger>Block This Comment</SheetLabel>
+                </SheetItem>
+              </>
+            )}
+
 
             <SheetDivider />
             <SheetItem onPress={() => setMenuVisible(false)}>
@@ -821,9 +929,13 @@ export default function PostDetailScreen() {
             <DialogTextarea
               value={reportText}
               onChangeText={setReportText}
-              placeholder={reportTarget === 'user'
-                ? "Tell us what’s wrong with this user’s content…"
-                : "Tell us what’s wrong with this post…"}
+              placeholder={
+                reportTarget === 'user'
+                  ? "Tell us what’s wrong with this user’s content…"
+                  : reportTarget === 'comment'
+                    ? "Tell us what’s wrong with this comment…"
+                    : "Tell us what’s wrong with this post…"
+              }
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"
