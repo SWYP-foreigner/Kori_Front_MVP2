@@ -1,5 +1,6 @@
 import api from '@/api/axiosInstance';
 import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
+import { blockComment } from '@/api/community/comments';
 import CommentItem, { Comment } from '@/components/CommentItem';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -32,6 +33,7 @@ import {
   ViewToken
 } from 'react-native';
 import styled from 'styled-components/native';
+
 
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
@@ -264,7 +266,9 @@ export default function PostDetailScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportTarget, setReportTarget] = useState<'post' | 'user'>('post');
+  const [reportCommentId, setReportCommentId] = useState<number | null>(null); // ✅ 추가
+  type ReportTarget = 'post' | 'user' | 'comment';
+  const [reportTarget, setReportTarget] = useState<ReportTarget>('post');
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
@@ -478,6 +482,16 @@ export default function PostDetailScreen() {
       toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
     }).start();
   };
+
+  const openCommentReport = (c: Comment) => {
+    const cid = Number((c as any).id ?? (c as any).commentId);
+    if (!Number.isFinite(cid)) return;
+    setReportTarget('comment');
+    setReportCommentId(cid);
+    setReportText('');
+    setReportOpen(true);
+  };
+
   const closeMenu = () =>
     new Promise<void>((resolve) => {
       Animated.timing(slideY, {
@@ -486,10 +500,17 @@ export default function PostDetailScreen() {
     });
 
   const onSubmitReport = () => {
-    const text = reportText.trim();
-    if (!text) { Alert.alert('Report', 'Please enter details.'); return; }
+    const reason = reportText.trim();
 
-    const titleText = reportTarget === 'user' ? 'Report This User' : 'Report This Post';
+    if (reportTarget !== 'comment' && !reason) {
+      Alert.alert('Report', 'Please enter details.');
+      return;
+    }
+
+    const titleText =
+      reportTarget === 'user' ? 'Report This User'
+        : reportTarget === 'comment' ? 'Report This Comment'
+          : 'Report This Post';
 
     Alert.alert('Report', `Are you sure\n${titleText}?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -497,64 +518,35 @@ export default function PostDetailScreen() {
         text: 'Report',
         style: 'destructive',
         onPress: async () => {
-          const reqUrl = `/api/v1/posts/${postId}/block`;
-          const t0 = Date.now();
           setReportLoading(true);
-
-          console.groupCollapsed('[report] start');
-          console.log('target', reportTarget);
-          console.log('endpoint', reqUrl);
-          console.log('postId', postId, 'authorId', authorId, 'authorName', authorName);
-          console.log('bodySent', '(none) first-try');
-          console.groupEnd();
-
           try {
-            const res = await api.post(reqUrl);
-            const ms = Date.now() - t0;
-
-            console.groupCollapsed('[report] success');
-            console.log('target', reportTarget, 'status', res.status, 'timeMs', ms);
-            console.log('data', res.data);
-            console.groupEnd();
+            if (reportTarget === 'comment') {
+              if (!Number.isFinite(reportCommentId)) throw new Error('commentId missing');
+              await blockComment(reportCommentId!, reason); // ✅ 댓글 차단
+            } else if (reportTarget === 'user') {
+              await api.post(`/api/v1/posts/${postId}/block`, { reason });
+            } else {
+              await api.post(`/api/v1/posts/${postId}/block`, { reason });
+            }
 
             setReportOpen(false);
             setReportText('');
-            Alert.alert('Report', 'The request has been submitted.');
+            setReportCommentId(null);
+            Alert.alert('Report', 'We’ve received your report. It may take up to 24 hours for review.');
           } catch (e: any) {
-            const ms = Date.now() - t0;
-            const status = e?.response?.status ?? 'ERR';
-            const data = e?.response?.data;
+            const s = e?.response?.status;
+            let msg =
+              s === 401 ? 'Authentication required. Please log in again.' :
+                s === 403 ? 'You do not have permission.' :
+                  s === 404 ? 'Target not found.' :
+                    s === 400 ? 'This comment cannot be blocked.' :
+                      'Failed to submit the report.';
+            Alert.alert('Report', msg);
 
-            console.group('[report] error 1st');
-            console.log('target', reportTarget, 'status', status, 'timeMs', ms);
-            console.log('resp.data', data);
-            console.log('meta', { postId, authorId, authorName, postType, isAnonymous });
+            console.group('[report] error');
+            console.log('target', reportTarget, 'status', s);
+            console.log('meta', { postId, reportCommentId });
             console.groupEnd();
-
-            if (status === 400) {
-              try {
-                console.log('[report] retry with { reason }');
-                const r2 = await api.post(reqUrl, { reason: text });
-                console.log('[report] success (with-body)', { status: r2.status, target: reportTarget });
-                setReportOpen(false);
-                setReportText('');
-                Alert.alert('Report', 'The request has been submitted.');
-              } catch (e2: any) {
-                const s2 = e2?.response?.status ?? 'ERR';
-                const d2 = e2?.response?.data;
-                console.group('[report] error 2nd');
-                console.log('target', reportTarget, 'status', s2, 'resp.data', d2);
-                console.log('hint', 'If still 400: server policy likely disallows blocking this target/asset.');
-                console.groupEnd();
-                Alert.alert('Report', d2?.message || 'This target cannot be blocked/reported.');
-              }
-            } else {
-              let msg = 'Failed to submit the report.';
-              if (status === 401) msg = 'Authentication required. Please log in again.';
-              else if (status === 403) msg = 'You do not have permission.';
-              else if (status === 404) msg = 'Post not found.';
-              Alert.alert('Report', msg);
-            }
           } finally {
             setReportLoading(false);
           }
@@ -562,6 +554,7 @@ export default function PostDetailScreen() {
       },
     ]);
   };
+
 
   const onSaveEdit = async () => {
     const text = editText.trim();
@@ -577,7 +570,10 @@ export default function PostDetailScreen() {
     }
   };
 
-  const reportTitle = reportTarget === 'user' ? 'Report This User' : 'Report This Post';
+  const reportTitle =
+    reportTarget === 'user' ? 'Report This User'
+      : reportTarget === 'comment' ? 'Report This Comment'
+        : 'Report This Post';
 
   return (
     <Safe>
@@ -600,6 +596,7 @@ export default function PostDetailScreen() {
               data={item}
               isFirst={index === 0}
               onPressLike={() => toggleCommentLike(item)}
+              onPressMore={(c) => openCommentReport(c)}
             />
           )}
           keyboardShouldPersistTaps="handled"

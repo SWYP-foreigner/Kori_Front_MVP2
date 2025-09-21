@@ -64,3 +64,9 @@ export async function updateComment(commentId: number, body: UpdateCommentReq) {
     await api.patch(`/api/v1/comments/${commentId}`, body);
     return commentId;
 }
+
+//ㄷ댓글 차단 api 추가
+export async function blockComment(commentId: number, reason?: string) {
+    const body = reason && reason.trim().length > 0 ? { reason } : undefined;
+    return api.post(`/api/v1/comments/${commentId}/block`, body);
+}
