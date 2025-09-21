@@ -23,6 +23,7 @@ type Props = {
   data: Comment | any;
   onPressLike?: () => void;
   isFirst?: boolean;
+  onPressMore?: (c: Comment) => void; // ✅ 더보기 콜백
 };
 
 function isAnon(row: any): boolean {
@@ -107,7 +108,7 @@ function formatDate(rawIn: any): string {
   return raw;
 }
 
-export default function CommentItem({ data, onPressLike, isFirst }: Props) {
+export default function CommentItem({ data, onPressLike, isFirst, onPressMore }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
 
@@ -122,6 +123,17 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
 
   return (
     <Wrap $child={child} $first={isFirst}>
+
+      <MoreBtn
+        onPress={() => onPressMore?.(data)}
+        disabled={!onPressMore}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="More actions"
+      >
+        <Feather name="more-horizontal" size={20} color="#8a8a8a" />
+      </MoreBtn>
+
       <Row>
         {child && (
           <ReplyIcon>
@@ -162,6 +174,7 @@ export default function CommentItem({ data, onPressLike, isFirst }: Props) {
 
 /* ---------- 스타일 ---------- */
 const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
+position: relative;
   background: #171818;
   padding: 15px 17px 25px 20px;
   border-top-width: ${({ $child, $first }) => ($first || $child ? 0 : 1)}px;
@@ -186,4 +199,12 @@ const Count = styled.Text<{ $active?: boolean }>`
 const AnonBadge = styled.Text`
   color: #000; background: #30f59b; border-radius: 4px;
   padding: 1px 6px; margin-right: 6px; font-size: 10px;
+`;
+
+const MoreBtn = styled.Pressable`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px;
+  z-index: 10;
 `;
