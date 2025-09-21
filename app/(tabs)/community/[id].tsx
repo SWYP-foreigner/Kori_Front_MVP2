@@ -264,7 +264,9 @@ export default function PostDetailScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportTarget, setReportTarget] = useState<'post' | 'user'>('post');
+  const [reportCommentId, setReportCommentId] = useState<number | null>(null); // ✅ 추가
+  type ReportTarget = 'post' | 'user' | 'comment';
+  const [reportTarget, setReportTarget] = useState<ReportTarget>('post');
 
   const likeMutation = useToggleLike();
   const createCmt = useCreateComment(postId);
@@ -478,6 +480,16 @@ export default function PostDetailScreen() {
       toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
     }).start();
   };
+
+  const openCommentReport = (c: Comment) => {
+    const cid = Number((c as any).id ?? (c as any).commentId);
+    if (!Number.isFinite(cid)) return;
+    setReportTarget('comment');
+    setReportCommentId(cid);
+    setReportText('');
+    setReportOpen(true);
+  };
+
   const closeMenu = () =>
     new Promise<void>((resolve) => {
       Animated.timing(slideY, {
@@ -577,7 +589,10 @@ export default function PostDetailScreen() {
     }
   };
 
-  const reportTitle = reportTarget === 'user' ? 'Report This User' : 'Report This Post';
+  const reportTitle =
+    reportTarget === 'user' ? 'Report This User'
+      : reportTarget === 'comment' ? 'Report This Comment'
+        : 'Report This Post';
 
   return (
     <Safe>
@@ -600,6 +615,7 @@ export default function PostDetailScreen() {
               data={item}
               isFirst={index === 0}
               onPressLike={() => toggleCommentLike(item)}
+              onPressMore={(c) => openCommentReport(c)}
             />
           )}
           keyboardShouldPersistTaps="handled"
