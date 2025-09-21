@@ -14,6 +14,7 @@ import { Dimensions ,Image, InteractionManager} from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from "@/src/lib/config";
 import { useNavigation } from 'expo-router';
+import axios from "axios";
 type ChatHistory = {
     id: number,
     roomId: number,
@@ -60,20 +61,25 @@ const ChattingRoomScreen=()=>{
     const pointerRef=useRef(0);
     const flatListRef = useRef<FlatList>(null);
     // ---------------------- 토큰 refresh 함수 ----------------------
-    const refreshTokenIfNeeded = async (): Promise<string | null> => {
-        try {
-            const refresh = await SecureStore.getItemAsync("refresh");
-            if (!refresh) return null;
-            const res = await api.post("/api/v1/member/refresh", { refreshToken: refresh });
-            const newToken = res.data.accessToken;
-            await SecureStore.setItemAsync("jwt", newToken);
-            console.log("[AUTH] 토큰 재발급 성공");
-            return newToken;
-        } catch (err) {
-            console.log("[AUTH] 토큰 재발급 실패", err);
-            return null;
-        }
-    };
+   const refreshTokenIfNeeded = async (): Promise<string | null> => {
+    try {
+      const refresh = await SecureStore.getItemAsync("refresh");
+      if (!refresh) return null;
+      const res = await api.post("/api/v1/member/refresh", { refreshToken: refresh });
+      const newToken = res.data.data.accessToken;
+      const newRefreshToken=res.data.data.refreshToken 
+      if (newToken) {
+        await SecureStore.setItemAsync("jwt", newToken);
+        await SecureStore.setItemAsync('refresh', newRefreshToken);
+        console.log("[AUTH] accessToken 재발급 성공");
+        return newToken;
+      }
+      return null;
+    } catch (err) {
+      console.error("[AUTH] 토큰 재발급 실패", err);
+      return null;
+    }
+  };
     
 
     // ---------------------- STOMP 연결 함수 ----------------------
@@ -107,19 +113,17 @@ const ChattingRoomScreen=()=>{
             console.log('✅ STOMP 연결 성공');
             setStompConnected(true);
             subscribeToMessages(myId);
-           subscribeDeleteMessages();
+            subscribeDeleteMessages();
         };
 
         // STOMP 오류 처리
         stompClient.current.onStompError = async (frame) => {
-            console.log('❌ STOMP 오류', frame.headers['message']);
-            if (frame.headers['message']?.includes('401')) {
+                console.log('❌ STOMP 오류', frame.headers['message']);
                 console.log("[AUTH] 토큰 만료 감지, refresh 시도");
                 const newToken = await refreshTokenIfNeeded();
                 if (!newToken) return console.log("[AUTH] 토큰 재발급 실패");
                 stompClient.current?.deactivate();
-                connectStomp();
-            }
+                connectStomp();                           
         };
 
         stompClient.current.onWebSocketError = (evt) => console.log('WebSocket 오류', evt);
@@ -151,6 +155,7 @@ const ChattingRoomScreen=()=>{
             }
         });
         };
+
     useEffect(() => {
         fetchHistory();
         connectStomp();
