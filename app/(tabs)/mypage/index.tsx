@@ -19,6 +19,7 @@ import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 import { Config } from '@/src/lib/config';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { DeviceEventEmitter } from 'react-native';
 
@@ -49,6 +50,9 @@ const toUrl = (u?: string) => {
 };
 
 export default function MyPageScreen() {
+
+  const qc = useQueryClient();
+
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
   const updateProfile = useUpdateProfile();
@@ -150,13 +154,30 @@ export default function MyPageScreen() {
           onPress: () => {
             setTimeout(() => {
               deleteAccountMut.mutate(undefined, {
-                onSuccess: async () => {
+                onSuccess: async (isApple: boolean) => {
                   try {
                     await SecureStore.deleteItemAsync('jwt');
                   } catch { }
-                  Alert.alert('Account deleted', 'Your account has been removed.', [
-                    { text: 'OK', onPress: () => router.replace('/login') },
-                  ]);
+                  if (isApple) {
+                    Alert.alert(
+                      'Account deleted',
+                      [
+                        'To completely remove any linkage with your Apple account,',
+                        'go to iOS Settings → Apple ID → Password & Security → Sign in with Apple',
+                        'and manually disconnect this app.',
+                        '',
+                        'If the linkage isn’t removed, then when re-registering with the same Apple ID later',
+                        'providing your email and name may be restricted.',
+                      ].join('\n'),
+                      [
+                        { text: 'OK', onPress: () => router.replace('/login') },
+                      ],
+                    );
+                  } else {
+                    Alert.alert('Account deleted', 'Your account has been removed.', [
+                      { text: 'OK', onPress: () => router.replace('/login') },
+                    ]);
+                  }
                 },
                 onError: (e: any) => {
                   const msg =
