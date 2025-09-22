@@ -611,6 +611,40 @@ export default function PostDetailScreen() {
     });
   };
 
+  //r게시글 차단
+  const blockPostFromSheet = () => {
+    if (!Number.isFinite(postId)) return;
+    setMenuVisible(false);
+
+    Alert.alert('Block', 'Are you sure you want to block this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Block',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.post(`/api/v1/posts/${postId}/block`, {
+              reason: 'Blocked from post sheet',
+            });
+
+            Alert.alert('Block', 'This post has been blocked.');
+          } catch (e: any) {
+            const s = e?.response?.status;
+            const msg =
+              s === 401 ? 'Authentication required. Please log in again.' :
+                s === 403 ? 'You do not have permission.' :
+                  s === 404 ? 'Post not found.' :
+                    'Failed to block this post.';
+            Alert.alert('Block', msg);
+            console.log('[block post] error', { status: s, postId, e });
+          } finally {
+            router.back();
+          }
+        },
+      },
+    ]);
+  };
+
 
   const blockCommentFromSheet = () => {
     if (sheetCtx.type !== 'comment' || !Number.isFinite(sheetCtx.commentId!)) return;
@@ -869,6 +903,13 @@ export default function PostDetailScreen() {
                 >
                   <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
                   <SheetLabel $danger>Report This User</SheetLabel>
+                </SheetItem>
+
+                <SheetItem onPress={blockPostFromSheet}>
+                  <SheetIcon>
+                    <MaterialIcons name="block" size={18} color={DANGER} />
+                  </SheetIcon>
+                  <SheetLabel $danger>Block This Post</SheetLabel>
                 </SheetItem>
               </>
             )}
