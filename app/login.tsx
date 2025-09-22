@@ -18,10 +18,11 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from "react";
 import {
   Animated, Dimensions,
-  ImageBackground, Modal, Platform, StatusBar, TouchableOpacity, useWindowDimensions
+  ImageBackground, Modal, Platform, StatusBar, TouchableOpacity, useWindowDimensions,Alert
 } from "react-native";
 import { PageIndicator } from 'react-native-page-indicator';
 import styled from "styled-components/native";
+import api from "@/api/axiosInstance";
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -156,6 +157,7 @@ const LoginScreen = () => {
   // 애플 로그인
   const appleSignIn = async () => {
     try {
+
       setAppleLoading(true);
       const rawNonce = randomUUID();
       const credential = await AppleAuthentication.signInAsync({
@@ -180,6 +182,7 @@ const LoginScreen = () => {
           }
         }
       );
+
       console.log("데이터", res.data.data);
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
       await SecureStore.setItemAsync('jwt', accessToken);
@@ -187,8 +190,34 @@ const LoginScreen = () => {
       await SecureStore.setItemAsync('MyuserId', userId.toString());
 
       if (isNewUser) {
-        showModal();
-        setIsAppleLogin(true);
+        try{
+          const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/${userId}/is-apple`);
+          const {isRejoiningWithoutFullName}=res.data.data;
+          if(isRejoiningWithoutFullName)
+          {
+            // 알림 띄워주기
+            Alert.alert(
+                      'Apple Sign-In Not Completed!',
+                      [
+                       	'Go to iOS Settings → [Your Name/Apple ID]  → Password & Security → Sign in with Apple',
+                        'find this app, and disconnect it.',
+			                  'Then return to the app and sign up again to complete the process'
+                      ].join('\n'),
+                      [
+                        { text: 'OK', onPress: () =>console.log("ok") },
+                      ],
+                    );
+          }
+          else{
+            // 바로 약관 동의 보여주기
+            showModal();
+            setIsAppleLogin(true);
+          }
+        }catch(error)
+        {
+          console.log("error",error);
+        }
+       
       }
       else {
         router.replace('/(tabs)');
