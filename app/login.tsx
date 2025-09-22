@@ -191,7 +191,7 @@ const LoginScreen = () => {
 
       if (isNewUser) {
         try{
-          const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/${userId}/is-apple`);
+          const res=await api.get(`${Config.SERVER_URL}/api/v1/member/${userId}/is-apple`);
           const {isRejoiningWithoutFullName}=res.data.data;
           if(isRejoiningWithoutFullName)
           {
