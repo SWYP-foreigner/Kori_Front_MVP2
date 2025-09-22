@@ -112,7 +112,7 @@ const ChattingRoomScreen=()=>{
         stompClient.current.onConnect = (frame) => {
             console.log('✅ STOMP 연결 성공');
             setStompConnected(true);
-            subscribeToMessages(myId);
+            subscribeToMessages();
             subscribeDeleteMessages();
         };
 
@@ -133,8 +133,8 @@ const ChattingRoomScreen=()=>{
         stompClient.current.activate();
     };
 
-    const subscribeToMessages = (myId: string) => {
-        stompClient.current?.subscribe(`/topic/user/${myId}/messages`, (message) => {
+    const subscribeToMessages = () => {
+        stompClient.current?.subscribe(`/topic/rooms/${roomId}/messages`, (message) => {
             const body = JSON.parse(message.body);
            // 일반 메시지라면 추가
             setMessages((prev) => [body, ...prev]);
