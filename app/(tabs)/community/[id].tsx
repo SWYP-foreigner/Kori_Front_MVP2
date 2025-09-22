@@ -17,7 +17,6 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
@@ -595,8 +594,6 @@ export default function PostDetailScreen() {
       Alert.alert('Edit', 'Failed to save changes.');
     }
   };
-
-  const qc = useQueryClient?.() as any;
 
   const hideCommentLocal = (cid: number) => {
     setHiddenCommentIds(prev => {
