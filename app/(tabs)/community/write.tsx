@@ -85,11 +85,31 @@ export default function WriteScreen() {
   const updateMutation = useUpdatePost();
   const createMutation = useCreatePost(boardId);
 
-  const pickImage = async () => {
-    setPickerOpen(false);
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
+  async function confirmPurposeAndPick(setImages: React.Dispatch<React.SetStateAction<string[]>>) {
+    const proceed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        'Pick photo',
+        'The selected photos will be used only to attach to your post. Continue?',
+        [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Continue', onPress: () => resolve(true) },
+        ]
+      );
+    });
+    if (!proceed) return;
 
+    const { status, granted, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!granted) {
+      if (!canAskAgain) {
+        Alert.alert(
+          'Permission Required',
+          'Please allow Photos access in Settings > [App Name] > Photos.'
+        );
+      }
+      return;
+    }
+
+    // 앨범 열기
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
@@ -97,10 +117,16 @@ export default function WriteScreen() {
     });
     if (!res.canceled) {
       const uris = res.assets.map(a => a.uri);
-      console.log('[image:picker]', { added: uris.length, uris });
       setImages(prev => [...prev, ...uris]);
     }
+  }
+
+  // 2) 기존 pickImage 대체
+  const pickImage = async () => {
+    setPickerOpen(false);
+    await confirmPurposeAndPick(setImages);
   };
+
 
   const removeImage = (uri: string) => {
     console.log('[image:remove]', uri);
