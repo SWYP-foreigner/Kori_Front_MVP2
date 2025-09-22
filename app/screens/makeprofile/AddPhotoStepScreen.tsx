@@ -63,7 +63,7 @@ export default function AddPhotoStepScreen({  }) {
     const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (cameraPermission.status !== 'granted' || mediaLibraryPermission.status !== 'granted') {
-      Alert.alert('권한 필요', '카메라와 갤러리 접근 권한이 필요합니다.');
+      Alert.alert('Permission Required', 'Camera and gallery access are required.\n\nYour photo will be used in Friend Recommendations, Chatting, and Community features.');
       return false;
     }
     return true;
@@ -74,15 +74,16 @@ export default function AddPhotoStepScreen({  }) {
     const hasPermission = await requestPermissions(); // 권한 
     if (!hasPermission) return;
 
-    Alert.alert(
-      "Pick photo",
-      "How to pick your profile photo?",
-      [
-        { text: "Camera", onPress: openCamera },
-        { text: "Gallery", onPress: openGallery },
-        { text: "cancel", style: "cancel" }
-      ]
-    );
+   Alert.alert(
+  "Pick a Photo",
+  "How would you like to set your profile picture?\n\nYour photo will be used in Friend Recommendations, Chatting, and Community features.",
+  [
+    { text: "Camera", onPress: openCamera },
+    { text: "Gallery", onPress: openGallery },
+    { text: "Cancel", style: "cancel" }
+  ]
+);
+
   };
 
   // 카메라에서 사진 촬영

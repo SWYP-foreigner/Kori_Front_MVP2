@@ -62,7 +62,7 @@ export default function NameStepScreen() {
 
           <Spacer />
           <NextButton
-          onPress={handleNext}
+            onPress={handleNext}
             disabled={!canProceed}
             canProceed={canProceed}
           >

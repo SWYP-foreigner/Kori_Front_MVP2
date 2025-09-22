@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from "react";
 import styled from "styled-components/native";
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,TouchableOpacity,Modal,Image} from 'react-native';
+import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform ,ScrollView,TouchableOpacity,Modal,Image,Alert} from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { useRouter } from 'expo-router';
 import MembersBox from "@/components/MembersBox";
@@ -23,10 +23,12 @@ const ChatInsideMember=()=>{
     const router = useRouter();
         // BottomSheet 상태
     const [isModalVisible, setModalVisible] = useState(false);
-    const [isReportVisible, setReportVisible] = useState(false);
+    const [isReportMenuVisible, setReportMenuVisible] = useState(false);
+    const [isReportVisible,setIsReportVisible]=useState(false);
     const [selectedMember, setSelectedMember] = useState<string | null>(null);
     const { roomId, roomName } = useLocalSearchParams<{ roomId: string; roomName: string }>();
     const [members, setMembers] = useState<ChatMembers[]>([]);
+    const [reportId,setReportId]=useState<string|null>(null);
     const [text,setText]=useState(``);
     
      useEffect(() => {
@@ -44,6 +46,7 @@ const ChatInsideMember=()=>{
         getMembers();
         }, [roomId]);
     
+    // 채팅방 나가기
     const onLeaveChat = async () => {
         try {
             const res = await api.delete(`/api/v1/chat/rooms/${roomId}/leave`);
@@ -55,19 +58,38 @@ const ChatInsideMember=()=>{
         }
     };
 
+    // 신고/차단 창 닫기
     const closeModal=()=>{
         setModalVisible(false);
     }
 
-    const closeReportModal=()=>{
-        setReportVisible(false);
-    };
-
-    const openReportModal=()=>{
+    // 신고메뉴 창 닫기
+    const closeReportMenuModal=()=>{
+        setReportMenuVisible(false);
         setModalVisible(false);
-        setReportVisible(true);
     }
 
+    // 신고 창 닫기
+    const closeReportModal=()=>{
+        setIsReportVisible(false);
+    };
+
+    // 신고 창 열기
+    const openReportModal=()=>{
+        setModalVisible(false);
+        setReportMenuVisible(false);
+        setIsReportVisible(true);
+    }
+
+    // 신고 메뉴 창 열기
+    const openReportMenu=()=>{
+        setModalVisible(false);
+        setReportMenuVisible(true);
+    }
+
+    // 차단 알람 띄우기
+    // 그룹 채팅이면 그 채팅 유저의 채팅만 안보이게 하기
+    // 1:1 채팅이면 채팅유저 차단 후 채팅방까지 자동적으로 나가기 
 
     const completeReport=async()=>{
         try{
@@ -80,20 +102,67 @@ const ChatInsideMember=()=>{
                     text1: 'Your report has been received',
                     text2: 'It takes up to 24 hours to review',
                     });
-            setReportVisible(false);
+            setIsReportVisible(false);
         }catch(error)
         {
              Toast.show({
                     type: 'error',
                     text1: 'Report Fail',
                     });
-             setReportVisible(false);
+             setIsReportVisible(false);
         }
+        
+
         // submit 버튼 누르면 api 호출후
         // 되면 토스트 메세지
         // 안되면 토스트 메세지 
-
     }
+    const openBlockMenu=()=>{
+    setModalVisible(false);
+    Alert.alert('Block User',  "If you block this user in a 1-on-1 chat, you will leave the chat room.\n\nIn a group chat, you will no longer see messages from the blocked user.", [
+    {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+    },
+      {text: 'Block User', onPress: blockUser},
+    ]);
+    }
+
+    //채팅방 유저
+    const blockUser=async()=>{
+        const res=await api.get(`${Config.SERVER_URL}/api/v1/chat/isGroup?roomId=${roomId}`);
+        const {isGroup}=res.data.data;
+        try{
+            await api.post(`${Config.SERVER_URL}/api/v1/chat/block/${reportId}`);
+            if(isGroup)
+            {
+                console.log("User Block success");
+            }else
+            {
+                onLeaveChat();
+            }
+            Toast.show({
+                    type: 'success',
+                    text1: 'Blocking this user success',
+                  
+                    });
+        }catch(error)
+        {
+            console.log("block error",error);
+             Toast.show({
+                    type: 'error',
+                    text1: 'Blocking this user fail',
+                  
+                    });
+        }
+        finally{
+            setReportId('');
+        }
+    
+    }
+
+
     return(
           <SafeArea>
             <StatusBar barStyle="light-content" />
@@ -127,6 +196,7 @@ const ChatInsideMember=()=>{
                             onPressMore={() => {
                                 setSelectedMember(item.firstName);
                                 setModalVisible(true);
+                                setReportId(item.userId.toString());
                             }}
                             />
                         )}
@@ -138,12 +208,31 @@ const ChatInsideMember=()=>{
                         <LeaveChatButtonText >Leave Chat</LeaveChatButtonText>
                     </LeaveChatButton>
                     <BottomSpacer/>
-                     <Modal
+                    
+                    {/* 첫번째 */}
+                    <Modal
                         visible={isModalVisible}
                         transparent
                         animationType="slide"
-                       
-                        >
+                    >
+                    <ModalOverlay activeOpacity={1}>
+                        <BottomSheetContent>
+                        <BottomSheetHeader>
+                        <BottomSheetHandle/>
+                        </BottomSheetHeader>
+                            <ReasonBox onPress={openReportMenu}><MenuText>Report this user</MenuText></ReasonBox>
+                            <ReasonBox onPress={openBlockMenu}><MenuText>Block this user</MenuText></ReasonBox>
+                            <CancelBox onPress={closeModal}><CancelText>Cancel</CancelText></CancelBox>
+                        </BottomSheetContent>
+                    </ModalOverlay>
+                    </Modal>
+                    
+                    {/* 신고메뉴 */}
+                    <Modal
+                        visible={isReportMenuVisible}
+                        transparent
+                        animationType="slide"
+                    >
                     <ModalOverlay activeOpacity={1}>
                         <BottomSheetContent>
                             <BottomSheetHeader>
@@ -156,10 +245,12 @@ const ChatInsideMember=()=>{
                             <ReasonBox onPress={openReportModal}><ReasonText>Violence</ReasonText></ReasonBox>
                             <ReasonBox onPress={openReportModal}><ReasonText>Fraud</ReasonText></ReasonBox>
                             <ReasonBox onPress={openReportModal}><ReasonText>Etc</ReasonText></ReasonBox>
-                            <CancelBox onPress={closeModal}><CancelText>Cancel</CancelText></CancelBox>
+                            <CancelBox onPress={closeReportMenuModal}><CancelText>Cancel</CancelText></CancelBox>
                         </BottomSheetContent>
                     </ModalOverlay>
                     </Modal>
+                    
+                 
 
                    <Modal 
                     visible={isReportVisible} 
@@ -327,7 +418,6 @@ const BottomSheetSubTitle=styled.Text`
 `
 
 const ReasonBox=styled.TouchableOpacity`
-
     height:60px;
     border-top-color:#949899;
     border-bottom-color:#949899;
@@ -337,7 +427,11 @@ const ReasonBox=styled.TouchableOpacity`
     
 
 `;
-
+const MenuText=styled.Text`
+    color:#FF4F4F;
+    font-size:17px;
+    font-family:PlusJakartaSans_500Medium;
+`;
 const ReasonText=styled.Text`
     color:#ffffff;
     font-size:17px;
