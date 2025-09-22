@@ -623,8 +623,7 @@ export default function PostDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.post(`/api/v1/posts/${postId}/block`, {
-              reason: 'Blocked from post sheet',
+            await api.post(`/api/v1/posts/${postId}/declaration`, {
             });
 
             Alert.alert('Block', 'This post has been blocked.');
@@ -644,7 +643,6 @@ export default function PostDetailScreen() {
       },
     ]);
   };
-
 
   const blockCommentFromSheet = () => {
     if (sheetCtx.type !== 'comment' || !Number.isFinite(sheetCtx.commentId!)) return;
@@ -974,6 +972,8 @@ export default function PostDetailScreen() {
                     ? "Tell us what’s wrong with this comment…"
                     : "Tell us what’s wrong with this post…"
               }
+              blurOnSubmit
+              returnKeyType='done'
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"
