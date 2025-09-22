@@ -48,19 +48,6 @@ const toUrl = (u?: string) => {
     : undefined;
 };
 
-function isAppleLogin(me: any): boolean {
-  const cand =
-    me?.provider ??
-    me?.authProvider ??
-    me?.loginType ??
-    me?.socialType ??
-    me?.oauthProvider ??
-    me?.signInProvider ??
-    me?.accountType ??
-    me?.type;
-  return typeof cand == 'string' ? /apple/i.test(cand) : false;
-}
-
 export default function MyPageScreen() {
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
@@ -166,24 +153,8 @@ export default function MyPageScreen() {
                 onSuccess: async () => {
                   try {
                     await SecureStore.deleteItemAsync('jwt');
-                    await SecureStore.deleteItemAsync('refresh'); //refresh 토큰 정리
                   } catch { }
-
-                  const apple = isAppleLogin(me);
-
-                  const title = 'Account deleted';
-                  const message = apple
-                    ? [
-                      'To completely remove the link with your Apple account,',
-                      'go to iOS Settings → Apple ID → Password & Security → Sign in with Apple,',
-                      'and disconnect this app.',
-                      '',
-                      'If you don’t remove the link, signing up again with the same Apple ID later',
-                      'may limit the sharing of your email and name.'
-                    ].join('\n')
-                    : "Your account has been removed."
-
-                  Alert.alert(title, message, [
+                  Alert.alert('Account deleted', 'Your account has been removed.', [
                     { text: 'OK', onPress: () => router.replace('/login') },
                   ]);
                 },
@@ -402,6 +373,7 @@ export default function MyPageScreen() {
   );
 }
 
+// ===== 스타일 (기존 그대로) =====
 const Safe = styled.SafeAreaView`
   flex: 1;
   background: #1D1E1F;
