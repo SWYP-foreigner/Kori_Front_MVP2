@@ -61,6 +61,7 @@ const LoginScreen = () => {
   const [check3, setCheck3] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [isAppleLogin,setIsAppleLogin]=useState(false);
 
   const onBoardingData: OnBoardingItem[] = [
     { id: "1", image: require("@/assets/images/onboarding1.png"), TitleText: "Meet New friends", SubTitleText: "Connect with people abroad in Korea for\nstudy, work, travel, or more." },
@@ -74,7 +75,15 @@ const LoginScreen = () => {
 
   const goSetProfilePage = () => {
     setModalVisible(false);
-    router.push('/screens/makeprofile/NameStepScreen');
+    if(isAppleLogin)
+    {
+      setIsAppleLogin(false);
+      router.push('/screens/makeprofile/GenderStepScreen')
+    }
+    else{
+      router.push('/screens/makeprofile/NameStepScreen');
+    }
+    
   };
 
 
@@ -179,6 +188,7 @@ const LoginScreen = () => {
 
       if (isNewUser) {
         showModal();
+        setIsAppleLogin(true);
       }
       else {
         router.replace('/(tabs)');

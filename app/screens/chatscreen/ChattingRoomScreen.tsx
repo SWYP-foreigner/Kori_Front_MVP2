@@ -511,7 +511,7 @@ const confirmDeleteMessage = (messageId: string) => {
                         placeholder="Search Chat"
                         placeholderTextColor='#616262'
                         onSubmitEditing={search}
-
+                      
                     />
                 {searchText&&
                 <TouchableOpacity onPress={() => {setSearchText('') , setIsSearching(false)}}>

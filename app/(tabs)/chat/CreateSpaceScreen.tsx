@@ -68,7 +68,7 @@ const CreateSpaceScreen = () => {
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
     const granted = cam.status === 'granted' && lib.status === 'granted';
     if (!granted) {
-      Alert.alert('Permission required', 'Camera and photo library access is needed.');
+      Alert.alert('Permission required', 'Camera and photo library access is needed.\n\nYour photo will be used in Linked Space chatting room profile.');
     }
     return granted;
   };
@@ -106,7 +106,7 @@ const CreateSpaceScreen = () => {
   const pickFromCameraOrGallery = () => {
     Alert.alert(
       'Pick photo',
-      'How to pick your profile photo?',
+      'How to pick your profile photo?\n\nYour photo will be used in Linked Space hatting room profile.',
       [
         { text: 'Camera', onPress: openCamera },
         { text: 'Gallery', onPress: openGallery },
