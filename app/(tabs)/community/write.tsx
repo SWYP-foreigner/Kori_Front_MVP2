@@ -271,7 +271,7 @@ export default function WriteScreen() {
                 onChangeText={setBody}
                 multiline
                 textAlignVertical="top"
-                placeholder="Feel free to talk to others."
+                placeholder="If you write inappropriate posts, you may be reported or blocked."
                 placeholderTextColor="#8a8a8a"
                 returnKeyType="default"
               />
