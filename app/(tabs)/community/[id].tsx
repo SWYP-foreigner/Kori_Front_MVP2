@@ -17,7 +17,6 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
@@ -596,8 +595,6 @@ export default function PostDetailScreen() {
     }
   };
 
-  const qc = useQueryClient?.() as any;
-
   const hideCommentLocal = (cid: number) => {
     setHiddenCommentIds(prev => {
       const next = new Set(prev);
@@ -614,6 +611,38 @@ export default function PostDetailScreen() {
     });
   };
 
+  //r게시글 차단
+  const blockPostFromSheet = () => {
+    if (!Number.isFinite(postId)) return;
+    setMenuVisible(false);
+
+    Alert.alert('Block', 'Are you sure you want to block this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Block',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.post(`/api/v1/posts/${postId}/declaration`, {
+            });
+
+            Alert.alert('Block', 'This post has been blocked.');
+          } catch (e: any) {
+            const s = e?.response?.status;
+            const msg =
+              s === 401 ? 'Authentication required. Please log in again.' :
+                s === 403 ? 'You do not have permission.' :
+                  s === 404 ? 'Post not found.' :
+                    'Failed to block this post.';
+            Alert.alert('Block', msg);
+            console.log('[block post] error', { status: s, postId, e });
+          } finally {
+            router.back();
+          }
+        },
+      },
+    ]);
+  };
 
   const blockCommentFromSheet = () => {
     if (sheetCtx.type !== 'comment' || !Number.isFinite(sheetCtx.commentId!)) return;
@@ -873,6 +902,13 @@ export default function PostDetailScreen() {
                   <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
                   <SheetLabel $danger>Report This User</SheetLabel>
                 </SheetItem>
+
+                <SheetItem onPress={blockPostFromSheet}>
+                  <SheetIcon>
+                    <MaterialIcons name="block" size={18} color={DANGER} />
+                  </SheetIcon>
+                  <SheetLabel $danger>Block This Post</SheetLabel>
+                </SheetItem>
               </>
             )}
 
@@ -936,6 +972,8 @@ export default function PostDetailScreen() {
                     ? "Tell us what’s wrong with this comment…"
                     : "Tell us what’s wrong with this post…"
               }
+              blurOnSubmit
+              returnKeyType='done'
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"

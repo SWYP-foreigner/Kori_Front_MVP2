@@ -71,7 +71,9 @@ export function toFriendCard(dto: RecommendedFriendDto, idx: number): FriendCard
     };
 }
 
-export async function getRecommended(limit = 20): Promise<RecommendedFriendDto[]> {
-    const { data } = await api.get('/api/v1/commend/content-based', { params: { limit } });
+export async function getRecommended(): Promise<RecommendedFriendDto[]> {
+    const { data } = await api.get('/api/v1/commend/content-based', {
+        params: { limit: 50 },
+    });
     return data ?? [];
 }
