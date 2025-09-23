@@ -232,6 +232,7 @@ export default function AddPhotoStepScreen({  }) {
       router.replace('/screens/makeprofile/ProfileSetUpDoneScreen');
     } catch (err) {
       console.error('프로필 업데이트 실패', err);
+      console.log("error",err);
       throw err;
     }
   };

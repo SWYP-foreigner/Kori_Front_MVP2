@@ -19,8 +19,11 @@
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+          "ITSAppUsesNonExemptEncryption": false,
+          "NSCameraUsageDescription": "Camera access is required to take and upload photos within the app.",
+          "NSPhotoLibraryUsageDescription": "Photo library access is required to upload photos for use in Friend Recommendations, Chatting, and Community features."
+        }
+
     },
     "android": {
       "package": "com.SWYP.kori",
