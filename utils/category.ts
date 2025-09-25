@@ -12,15 +12,22 @@ const TEXT_MAP: Record<string, Category> = {
     'news': 'News',
     'tip': 'Tip',
     'q&a': 'Q&A',
+    'qna': 'Q&A',
+    'qa': 'Q&A',
     'event': 'Event',
     'free talk': 'Free talk',
     'activity': 'Activity',
 };
 
 function norm(v?: any) {
-    return typeof v === 'string'
-        ? v.trim().toLowerCase().replace(/\s+/g, ' ').replace(/_/g, ' ')
-        : '';
+    if (typeof v !== 'string') return '';
+    return v
+        .normalize('NFKC')
+        .trim()
+        .toLowerCase()
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*&\s*/g, '&');
 }
 
 export function resolvePostCategory(post?: any): Category | undefined {
@@ -48,7 +55,7 @@ export function resolvePostCategory(post?: any): Category | undefined {
         const key = norm(raw);
         if (TEXT_MAP[key]) return TEXT_MAP[key];
         if (key.includes('free')) return 'Free talk';
-        if (key.includes('q&a')) return 'Q&A';
+        if (key.includes('q&a') || key.includes('qna') || key === 'qa') return 'Q&A';
         if (key.includes('event')) return 'Event';
         if (key.includes('news')) return 'News';
         if (key.includes('tip')) return 'Tip';
