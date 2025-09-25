@@ -1,3 +1,10 @@
+
+
+
+
+import axios from 'axios';
+import { Buffer } from 'buffer';
+
 import Avatar from '@/components/Avatar';
 import BottomSheetTagPicker, { TagSection } from '@/components/BottomSheetTagPicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +25,7 @@ import { Config } from '@/src/lib/config';
 import api from '@/api/axiosInstance';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Image as RNImage } from 'react-native';
+import { Alert, Image as RNImage, Modal } from 'react-native';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
@@ -44,10 +51,10 @@ const AVATARS = [
   require('@/assets/images/character3.png'),
 ] as const;
 
-const AVATAR_KEYS = [
-  'avatars/character1.png',
-  'avatars/character2.png',
-  'avatars/character3.png',
+const AVATAR_URLS = [
+  'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png',
+  'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png',
+  'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png',
 ] as const;
 
 const stripHost = (keyOrUrl?: string) => {
@@ -66,7 +73,7 @@ const stripHost = (keyOrUrl?: string) => {
 const detectPresetIndex = (keyOrUrl?: string) => {
   const path = stripHost(keyOrUrl);
   if (!path) return -1;
-  return AVATAR_KEYS.findIndex(k => path.endsWith(k));
+  return AVATAR_URLS.findIndex(k => path.endsWith(k));
 };
 
 async function uploadLocalImageAndGetKeyInline(uri: string, mime = 'image/jpeg') {
@@ -83,21 +90,17 @@ async function uploadLocalImageAndGetKeyInline(uri: string, mime = 'image/jpeg')
   }
 
   const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const buffer = Buffer.from(base64, 'base64');
 
-  const res = await fetch(info.putUrl, {
-    method: 'PUT',
-    headers: info.headers,
-    body: bytes,
+  const res = await axios.put(info.putUrl, buffer, {
+    headers: { ...info.headers, 'Content-Type': mime },
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `PUT failed: ${res.status}`);
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`PUT failed: ${res.status}`);
   }
   return info.key as string;
 }
+
 
 const TAG_SECTIONS: TagSection[] = [
   { title: 'Entertainment & Hobbies', items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'], emojis: ['🎵', '🎬', '📚', '🎬', '🎮'] },
@@ -138,8 +141,7 @@ export default function EditProfileScreen() {
   }, [avatarKeyOrUrl]);
 
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
-  const [tempIdx, setTempIdx] = useState<number>(0);
-  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
+  const [tempIdx, setTempIdx] = useState<number | null>(null); const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
   const [sheetSaving, setSheetSaving] = useState(false);
 
   const [pendingImageKey, setPendingImageKey] = useState<string | undefined>(undefined);
@@ -191,10 +193,6 @@ export default function EditProfileScreen() {
       return (m ? m[1] : l).trim();
     });
 
-    const imageKeyToSend =
-      pendingImageKey && !AVATAR_KEYS.includes(pendingImageKey as any)
-        ? pendingImageKey
-        : undefined;
 
     const body: any = {
       firstname,
@@ -207,8 +205,9 @@ export default function EditProfileScreen() {
       language,
       hobby: selectedInterests ?? [],
     };
-    if (imageKeyToSend) body.imageKey = imageKeyToSend;
-
+    if (pendingImageKey) {
+      body.imageKey = pendingImageKey;
+    }
     try {
       await editMutation.mutateAsync(body);
       await queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
@@ -220,17 +219,8 @@ export default function EditProfileScreen() {
   };
 
   const openAvatarSheet = () => {
-    const idx = detectPresetIndex(avatarKeyOrUrl);
-    if (idx >= 0) {
-      setTempIdx(idx);
-      setCustomPhotoUri(undefined);
-    } else if (avatarKeyOrUrl && /^(asset|file|data):/i.test(avatarKeyOrUrl)) {
-      setTempIdx(-1);
-      setCustomPhotoUri(avatarKeyOrUrl);
-    } else {
-      setTempIdx(-1);
-      setCustomPhotoUri(toUrl(avatarKeyOrUrl));
-    }
+    setTempIdx(null);
+    setCustomPhotoUri(undefined);
     setShowAvatarSheet(true);
   };
 
@@ -285,13 +275,16 @@ export default function EditProfileScreen() {
 
       if (tempIdx === -1) {
         if (!customPhotoUri) throw new Error('No custom photo selected');
-        const key = await uploadLocalImageAndGetKeyInline(customPhotoUri); // ← 인터셉터 없는 업로더
+        const key = await uploadLocalImageAndGetKeyInline(customPhotoUri);
+        const publicUrl = toUrl(key);
         setPendingImageKey(key);
-        setAvatarKeyOrUrl(key);
+        setAvatarKeyOrUrl(publicUrl || customPhotoUri);
+      } else if (tempIdx !== null && tempIdx >= 0) {
+        const url = AVATAR_URLS[tempIdx];
+        setPendingImageKey(url);
+        setAvatarKeyOrUrl(url);
       } else {
-        const key = AVATAR_KEYS[tempIdx];
-        setPendingImageKey(undefined);
-        setAvatarKeyOrUrl(key);
+        return;
       }
 
       setShowAvatarSheet(false);
@@ -449,71 +442,91 @@ export default function EditProfileScreen() {
         max={5}
         title="Select your interests"
       />
+      {showAvatarSheet && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowAvatarSheet(false)}
+        >
+          <SheetOverlay
+            activeOpacity={1}
+            onPress={() => setShowAvatarSheet(false)}
+          >
+            <Sheet
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={(e: any) => e.stopPropagation()}
+            >
+              <Handle />
+              <SheetTitle>Select Profile</SheetTitle>
 
-      {/* <Modal
-        visible={showAvatarSheet}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAvatarSheet(false)}
-      >
-        <SheetOverlay activeOpacity={1} onPress={() => setShowAvatarSheet(false)}>
-          <Sheet onStartShouldSetResponder={() => true}>
-            <Handle />
-            <SheetTitle>Select Profile</SheetTitle>
+              <AvatarRow>
+                {AVATARS.map((src, i) => {
+                  const selected = tempIdx === i;
+                  return (
+                    <AvatarItem
+                      key={i}
+                      onPress={() => {
+                        setTempIdx(i);
+                        setCustomPhotoUri(undefined);
+                      }}
+                    >
+                      <AvatarCircle selected={selected}>
+                        <AvatarImg source={src} />
+                        {selected && (
+                          <CheckBadge>
+                            <AntDesign name="check" size={12} color="#0f1011" />
+                          </CheckBadge>
+                        )}
+                      </AvatarCircle>
+                    </AvatarItem>
+                  );
+                })}
 
-            <AvatarRow>
-              {AVATARS.map((img, idx) => {
-                const selected = idx === tempIdx;
-                return (
-                  <AvatarItem
-                    key={idx}
-                    onPress={() => {
-                      setTempIdx(idx);
-                      setCustomPhotoUri(undefined);
-                    }}
-                  >
-                    <AvatarCircle selected={selected}>
-                      <AvatarImg source={img} />
-                      {selected && (
+                <AvatarItem
+                  onPress={pickFromCameraOrGallery}
+                  onLongPress={() => {
+                    setCustomPhotoUri(undefined);
+                    setTempIdx(null);
+                  }}
+                >
+                  <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
+                    {customPhotoUri ? (
+                      <>
+                        <AvatarImg source={{ uri: customPhotoUri }} />
                         <CheckBadge>
-                          <Ionicons name="checkmark" size={14} color="#0f1011" />
+                          <AntDesign name="check" size={12} color="#0f1011" />
                         </CheckBadge>
-                      )}
-                    </AvatarCircle>
-                  </AvatarItem>
-                );
-              })}
+                      </>
+                    ) : (
+                      <CameraCircleInner>
+                        <Ionicons name="camera" size={22} color="#e8eaed" />
+                      </CameraCircleInner>
+                    )}
+                  </AvatarCircle>
+                </AvatarItem>
+              </AvatarRow>
 
-              <AvatarItem onPress={pickFromCameraOrGallery}>
-                <AvatarCircle selected={tempIdx === -1 && !!customPhotoUri}>
-                  {customPhotoUri ? (
-                    <AvatarImg source={{ uri: customPhotoUri }} />
-                  ) : (
-                    <CameraCircleInner>
-                      <Ionicons name="camera" size={22} color="#cfd4da" />
-                    </CameraCircleInner>
-                  )}
-                  {tempIdx === -1 && !!customPhotoUri && (
-                    <CheckBadge>
-                      <Ionicons name="checkmark" size={14} color="#0f1011" />
-                    </CheckBadge>
-                  )}
-                </AvatarCircle>
-              </AvatarItem>
-            </AvatarRow>
+              <ButtonRow>
+                <SheetBtn onPress={() => setShowAvatarSheet(false)}>
+                  <SheetBtnText>Cancel</SheetBtnText>
+                </SheetBtn>
+                <Gap />
+                <SheetBtnMint
+                  disabled={sheetSaving || tempIdx === null || (tempIdx === -1 && !customPhotoUri)}
+                  onPress={saveAvatarSelection}
+                >
+                  <SheetBtnMintText>
+                    {sheetSaving ? 'Saving…' : 'Save'}
+                  </SheetBtnMintText>
+                </SheetBtnMint>
+              </ButtonRow>
+            </Sheet>
+          </SheetOverlay>
+        </Modal>
+      )}
 
-            <ButtonRow>
-              <SheetBtn onPress={() => setShowAvatarSheet(false)}>
-                <SheetBtnText>Cancel</SheetBtnText>
-              </SheetBtn>
-              <Gap />
-              <SheetBtnMint disabled={sheetSaving} onPress={saveAvatarSelection}>
-                <SheetBtnMintText>{sheetSaving ? 'Saving…' : 'Save'}</SheetBtnMintText>
-              </SheetBtnMint>
-            </ButtonRow>
-          </Sheet>
-        </SheetOverlay>
-      </Modal> */}
+
     </Safe>
   );
 }
@@ -673,3 +686,4 @@ const SheetBtnMintText = styled.Text`
 const EditRow = styled.View`margin-top:10px;`;
 const EditOutlineBtn = styled.Pressable`align-self:flex-start;flex-direction:row;align-items:center;height:28px;padding:0 10px;gap:4px;border-radius:100px;border-width:1px;border-color:#30F59B;background:transparent;`;
 const EditOutlineText = styled.Text`color:#30F59B;font-size:13px;font-family:'PlusJakartaSans_600SemiBold';`;
+
