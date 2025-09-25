@@ -263,7 +263,7 @@ export default function EditProfileScreen() {
   };
 
   const pickFromCameraOrGallery = () =>
-    Alert.alert('Pick photo', 'How to pick your profile photo?', [
+    Alert.alert('Pick photo', 'How to pick your profile photo?\n\nThis photo will be used as your profile picture.', [
       { text: 'Camera', onPress: openCamera },
       { text: 'Gallery', onPress: openGallery },
       { text: 'Cancel', style: 'cancel' },
