@@ -57,6 +57,8 @@ const AVATAR_URLS = [
   'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png',
 ] as const;
 
+const CAMERA_IMG = require('@/assets/images/camera.png');
+
 const stripHost = (keyOrUrl?: string) => {
   if (!keyOrUrl) return undefined;
   if (/^https?:\/\//i.test(keyOrUrl)) {
@@ -313,6 +315,9 @@ export default function EditProfileScreen() {
         <Center>
           <AvatarPress onPress={openAvatarSheet}>
             <Avatar uri={displayAvatarUrl} />
+            <CameraBadge>
+              <CameraBadgeImg source={CAMERA_IMG} />
+            </CameraBadge>
           </AvatarPress>
           <NameText numberOfLines={1} ellipsizeMode="tail">
             {name || (isLoading ? 'Loading...' : '—')}
@@ -563,7 +568,7 @@ const SheetOverlay = styled.TouchableOpacity`
 `;
 
 const Sheet = styled.View`
-  background: #3a3b3c;                 /* 더 진한 회색 */
+  background: #3a3b3c;                 
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   padding: 14px 16px 20px 16px;
@@ -571,7 +576,7 @@ const Sheet = styled.View`
 
 const Handle = styled.View`
   align-self: center;
-  width: 46px;                         /* 짧은 손잡이 */
+  width: 46px;                        
   height: 4px;
   border-radius: 2px;
   background: #8d9296;
@@ -580,7 +585,7 @@ const Handle = styled.View`
 
 const SheetTitle = styled.Text`
   color: #ffffff;
-  font-size: 16px;                     /* 살짝 작게 */
+  font-size: 16px;                     
   font-family: 'PlusJakartaSans_700Bold';
   text-align: center;
   margin-bottom: 14px;
@@ -591,7 +596,7 @@ const AvatarRow = styled.View`
   align-items: center;
   justify-content: space-between;
   padding: 0 2px;
-  margin: 0 6px 18px 6px;              /* 좌우 살짝 여백 */
+  margin: 0 6px 18px 6px;              
 `;
 
 const AvatarItem = styled.Pressable``;
@@ -600,10 +605,10 @@ const AvatarCircle = styled.View<{ selected: boolean }>`
   width: 72px;
   height: 72px;
   border-radius: 36px;
-  background: #242526;                 /* 어두운 배경 */
+  background: #242526;                 
   align-items: center;
   justify-content: center;
-  border-width: 3px;                   /* 선택 윤곽 더 두껍게 */
+  border-width: 3px;                  
   border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
   position: relative;
 `;
@@ -616,16 +621,15 @@ const AvatarImg = styled.Image`
 
 const CheckBadge = styled.View`
   position: absolute;
-  left: -2px;                          /* ▶︎ 좌상단 */
+  left: -2px;                          
   top: -2px;
   width: 22px;
   height: 22px;
   border-radius: 11px;
-  background: #30F59B;                 /* 민트 */
+  background: #30F59B;                 
   align-items: center;
   justify-content: center;
-  border-width: 2px;                   /* 테두리로 도드라지게 */
-  border-color: #3a3b3c;               /* 시트 배경과 동일하게 */
+  border-width: 2px;                  
   shadow-color: #000;
   shadow-opacity: 0.25;
   shadow-radius: 3.4px;
@@ -639,14 +643,14 @@ const CameraCircleInner = styled.View`
   border-radius: 33px;
   align-items: center;
   justify-content: center;
-  background: #4a4b4c;                 /* 더 진한 회색 */
+  background: #4a4b4c;                
 `;
 
 const ButtonRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin-top: 8px;
-  padding: 0 4px 22px 4px;             /* 좌우 여백 + 하단 패딩 */
+  padding: 0 4px 22px 4px;             
 `;
 
 const Gap = styled.View`
@@ -657,7 +661,7 @@ const SheetBtn = styled.Pressable`
   flex: 1;
   height: 48px;
   border-radius: 12px;
-  background: #595b5c;                 /* 회색(취소) */
+  background: #595b5c;                 
   align-items: center;
   justify-content: center;
 `;
@@ -671,7 +675,7 @@ const SheetBtnMint = styled.Pressable<{ disabled?: boolean }>`
   flex: 1;
   height: 48px;
   border-radius: 12px;
-  background: #30f59b;                 /* 민트(저장) */
+  background: #30f59b;                 
   align-items: center;
   justify-content: center;
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
@@ -687,3 +691,25 @@ const EditRow = styled.View`margin-top:10px;`;
 const EditOutlineBtn = styled.Pressable`align-self:flex-start;flex-direction:row;align-items:center;height:28px;padding:0 10px;gap:4px;border-radius:100px;border-width:1px;border-color:#30F59B;background:transparent;`;
 const EditOutlineText = styled.Text`color:#30F59B;font-size:13px;font-family:'PlusJakartaSans_600SemiBold';`;
 
+const CameraBadge = styled.View`
+  position: absolute;
+  right: 20px;
+  bottom: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  background: #30f59b;  
+  align-items: center;
+  justify-content: center;
+  shadow-color: #000;
+  shadow-opacity: 0.25;
+  shadow-radius: 3.4px;
+  shadow-offset: 0px 2px;
+  elevation: 3;
+`;
+
+const CameraBadgeImg = styled.Image`
+  width: 18px;
+  height: 18px;
+  resize-mode: contain;
+`;
