@@ -1,29 +1,35 @@
 {
-  "cli": {
-    "version": ">= 16.17.4",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
+    "cli": {
+        "version": ">= 16.17.4",
+        "appVersionSource": "remote"
     },
-    "preview": {
-      "distribution": "internal"
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal"
+        },
+        "preview": {
+            "distribution": "internal"
+        },
+        "production": {
+            "env": {
+                "EXPO_PUBLIC_SERVER_URL": "https://dev.ko-ri.cloud",
+                "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
+                "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com"
+            },
+            "android": {
+                "buildType": "app-bundle"
+            },
+            "autoIncrement": true
+        },
+        "adhoc": {
+            "distribution": "internal",
+            "ios": {
+                "simulator": false
+            }
+        }
     },
-    "production": {
-      "env":{
-          "EXPO_PUBLIC_SERVER_URL":"https://dev.ko-ri.cloud",
-          "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID":"86972168076-3bllmjnmkf9o6o7puri902co61jonbmi.apps.googleusercontent.com",
-          "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID":"86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com"
-      },
-      "android": {
-          "buildType": "app-bundle"  
-      },
-      "autoIncrement": true
+    "submit": {
+        "production": {}
     }
-  },
-  "submit": {
-    "production": {}
-  }
 }
