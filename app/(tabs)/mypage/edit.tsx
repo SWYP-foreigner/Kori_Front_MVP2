@@ -1,7 +1,3 @@
-
-
-
-
 import axios from 'axios';
 import { Buffer } from 'buffer';
 
@@ -15,7 +11,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
 import CountryPicker, { CountryDropdownButton, CountryDropdownText } from '@/components/CountryPicker';
-import LanguagePicker, { LanguageDropdownButton, LanguageDropdownText, MAX_LANGUAGES } from '@/components/LanguagePicker';
+import LanguagePicker, {
+  LanguageDropdownButton,
+  LanguageDropdownText,
+  MAX_LANGUAGES,
+} from '@/components/LanguagePicker';
 import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
 
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
@@ -75,7 +75,7 @@ const stripHost = (keyOrUrl?: string) => {
 const detectPresetIndex = (keyOrUrl?: string) => {
   const path = stripHost(keyOrUrl);
   if (!path) return -1;
-  return AVATAR_URLS.findIndex(k => path.endsWith(k));
+  return AVATAR_URLS.findIndex((k) => path.endsWith(k));
 };
 
 async function uploadLocalImageAndGetKeyInline(uri: string, mime = 'image/jpeg') {
@@ -103,12 +103,27 @@ async function uploadLocalImageAndGetKeyInline(uri: string, mime = 'image/jpeg')
   return info.key as string;
 }
 
-
 const TAG_SECTIONS: TagSection[] = [
-  { title: 'Entertainment & Hobbies', items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'], emojis: ['🎵', '🎬', '📚', '🎬', '🎮'] },
-  { title: 'LifeStyle & Social', items: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'], emojis: ['🍺', '☕️', '✈️', '🧩', '🛍️', '💄️', '🛏️'] },
-  { title: 'Activities & Wellness', items: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'], emojis: ['🧘', '🏃', '🏋️', '🥾', '💃', '⛰️'] },
-  { title: 'Creativity & Personal Growth', items: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'], emojis: ['🎨', '🎤', '🍳', '🐶', '💼', '📸'] },
+  {
+    title: 'Entertainment & Hobbies',
+    items: ['Music', 'Movies', 'Reading', 'Anime', 'Gaming'],
+    emojis: ['🎵', '🎬', '📚', '🎬', '🎮'],
+  },
+  {
+    title: 'LifeStyle & Social',
+    items: ['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing'],
+    emojis: ['🍺', '☕️', '✈️', '🧩', '🛍️', '💄️', '🛏️'],
+  },
+  {
+    title: 'Activities & Wellness',
+    items: ['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking'],
+    emojis: ['🧘', '🏃', '🏋️', '🥾', '💃', '⛰️'],
+  },
+  {
+    title: 'Creativity & Personal Growth',
+    items: ['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography'],
+    emojis: ['🎨', '🎤', '🍳', '🐶', '💼', '📸'],
+  },
   { title: 'Korean Culture', items: ['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover'], emojis: ['☕️', '🎬', '🍜'] },
 ];
 
@@ -143,7 +158,8 @@ export default function EditProfileScreen() {
   }, [avatarKeyOrUrl]);
 
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
-  const [tempIdx, setTempIdx] = useState<number | null>(null); const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
+  const [tempIdx, setTempIdx] = useState<number | null>(null);
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
   const [sheetSaving, setSheetSaving] = useState(false);
 
   const [pendingImageKey, setPendingImageKey] = useState<string | undefined>(undefined);
@@ -194,7 +210,6 @@ export default function EditProfileScreen() {
       const m = l.match(/\(([^)]+)\)/);
       return (m ? m[1] : l).trim();
     });
-
 
     const body: any = {
       firstname,
@@ -341,9 +356,7 @@ export default function EditProfileScreen() {
         <Field>
           <LabelText>Country</LabelText>
           <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
-            <CountryDropdownText selected={!!country}>
-              {country || 'Select your country'}
-            </CountryDropdownText>
+            <CountryDropdownText selected={!!country}>{country || 'Select your country'}</CountryDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </CountryDropdownButton>
         </Field>
@@ -364,9 +377,7 @@ export default function EditProfileScreen() {
         <Field>
           <LabelText>Purpose</LabelText>
           <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
-            <PurposeDropdownText selected={!!purpose}>
-              {purpose || 'Select purpose'}
-            </PurposeDropdownText>
+            <PurposeDropdownText selected={!!purpose}>{purpose || 'Select purpose'}</PurposeDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </PurposeDropdownButton>
         </Field>
@@ -374,12 +385,14 @@ export default function EditProfileScreen() {
         <Field>
           <LabelRow>
             <LabelText>Language</LabelText>
-            {!!langs.length && <SmallMuted>{langs.length}/{MAX_LANGUAGES} selected</SmallMuted>}
+            {!!langs.length && (
+              <SmallMuted>
+                {langs.length}/{MAX_LANGUAGES} selected
+              </SmallMuted>
+            )}
           </LabelRow>
           <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
-            <LanguageDropdownText selected={langs.length > 0}>
-              {languagesDisplay}
-            </LanguageDropdownText>
+            <LanguageDropdownText selected={langs.length > 0}>{languagesDisplay}</LanguageDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </LanguageDropdownButton>
         </Field>
@@ -424,19 +437,20 @@ export default function EditProfileScreen() {
         visible={showCountry}
         value={country}
         onClose={() => setShowCountry(false)}
-        onSelect={(c) => { setCountry(c); setShowCountry(false); }}
+        onSelect={(c) => {
+          setCountry(c);
+          setShowCountry(false);
+        }}
       />
-      <LanguagePicker
-        visible={showLang}
-        value={langs}
-        onClose={() => setShowLang(false)}
-        onChange={setLangs}
-      />
+      <LanguagePicker visible={showLang} value={langs} onClose={() => setShowLang(false)} onChange={setLangs} />
       <PurposePicker
         visible={showPurpose}
         value={purpose}
         onClose={() => setShowPurpose(false)}
-        onSelect={(p) => { setPurpose(p); setShowPurpose(false); }}
+        onSelect={(p) => {
+          setPurpose(p);
+          setShowPurpose(false);
+        }}
       />
       <BottomSheetTagPicker
         visible={showTagPicker}
@@ -448,20 +462,9 @@ export default function EditProfileScreen() {
         title="Select your interests"
       />
       {showAvatarSheet && (
-        <Modal
-          visible
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowAvatarSheet(false)}
-        >
-          <SheetOverlay
-            activeOpacity={1}
-            onPress={() => setShowAvatarSheet(false)}
-          >
-            <Sheet
-              onStartShouldSetResponder={() => true}
-              onTouchEnd={(e: any) => e.stopPropagation()}
-            >
+        <Modal visible transparent animationType="fade" onRequestClose={() => setShowAvatarSheet(false)}>
+          <SheetOverlay activeOpacity={1} onPress={() => setShowAvatarSheet(false)}>
+            <Sheet onStartShouldSetResponder={() => true} onTouchEnd={(e: any) => e.stopPropagation()}>
               <Handle />
               <SheetTitle>Select Profile</SheetTitle>
 
@@ -521,45 +524,148 @@ export default function EditProfileScreen() {
                   disabled={sheetSaving || tempIdx === null || (tempIdx === -1 && !customPhotoUri)}
                   onPress={saveAvatarSelection}
                 >
-                  <SheetBtnMintText>
-                    {sheetSaving ? 'Saving…' : 'Save'}
-                  </SheetBtnMintText>
+                  <SheetBtnMintText>{sheetSaving ? 'Saving…' : 'Save'}</SheetBtnMintText>
                 </SheetBtnMint>
               </ButtonRow>
             </Sheet>
           </SheetOverlay>
         </Modal>
       )}
-
-
     </Safe>
   );
 }
 
-const Safe = styled.SafeAreaView`flex:1;background:#171818;`;
-const Scroll = styled.ScrollView`padding:0 16px;`;
-const Header = styled.View`height:52px;align-items:center;justify-content:center;position:relative;`;
-const Title = styled.Text`color:#fff;font-size:20px;font-family:'PlusJakartaSans_700Bold';`;
-const Side = styled.Pressable`position:absolute;top:0;bottom:0;justify-content:center;padding:0 12px;`;
-const SaveText = styled.Text`color:#30f59b;font-family:'PlusJakartaSans_600SemiBold';`;
-const Center = styled.View`align-items:center;padding:8px 0 16px 0;`;
-const AvatarPress = styled.Pressable`position:relative;`;
-const NameText = styled.Text`margin-top:8px;color:#fff;font-size:16px;font-family:'PlusJakartaSans_700Bold';max-width:82%;text-align:center;`;
-const EmailText = styled.Text`margin-top:2px;color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const Field = styled.View`margin-bottom:14px;`;
-const LabelRow = styled.View`flex-direction:row;justify-content:space-between;align-items:flex-end;`;
-const LabelText = styled.Text`color:#e9ecef;font-size:13px;margin-bottom:6px;font-family:'PlusJakartaSans_600SemiBold';`;
-const Count = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const NameInput = styled.TextInput`height:${INPUT_HEIGHT}px;border-radius:${INPUT_RADIUS}px;background:${INPUT_BG};padding:0 16px;color:#fff;border-width:0.48px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';`;
-const BirthInput = styled.TextInput`height:${INPUT_HEIGHT}px;border-radius:${INPUT_RADIUS}px;background:${INPUT_BG};padding:0 16px;color:#fff;border-width:0.48px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';`;
-const TopRow = styled.View`flex-direction:row;justify-content:space-between;align-items:center;margin-bottom:6px;`;
-const SmallMuted = styled.Text`color:#7e848a;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const TagsWrap = styled.View`flex-direction:row;flex-wrap:wrap;gap:8px;margin-top:6px;`;
-const PreviewTag = styled.View`padding:6px 12px;border-radius:999px;border:1px solid #2a2b2c;background:#121314;`;
-const PreviewTagText = styled.Text`color:#fff;font-size:12px;font-family:'PlusJakartaSans_600SemiBold';`;
-const TextArea = styled.TextInput`background:${INPUT_BG};border-radius:${INPUT_RADIUS}px;padding:12px 14px;color:#fff;border-width:1px;border-color:${INPUT_BORDER};font-family:'PlusJakartaSans_400Regular';min-height:110px;text-align-vertical:top;`;
-const BottomPad = styled.View`height:20px;`;
-
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #171818;
+`;
+const Scroll = styled.ScrollView`
+  padding: 0 16px;
+`;
+const Header = styled.View`
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+`;
+const Title = styled.Text`
+  color: #fff;
+  font-size: 20px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const Side = styled.Pressable`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  justify-content: center;
+  padding: 0 12px;
+`;
+const SaveText = styled.Text`
+  color: #30f59b;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const Center = styled.View`
+  align-items: center;
+  padding: 8px 0 16px 0;
+`;
+const AvatarPress = styled.Pressable`
+  position: relative;
+`;
+const NameText = styled.Text`
+  margin-top: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+  max-width: 82%;
+  text-align: center;
+`;
+const EmailText = styled.Text`
+  margin-top: 2px;
+  color: #b7babd;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const Field = styled.View`
+  margin-bottom: 14px;
+`;
+const LabelRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+`;
+const LabelText = styled.Text`
+  color: #e9ecef;
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const Count = styled.Text`
+  color: #7e848a;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const NameInput = styled.TextInput`
+  height: ${INPUT_HEIGHT}px;
+  border-radius: ${INPUT_RADIUS}px;
+  background: ${INPUT_BG};
+  padding: 0 16px;
+  color: #fff;
+  border-width: 0.48px;
+  border-color: ${INPUT_BORDER};
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const BirthInput = styled.TextInput`
+  height: ${INPUT_HEIGHT}px;
+  border-radius: ${INPUT_RADIUS}px;
+  background: ${INPUT_BG};
+  padding: 0 16px;
+  color: #fff;
+  border-width: 0.48px;
+  border-color: ${INPUT_BORDER};
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const TopRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+`;
+const SmallMuted = styled.Text`
+  color: #7e848a;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const TagsWrap = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+`;
+const PreviewTag = styled.View`
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #2a2b2c;
+  background: #121314;
+`;
+const PreviewTagText = styled.Text`
+  color: #fff;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const TextArea = styled.TextInput`
+  background: ${INPUT_BG};
+  border-radius: ${INPUT_RADIUS}px;
+  padding: 12px 14px;
+  color: #fff;
+  border-width: 1px;
+  border-color: ${INPUT_BORDER};
+  font-family: 'PlusJakartaSans_400Regular';
+  min-height: 110px;
+  text-align-vertical: top;
+`;
+const BottomPad = styled.View`
+  height: 20px;
+`;
 
 const SheetOverlay = styled.TouchableOpacity`
   flex: 1;
@@ -568,7 +674,7 @@ const SheetOverlay = styled.TouchableOpacity`
 `;
 
 const Sheet = styled.View`
-  background: #3a3b3c;                 
+  background: #3a3b3c;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   padding: 14px 16px 20px 16px;
@@ -576,7 +682,7 @@ const Sheet = styled.View`
 
 const Handle = styled.View`
   align-self: center;
-  width: 46px;                        
+  width: 46px;
   height: 4px;
   border-radius: 2px;
   background: #8d9296;
@@ -585,7 +691,7 @@ const Handle = styled.View`
 
 const SheetTitle = styled.Text`
   color: #ffffff;
-  font-size: 16px;                     
+  font-size: 16px;
   font-family: 'PlusJakartaSans_700Bold';
   text-align: center;
   margin-bottom: 14px;
@@ -596,7 +702,7 @@ const AvatarRow = styled.View`
   align-items: center;
   justify-content: space-between;
   padding: 0 2px;
-  margin: 0 6px 18px 6px;              
+  margin: 0 6px 18px 6px;
 `;
 
 const AvatarItem = styled.Pressable``;
@@ -605,10 +711,10 @@ const AvatarCircle = styled.View<{ selected: boolean }>`
   width: 72px;
   height: 72px;
   border-radius: 36px;
-  background: #242526;                 
+  background: #242526;
   align-items: center;
   justify-content: center;
-  border-width: 3px;                  
+  border-width: 3px;
   border-color: ${({ selected }) => (selected ? '#30F59B' : 'transparent')};
   position: relative;
 `;
@@ -621,15 +727,15 @@ const AvatarImg = styled.Image`
 
 const CheckBadge = styled.View`
   position: absolute;
-  left: -2px;                          
+  left: -2px;
   top: -2px;
   width: 22px;
   height: 22px;
   border-radius: 11px;
-  background: #30F59B;                 
+  background: #30f59b;
   align-items: center;
   justify-content: center;
-  border-width: 2px;                  
+  border-width: 2px;
   shadow-color: #000;
   shadow-opacity: 0.25;
   shadow-radius: 3.4px;
@@ -643,14 +749,14 @@ const CameraCircleInner = styled.View`
   border-radius: 33px;
   align-items: center;
   justify-content: center;
-  background: #4a4b4c;                
+  background: #4a4b4c;
 `;
 
 const ButtonRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin-top: 8px;
-  padding: 0 4px 22px 4px;             
+  padding: 0 4px 22px 4px;
 `;
 
 const Gap = styled.View`
@@ -661,7 +767,7 @@ const SheetBtn = styled.Pressable`
   flex: 1;
   height: 48px;
   border-radius: 12px;
-  background: #595b5c;                 
+  background: #595b5c;
   align-items: center;
   justify-content: center;
 `;
@@ -675,7 +781,7 @@ const SheetBtnMint = styled.Pressable<{ disabled?: boolean }>`
   flex: 1;
   height: 48px;
   border-radius: 12px;
-  background: #30f59b;                 
+  background: #30f59b;
   align-items: center;
   justify-content: center;
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
@@ -686,10 +792,26 @@ const SheetBtnMintText = styled.Text`
   font-weight: 800;
 `;
 
-
-const EditRow = styled.View`margin-top:10px;`;
-const EditOutlineBtn = styled.Pressable`align-self:flex-start;flex-direction:row;align-items:center;height:28px;padding:0 10px;gap:4px;border-radius:100px;border-width:1px;border-color:#30F59B;background:transparent;`;
-const EditOutlineText = styled.Text`color:#30F59B;font-size:13px;font-family:'PlusJakartaSans_600SemiBold';`;
+const EditRow = styled.View`
+  margin-top: 10px;
+`;
+const EditOutlineBtn = styled.Pressable`
+  align-self: flex-start;
+  flex-direction: row;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  gap: 4px;
+  border-radius: 100px;
+  border-width: 1px;
+  border-color: #30f59b;
+  background: transparent;
+`;
+const EditOutlineText = styled.Text`
+  color: #30f59b;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
 
 const CameraBadge = styled.View`
   position: absolute;
@@ -698,7 +820,7 @@ const CameraBadge = styled.View`
   width: 34px;
   height: 34px;
   border-radius: 17px;
-  background: #30f59b;  
+  background: #30f59b;
   align-items: center;
   justify-content: center;
   shadow-color: #000;

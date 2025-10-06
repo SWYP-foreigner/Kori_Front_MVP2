@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import { StatusBar, Animated } from "react-native";
-import styled from "styled-components/native";
-import { useRouter } from "expo-router";
+import React, { useEffect, useRef } from 'react';
+import { StatusBar, Animated } from 'react-native';
+import styled from 'styled-components/native';
+import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,7 +33,7 @@ const CustomSplashScreen = () => {
         duration: 500,
         useNativeDriver: true,
       }).start(() => {
-        router.replace("../../login");
+        router.replace('../../login');
       });
     }, 1000);
 
@@ -44,7 +44,7 @@ const CustomSplashScreen = () => {
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container style={{ opacity: fadeAnim }}>
-        <Logo source={require("../../../assets/images/AppLogo.png")} resizeMode="contain" />
+        <Logo source={require('../../../assets/images/AppLogo.png')} resizeMode="contain" />
       </Container>
     </SafeArea>
   );

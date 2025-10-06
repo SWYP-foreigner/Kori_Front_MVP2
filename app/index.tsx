@@ -44,5 +44,5 @@ export default function Index() {
   }
 
   // 로딩 끝나면 내가 만든 커스텀 SplashScreen 라우트로 이동
-  return <CustomSplashScreen/>;
+  return <CustomSplashScreen />;
 }

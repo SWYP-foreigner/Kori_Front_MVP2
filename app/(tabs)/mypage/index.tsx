@@ -5,12 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Image as RNImage,
-  ImageSourcePropType
-} from 'react-native';
+import { Alert, Image, Image as RNImage, ImageSourcePropType } from 'react-native';
 import styled from 'styled-components/native';
 
 import api from '@/api/axiosInstance';
@@ -29,11 +24,7 @@ const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character3.png'),
 ];
 
-const AVATAR_KEYS = [
-  'avatars/character1.png',
-  'avatars/character2.png',
-  'avatars/character3.png',
-];
+const AVATAR_KEYS = ['avatars/character1.png', 'avatars/character2.png', 'avatars/character3.png'];
 
 const toUrl = (u?: string) => {
   if (!u) return undefined;
@@ -44,13 +35,10 @@ const toUrl = (u?: string) => {
     (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
     (Config as any).IMAGE_BASE_URL ||
     '';
-  return base
-    ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}`
-    : undefined;
+  return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
 };
 
 export default function MyPageScreen() {
-
   const qc = useQueryClient();
 
   const { data: me, isLoading } = useMyProfile();
@@ -65,22 +53,10 @@ export default function MyPageScreen() {
     const obj = raw?.data?.data ?? raw?.data ?? raw;
 
     const recv =
-      obj?.received ??
-      obj?.receivedCount ??
-      obj?.followers ??
-      obj?.incoming ??
-      obj?.toMe ??
-      obj?.requestReceived ??
-      0;
+      obj?.received ?? obj?.receivedCount ?? obj?.followers ?? obj?.incoming ?? obj?.toMe ?? obj?.requestReceived ?? 0;
 
     const sent =
-      obj?.sent ??
-      obj?.sentCount ??
-      obj?.followings ??
-      obj?.outgoing ??
-      obj?.fromMe ??
-      obj?.requestSent ??
-      0;
+      obj?.sent ?? obj?.sentCount ?? obj?.followings ?? obj?.outgoing ?? obj?.fromMe ?? obj?.requestSent ?? 0;
 
     return {
       received: Number.isFinite(Number(recv)) ? Number(recv) : 0,
@@ -102,12 +78,11 @@ export default function MyPageScreen() {
     }
   };
 
-
   useFocusEffect(
     useCallback(() => {
       fetchPendingCounts();
       return undefined;
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
@@ -121,7 +96,7 @@ export default function MyPageScreen() {
       DeviceEventEmitter.addListener('UNFOLLOW_ACCEPTED', refresh),
     ];
 
-    return () => subs.forEach(s => s.remove());
+    return () => subs.forEach((s) => s.remove());
   }, []);
 
   const fullName = useMemo(() => {
@@ -143,60 +118,51 @@ export default function MyPageScreen() {
   const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
 
   const confirmDelete = () => {
-    Alert.alert(
-      'Are you sure you want to leave the this app?',
-      'After deleting it, you cannot restore it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setTimeout(() => {
-              deleteAccountMut.mutate(undefined, {
-                onSuccess: async (isApple: boolean) => {
-                  try {
-                    await SecureStore.deleteItemAsync('jwt');
-                  } catch { }
-                  if (isApple) {
-                    Alert.alert(
-                      'Account deleted',
-                      [
-                        'To completely remove any linkage with your Apple account,',
-                        'go to iOS Settings → Apple ID → Password & Security → Sign in with Apple',
-                        'and manually disconnect this app.',
-                        '',
-                        'If the linkage isn’t removed, then when re-registering with the same Apple ID later',
-                        'providing your email and name may be restricted.',
-                      ].join('\n'),
-                      [
-                        { text: 'OK', onPress: () => router.replace('/login') },
-                      ],
-                    );
-                  } else {
-                    Alert.alert('Account deleted', 'Your account has been removed.', [
-                      { text: 'OK', onPress: () => router.replace('/login') },
-                    ]);
-                  }
-                },
-                onError: (e: any) => {
-                  const msg =
-                    e?.response?.data?.message ??
-                    e?.message ??
-                    'Failed to delete account. Please try again.';
-                  Alert.alert('Error', msg);
-                },
-              });
-            }, 0);
-          },
+    Alert.alert('Are you sure you want to leave the this app?', 'After deleting it, you cannot restore it.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          setTimeout(() => {
+            deleteAccountMut.mutate(undefined, {
+              onSuccess: async (isApple: boolean) => {
+                try {
+                  await SecureStore.deleteItemAsync('jwt');
+                } catch {}
+                if (isApple) {
+                  Alert.alert(
+                    'Account deleted',
+                    [
+                      'To completely remove any linkage with your Apple account,',
+                      'go to iOS Settings → Apple ID → Password & Security → Sign in with Apple',
+                      'and manually disconnect this app.',
+                      '',
+                      'If the linkage isn’t removed, then when re-registering with the same Apple ID later',
+                      'providing your email and name may be restricted.',
+                    ].join('\n'),
+                    [{ text: 'OK', onPress: () => router.replace('/login') }],
+                  );
+                } else {
+                  Alert.alert('Account deleted', 'Your account has been removed.', [
+                    { text: 'OK', onPress: () => router.replace('/login') },
+                  ]);
+                }
+              },
+              onError: (e: any) => {
+                const msg = e?.response?.data?.message ?? e?.message ?? 'Failed to delete account. Please try again.';
+                Alert.alert('Error', msg);
+              },
+            });
+          }, 0);
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const openAvatarSheet = () => {
     const currentAssetIdx = AVATARS.findIndex(
-      img => (RNImage.resolveAssetSource(img)?.uri ?? '') === (displayAvatarUrl ?? ''),
+      (img) => (RNImage.resolveAssetSource(img)?.uri ?? '') === (displayAvatarUrl ?? ''),
     );
     if (currentAssetIdx >= 0) {
       setTempIdx(currentAssetIdx);
@@ -234,8 +200,7 @@ export default function MyPageScreen() {
       Alert.alert('Saved', 'Profile image updated.');
     } catch (e: any) {
       const raw = e?.detail || e?.response?.data || e?.message || e;
-      const msg =
-        typeof raw === 'string' ? raw : raw?.message || raw?.error || '이미지 업로드에 실패했습니다.';
+      const msg = typeof raw === 'string' ? raw : raw?.message || raw?.error || '이미지 업로드에 실패했습니다.';
       Alert.alert('Upload error', String(msg));
     }
   };
@@ -287,27 +252,23 @@ export default function MyPageScreen() {
 
   // 로그아웃
   const AccountLogout = async () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Log Out",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await api.post(`${Config.SERVER_URL}/api/v1/member/logout`);
-              await SecureStore.deleteItemAsync("jwt");
-              await SecureStore.deleteItemAsync("refresh");
-              router.replace("/login");
-            } catch (error) {
-              console.error("로그아웃 실패", error);
-            }
-          },
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.post(`${Config.SERVER_URL}/api/v1/member/logout`);
+            await SecureStore.deleteItemAsync('jwt');
+            await SecureStore.deleteItemAsync('refresh');
+            router.replace('/login');
+          } catch (error) {
+            console.error('로그아웃 실패', error);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -328,12 +289,7 @@ export default function MyPageScreen() {
           </Name>
 
           <EditButtonWrap>
-            <CustomButton
-              label="Edit Profile"
-              tone="mint"
-              filled
-              onPress={() => router.push('/mypage/edit')}
-            />
+            <CustomButton label="Edit Profile" tone="mint" filled onPress={() => router.push('/mypage/edit')} />
           </EditButtonWrap>
         </ProfileView>
 
@@ -388,8 +344,6 @@ export default function MyPageScreen() {
           <DeleteText>{deleteAccountMut.isPending ? 'Deleting...' : 'Delete Account'}</DeleteText>
         </DeletePressable>
       </Scroll>
-
-
     </Safe>
   );
 }
@@ -397,7 +351,7 @@ export default function MyPageScreen() {
 // ===== 스타일 (기존 그대로) =====
 const Safe = styled.SafeAreaView`
   flex: 1;
-  background: #1D1E1F;
+  background: #1d1e1f;
 `;
 const Scroll = styled.ScrollView``;
 
@@ -423,7 +377,9 @@ const ProfileView = styled.View`
   align-items: center;
   padding: 8px 16px 12px 16px;
 `;
-const AvatarPress = styled.Pressable`position: relative;`;
+const AvatarPress = styled.Pressable`
+  position: relative;
+`;
 const Name = styled.Text`
   margin-top: 10px;
   color: #ffffff;
@@ -438,7 +394,7 @@ const EditButtonWrap = styled.View`
   padding: 12px 16px 0 16px;
   height: 48px;
   justify-content: center;
-  position: relative; 
+  position: relative;
   z-index: 1;
 `;
 
@@ -455,7 +411,14 @@ const SectionTitleRow = styled.View`
   margin: 28px 16px 10px 16px;
 `;
 function SectionTitleIcon() {
-  return <Ionicons name="person-outline" size={12} color="#9aa0a6" style={{ marginRight: 6, transform: [{ translateY: 1 }] }} />;
+  return (
+    <Ionicons
+      name="person-outline"
+      size={12}
+      color="#9aa0a6"
+      style={{ marginRight: 6, transform: [{ translateY: 1 }] }}
+    />
+  );
 }
 function SectionTitleIconGlobe() {
   return (
@@ -538,4 +501,3 @@ const DeleteText = styled.Text`
   font-size: 14px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
-

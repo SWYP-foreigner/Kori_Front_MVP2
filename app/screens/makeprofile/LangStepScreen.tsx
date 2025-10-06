@@ -3,41 +3,209 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import {useProfile} from '../../contexts/ProfileContext'
+import { useProfile } from '../../contexts/ProfileContext';
 
 export default function LanguageStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const { profileData, updateProfile } = useProfile();
 
- const languages = [
-  'Abkhaz [AB]','Acehnese [ACE]','Acholi [ACH]','Afrikaans [AF]','Albanian [SQ]','Alur [ALZ]','Amharic [AM]','Arabic [AR]',
-  'Armenian [HY]','Assamese [AS]','Awadhi [AWA]','Aymara [AY]','Azerbaijani [AZ]','Balinese [BAN]','Bambara [BM]','Bashkir [BA]',
-  'Basque [EU]','Batak Karo [BTX]','Batak Simalungun [BTS]','Batak Toba [BBC]','Belarusian [BE]','Bemba [BEM]','Bengali [BN]',
-  'Betawi [BEW]','Bhojpuri [BHO]','Bikol [BIK]','Bosnian [BS]','Breton [BR]','Bulgarian [BG]','Buryat [BUA]','Cantonese [YUE]',
-  'Catalan [CA]','Cebuano [CEB]','Chichewa [NY]','Chinese (Simplified) [ZH-CN]','Chinese (Traditional) [ZH-TW]','Chuvash [CV]',
-  'Corsican [CO]','Crimean Tatar [CRH]','Croatian [HR]','Czech [CS]','Danish [DA]','Dinka [DIN]','Divehi [DV]','Dogri [DOI]',
-  'Dombe [DOV]','Dutch [NL]','Dzongkha [DZ]','English [EN]','Esperanto [EO]','Estonian [ET]','Ewe [EE]','Fijian [FJ]','Filipino [FIL]',
-  'Finnish [FI]','French [FR]','French (French) [FR-FR]','French (Canadian) [FR-CA]','Frisian [FY]','Fulfulde [FF]','Ga [GAA]',
-  'Galician [GL]','Ganda [LG]','Georgian [KA]','German [DE]','Greek [EL]','Guarani [GN]','Gujarati [GU]','Haitian Creole [HT]',
-  'Hakha Chin [CNH]','Hausa [HA]','Hawaiian [HAW]','Hebrew [IW]','Hiligaynon [HIL]','Hindi [HI]','Hmong [HMN]','Hungarian [HU]',
-  'Hunsrik [HRX]','Icelandic [IS]','Igbo [IG]','Iloko [ILO]','Indonesian [ID]','Irish [GA]','Italian [IT]','Japanese [JA]',
-  'Javanese [JW]','Kannada [KN]','Kapampangan [PAM]','Kazakh [KK]','Khmer [KM]','Kiga [CGG]','Kinyarwanda [RW]','Kituba [KTU]',
-  'Konkani [GOM]','Korean [KO]','Krio [KRI]','Kurdish (Kurmanji) [KU]','Kurdish (Sorani) [CKB]','Kyrgyz [KY]','Lao [LO]',
-  'Latgalian [LTG]','Latin [LA]','Latvian [LV]','Ligurian [LIJ]','Limburgan [LI]','Lingala [LN]','Lithuanian [LT]','Lombard [LMO]',
-  'Luo [LUO]','Luxembourgish [LB]','Macedonian [MK]','Maithili [MAI]','Makassar [MAK]','Malagasy [MG]','Malay [MS]','Malay (Jawi) [MS-ARAB]',
-  'Malayalam [ML]','Maltese [MT]','Maori [MI]','Marathi [MR]','Meadow Mari [CHM]','Meiteilon [MNI-MTEI]','Minang [MIN]','Mizo [LUS]',
-  'Mongolian [MN]','Myanmar (Burmese) [MY]','Ndebele (South) [NR]','Nepalbhasa [NEW]','Nepali [NE]','Northern Sotho [NSO]','Norwegian [NO]',
-  'Nuer [NUS]','Occitan [OC]','Odia [OR]','Oromo [OM]','Pangasinan [PAG]','Papiamento [PAP]','Pashto [PS]','Persian [FA]','Polish [PL]',
-  'Portuguese [PT]','Portuguese (Portugal) [PT-PT]','Portuguese (Brazil) [PT-BR]','Punjabi [PA]','Punjabi (Shahmukhi) [PA-ARAB]',
-  'Quechua [QU]','Romani [ROM]','Romanian [RO]','Rundi [RN]','Russian [RU]','Samoan [SM]','Sango [SG]','Sanskrit [SA]','Scots Gaelic [GD]',
-  'Serbian [SR]','Sesotho [ST]', 'Seychellois Creole [CRS]', 'Shan [SHN]','Shona [SN]','Sicilian [SCN]','Silesian [SZL]','Sindhi [SD]',
-  'Sinhala [SI]','Slovak [SK]','Slovenian [SL]','Somali [SO]','Spanish [ES]','Sundanese [SU]','Swahili [SW]','Swati [SS]',
-  'Swedish [SV]','Tajik [TG]','Tamil [TA]','Tatar [TT]','Telugu [TE]','Tetum [TET]','Thai [TH]','Tigrinya [TI]','Tsonga [TS]','Tswana [TN]',
-  'Turkish [TR]','Turkmen [TK]','Twi [AK]','Ukrainian [UK]','Urdu [UR]','Uyghur [UG]','Uzbek [UZ]','Vietnamese [VI]','Welsh [CY]',
-  'Xhosa [XH]','Yiddish [YI]','Yoruba [YO]','Yucatec Maya [YUA]','Zulu [ZU]'
-].sort();
-
+  const languages = [
+    'Abkhaz [AB]',
+    'Acehnese [ACE]',
+    'Acholi [ACH]',
+    'Afrikaans [AF]',
+    'Albanian [SQ]',
+    'Alur [ALZ]',
+    'Amharic [AM]',
+    'Arabic [AR]',
+    'Armenian [HY]',
+    'Assamese [AS]',
+    'Awadhi [AWA]',
+    'Aymara [AY]',
+    'Azerbaijani [AZ]',
+    'Balinese [BAN]',
+    'Bambara [BM]',
+    'Bashkir [BA]',
+    'Basque [EU]',
+    'Batak Karo [BTX]',
+    'Batak Simalungun [BTS]',
+    'Batak Toba [BBC]',
+    'Belarusian [BE]',
+    'Bemba [BEM]',
+    'Bengali [BN]',
+    'Betawi [BEW]',
+    'Bhojpuri [BHO]',
+    'Bikol [BIK]',
+    'Bosnian [BS]',
+    'Breton [BR]',
+    'Bulgarian [BG]',
+    'Buryat [BUA]',
+    'Cantonese [YUE]',
+    'Catalan [CA]',
+    'Cebuano [CEB]',
+    'Chichewa [NY]',
+    'Chinese (Simplified) [ZH-CN]',
+    'Chinese (Traditional) [ZH-TW]',
+    'Chuvash [CV]',
+    'Corsican [CO]',
+    'Crimean Tatar [CRH]',
+    'Croatian [HR]',
+    'Czech [CS]',
+    'Danish [DA]',
+    'Dinka [DIN]',
+    'Divehi [DV]',
+    'Dogri [DOI]',
+    'Dombe [DOV]',
+    'Dutch [NL]',
+    'Dzongkha [DZ]',
+    'English [EN]',
+    'Esperanto [EO]',
+    'Estonian [ET]',
+    'Ewe [EE]',
+    'Fijian [FJ]',
+    'Filipino [FIL]',
+    'Finnish [FI]',
+    'French [FR]',
+    'French (French) [FR-FR]',
+    'French (Canadian) [FR-CA]',
+    'Frisian [FY]',
+    'Fulfulde [FF]',
+    'Ga [GAA]',
+    'Galician [GL]',
+    'Ganda [LG]',
+    'Georgian [KA]',
+    'German [DE]',
+    'Greek [EL]',
+    'Guarani [GN]',
+    'Gujarati [GU]',
+    'Haitian Creole [HT]',
+    'Hakha Chin [CNH]',
+    'Hausa [HA]',
+    'Hawaiian [HAW]',
+    'Hebrew [IW]',
+    'Hiligaynon [HIL]',
+    'Hindi [HI]',
+    'Hmong [HMN]',
+    'Hungarian [HU]',
+    'Hunsrik [HRX]',
+    'Icelandic [IS]',
+    'Igbo [IG]',
+    'Iloko [ILO]',
+    'Indonesian [ID]',
+    'Irish [GA]',
+    'Italian [IT]',
+    'Japanese [JA]',
+    'Javanese [JW]',
+    'Kannada [KN]',
+    'Kapampangan [PAM]',
+    'Kazakh [KK]',
+    'Khmer [KM]',
+    'Kiga [CGG]',
+    'Kinyarwanda [RW]',
+    'Kituba [KTU]',
+    'Konkani [GOM]',
+    'Korean [KO]',
+    'Krio [KRI]',
+    'Kurdish (Kurmanji) [KU]',
+    'Kurdish (Sorani) [CKB]',
+    'Kyrgyz [KY]',
+    'Lao [LO]',
+    'Latgalian [LTG]',
+    'Latin [LA]',
+    'Latvian [LV]',
+    'Ligurian [LIJ]',
+    'Limburgan [LI]',
+    'Lingala [LN]',
+    'Lithuanian [LT]',
+    'Lombard [LMO]',
+    'Luo [LUO]',
+    'Luxembourgish [LB]',
+    'Macedonian [MK]',
+    'Maithili [MAI]',
+    'Makassar [MAK]',
+    'Malagasy [MG]',
+    'Malay [MS]',
+    'Malay (Jawi) [MS-ARAB]',
+    'Malayalam [ML]',
+    'Maltese [MT]',
+    'Maori [MI]',
+    'Marathi [MR]',
+    'Meadow Mari [CHM]',
+    'Meiteilon [MNI-MTEI]',
+    'Minang [MIN]',
+    'Mizo [LUS]',
+    'Mongolian [MN]',
+    'Myanmar (Burmese) [MY]',
+    'Ndebele (South) [NR]',
+    'Nepalbhasa [NEW]',
+    'Nepali [NE]',
+    'Northern Sotho [NSO]',
+    'Norwegian [NO]',
+    'Nuer [NUS]',
+    'Occitan [OC]',
+    'Odia [OR]',
+    'Oromo [OM]',
+    'Pangasinan [PAG]',
+    'Papiamento [PAP]',
+    'Pashto [PS]',
+    'Persian [FA]',
+    'Polish [PL]',
+    'Portuguese [PT]',
+    'Portuguese (Portugal) [PT-PT]',
+    'Portuguese (Brazil) [PT-BR]',
+    'Punjabi [PA]',
+    'Punjabi (Shahmukhi) [PA-ARAB]',
+    'Quechua [QU]',
+    'Romani [ROM]',
+    'Romanian [RO]',
+    'Rundi [RN]',
+    'Russian [RU]',
+    'Samoan [SM]',
+    'Sango [SG]',
+    'Sanskrit [SA]',
+    'Scots Gaelic [GD]',
+    'Serbian [SR]',
+    'Sesotho [ST]',
+    'Seychellois Creole [CRS]',
+    'Shan [SHN]',
+    'Shona [SN]',
+    'Sicilian [SCN]',
+    'Silesian [SZL]',
+    'Sindhi [SD]',
+    'Sinhala [SI]',
+    'Slovak [SK]',
+    'Slovenian [SL]',
+    'Somali [SO]',
+    'Spanish [ES]',
+    'Sundanese [SU]',
+    'Swahili [SW]',
+    'Swati [SS]',
+    'Swedish [SV]',
+    'Tajik [TG]',
+    'Tamil [TA]',
+    'Tatar [TT]',
+    'Telugu [TE]',
+    'Tetum [TET]',
+    'Thai [TH]',
+    'Tigrinya [TI]',
+    'Tsonga [TS]',
+    'Tswana [TN]',
+    'Turkish [TR]',
+    'Turkmen [TK]',
+    'Twi [AK]',
+    'Ukrainian [UK]',
+    'Urdu [UR]',
+    'Uyghur [UG]',
+    'Uzbek [UZ]',
+    'Vietnamese [VI]',
+    'Welsh [CY]',
+    'Xhosa [XH]',
+    'Yiddish [YI]',
+    'Yoruba [YO]',
+    'Yucatec Maya [YUA]',
+    'Zulu [ZU]',
+  ].sort();
 
   const canProceed = selectedLanguages.length > 0;
   const router = useRouter();
@@ -45,25 +213,25 @@ export default function LanguageStepScreen({ navigation }) {
   const handleLanguageSelect = (language) => {
     if (selectedLanguages.includes(language)) {
       // 이미 선택된 언어면 제거
-      setSelectedLanguages(selectedLanguages.filter(lang => lang !== language));
+      setSelectedLanguages(selectedLanguages.filter((lang) => lang !== language));
     } else if (selectedLanguages.length < 5) {
       // 최대 5개까지만 선택 가능
       setSelectedLanguages([...selectedLanguages, language]);
     } else {
       // 5개 초과 선택시 경고
-      Alert.alert("Maximum Selection", "You can select up to five languages!");
+      Alert.alert('Maximum Selection', 'You can select up to five languages!');
     }
   };
 
   const handleNext = () => {
-    console.log("Selected languages:", selectedLanguages);
-    updateProfile('language',selectedLanguages);
+    console.log('Selected languages:', selectedLanguages);
+    updateProfile('language', selectedLanguages);
     router.push('./AboutMeStepScreen');
   };
 
   const handleSkip = () => {
     router.push({
-      pathname: './AboutMeStepScreen'
+      pathname: './AboutMeStepScreen',
     });
   };
 
@@ -72,7 +240,7 @@ export default function LanguageStepScreen({ navigation }) {
       return 'Select your language';
     } else {
       // 언어 코드만 추출해서 표시
-      const codes = selectedLanguages.map(lang => {
+      const codes = selectedLanguages.map((lang) => {
         const match = lang.match(/\(([^)]+)\)/);
         return match ? match[1] : lang;
       });
@@ -82,16 +250,11 @@ export default function LanguageStepScreen({ navigation }) {
 
   const renderLanguageItem = ({ item }) => {
     const isSelected = selectedLanguages.includes(item);
-    
+
     return (
-      <LanguageItem 
-        selected={isSelected}
-        onPress={() => handleLanguageSelect(item)}
-      >
+      <LanguageItem selected={isSelected} onPress={() => handleLanguageSelect(item)}>
         <LanguageText>{item}</LanguageText>
-        {isSelected && (  
-          <AntDesign name="check" size={20} color="#02F59B" />
-        )}
+        {isSelected && <AntDesign name="check" size={20} color="#02F59B" />}
       </LanguageItem>
     );
   };
@@ -108,39 +271,30 @@ export default function LanguageStepScreen({ navigation }) {
         </TitleWrapper>
 
         <Subtitle>You can select up to 5 language.</Subtitle>
-        
+
         <Form>
-          <DropdownButton 
-            selected={selectedLanguages.length > 0} 
-            onPress={() => setIsModalVisible(true)}
-          >
-            <DropdownText selected={selectedLanguages.length > 0}>
-              {getDisplayText()}
-            </DropdownText>
+          <DropdownButton selected={selectedLanguages.length > 0} onPress={() => setIsModalVisible(true)}>
+            <DropdownText selected={selectedLanguages.length > 0}>{getDisplayText()}</DropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </DropdownButton>
-          
+
           {selectedLanguages.length > 0 && (
             <SelectionInfo>
-              <SelectionCount >{selectedLanguages.length}/5 selected</SelectionCount>
+              <SelectionCount>{selectedLanguages.length}/5 selected</SelectionCount>
             </SelectionInfo>
           )}
         </Form>
 
         <Spacer />
-        
+
         <ButtonContainer hasSelection={canProceed}>
-          <NextButton
-            onPress={handleNext}
-            disabled={!canProceed}
-            canProceed={canProceed}
-          >
+          <NextButton onPress={handleNext} disabled={!canProceed} canProceed={canProceed}>
             <ButtonText>Next</ButtonText>
           </NextButton>
-          {!canProceed &&(
-          <SkipButton onPress={handleSkip}>
-            <SkipText>Skip</SkipText>
-          </SkipButton>
+          {!canProceed && (
+            <SkipButton onPress={handleSkip}>
+              <SkipText>Skip</SkipText>
+            </SkipButton>
           )}
         </ButtonContainer>
 
@@ -148,25 +302,20 @@ export default function LanguageStepScreen({ navigation }) {
       </Container>
 
       {/* Language Selection Bottom Sheet */}
-      <Modal
-        visible={isModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+      <Modal visible={isModalVisible} transparent animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
         <ModalOverlay onPress={() => setIsModalVisible(false)} activeOpacity={1}>
           <BottomSheetContent>
             <BottomSheetHeader>
               <BottomSheetHandle />
             </BottomSheetHeader>
-            
+
             <LanguageList
               data={languages}
               renderItem={renderLanguageItem}
               keyExtractor={(item, index) => index.toString()}
               showsVerticalScrollIndicator={false}
             />
-            
+
             {selectedLanguages.length >= 5 && (
               <MaxSelectionWarning>
                 <AntDesign name="closecircle" size={16} color="#FF6B6B" />
@@ -194,7 +343,7 @@ const Container = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5BD08D;
+  color: #5bd08d;
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
@@ -206,7 +355,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 40px;
   line-height: 45px;
   letter-spacing: 0.2px;
@@ -251,15 +400,13 @@ const SelectionInfo = styled.View`
 `;
 
 const SelectionText = styled.Text`
-  
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 12px;
   font-family: 'PlusJakartaSans-Medium';
-  
 `;
 
 const SelectionCount = styled.Text`
-  color:  #02F59B;
+  color: #02f59b;
   font-size: 13px;
   font-family: 'PlusJakartaSans-Regular';
 `;
@@ -298,14 +445,14 @@ const LanguageList = styled(FlatList)`
 const LanguageItem = styled.TouchableOpacity`
   padding: 16px 0;
   border-bottom-width: 0.5px;
-  border-bottom-color: #4A4B4C;
+  border-bottom-color: #4a4b4c;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 `;
 
 const LanguageText = styled.Text`
-  color: #EDEDED;
+  color: #ededed;
   font-size: 16px;
   font-family: 'PlusJakartaSans-Regular';
   flex: 1;
@@ -323,7 +470,7 @@ const MaxSelectionWarning = styled.View`
 `;
 
 const WarningText = styled.Text`
-  color: #FF6B6B;
+  color: #ff6b6b;
   font-size: 14px;
   font-family: 'PlusJakartaSans-Regular';
   margin-left: 8px;
@@ -334,7 +481,7 @@ const Spacer = styled.View`
 `;
 
 const ButtonContainer = styled.View`
-  margin-bottom:${(props)=>(props.hasSelection ? '20px':'0px')};
+  margin-bottom: ${(props) => (props.hasSelection ? '20px' : '0px')};
   gap: 12px;
 `;
 
@@ -343,12 +490,12 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: #02F59B;
+  background-color: #02f59b;
   opacity: ${(props) => (props.canProceed ? 1 : 0.4)};
 `;
 
 const ButtonText = styled.Text`
-  color: #1D1E1F;
+  color: #1d1e1f;
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';

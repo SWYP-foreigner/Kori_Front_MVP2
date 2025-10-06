@@ -32,36 +32,21 @@ function isAnon(row: any): boolean {
     row?.isAnonymous ??
     row?.isAnonymousWriter ??
     row?.writerAnonymous ??
-    (typeof row?.anonymousYn === 'string' &&
-      row.anonymousYn.toUpperCase() === 'Y');
+    (typeof row?.anonymousYn === 'string' && row.anonymousYn.toUpperCase() === 'Y');
 
-  const label =
-    row?.author ??
-    row?.authorName ??
-    row?.nickname ??
-    row?.userName ??
-    row?.writerName ??
-    '';
-  const labelAnon =
-    String(label).trim().toLowerCase() === '익명' ||
-    String(label).trim().toLowerCase() === 'anonymous';
+  const label = row?.author ?? row?.authorName ?? row?.nickname ?? row?.userName ?? row?.writerName ?? '';
+  const labelAnon = String(label).trim().toLowerCase() === '익명' || String(label).trim().toLowerCase() === 'anonymous';
 
   const hasAnyName =
-    [row?.author, row?.authorName, row?.nickname, row?.userName, row?.writerName]
-      .filter((v) => !!String(v ?? '').trim()).length > 0;
+    [row?.author, row?.authorName, row?.nickname, row?.userName, row?.writerName].filter(
+      (v) => !!String(v ?? '').trim(),
+    ).length > 0;
 
   return Boolean(explicit || labelAnon || !hasAnyName);
 }
 
 function resolveAuthor(row: any): string {
-  const cands = [
-    row?.author,
-    row?.authorName,
-    row?.memberName,
-    row?.nickname,
-    row?.userName,
-    row?.writerName,
-  ]
+  const cands = [row?.author, row?.authorName, row?.memberName, row?.nickname, row?.userName, row?.writerName]
     .map((v) => (v == null ? undefined : String(v).trim()))
     .filter(Boolean) as string[];
   return cands[0] ?? '익명';
@@ -114,7 +99,7 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
 
   const authorLabel = resolveAuthor(data);
   const avatarResolved = resolveAvatar(data);
-  const avatarSrc = anon ? DEFAULT_AV : (avatarResolved || DEFAULT_AV);
+  const avatarSrc = anon ? DEFAULT_AV : avatarResolved || DEFAULT_AV;
   const dateLabel = useMemo(() => formatDate(data?.createdAt), [data?.createdAt]);
 
   const bodyText = resolveBody(data);
@@ -123,7 +108,6 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
 
   return (
     <Wrap $child={child} $first={isFirst}>
-
       <MoreBtn
         onPress={() => onPressMore?.(data)}
         disabled={!onPressMore}
@@ -153,20 +137,10 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
       {!!bodyText && <Body>{bodyText}</Body>}
 
       <Footer>
-        <Act
-          onPress={onPressLike}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Like this comment"
-        >
-          <AntDesign
-            name={likedByMe ? 'like1' : 'like2'}
-            size={14}
-            color={likedByMe ? '#30F59B' : '#cfd4da'}
-          />
+        <Act onPress={onPressLike} hitSlop={8} accessibilityRole="button" accessibilityLabel="Like this comment">
+          <AntDesign name={likedByMe ? 'like1' : 'like2'} size={14} color={likedByMe ? '#30F59B' : '#cfd4da'} />
           <Count $active={likedByMe}>{likeCount}</Count>
         </Act>
-
       </Footer>
     </Wrap>
   );
@@ -174,7 +148,7 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
 
 /* ---------- 스타일 ---------- */
 const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
-position: relative;
+  position: relative;
   background: #171818;
   padding: 15px 17px 25px 20px;
   border-top-width: ${({ $child, $first }) => ($first || $child ? 0 : 1)}px;
@@ -182,23 +156,69 @@ position: relative;
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
-const Row = styled.View`flex-direction: row; align-items: center;`;
-const ReplyIcon = styled.View`width: 22px; align-items: center; justify-content: center; margin-right: 6px;`;
-const Avatar = styled.Image`width: 28px; height: 28px; border-radius: 14px; background: #2a2b2c;`;
-const Meta = styled.View`margin-left: 10px; flex: 1;`;
-const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
-const Sub = styled.Text`color: #9aa0a6; font-size: 11px; margin-top: 2px;`;
-const More = styled.Text`color: #9aa0a6; font-size: 18px; padding: 4px 6px;`;
-const Body = styled.Text`color: #d9dcdf; font-size: 13px; line-height: 18px; margin-top: 6px;`;
-const Footer = styled.View`margin-top: 6px; flex-direction: row; align-items: center;`;
-const Act = styled.Pressable`flex-direction: row; align-items: center; margin-right: 16px;`;
+const Row = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const ReplyIcon = styled.View`
+  width: 22px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+`;
+const Avatar = styled.Image`
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background: #2a2b2c;
+`;
+const Meta = styled.View`
+  margin-left: 10px;
+  flex: 1;
+`;
+const Author = styled.Text`
+  color: #fff;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const Sub = styled.Text`
+  color: #9aa0a6;
+  font-size: 11px;
+  margin-top: 2px;
+`;
+const More = styled.Text`
+  color: #9aa0a6;
+  font-size: 18px;
+  padding: 4px 6px;
+`;
+const Body = styled.Text`
+  color: #d9dcdf;
+  font-size: 13px;
+  line-height: 18px;
+  margin-top: 6px;
+`;
+const Footer = styled.View`
+  margin-top: 6px;
+  flex-direction: row;
+  align-items: center;
+`;
+const Act = styled.Pressable`
+  flex-direction: row;
+  align-items: center;
+  margin-right: 16px;
+`;
 const Count = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
-  margin-left: 6px; font-size: 12px;
+  margin-left: 6px;
+  font-size: 12px;
 `;
 const AnonBadge = styled.Text`
-  color: #000; background: #30f59b; border-radius: 4px;
-  padding: 1px 6px; margin-right: 6px; font-size: 10px;
+  color: #000;
+  background: #30f59b;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-right: 6px;
+  font-size: 10px;
 `;
 
 const MoreBtn = styled.Pressable`

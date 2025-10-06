@@ -1,14 +1,23 @@
-import React, { useState } from "react";
-import styled from "styled-components/native";
+import React, { useState } from 'react';
+import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
-import {StatusBar,TouchableOpacity, Alert, Image as RNImage, ImageSourcePropType, Modal, KeyboardAvoidingView,Platform,ScrollView} from 'react-native';
+import {
+  StatusBar,
+  TouchableOpacity,
+  Alert,
+  Image as RNImage,
+  ImageSourcePropType,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import CustomButton from '@/components/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Asset } from "expo-asset";
-
+import { Asset } from 'expo-asset';
 
 const MOCK_ME = {
   name: 'Alice Kori, Kim',
@@ -35,9 +44,7 @@ const CreateSpaceScreen = () => {
 
   const openAvatarSheet = () => {
     if (avatarUrl) {
-      const cur = AVATARS.findIndex(
-        img => (RNImage.resolveAssetSource(img)?.uri ?? '') === avatarUrl
-      );
+      const cur = AVATARS.findIndex((img) => (RNImage.resolveAssetSource(img)?.uri ?? '') === avatarUrl);
       if (cur >= 0) {
         setSelectedAvatarIdx(cur);
         setCustomPhotoUri(undefined);
@@ -68,7 +75,10 @@ const CreateSpaceScreen = () => {
     const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
     const granted = cam.status === 'granted' && lib.status === 'granted';
     if (!granted) {
-      Alert.alert('Permission required', 'Camera and photo library access is needed.\n\nYour photo will be used in Linked Space chatting room profile.');
+      Alert.alert(
+        'Permission required',
+        'Camera and photo library access is needed.\n\nYour photo will be used in Linked Space chatting room profile.',
+      );
     }
     return granted;
   };
@@ -115,14 +125,14 @@ const CreateSpaceScreen = () => {
     );
   };
 
-  const handleSave =() => {
+  const handleSave = () => {
     router.push({
       pathname: '../../screens/chatscreen/NewSpaceCreated',
-      params: { 
+      params: {
         spaceName: text,
         spaceDescription: explainText,
         spaceImageUrl: avatarUrl,
-        index:selectedAvatarIdx.toString()
+        index: selectedAvatarIdx.toString(),
       },
     });
   };
@@ -140,58 +150,56 @@ const CreateSpaceScreen = () => {
             <SaveText>Save</SaveText>
           </TouchableOpacity>
         </HeaderContainer>
-      
+
         <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ flex: 1 }}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0} // 네비게이션 헤더 있으면 조정
-          >
-        <ProfileContainer>
-          <ProfileBox onPress={openAvatarSheet}>
-            <ProfileImage source={
-              avatarUrl ? { uri: avatarUrl } : AVATARS[0]
-            }/>
-            <CameraContainer>
-              <FontAwesome name="camera" size={17} color="black" />
-            </CameraContainer>
-          </ProfileBox>
-        </ProfileContainer>
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // 네비게이션 헤더 있으면 조정
+        >
+          <ProfileContainer>
+            <ProfileBox onPress={openAvatarSheet}>
+              <ProfileImage source={avatarUrl ? { uri: avatarUrl } : AVATARS[0]} />
+              <CameraContainer>
+                <FontAwesome name="camera" size={17} color="black" />
+              </CameraContainer>
+            </ProfileBox>
+          </ProfileContainer>
 
-        <SpaceNameContainer>
-          <SpaceNameText>Space Name</SpaceNameText>
-          <SpaceNamelengthText>{text.length}/20</SpaceNamelengthText>
-        </SpaceNameContainer>
+          <SpaceNameContainer>
+            <SpaceNameText>Space Name</SpaceNameText>
+            <SpaceNamelengthText>{text.length}/20</SpaceNamelengthText>
+          </SpaceNameContainer>
 
-        <EnterSpaceNameContainer
-          value={text}
-          onChangeText={onChangeText}
-          maxLength={20}
-          placeholder="Enter Space name"
-          placeholderTextColor="#848687"
-        />
-
-        <SpaceDecContainer>
-          <SpaceDecText>Space Description</SpaceDecText>
-        </SpaceDecContainer>
-
-        <EnterDecContainer>
-          <EnterDecInput
-            value={explainText}
-            onChangeText={onChangeExplainText}
-            placeholder="Describe space here"
+          <EnterSpaceNameContainer
+            value={text}
+            onChangeText={onChangeText}
+            maxLength={20}
+            placeholder="Enter Space name"
             placeholderTextColor="#848687"
-            returnKeyType="done"
-            multiline
-            submitBehavior="blurAndSubmit"
-            textAlignVertical="top"
-            maxLength={200}
           />
-          <LimitWrapper>
-            <LimitCount>{explainText.length}/200 limit</LimitCount>
-          </LimitWrapper>
-        </EnterDecContainer>
+
+          <SpaceDecContainer>
+            <SpaceDecText>Space Description</SpaceDecText>
+          </SpaceDecContainer>
+
+          <EnterDecContainer>
+            <EnterDecInput
+              value={explainText}
+              onChangeText={onChangeExplainText}
+              placeholder="Describe space here"
+              placeholderTextColor="#848687"
+              returnKeyType="done"
+              multiline
+              submitBehavior="blurAndSubmit"
+              textAlignVertical="top"
+              maxLength={200}
+            />
+            <LimitWrapper>
+              <LimitCount>{explainText.length}/200 limit</LimitCount>
+            </LimitWrapper>
+          </EnterDecContainer>
         </KeyboardAvoidingView>
-       
+
         {/* Avatar Modal */}
         <Modal
           visible={showAvatarSheet}
@@ -205,40 +213,46 @@ const CreateSpaceScreen = () => {
               <SheetTitle>Select Space Image</SheetTitle>
 
               <AvatarRow>
-                  {/* AVATARS 선택 */}
-                    {AVATARS.map((img, idx) => {
-                      const selected = idx === selectedAvatarIdx && !customPhotoUri; // 🔹 customPhotoUri 있으면 선택 해제
-                      return (
-                        <AvatarItem key={idx} onPress={() => { setSelectedAvatarIdx(idx); setCustomPhotoUri(undefined); }}>
-                          <AvatarCircle selected={selected}>
-                            <AvatarImg source={img} />
-                            {selected && (
-                              <CheckBadge>
-                                <Ionicons name="checkmark" size={14} color="#0f1011" />
-                              </CheckBadge>
-                            )}
-                          </AvatarCircle>
-                        </AvatarItem>
-                      );
-                    })}
-
-                    {/* 카메라/갤러리 선택 */}
-                    <AvatarItem onPress={pickFromCameraOrGallery}>
-                      <AvatarCircle selected={!!customPhotoUri}>
-                        {customPhotoUri ? (
-                          <AvatarImg source={{ uri: customPhotoUri }} />
-                        ) : (
-                          <CameraCircleInner>
-                            <Ionicons name="camera" size={22} color="#cfd4da" />
-                          </CameraCircleInner>
-                        )}
-                        {!!customPhotoUri && (
+                {/* AVATARS 선택 */}
+                {AVATARS.map((img, idx) => {
+                  const selected = idx === selectedAvatarIdx && !customPhotoUri; // 🔹 customPhotoUri 있으면 선택 해제
+                  return (
+                    <AvatarItem
+                      key={idx}
+                      onPress={() => {
+                        setSelectedAvatarIdx(idx);
+                        setCustomPhotoUri(undefined);
+                      }}
+                    >
+                      <AvatarCircle selected={selected}>
+                        <AvatarImg source={img} />
+                        {selected && (
                           <CheckBadge>
                             <Ionicons name="checkmark" size={14} color="#0f1011" />
                           </CheckBadge>
                         )}
                       </AvatarCircle>
                     </AvatarItem>
+                  );
+                })}
+
+                {/* 카메라/갤러리 선택 */}
+                <AvatarItem onPress={pickFromCameraOrGallery}>
+                  <AvatarCircle selected={!!customPhotoUri}>
+                    {customPhotoUri ? (
+                      <AvatarImg source={{ uri: customPhotoUri }} />
+                    ) : (
+                      <CameraCircleInner>
+                        <Ionicons name="camera" size={22} color="#cfd4da" />
+                      </CameraCircleInner>
+                    )}
+                    {!!customPhotoUri && (
+                      <CheckBadge>
+                        <Ionicons name="checkmark" size={14} color="#0f1011" />
+                      </CheckBadge>
+                    )}
+                  </AvatarCircle>
+                </AvatarItem>
               </AvatarRow>
 
               <ButtonRow>
@@ -256,111 +270,107 @@ const CreateSpaceScreen = () => {
 
 export default CreateSpaceScreen;
 
-
-
-const SafeArea=styled.SafeAreaView`
-    flex:1;
+const SafeArea = styled.SafeAreaView`
+  flex: 1;
 `;
-const Container=styled.View`
-    flex:1;
-    background-color:#1D1E1F;
-    padding:0px 15px;
+const Container = styled.View`
+  flex: 1;
+  background-color: #1d1e1f;
+  padding: 0px 15px;
 `;
-const HeaderContainer=styled.View`
-    flex-direction:row;
-    height:70px;
-    align-items:center;
-    justify-content:space-between;
+const HeaderContainer = styled.View`
+  flex-direction: row;
+  height: 70px;
+  align-items: center;
+  justify-content: space-between;
 `;
-const HeaderTitleText=styled.Text`
-    color:#FFFFFF;
-    font-family:PlusJakartaSans_500Medium;
-    font-size:16px;
-
+const HeaderTitleText = styled.Text`
+  color: #ffffff;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 16px;
 `;
-const SaveText=styled.Text`
-    color:#02F59B;
-    font-family:PlusJakartaSans_500Medium;
-    font-size:15px;
+const SaveText = styled.Text`
+  color: #02f59b;
+  font-family: PlusJakartaSans_500Medium;
+  font-size: 15px;
 `;
-const ProfileContainer=styled.View`
-    height:30%;    
-    align-items:center;
-    justify-content:center;
+const ProfileContainer = styled.View`
+  height: 30%;
+  align-items: center;
+  justify-content: center;
 `;
-const ProfileBox=styled.Pressable`
-    width:150px;
-    height:150px;
+const ProfileBox = styled.Pressable`
+  width: 150px;
+  height: 150px;
 `;
-const CameraContainer=styled.View`
-    position:absolute;
-    bottom:20px;
-    right:5px;
-    width:32px;
-    height:32px;
-    border-radius:30px;
-    background-color:#02F59B;
-    justify-content:center;
-    align-items:center;
-    z-index:999;
+const CameraContainer = styled.View`
+  position: absolute;
+  bottom: 20px;
+  right: 5px;
+  width: 32px;
+  height: 32px;
+  border-radius: 30px;
+  background-color: #02f59b;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 `;
-const ProfileImage=styled.Image`
-    width:100%;
-    height:100%;
-    border-radius: 75px;  /* 반지름을 width/2 값으로 */
-    resize-mode: contain;  /* 사진을 꽉 채우게 */
+const ProfileImage = styled.Image`
+  width: 100%;
+  height: 100%;
+  border-radius: 75px; /* 반지름을 width/2 값으로 */
+  resize-mode: contain; /* 사진을 꽉 채우게 */
 `;
-const SpaceNameContainer=styled.View`
-    height:40px;
-    justify-content:space-between;
-    flex-direction:row;
-    align-items:center;
+const SpaceNameContainer = styled.View`
+  height: 40px;
+  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
 `;
-const SpaceNameText=styled.Text`
-    color:#848687;
-    font-family:PlusJakartaSans_600SemiBold;
-    font-size:13px;
+const SpaceNameText = styled.Text`
+  color: #848687;
+  font-family: PlusJakartaSans_600SemiBold;
+  font-size: 13px;
 `;
-const SpaceNamelengthText=styled.Text`
-    color:#CCCFD0;
-    font-family:PlusJakartaSans_400Regular;
-    font-size:13px;
+const SpaceNamelengthText = styled.Text`
+  color: #cccfd0;
+  font-family: PlusJakartaSans_400Regular;
+  font-size: 13px;
 `;
-const EnterSpaceNameContainer=styled.TextInput`
-    background-color:#353637;
-    height:50px;
-    padding-left:10px;
-    border-radius:4px;
-    color: #EDEDED;
+const EnterSpaceNameContainer = styled.TextInput`
+  background-color: #353637;
+  height: 50px;
+  padding-left: 10px;
+  border-radius: 4px;
+  color: #ededed;
 `;
-const SpaceDecContainer=styled.View`
-    height:40px;
-    justify-content:center;
+const SpaceDecContainer = styled.View`
+  height: 40px;
+  justify-content: center;
 `;
-const SpaceDecText=styled.Text`
-    color:#848687;
-    font-family:PlusJakartaSans_600SemiBold;
-    font-size:13px;
-    margin-top:10px;
+const SpaceDecText = styled.Text`
+  color: #848687;
+  font-family: PlusJakartaSans_600SemiBold;
+  font-size: 13px;
+  margin-top: 10px;
 `;
 
-const EnterDecContainer=styled.View`
-    background-color:#353637;
-    height:200px;
-    border-radius:4px;
-    color: #EDEDED;
-    padding-left:10px;
-    position: relative;
-    margin-top:3px;
-
+const EnterDecContainer = styled.View`
+  background-color: #353637;
+  height: 200px;
+  border-radius: 4px;
+  color: #ededed;
+  padding-left: 10px;
+  position: relative;
+  margin-top: 3px;
 `;
-const EnterDecInput=styled.TextInput`
-    flex:1;
-    color: #EDEDED;
-    font-size: 16px;
-    line-height: 24px;
-    font-family:PlusJakartaSans_400Regular;
-    text-align-vertical: top;
+const EnterDecInput = styled.TextInput`
+  flex: 1;
+  color: #ededed;
+  font-size: 16px;
+  line-height: 24px;
+  font-family: PlusJakartaSans_400Regular;
+  text-align-vertical: top;
 `;
 
 const LimitWrapper = styled.View`
@@ -440,7 +450,7 @@ const CheckBadge = styled.View`
   width: 20px;
   height: 20px;
   border-radius: 10px;
-  background: #30F59B;
+  background: #30f59b;
   align-items: center;
   justify-content: center;
   border-width: 2px;

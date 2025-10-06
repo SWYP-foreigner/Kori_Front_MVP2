@@ -4,104 +4,108 @@ import { Alert, Modal, ScrollView } from 'react-native';
 import styled from 'styled-components/native';
 
 export type TagSection = {
-    title: string;
-    items: string[];
-    emojis?: string[];
+  title: string;
+  items: string[];
+  emojis?: string[];
 };
 
 type Props = {
-    visible: boolean;
-    value: string[];
-    onClose: () => void;
-    onChange: (next: string[]) => void;
-    sections: TagSection[];
-    max?: number;
-    title?: string;
+  visible: boolean;
+  value: string[];
+  onClose: () => void;
+  onChange: (next: string[]) => void;
+  sections: TagSection[];
+  max?: number;
+  title?: string;
 };
 
 const DEFAULT_MAX = 5;
 
 export default function BottomSheetTagPicker({
-    visible,
-    value,
-    onClose,
-    onChange,
-    sections,
-    max = DEFAULT_MAX,
-    title = 'Select interests',
+  visible,
+  value,
+  onClose,
+  onChange,
+  sections,
+  max = DEFAULT_MAX,
+  title = 'Select interests',
 }: Props) {
-    const toggle = (tag: string) => {
-        const exists = value.includes(tag);
-        if (exists) {
-            onChange(value.filter((t) => t !== tag));
-        } else {
-            if (value.length >= max) {
-                Alert.alert('Maximum Selection', `You can select up to ${max} tags!`);
-                return;
-            }
-            onChange([...value, tag]);
-        }
-    };
+  const toggle = (tag: string) => {
+    const exists = value.includes(tag);
+    if (exists) {
+      onChange(value.filter((t) => t !== tag));
+    } else {
+      if (value.length >= max) {
+        Alert.alert('Maximum Selection', `You can select up to ${max} tags!`);
+        return;
+      }
+      onChange([...value, tag]);
+    }
+  };
 
-    const clearAll = () => onChange([]);
+  const clearAll = () => onChange([]);
 
-    return (
-        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-            <Overlay activeOpacity={1} onPress={onClose}>
-                <Sheet onStartShouldSetResponder={() => true}>
-                    <Handle />
-                    <HeaderRow>
-                        <TitleText>{title}</TitleText>
-                        <RightRow>
-                            {!!value.length && <CountText>{value.length}/{max}</CountText>}
-                            {!!value.length && (
-                                <PillBtn onPress={clearAll}>
-                                    <PillBtnText>Clear</PillBtnText>
-                                </PillBtn>
-                            )}
-                            <IconBtn onPress={onClose}>
-                                <AntDesign name="close" size={18} color="#cfd4da" />
-                            </IconBtn>
-                        </RightRow>
-                    </HeaderRow>
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Overlay activeOpacity={1} onPress={onClose}>
+        <Sheet onStartShouldSetResponder={() => true}>
+          <Handle />
+          <HeaderRow>
+            <TitleText>{title}</TitleText>
+            <RightRow>
+              {!!value.length && (
+                <CountText>
+                  {value.length}/{max}
+                </CountText>
+              )}
+              {!!value.length && (
+                <PillBtn onPress={clearAll}>
+                  <PillBtnText>Clear</PillBtnText>
+                </PillBtn>
+              )}
+              <IconBtn onPress={onClose}>
+                <AntDesign name="close" size={18} color="#cfd4da" />
+              </IconBtn>
+            </RightRow>
+          </HeaderRow>
 
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        {sections.map((sec, idx) => (
-                            <Section key={`${sec.title}-${idx}`}>
-                                <SectionTitle>{sec.title}</SectionTitle>
-                                <TagsWrap>
-                                    {sec.items.map((tag, i) => {
-                                        const selected = value.includes(tag);
-                                        const emoji = sec.emojis?.[i] ?? '';
-                                        return (
-                                            <Tag key={tag} selected={selected} onPress={() => toggle(tag)}>
-                                                {!!emoji && <Emoji>{emoji}</Emoji>}
-                                                <TagText selected={selected}>{tag}</TagText>
-                                                {selected && <AntDesign name="check" size={14} color="#02F59B" />}
-                                            </Tag>
-                                        );
-                                    })}
-                                </TagsWrap>
-                            </Section>
-                        ))}
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {sections.map((sec, idx) => (
+              <Section key={`${sec.title}-${idx}`}>
+                <SectionTitle>{sec.title}</SectionTitle>
+                <TagsWrap>
+                  {sec.items.map((tag, i) => {
+                    const selected = value.includes(tag);
+                    const emoji = sec.emojis?.[i] ?? '';
+                    return (
+                      <Tag key={tag} selected={selected} onPress={() => toggle(tag)}>
+                        {!!emoji && <Emoji>{emoji}</Emoji>}
+                        <TagText selected={selected}>{tag}</TagText>
+                        {selected && <AntDesign name="check" size={14} color="#02F59B" />}
+                      </Tag>
+                    );
+                  })}
+                </TagsWrap>
+              </Section>
+            ))}
 
-                        {value.length >= max && (
-                            <Warn>
-                                <AntDesign name="closecircle" size={16} color="#FF6B6B" />
-                                <WarnText>You can select up to {max} tags!</WarnText>
-                            </Warn>
-                        )}
-                        <BottomPad />
-                    </ScrollView>
-                </Sheet>
-            </Overlay>
-        </Modal>
-    );
+            {value.length >= max && (
+              <Warn>
+                <AntDesign name="closecircle" size={16} color="#FF6B6B" />
+                <WarnText>You can select up to {max} tags!</WarnText>
+              </Warn>
+            )}
+            <BottomPad />
+          </ScrollView>
+        </Sheet>
+      </Overlay>
+    </Modal>
+  );
 }
 
 const Overlay = styled.TouchableOpacity`
   flex: 1;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.55);
   justify-content: flex-end;
 `;
 
@@ -207,12 +211,12 @@ const Warn = styled.View`
   align-items: center;
   justify-content: center;
   padding: 14px 16px;
-  background: rgba(255,107,107,0.1);
+  background: rgba(255, 107, 107, 0.1);
   margin: 8px 0 0 0;
   border-radius: 8px;
 `;
 const WarnText = styled.Text`
-  color: #FF6B6B;
+  color: #ff6b6b;
   font-size: 13px;
   font-family: 'PlusJakartaSans-Regular';
   margin-left: 8px;

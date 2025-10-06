@@ -8,8 +8,6 @@ import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
 
-
-
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
 
@@ -30,7 +28,6 @@ type Props = {
   imageKey?: string;
 
   personalityEmojis?: string[];
-
 
   isFollowed?: boolean;
   onFollow?: (userId: number) => void;
@@ -66,10 +63,7 @@ const COL_GAP = 18;
 const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;
 
-const genderIconByType: Record<
-  NonNullable<Props['gender']>,
-  keyof typeof MaterialCommunityIcons.glyphMap
-> = {
+const genderIconByType: Record<NonNullable<Props['gender']>, keyof typeof MaterialCommunityIcons.glyphMap> = {
   male: 'gender-male',
   female: 'gender-female',
   unspecified: 'help-circle-outline',
@@ -165,11 +159,7 @@ export default function FriendCard(props: Props) {
           <Divider />
           {collapsible && (
             <ChevronButton onPress={() => setExpanded(!expanded)}>
-              <MaterialIcons
-                name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                size={20}
-                color="#8a8a8a"
-              />
+              <MaterialIcons name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} size={20} color="#8a8a8a" />
             </ChevronButton>
           )}
         </DividerWrap>
@@ -209,7 +199,8 @@ export default function FriendCard(props: Props) {
             <TagsWrap>
               {personalities.map((p, i) => {
                 const emoji = personalityEmojis[i] ?? getEmojiFor(p);
-                const label = emoji ? `${emoji} ${p}` : p; return <Tag key={`${p}-${i}`} label={label} />;
+                const label = emoji ? `${emoji} ${p}` : p;
+                return <Tag key={`${p}-${i}`} label={label} />;
               })}
             </TagsWrap>
           </>
@@ -219,18 +210,24 @@ export default function FriendCard(props: Props) {
           {mode === 'received' ? (
             <>
               <CustomButton label="Accept" tone="mint" filled leftIcon="add" onPress={handlePrimaryPress} />
-              <CustomButton
-                label="Decline"
-                tone="danger"
-                filled
-                leftIcon="close"
-                onPress={() => onCancel?.(userId)}
-              />
+              <CustomButton label="Decline" tone="danger" filled leftIcon="close" onPress={() => onCancel?.(userId)} />
             </>
           ) : mode === 'sent' ? (
             <>
-              <CustomButton label="Following" tone="muted" filled={false} leftIcon="check" onPress={handlePrimaryPress} />
-              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={() => onChat?.()} />
+              <CustomButton
+                label="Following"
+                tone="muted"
+                filled={false}
+                leftIcon="check"
+                onPress={handlePrimaryPress}
+              />
+              <CustomButton
+                label="Chat"
+                tone="black"
+                filled
+                leftIcon="chat-bubble-outline"
+                onPress={() => onChat?.()}
+              />
             </>
           ) : (
             <>
@@ -247,7 +244,13 @@ export default function FriendCard(props: Props) {
               ) : (
                 <CustomButton label="Follow" tone="mint" filled leftIcon="add" onPress={() => onFollow?.(userId)} />
               )}
-              <CustomButton label="Chat" tone="black" filled leftIcon="chat-bubble-outline" onPress={() => onChat?.()} />
+              <CustomButton
+                label="Chat"
+                tone="black"
+                filled
+                leftIcon="chat-bubble-outline"
+                onPress={() => onChat?.()}
+              />
             </>
           )}
         </Actions>
@@ -273,7 +276,9 @@ const CardInner = styled.View`
   border-radius: ${CARD_RADIUS}px;
   padding: ${P_TOP}px ${P_H}px ${P_BOTTOM}px ${P_H}px;
 `;
-const Top = styled.View` align-items: center; `;
+const Top = styled.View`
+  align-items: center;
+`;
 const Name = styled.Text`
   margin-top: ${NAME_MT}px;
   font-size: 18px;
@@ -282,10 +287,26 @@ const Name = styled.Text`
   color: #111;
   letter-spacing: 0.1px;
 `;
-const MetaLine = styled.View` margin-top: ${META_MT}px; flex-direction: row; align-items: center; `;
-const GenderIconSpacer = styled.View` margin: 1px 4px 0 4px; `;
-const MetaDim = styled.Text` font-family: 'PlusJakartaSans_400Regular'; color: #9a9a9a; font-size: 13px; line-height: 18px; `;
-const MetaStrong = styled.Text` font-family: 'PlusJakartaSans_500SemiBold'; color: #111; font-size: 13px; line-height: 18px; `;
+const MetaLine = styled.View`
+  margin-top: ${META_MT}px;
+  flex-direction: row;
+  align-items: center;
+`;
+const GenderIconSpacer = styled.View`
+  margin: 1px 4px 0 4px;
+`;
+const MetaDim = styled.Text`
+  font-family: 'PlusJakartaSans_400Regular';
+  color: #9a9a9a;
+  font-size: 13px;
+  line-height: 18px;
+`;
+const MetaStrong = styled.Text`
+  font-family: 'PlusJakartaSans_500SemiBold';
+  color: #111;
+  font-size: 13px;
+  line-height: 18px;
+`;
 const Bio = styled.Text`
   margin-top: ${BIO_MT}px;
   margin-bottom: ${BIO_MB}px;
@@ -296,27 +317,101 @@ const Bio = styled.Text`
   font-family: 'PlusJakartaSans_300Light';
 `;
 const DividerWrap = styled.View`
-  position: relative; align-self: stretch; align-items: center; justify-content: center;
-  margin-top: 9px; margin-bottom: 18px;
+  position: relative;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  margin-top: 9px;
+  margin-bottom: 18px;
 `;
-const Divider = styled.View` height: 1px; align-self: stretch; background-color: ${DIVIDER_COLOR}; `;
+const Divider = styled.View`
+  height: 1px;
+  align-self: stretch;
+  background-color: ${DIVIDER_COLOR};
+`;
 const ChevronButton = styled.Pressable`
-  position: absolute; top: 50%; margin-top: -${CHEVRON.lift}px;
-  width: ${CHEVRON.size}px; height: ${CHEVRON.size}px; border-radius: ${CHEVRON.size / 2}px;
-  border-width: ${CHEVRON.ring}px; border-color: #dcdcdc; background-color: #ffffff; align-items: center; justify-content: center;
+  position: absolute;
+  top: 50%;
+  margin-top: -${CHEVRON.lift}px;
+  width: ${CHEVRON.size}px;
+  height: ${CHEVRON.size}px;
+  border-radius: ${CHEVRON.size / 2}px;
+  border-width: ${CHEVRON.ring}px;
+  border-color: #dcdcdc;
+  background-color: #ffffff;
+  align-items: center;
+  justify-content: center;
 `;
-const Row = styled.View` flex-direction: row; align-self: stretch; `;
-const RowTop = styled(Row)` margin-top: ${SECTION_GAP_TOP}px; `;
-const Col = styled.View` flex: 1; `;
-const ColRight = styled(Col)` margin-left: ${COL_GAP}px; `;
-const LabelRow = styled.View` flex-direction: row; align-items: center; `;
-const Icon = styled.Image` width: 12px; height: 12px; tint-color: #808080; `;
-const Label = styled.Text` font-size: 12px; line-height: 16px; color: #808080; font-family: 'PlusJakartaSans_400Regular'; margin-left: 6px; `;
-const CategoryValue = styled.Text` margin-top: 4px; font-size: 14px; line-height: 18px; font-family: 'PlusJakartaSans_400Regular'; color: #000000; `;
-const LangWrap = styled.View` margin-top: 4px; flex-direction: row; align-items: center; flex-wrap: wrap; `;
-const LangText = styled.Text` font-size: 13px; line-height: 18px; font-family: 'PlusJakartaSans_400Regular'; color: #000000; `;
-const LangDot = styled.Text` font-size: 8px; color: #9e9e9e; margin: 0 6px; `;
-const TagsWrap = styled.View` flex-direction: row; flex-wrap: wrap; gap: 10px; margin-top: 2px; `;
-const Actions = styled.View` margin-top: 16px; flex-direction: row; gap: ${BTN_GAP}px; `;
-const InterestHeader = styled.View` flex-direction: row; align-items: center; margin-top: 14px; margin-bottom: 8px; `;
-const HeartIcon = styled(MaterialCommunityIcons)` margin-right: 4px; `;
+const Row = styled.View`
+  flex-direction: row;
+  align-self: stretch;
+`;
+const RowTop = styled(Row)`
+  margin-top: ${SECTION_GAP_TOP}px;
+`;
+const Col = styled.View`
+  flex: 1;
+`;
+const ColRight = styled(Col)`
+  margin-left: ${COL_GAP}px;
+`;
+const LabelRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const Icon = styled.Image`
+  width: 12px;
+  height: 12px;
+  tint-color: #808080;
+`;
+const Label = styled.Text`
+  font-size: 12px;
+  line-height: 16px;
+  color: #808080;
+  font-family: 'PlusJakartaSans_400Regular';
+  margin-left: 6px;
+`;
+const CategoryValue = styled.Text`
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 18px;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: #000000;
+`;
+const LangWrap = styled.View`
+  margin-top: 4px;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+const LangText = styled.Text`
+  font-size: 13px;
+  line-height: 18px;
+  font-family: 'PlusJakartaSans_400Regular';
+  color: #000000;
+`;
+const LangDot = styled.Text`
+  font-size: 8px;
+  color: #9e9e9e;
+  margin: 0 6px;
+`;
+const TagsWrap = styled.View`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+`;
+const Actions = styled.View`
+  margin-top: 16px;
+  flex-direction: row;
+  gap: ${BTN_GAP}px;
+`;
+const InterestHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 14px;
+  margin-bottom: 8px;
+`;
+const HeartIcon = styled(MaterialCommunityIcons)`
+  margin-right: 4px;
+`;

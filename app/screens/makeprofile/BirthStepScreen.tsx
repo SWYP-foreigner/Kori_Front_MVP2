@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import {useProfile} from '../../contexts/ProfileContext'
+import { useProfile } from '../../contexts/ProfileContext';
 
 export default function BirthdaySelectionScreen() {
   const router = useRouter();
@@ -33,12 +33,7 @@ export default function BirthdaySelectionScreen() {
     // 2. 실제 날짜 존재 여부
     const [month, day, year] = input.split('/').map(Number);
     const date = new Date(year, month - 1, day);
-    if (
-      date.getFullYear() !== year ||
-      date.getMonth() !== month - 1 ||
-      date.getDate() !== day
-    )
-      return false;
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return false;
 
     // 3. 미래 날짜 방지
     const today = new Date();
@@ -48,7 +43,7 @@ export default function BirthdaySelectionScreen() {
   };
 
   const moveNextScreen = () => {
-    updateProfile('birthday',text);
+    updateProfile('birthday', text);
     router.push('./PurposeStepScreen');
   };
 
@@ -163,8 +158,7 @@ const BirthBox = styled.View`
 const BirthInput = styled.TextInput`
   flex: 1;
   padding-left: 16px;
-  color: ${(props) =>
-    props.isText?.length === 10 ? (props.isValid ? '#ffffff' : '#FF4F4F') : '#ffffff'};
+  color: ${(props) => (props.isText?.length === 10 ? (props.isValid ? '#ffffff' : '#FF4F4F') : '#ffffff')};
 `;
 
 const ErrorWrapper = styled.View`

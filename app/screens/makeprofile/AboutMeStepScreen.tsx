@@ -35,7 +35,7 @@ export default function NameStepScreen() {
         <Subtitle>Tell us about your short story.</Subtitle>
 
         <Form>
-          <InputWrapper >
+          <InputWrapper>
             <Input
               value={AboutMe}
               onChangeText={setAboutMe}
@@ -58,11 +58,7 @@ export default function NameStepScreen() {
 
         <Spacer />
 
-        <NextButton
-          onPress={handleNext}
-          disabled={!canProceed}
-          canProceed={canProceed}
-        >
+        <NextButton onPress={handleNext} disabled={!canProceed} canProceed={canProceed}>
           <ButtonText>Next</ButtonText>
         </NextButton>
 
@@ -86,7 +82,7 @@ const Container = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5BD08D;
+  color: #5bd08d;
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
@@ -98,7 +94,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 40px;
   line-height: 40px;
   letter-spacing: 0.2px;
@@ -128,7 +124,7 @@ const InputWrapper = styled.View`
 
 const Input = styled.TextInput`
   flex: 1;
-  color: #EDEDED;
+  color: #ededed;
   font-size: 16px;
   line-height: 24px;
   font-family: PlusJakartaSans_400Regular;
@@ -142,7 +138,7 @@ const CharacterCountWrapper = styled.View`
 `;
 
 const CharacterCount = styled.Text`
-  color: ${props => props.isError ? '#FF6B6B' : '#666'};
+  color: ${(props) => (props.isError ? '#FF6B6B' : '#666')};
   font-size: 12px;
   font-family: 'PlusJakartaSans-Regular';
 `;
@@ -156,13 +152,13 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: #02F59B;
+  background-color: #02f59b;
   margin-bottom: 8px;
   opacity: ${(props) => (props.canProceed ? 1 : 0.5)};
 `;
 
 const ButtonText = styled.Text`
-  color: #1D1E1F;
+  color: #1d1e1f;
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';

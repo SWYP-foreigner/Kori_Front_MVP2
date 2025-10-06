@@ -19,25 +19,24 @@ export default function SortTabs({ value, onChange }: Props) {
         <TabText $active={value === 'hot'}>Hot</TabText>
       </Tab>
     </Bar>
-  )
+  );
 }
 
 const Bar = styled.View`
   flex-direction: row;
   align-items: center;
-  padding: 4px 12px 0 12px; 
+  padding: 4px 12px 0 12px;
 
   gap: 8px;
 `;
 const SortBy = styled.Text`
-  color:#848687;
-  font-size:13px;
-  font-family:'PlusJakartaSans_Regular';
-`;
-const Tab = styled.Pressable<{ $active?: boolean }>`
-`;
-const TabText = styled.Text<{ $active?: boolean }>`
-  color: ${({ $active }) => $active ? '#E9E9E9' : '#848687'};
+  color: #848687;
   font-size: 13px;
-  font-family:'PlusJakartaSans_Regular';
+  font-family: 'PlusJakartaSans_Regular';
+`;
+const Tab = styled.Pressable<{ $active?: boolean }>``;
+const TabText = styled.Text<{ $active?: boolean }>`
+  color: ${({ $active }) => ($active ? '#E9E9E9' : '#848687')};
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_Regular';
 `;

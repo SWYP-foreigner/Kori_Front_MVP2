@@ -1,40 +1,39 @@
 import React from 'react';
 import styled from 'styled-components/native';
 
-export type Category =
-    | 'All' | 'News' | 'Tip' | 'Q&A' | 'Event' | 'Free talk' | 'Activity';
+export type Category = 'All' | 'News' | 'Tip' | 'Q&A' | 'Event' | 'Free talk' | 'Activity';
 
 const CATS: Category[] = ['All', 'News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'];
 
 type Props = { value: Category; onChange: (c: Category) => void };
 
 export default function CategoryChips({ value, onChange }: Props) {
-    return (
-        <Row horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
-            {CATS.map(c => {
-                const active = c === value;
-                return (
-                    <Chip key={c} $active={active} onPress={() => onChange(c)}>
-                        <ChipText $active={active}>{c}</ChipText>
-                    </Chip>
-                );
-            })}
-        </Row>
-    );
+  return (
+    <Row horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
+      {CATS.map((c) => {
+        const active = c === value;
+        return (
+          <Chip key={c} $active={active} onPress={() => onChange(c)}>
+            <ChipText $active={active}>{c}</ChipText>
+          </Chip>
+        );
+      })}
+    </Row>
+  );
 }
 
 const Row = styled.ScrollView`
-  padding: 8px 12px 0 12px; 
+  padding: 8px 12px 0 12px;
   gap: 8px;
 ` as unknown as typeof import('react-native').ScrollView;
 
 const Chip = styled.Pressable<{ $active?: boolean }>`
-  padding: 6px 12px;   
-  height: 32px;       
+  padding: 6px 12px;
+  height: 32px;
   border-radius: 10px;
   background: ${({ $active }) => ($active ? '#02F59B' : '#353637')};
   margin-right: 8px;
-  align-items: center;      
+  align-items: center;
   justify-content: center;
 `;
 

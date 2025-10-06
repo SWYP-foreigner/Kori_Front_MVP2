@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar} from 'react-native';
+import { SafeAreaView, StatusBar } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import {useProfile} from '../../contexts/ProfileContext'
+import { useProfile } from '../../contexts/ProfileContext';
 import { useRouter } from 'expo-router';
 
 // ------------------------
@@ -11,66 +11,58 @@ import { useRouter } from 'expo-router';
 export default function NameStepScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const canProceed = firstName&&lastName;
-  const router=useRouter();
+  const canProceed = firstName && lastName;
+  const router = useRouter();
   const { profileData, updateProfile } = useProfile();
-  
-  const handleNext=()=>{
 
-    updateProfile('firstname',firstName);
-    updateProfile('lastname',lastName);
-    router.push('./GenderStepScreen')
-  }
+  const handleNext = () => {
+    updateProfile('firstname', firstName);
+    updateProfile('lastname', lastName);
+    router.push('./GenderStepScreen');
+  };
 
   return (
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
-        <Container>
-          <StepText>Step 1 / 9</StepText>
+      <Container>
+        <StepText>Step 1 / 9</StepText>
 
-          <TitleWrapper>
-            <Title>Tell us</Title>
-            <Title>about your name.</Title>
-          </TitleWrapper>
+        <TitleWrapper>
+          <Title>Tell us</Title>
+          <Title>about your name.</Title>
+        </TitleWrapper>
 
-          <Subtitle>This is how it’ll appear on your profile.</Subtitle>
-          <Form>
+        <Subtitle>This is how it’ll appear on your profile.</Subtitle>
+        <Form>
           <InputWrapper>
-          
-           <Input
+            <Input
               value={firstName}
               onChangeText={setFirstName}
               placeholder="First Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
-              
             />
-            {firstName&&firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {firstName && firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
           <InputWrapper>
-             <Input
+            <Input
               value={lastName}
               onChangeText={setLastName}
               placeholder="Last Name"
               placeholderTextColor="#616262"
               autoCapitalize="words"
             />
-            {lastName&&lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {lastName && lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
           </InputWrapper>
-        
-          </Form>
+        </Form>
 
-          <Spacer />
-          <NextButton
-            onPress={handleNext}
-            disabled={!canProceed}
-            canProceed={canProceed}
-          >
-            <ButtonText>Next</ButtonText>
-          </NextButton>
+        <Spacer />
+        <NextButton onPress={handleNext} disabled={!canProceed} canProceed={canProceed}>
+          <ButtonText>Next</ButtonText>
+        </NextButton>
 
-          <BottomSpacer />
-        </Container>
+        <BottomSpacer />
+      </Container>
     </SafeArea>
   );
 }
@@ -89,11 +81,11 @@ const Container = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5BD08D;
+  color: #5bd08d;
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
-  margin-top:40px;
+  margin-top: 40px;
 `;
 
 const TitleWrapper = styled.View`
@@ -101,7 +93,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 40px;
   line-height: 40px;
   letter-spacing: 0.2px;
@@ -118,20 +110,20 @@ const Subtitle = styled.Text`
 const Form = styled.View`
   margin-top: 50px;
 `;
-const InputWrapper=styled.View`
-  width:100%;
-  height:44px;
-  border-radius:4px;
-  background-color: #353637 ;
-  flex-direction:row;
-  align-items:center;
-  margin-top:16px;
+const InputWrapper = styled.View`
+  width: 100%;
+  height: 44px;
+  border-radius: 4px;
+  background-color: #353637;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 16px;
   padding: 0px 12px 0px 0px;
 `;
 const Input = styled.TextInput`
-  flex:1;
+  flex: 1;
   padding: 0 16px;
-  color: #EDEDED;
+  color: #ededed;
 `;
 
 const Spacer = styled.View`
@@ -143,17 +135,16 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: #02F59B;
+  background-color: #02f59b;
   margin-bottom: 8px;
   opacity: ${(props) => (props.canProceed ? 1 : 0.5)};
 `;
 
 const ButtonText = styled.Text`
-  color: #1D1E1F;
+  color: #1d1e1f;
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';
-
 `;
 
 const BottomSpacer = styled.View`

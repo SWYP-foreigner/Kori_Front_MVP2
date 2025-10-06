@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
 export default function ChatLayout() {
   return (
@@ -7,14 +7,14 @@ export default function ChatLayout() {
         name="index"
         options={{
           headerShown: false,
-          title: "채팅",
+          title: '채팅',
         }}
       />
       <Stack.Screen
         name="CreateSpaceScreen"
         options={{
           headerShown: false,
-          title: "채팅",
+          title: '채팅',
         }}
       />
     </Stack>
