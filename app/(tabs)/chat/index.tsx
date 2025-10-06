@@ -1,10 +1,10 @@
-import { SafeAreaView, Text,StatusBar ,FlatList,Platform} from 'react-native';
+import { SafeAreaView, Text, StatusBar, FlatList, Platform } from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import MyChatRoomBox from '@/components/MyChatRoomBox';
 import GroupChatRoomBox from '@/components/GroupChatRoomBox';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useEffect, useState , useRef,useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Client } from '@stomp/stompjs';
@@ -12,42 +12,42 @@ import * as SecureStore from 'expo-secure-store';
 import api from '@/api/axiosInstance';
 
 type ChatRoom = {
-  roomId: string;        // 채팅방 아이디
-  roomName: string;      // 채팅방 이름
+  roomId: string; // 채팅방 아이디
+  roomName: string; // 채팅방 이름
   lastMessageContent: string;
-  lastMessageTime: string; 
+  lastMessageTime: string;
   unreadCount: number;
   roomImageUrl?: string;
   participantCount?: number;
 };
 
 export default function ChatScreen() {
-  const router=useRouter();
-  const [chatrooms,setChatRooms]=useState<ChatRoom[]>([]);
-  const stompClient =useRef<Client | null>(null);
-  const [isGroupChat,setisGroupChat]=useState(false);
+  const router = useRouter();
+  const [chatrooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const stompClient = useRef<Client | null>(null);
+  const [isGroupChat, setisGroupChat] = useState(false);
 
-  const changeTomyChat=()=> setisGroupChat(false);
-  const changeToGroupChat=()=> setisGroupChat(true);
-  const createNewSpace=()=> router.push('/chat/CreateSpaceScreen');
+  const changeTomyChat = () => setisGroupChat(false);
+  const changeToGroupChat = () => setisGroupChat(true);
+  const createNewSpace = () => router.push('/chat/CreateSpaceScreen');
 
   // 🔹 accessToken 재발급 함수
   const refreshTokenIfNeeded = async (): Promise<string | null> => {
     try {
-      const refresh = await SecureStore.getItemAsync("refresh");
+      const refresh = await SecureStore.getItemAsync('refresh');
       if (!refresh) return null;
-      const res = await api.post("/api/v1/member/refresh", { refreshToken: refresh });
+      const res = await api.post('/api/v1/member/refresh', { refreshToken: refresh });
       const newToken = res.data.data.accessToken;
-      const newRefreshToken=res.data.data.refreshToken 
+      const newRefreshToken = res.data.data.refreshToken;
       if (newToken) {
-        await SecureStore.setItemAsync("jwt", newToken);
+        await SecureStore.setItemAsync('jwt', newToken);
         await SecureStore.setItemAsync('refresh', newRefreshToken);
-        console.log("[AUTH] accessToken 재발급 성공");
+        console.log('[AUTH] accessToken 재발급 성공');
         return newToken;
       }
       return null;
     } catch (err) {
-      console.error("[AUTH] 토큰 재발급 실패", err);
+      console.error('[AUTH] 토큰 재발급 실패', err);
       return null;
     }
   };
@@ -56,7 +56,7 @@ export default function ChatScreen() {
   const fetchRooms = async () => {
     try {
       const res = await api.get('/api/v1/chat/rooms');
-      
+
       setChatRooms(res.data.data);
     } catch (err) {
       console.error('채팅방 불러오기 실패:', err);
@@ -67,17 +67,17 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchRooms();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
     const connectStomp = async () => {
-      let token = await SecureStore.getItemAsync("jwt");
-      const MyuserId = await SecureStore.getItemAsync("MyuserId");
+      let token = await SecureStore.getItemAsync('jwt');
+      const MyuserId = await SecureStore.getItemAsync('MyuserId');
 
       if (!token) {
         token = await refreshTokenIfNeeded();
-        if (!token) return console.error("[AUTH] 토큰 없음, STOMP 연결 불가");
+        if (!token) return console.error('[AUTH] 토큰 없음, STOMP 연결 불가');
       }
 
       stompClient.current = new Client({
@@ -103,21 +103,21 @@ export default function ChatScreen() {
 
       // 🔹 STOMP Error → 토큰 만료 시 refresh 후 재연결
       stompClient.current.onStompError = async (frame) => {
-                console.log('❌ STOMP 오류', frame.headers['message']);
-                console.log("[AUTH] 토큰 만료 감지, refresh 시도");
-                const newToken = await refreshTokenIfNeeded();
-                if (!newToken) return console.log("[AUTH] 토큰 재발급 실패");
-                stompClient.current?.deactivate();
-                connectStomp();    
+        console.log('❌ STOMP 오류', frame.headers['message']);
+        console.log('[AUTH] 토큰 만료 감지, refresh 시도');
+        const newToken = await refreshTokenIfNeeded();
+        if (!newToken) return console.log('[AUTH] 토큰 재발급 실패');
+        stompClient.current?.deactivate();
+        connectStomp();
       };
-      stompClient.current.onWebSocketClose=()=>{
-        console.log("웹소켓 끊김");
-      }
+      stompClient.current.onWebSocketClose = () => {
+        console.log('웹소켓 끊김');
+      };
 
       stompClient.current.onWebSocketError = (evt) => console.error('WebSocket ERROR', evt);
       stompClient.current.onWebSocketClose = (evt) => console.log('WebSocket CLOSE', evt);
 
-      console.log("🚀 STOMP 연결 시도...");
+      console.log('🚀 STOMP 연결 시도...');
       stompClient.current.activate();
     };
 
@@ -130,8 +130,8 @@ export default function ChatScreen() {
 
   const goSearch = () => {
     router.push({
-      pathname: "../../screens/chatscreen/SearchChatRoom",
-      params: { isGroupChat: String(isGroupChat) }, 
+      pathname: '../../screens/chatscreen/SearchChatRoom',
+      params: { isGroupChat: String(isGroupChat) },
     });
   };
 
@@ -165,11 +165,11 @@ export default function ChatScreen() {
           <FlatList
             data={chatrooms}
             renderItem={({ item }) => <MyChatRoomBox data={item} />}
-            keyExtractor={item => item.roomId}
+            keyExtractor={(item) => item.roomId}
             showsVerticalScrollIndicator={false}
           />
         ) : (
-          <GroupChatRoomBox/>
+          <GroupChatRoomBox />
         )}
 
         {isGroupChat && (
@@ -192,13 +192,13 @@ const Container = styled.View`
   padding: 0px 20px;
 `;
 const Header = styled.View`
-  height:70px;
+  height: 70px;
   flex-direction: row;
-  justify-content:space-between;
+  justify-content: space-between;
   align-items: center;
 `;
-const SearchButton=styled.TouchableOpacity``;
-const TitleWrapper=styled.View`
+const SearchButton = styled.TouchableOpacity``;
+const TitleWrapper = styled.View`
   flex-direction: row;
   align-items: center;
 `;
@@ -212,56 +212,56 @@ const IconImage = styled.Image`
   width: 20px;
   height: 20px;
 `;
-const ChatWrapper=styled.View`
-  height:50px;
-  flex-direction:row;
-  border-bottom-width:1px;
-  border-bottom-color:#616262;
+const ChatWrapper = styled.View`
+  height: 50px;
+  flex-direction: row;
+  border-bottom-width: 1px;
+  border-bottom-color: #616262;
 `;
-const ChatBox=styled.View`
-  width:50%;
-  height:50px;
-  align-items:center;
-  justify-content:center;
+const ChatBox = styled.View`
+  width: 50%;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
 `;
-const MyChatBox=styled.TouchableOpacity`
-  width:70%;
-  height:50px;
-  margin:0px 100px;
-  border-bottom-color:${(props)=> (props.isGroupChat ? '#616262' :'#02F59B')};
-  border-bottom-width:${(props)=> (props.isGroupChat ? '1px' :'2px')};
-  align-items:center;
-  justify-content:center;
+const MyChatBox = styled.TouchableOpacity`
+  width: 70%;
+  height: 50px;
+  margin: 0px 100px;
+  border-bottom-color: ${(props) => (props.isGroupChat ? '#616262' : '#02F59B')};
+  border-bottom-width: ${(props) => (props.isGroupChat ? '1px' : '2px')};
+  align-items: center;
+  justify-content: center;
 `;
-const GroupChatBox=styled.TouchableOpacity`
-  width:70%;
-  height:50px;
-  border-bottom-color:${(props)=> (props.isGroupChat ? '#02F59B' :'#616262')};
-  border-bottom-width:${(props)=> (props.isGroupChat ? '2px' :'1px')};
-  align-items:center;
-  justify-content:center;
+const GroupChatBox = styled.TouchableOpacity`
+  width: 70%;
+  height: 50px;
+  border-bottom-color: ${(props) => (props.isGroupChat ? '#02F59B' : '#616262')};
+  border-bottom-width: ${(props) => (props.isGroupChat ? '2px' : '1px')};
+  align-items: center;
+  justify-content: center;
 `;
-const MyChatText=styled.Text`
-  color:${(props)=> (props.isGroupChat ? '#616262' :'#02F59B')};
-  font-family:'PlusJakartaSans_500Medium';
-  font-size:16px;
+const MyChatText = styled.Text`
+  color: ${(props) => (props.isGroupChat ? '#616262' : '#02F59B')};
+  font-family: 'PlusJakartaSans_500Medium';
+  font-size: 16px;
 `;
-const GroupChatText=styled.Text`
-  color:${(props)=> (props.isGroupChat ? '#02F59B' :'#616262')};
-  font-family:'PlusJakartaSans_500Medium';
-  font-size:16px;
+const GroupChatText = styled.Text`
+  color: ${(props) => (props.isGroupChat ? '#02F59B' : '#616262')};
+  font-family: 'PlusJakartaSans_500Medium';
+  font-size: 16px;
 `;
-const CreateSpaceButton=styled.TouchableOpacity`
-  position:absolute;
-  bottom:20px;
-  right:20px;
-  width:50px;
-  height:50px;
-  border-radius:30px;
-  background-color:#02F59B;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
+const CreateSpaceButton = styled.TouchableOpacity`
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 30px;
+  background-color: #02f59b;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
   elevation: 5;
   shadow-color: #000;
   shadow-offset: 0px 2px;

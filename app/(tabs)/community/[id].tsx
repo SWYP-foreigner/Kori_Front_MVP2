@@ -22,18 +22,22 @@ import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
   Alert,
-  Animated, Dimensions, Easing,
-  FlatList, Image as RNImage, Keyboard,
+  Animated,
+  Dimensions,
+  Easing,
+  FlatList,
+  Image as RNImage,
+  Keyboard,
   KeyboardAvoidingView,
-  Modal, Platform,
+  Modal,
+  Platform,
   Pressable,
   TextInput as RNTextInput,
   TextInputProps,
   View,
-  ViewToken
+  ViewToken,
 } from 'react-native';
 import styled from 'styled-components/native';
-
 
 async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
   const jobs = urls.map(
@@ -42,7 +46,7 @@ async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<numb
         RNImage.getSize(
           uri,
           (w, h) => resolve(w > 0 && h > 0 ? w / h : fallback),
-          () => resolve(fallback)
+          () => resolve(fallback),
         );
       }),
   );
@@ -53,21 +57,23 @@ const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 32;
 const IMG_W = SCREEN_W - H_PADDING;
 
-function ResponsiveImage({
-  uri,
-  width,
-  radius = 12,
-}: { uri: string; width: number; radius?: number }) {
+function ResponsiveImage({ uri, width, radius = 12 }: { uri: string; width: number; radius?: number }) {
   const [ratio, setRatio] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
     RNImage.getSize(
       uri,
-      (w, h) => { if (mounted) setRatio(w > 0 && h > 0 ? w / h : 16 / 9); },
-      () => { if (mounted) setRatio(16 / 9); }
+      (w, h) => {
+        if (mounted) setRatio(w > 0 && h > 0 ? w / h : 16 / 9);
+      },
+      () => {
+        if (mounted) setRatio(16 / 9);
+      },
     );
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [uri]);
 
   if (!ratio) {
@@ -78,7 +84,8 @@ function ResponsiveImage({
     <RNImage
       source={{ uri }}
       resizeMode="cover"
-      style={{ width, aspectRatio: ratio, borderRadius: radius, backgroundColor: '#111213' }} />
+      style={{ width, aspectRatio: ratio, borderRadius: radius, backgroundColor: '#111213' }}
+    />
   );
 }
 
@@ -93,14 +100,21 @@ function parseDateFlexible(v?: unknown): Date | null {
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
-function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
+function pad2(n: number) {
+  return n < 10 ? `0${n}` : String(n);
+}
 function formatCreatedYMD(v?: unknown): string {
   const d = parseDateFlexible(v);
   if (!d) return '';
   try {
     return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
-    }).format(d).replace(/-/g, '/');
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .format(d)
+      .replace(/-/g, '/');
   } catch {
     return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
   }
@@ -116,39 +130,42 @@ const StyledEditInput = styled(RNTextInput)`
   border-width: 1px;
   border-color: #3a3d40;
 `;
-const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => (
-  <StyledEditInput ref={ref} {...props} />
-));
+const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => <StyledEditInput ref={ref} {...props} />);
 EditInput.displayName = 'EditInput';
 
 export default function PostDetailScreen() {
-
   const { id, focusCommentId, intent } = useLocalSearchParams<{
-    id: string; focusCommentId?: string; intent?: string;
+    id: string;
+    focusCommentId?: string;
+    intent?: string;
   }>();
   const postId = Number(id);
 
   const {
-    bookmarked: bmMap, toggleBookmarked, hydrateFromServer, setBookmarked,
-    liked, likeCount, setLiked, toggleLiked, setLikeCount, hydrateLikeFromServer
+    bookmarked: bmMap,
+    toggleBookmarked,
+    hydrateFromServer,
+    setBookmarked,
+    liked,
+    likeCount,
+    setLiked,
+    toggleLiked,
+    setLikeCount,
+    hydrateLikeFromServer,
   } = usePostUI();
 
   const postBookmarked = bmMap[postId] ?? false;
 
-  const { data, isLoading, isError } = usePostDetail(
-    Number.isFinite(postId) ? postId : undefined,
-  );
+  const { data, isLoading, isError } = usePostDetail(Number.isFinite(postId) ? postId : undefined);
 
   const post = data as any;
 
   const category = React.useMemo(() => resolvePostCategory(post), [post]);
 
-  const { data: cmtOpts } = useCommentWriteOptions(
-    Number.isFinite(postId) ? postId : undefined
-  );
+  const { data: cmtOpts } = useCommentWriteOptions(Number.isFinite(postId) ? postId : undefined);
 
   const serverAnonymousAllowed = Boolean(
-    (cmtOpts as any)?.isAnonymousAvailable ?? (cmtOpts as any)?.isAnonymousAvaliable
+    (cmtOpts as any)?.isAnonymousAvailable ?? (cmtOpts as any)?.isAnonymousAvaliable,
   );
 
   const anonAllowed = React.useMemo(() => {
@@ -166,30 +183,21 @@ export default function PostDetailScreen() {
     });
   }, [postId, category, serverAnonymousAllowed, anonAllowed, cmtOpts]);
 
-
-
   const DEFAULT_RATIO = 16 / 9;
   const MAX_IMAGES = 5;
   const IMG_W = Dimensions.get('window').width - 32;
 
   const rawImageKeys: string[] = useMemo(() => {
     const p: any = data ?? {};
-    return (
-      (p.contentImageUrls as string[] | undefined) ??
-      (p.imageUrls as string[] | undefined) ??
-      []
-    );
+    return (p.contentImageUrls as string[] | undefined) ?? (p.imageUrls as string[] | undefined) ?? [];
   }, [data]);
 
-  const imageUrls: string[] = useMemo(
-    () => keysToUrls(rawImageKeys).slice(0, MAX_IMAGES),
-    [rawImageKeys]
-  );
+  const imageUrls: string[] = useMemo(() => keysToUrls(rawImageKeys).slice(0, MAX_IMAGES), [rawImageKeys]);
 
   const [ratios, setRatios] = useState<number[]>([]);
   const heights = useMemo(
-    () => (ratios.length ? ratios : imageUrls.map(() => DEFAULT_RATIO)).map(r => IMG_W / r),
-    [ratios, imageUrls, IMG_W]
+    () => (ratios.length ? ratios : imageUrls.map(() => DEFAULT_RATIO)).map((r) => IMG_W / r),
+    [ratios, imageUrls, IMG_W],
   );
 
   const [imgIndex, setImgIndex] = useState(0);
@@ -198,28 +206,28 @@ export default function PostDetailScreen() {
   //댓글 바로 숨기기 (임시로 )
   const [hiddenCommentIds, setHiddenCommentIds] = useState<Set<number>>(new Set());
 
-
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (!viewableItems?.length) return;
-      const i = viewableItems[0].index ?? 0;
-      syncHeightForIndex(i);
-    }
-  ).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (!viewableItems?.length) return;
+    const i = viewableItems[0].index ?? 0;
+    syncHeightForIndex(i);
+  }).current;
 
   const currentIndexRef = useRef(0);
 
-  const syncHeightForIndex = React.useCallback((i: number) => {
-    currentIndexRef.current = i;
-    setImgIndex(i);
-    const nextH = heights[i] ?? (IMG_W / DEFAULT_RATIO);
-    Animated.timing(heightAnim, {
-      toValue: nextH,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [heights, IMG_W, DEFAULT_RATIO, heightAnim]);
+  const syncHeightForIndex = React.useCallback(
+    (i: number) => {
+      currentIndexRef.current = i;
+      setImgIndex(i);
+      const nextH = heights[i] ?? IMG_W / DEFAULT_RATIO;
+      Animated.timing(heightAnim, {
+        toValue: nextH,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    },
+    [heights, IMG_W, DEFAULT_RATIO, heightAnim],
+  );
 
   const onMomentumScrollEnd = (e: any) => {
     const x = e?.nativeEvent?.contentOffset?.x ?? 0;
@@ -244,22 +252,26 @@ export default function PostDetailScreen() {
       const r = rs[i] ?? DEFAULT_RATIO;
       heightAnim.setValue(IMG_W / r);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [imageUrls, DEFAULT_RATIO, IMG_W, heightAnim]);
 
+  const syncHeightForOffset = React.useCallback(
+    (x: number) => {
+      const i = Math.max(0, Math.round(x / IMG_W));
+      setImgIndex(i);
 
-  const syncHeightForOffset = React.useCallback((x: number) => {
-    const i = Math.max(0, Math.round(x / IMG_W));
-    setImgIndex(i);
-
-    const nextH = heights[i] ?? (IMG_W / DEFAULT_RATIO);
-    Animated.timing(heightAnim, {
-      toValue: nextH,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [heights, IMG_W, DEFAULT_RATIO, heightAnim]);
+      const nextH = heights[i] ?? IMG_W / DEFAULT_RATIO;
+      Animated.timing(heightAnim, {
+        toValue: nextH,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    },
+    [heights, IMG_W, DEFAULT_RATIO, heightAnim],
+  );
 
   const openedOnceRef = useRef(false);
 
@@ -290,19 +302,16 @@ export default function PostDetailScreen() {
   const inputRef = useRef<RNTextInput>(null);
   const listRef = useRef<RNFlatList<Comment>>(null);
 
-  const { data: commentsRaw } = usePostComments(
-    Number.isFinite(postId) ? postId : undefined,
-    sort,
-  );
+  const { data: commentsRaw } = usePostComments(Number.isFinite(postId) ? postId : undefined, sort);
   const commentList: Comment[] = Array.isArray(commentsRaw)
     ? (commentsRaw as Comment[])
     : ((commentsRaw as any)?.items ?? []);
 
   //리스트 보이도록
-  const getCmtId = (c: any) => Number((c?.id ?? c?.commentId));
+  const getCmtId = (c: any) => Number(c?.id ?? c?.commentId);
   const visibleComments: Comment[] = useMemo(
-    () => commentList.filter(c => !hiddenCommentIds.has(getCmtId(c))),
-    [commentList, hiddenCommentIds]
+    () => commentList.filter((c) => !hiddenCommentIds.has(getCmtId(c))),
+    [commentList, hiddenCommentIds],
   );
 
   const [editVisible, setEditVisible] = useState(false);
@@ -313,8 +322,6 @@ export default function PostDetailScreen() {
   const likeBusyRef = useRef<Record<number, boolean>>({});
   const bmBusyRef = useRef<Record<number, boolean>>({});
 
-
-
   useEffect(() => {
     const serverVal = (post as any)?.bookmarked;
     hydrateFromServer(postId, typeof serverVal === 'boolean' ? serverVal : undefined);
@@ -323,9 +330,7 @@ export default function PostDetailScreen() {
   useEffect(() => {
     if (!Number.isFinite(postId) || !post) return;
 
-    const liked = Boolean(
-      (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
-    );
+    const liked = Boolean((post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false);
     const count = post.likeCount ?? 0;
 
     hydrateLikeFromServer(postId, liked, count);
@@ -336,15 +341,10 @@ export default function PostDetailScreen() {
     if (intent !== 'edit' || !focusCommentId) return;
     if (!Array.isArray(commentList) || commentList.length === 0) return;
 
-    const target = commentList.find(
-      c => String((c as any).id ?? (c as any).commentId) === String(focusCommentId)
-    );
+    const target = commentList.find((c) => String((c as any).id ?? (c as any).commentId) === String(focusCommentId));
     if (!target) return;
 
-    const body =
-      (target as any).content ??
-      (target as any).comment ??
-      (target as any).text ?? '';
+    const body = (target as any).content ?? (target as any).comment ?? (target as any).text ?? '';
 
     setEditText(String(body));
     setEditVisible(true);
@@ -352,18 +352,21 @@ export default function PostDetailScreen() {
 
     const t = setTimeout(() => editInputRef.current?.focus(), 350);
     return () => clearTimeout(t);
-
   }, [intent, focusCommentId, commentList.length]);
-
 
   if (isLoading) {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-          <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
+          <Back onPress={() => router.back()}>
+            <AntDesign name="left" size={20} color="#fff" />
+          </Back>
+          <HeaderTitle>Post</HeaderTitle>
+          <RightPlaceholder />
         </Header>
-        <Center><Dim>Loading…</Dim></Center>
+        <Center>
+          <Dim>Loading…</Dim>
+        </Center>
       </Safe>
     );
   }
@@ -371,22 +374,40 @@ export default function PostDetailScreen() {
     return (
       <Safe>
         <Header>
-          <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-          <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
+          <Back onPress={() => router.back()}>
+            <AntDesign name="left" size={20} color="#fff" />
+          </Back>
+          <HeaderTitle>Post</HeaderTitle>
+          <RightPlaceholder />
         </Header>
-        <Center><Dim>Post not found.</Dim></Center>
+        <Center>
+          <Dim>Post not found.</Dim>
+        </Center>
       </Safe>
     );
   }
 
-
   const authorId: string = String(
-    post.userId ?? post.authorId ?? post.memberId ?? post.writerId ??
-    post.ownerId ?? post.creatorId ?? post.author?.id ?? post.user?.id ?? ''
+    post.userId ??
+      post.authorId ??
+      post.memberId ??
+      post.writerId ??
+      post.ownerId ??
+      post.creatorId ??
+      post.author?.id ??
+      post.user?.id ??
+      '',
   );
   const authorName: string =
-    post.userName ?? post.authorName ?? post.memberName ?? post.writerName ??
-    post.ownerName ?? post.creatorName ?? post.author?.name ?? post.user?.name ?? 'Unknown';
+    post.userName ??
+    post.authorName ??
+    post.memberName ??
+    post.writerName ??
+    post.ownerName ??
+    post.creatorName ??
+    post.author?.name ??
+    post.user?.name ??
+    'Unknown';
   const postType = post.type ?? post.category ?? post.postType ?? post.kind ?? 'unknown';
   const isAnonymous = Boolean(post.anonymous ?? post.isAnonymous ?? post.private);
   const isBlocked = Boolean(post.blocked ?? post.isBlocked);
@@ -394,9 +415,7 @@ export default function PostDetailScreen() {
 
   const author = isAnonymous ? '익명' : authorName;
   const avatarUrl = post.userImageUrl ? keyToUrl(post.userImageUrl) : undefined;
-  const avatarSrc = isAnonymous
-    ? AV
-    : (avatarUrl ? { uri: avatarUrl } : AV);
+  const avatarSrc = isAnonymous ? AV : avatarUrl ? { uri: avatarUrl } : AV;
 
   const createdRaw = post.createdTime ?? post.createdAt ?? post.timestamp;
   const createdLabel = formatCreatedYMD(createdRaw);
@@ -406,9 +425,7 @@ export default function PostDetailScreen() {
   const views = post.viewCount ?? 0;
   const body = post.content ?? '';
 
-  const serverLiked = Boolean(
-    (post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false
-  );
+  const serverLiked = Boolean((post as any).likedByMe ?? (post as any).isLike ?? (post as any).isLiked ?? false);
 
   const likedByMe = liked[postId] ?? serverLiked;
   const likeCountUI = likeCount[postId] ?? serverLikeCount;
@@ -421,7 +438,7 @@ export default function PostDetailScreen() {
     const keys = Object.keys(post || {});
     console.log('post.keys', keys);
     console.groupEnd();
-  } catch { }
+  } catch {}
 
   const toggleCommentLike = (comment: Comment) => {
     const cmtId = Number((comment as any).id ?? (comment as any).commentId);
@@ -429,13 +446,15 @@ export default function PostDetailScreen() {
     if (likeBusyRef.current[cmtId]) return;
     likeBusyRef.current[cmtId] = true;
 
-    const prevLiked = Boolean(
-      (comment as any).likedByMe ?? (comment as any).isLiked ?? false
-    );
+    const prevLiked = Boolean((comment as any).likedByMe ?? (comment as any).isLiked ?? false);
 
     likeComment.mutate(
       { commentId: cmtId, liked: prevLiked },
-      { onSettled: () => { likeBusyRef.current[cmtId] = false; } }
+      {
+        onSettled: () => {
+          likeBusyRef.current[cmtId] = false;
+        },
+      },
     );
   };
 
@@ -451,9 +470,7 @@ export default function PostDetailScreen() {
         onSuccess: () => {
           setValue('');
           Keyboard.dismiss();
-          requestAnimationFrame(() =>
-            listRef.current?.scrollToOffset({ offset: 0, animated: true }),
-          );
+          requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }));
         },
         onError: () => Alert.alert('Comment', 'Failed to post comment.'),
       },
@@ -488,7 +505,10 @@ export default function PostDetailScreen() {
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, {
-      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
     }).start();
   };
 
@@ -500,7 +520,10 @@ export default function PostDetailScreen() {
     setMenuVisible(true);
     slideY.setValue(300);
     Animated.timing(slideY, {
-      toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
     }).start();
   };
 
@@ -516,8 +539,14 @@ export default function PostDetailScreen() {
   const closeMenu = () =>
     new Promise<void>((resolve) => {
       Animated.timing(slideY, {
-        toValue: 300, duration: 200, easing: Easing.in(Easing.cubic), useNativeDriver: true,
-      }).start(() => { setMenuVisible(false); resolve(); });
+        toValue: 300,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        setMenuVisible(false);
+        resolve();
+      });
     });
 
   const onSubmitReport = () => {
@@ -529,8 +558,10 @@ export default function PostDetailScreen() {
     }
 
     const titleText =
-      reportTarget === 'user' ? 'Report This User'
-        : reportTarget === 'comment' ? 'Report This Comment'
+      reportTarget === 'user'
+        ? 'Report This User'
+        : reportTarget === 'comment'
+          ? 'Report This Comment'
           : 'Report This Post';
 
     Alert.alert('Report', `Are you sure\n${titleText}?`, [
@@ -560,11 +591,15 @@ export default function PostDetailScreen() {
           } catch (e: any) {
             const s = e?.response?.status;
             let msg =
-              s === 401 ? 'Authentication required. Please log in again.' :
-                s === 403 ? 'You do not have permission.' :
-                  s === 404 ? 'Target not found.' :
-                    s === 400 ? 'This comment cannot be blocked.' :
-                      'Failed to submit the report.';
+              s === 401
+                ? 'Authentication required. Please log in again.'
+                : s === 403
+                  ? 'You do not have permission.'
+                  : s === 404
+                    ? 'Target not found.'
+                    : s === 400
+                      ? 'This comment cannot be blocked.'
+                      : 'Failed to submit the report.';
             Alert.alert('Report', msg);
 
             console.group('[report] error');
@@ -579,12 +614,16 @@ export default function PostDetailScreen() {
     ]);
   };
 
-
-
   const onSaveEdit = async () => {
     const text = editText.trim();
-    if (!text) { Alert.alert('Edit', 'Please enter your comment.'); return; }
-    if (!focusCommentId) { Alert.alert('Edit', 'Comment id missing.'); return; }
+    if (!text) {
+      Alert.alert('Edit', 'Please enter your comment.');
+      return;
+    }
+    if (!focusCommentId) {
+      Alert.alert('Edit', 'Comment id missing.');
+      return;
+    }
 
     try {
       await updateCommentMut({ commentId: Number(focusCommentId), content: text });
@@ -596,14 +635,14 @@ export default function PostDetailScreen() {
   };
 
   const hideCommentLocal = (cid: number) => {
-    setHiddenCommentIds(prev => {
+    setHiddenCommentIds((prev) => {
       const next = new Set(prev);
       next.add(cid);
       return next;
     });
   };
   const unhideCommentLocal = (cid: number) => {
-    setHiddenCommentIds(prev => {
+    setHiddenCommentIds((prev) => {
       if (!prev.has(cid)) return prev;
       const next = new Set(prev);
       next.delete(cid);
@@ -623,17 +662,19 @@ export default function PostDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.post(`/api/v1/posts/${postId}/declaration`, {
-            });
+            await api.post(`/api/v1/posts/${postId}/declaration`, {});
 
             Alert.alert('Block', 'This post has been blocked.');
           } catch (e: any) {
             const s = e?.response?.status;
             const msg =
-              s === 401 ? 'Authentication required. Please log in again.' :
-                s === 403 ? 'You do not have permission.' :
-                  s === 404 ? 'Post not found.' :
-                    'Failed to block this post.';
+              s === 401
+                ? 'Authentication required. Please log in again.'
+                : s === 403
+                  ? 'You do not have permission.'
+                  : s === 404
+                    ? 'Post not found.'
+                    : 'Failed to block this post.';
             Alert.alert('Block', msg);
             console.log('[block post] error', { status: s, postId, e });
           } finally {
@@ -663,10 +704,13 @@ export default function PostDetailScreen() {
           } catch (e: any) {
             const s = e?.response?.status;
             const msg =
-              s === 401 ? 'Authentication required. Please log in again.' :
-                s === 403 ? 'You do not have permission.' :
-                  s === 404 ? 'Comment not found.' :
-                    'Failed to block this comment.';
+              s === 401
+                ? 'Authentication required. Please log in again.'
+                : s === 403
+                  ? 'You do not have permission.'
+                  : s === 404
+                    ? 'Comment not found.'
+                    : 'Failed to block this comment.';
             Alert.alert('Block', msg);
             console.log('[block comment] error', { status: s, commentId: cid, e });
           }
@@ -675,18 +719,21 @@ export default function PostDetailScreen() {
     ]);
   };
 
-
-
   const reportTitle =
-    reportTarget === 'user' ? 'Report This User'
-      : reportTarget === 'comment' ? 'Report This Comment'
+    reportTarget === 'user'
+      ? 'Report This User'
+      : reportTarget === 'comment'
+        ? 'Report This Comment'
         : 'Report This Post';
 
   return (
     <Safe>
       <Header>
-        <Back onPress={() => router.back()}><AntDesign name="left" size={20} color="#fff" /></Back>
-        <HeaderTitle>Post</HeaderTitle><RightPlaceholder />
+        <Back onPress={() => router.back()}>
+          <AntDesign name="left" size={20} color="#fff" />
+        </Back>
+        <HeaderTitle>Post</HeaderTitle>
+        <RightPlaceholder />
       </Header>
 
       <KeyboardAvoidingView
@@ -757,7 +804,6 @@ export default function PostDetailScreen() {
                       color={postBookmarked ? '#30F59B' : '#8a8a8a'}
                     />
                   </BookmarkWrap>
-
                 </Row>
 
                 {imageUrls.length > 0 && (
@@ -782,13 +828,8 @@ export default function PostDetailScreen() {
                         onMomentumScrollEnd={onMomentumScrollEnd}
                         onScrollEndDrag={onScrollEndDrag}
                         onViewableItemsChanged={onViewableItemsChanged}
-
                         renderItem={({ item }) => (
-                          <RNImage
-                            source={{ uri: item }}
-                            resizeMode="cover"
-                            style={{ width: IMG_W, height: '100%' }}
-                          />
+                          <RNImage source={{ uri: item }} resizeMode="cover" style={{ width: IMG_W, height: '100%' }} />
                         )}
                       />
                     </Animated.View>
@@ -797,17 +838,11 @@ export default function PostDetailScreen() {
                   </View>
                 )}
 
-
-
                 <Body>{body}</Body>
 
                 <Footer>
                   <Act onPress={handleToggleLike} disabled={likeMutation.isPending}>
-                    <AntDesign
-                      name="like2"
-                      size={16}
-                      color={likedByMe ? '#30F59B' : '#cfd4da'}
-                    />
+                    <AntDesign name="like2" size={16} color={likedByMe ? '#30F59B' : '#cfd4da'} />
                     <ActText>{likeCountUI}</ActText>
                   </Act>
                   <Act>
@@ -849,9 +884,7 @@ export default function PostDetailScreen() {
                 }}
               >
                 <AnonLabel>Anonymous</AnonLabel>
-                <Check $active={anonymous}>
-                  {anonymous && <AntDesign name="check" size={14} color="#ffffff" />}
-                </Check>
+                <Check $active={anonymous}>{anonymous && <AntDesign name="check" size={14} color="#ffffff" />}</Check>
               </AnonToggle>
             )}
           </Composer>
@@ -887,7 +920,9 @@ export default function PostDetailScreen() {
                     setReportOpen(true);
                   }}
                 >
-                  <SheetIcon><MaterialIcons name="outlined-flag" size={18} color={DANGER} /></SheetIcon>
+                  <SheetIcon>
+                    <MaterialIcons name="outlined-flag" size={18} color={DANGER} />
+                  </SheetIcon>
                   <SheetLabel $danger>Report This Post</SheetLabel>
                 </SheetItem>
 
@@ -899,7 +934,9 @@ export default function PostDetailScreen() {
                     setReportOpen(true);
                   }}
                 >
-                  <SheetIcon><MaterialIcons name="person-outline" size={18} color={DANGER} /></SheetIcon>
+                  <SheetIcon>
+                    <MaterialIcons name="person-outline" size={18} color={DANGER} />
+                  </SheetIcon>
                   <SheetLabel $danger>Report This User</SheetLabel>
                 </SheetItem>
 
@@ -938,24 +975,43 @@ export default function PostDetailScreen() {
               </>
             )}
 
-
             <SheetDivider />
             <SheetItem onPress={() => setMenuVisible(false)}>
-              <SheetIcon><AntDesign name="close" size={18} color="#cfd4da" /></SheetIcon>
+              <SheetIcon>
+                <AntDesign name="close" size={18} color="#cfd4da" />
+              </SheetIcon>
               <SheetLabel>Cancel</SheetLabel>
             </SheetItem>
           </Animated.View>
         </View>
       </Modal>
 
-      <Modal visible={reportOpen} transparent animationType="fade" statusBarTranslucent presentationStyle="overFullScreen" onRequestClose={() => setReportOpen(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Pressable onPress={() => setReportOpen(false)} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
+      <Modal
+        visible={reportOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setReportOpen(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+          }}
+        >
+          <Pressable
+            onPress={() => setReportOpen(false)}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+          />
           <Dialog>
             <DialogHeader>
               <DialogTitle>
                 <MaterialCommunityIcons name="flag-variant" size={18} color={DANGER} />
-                <DialogTitleText $danger>  {reportTitle}</DialogTitleText>
+                <DialogTitleText $danger> {reportTitle}</DialogTitleText>
               </DialogTitle>
               <CloseBtn onPress={() => setReportOpen(false)}>
                 <AntDesign name="close" size={18} color="#cfd4da" />
@@ -967,13 +1023,13 @@ export default function PostDetailScreen() {
               onChangeText={setReportText}
               placeholder={
                 reportTarget === 'user'
-                  ? "Tell us what’s wrong with this user’s content…"
+                  ? 'Tell us what’s wrong with this user’s content…'
                   : reportTarget === 'comment'
-                    ? "Tell us what’s wrong with this comment…"
-                    : "Tell us what’s wrong with this post…"
+                    ? 'Tell us what’s wrong with this comment…'
+                    : 'Tell us what’s wrong with this post…'
               }
               blurOnSubmit
-              returnKeyType='done'
+              returnKeyType="done"
               placeholderTextColor="#858b90"
               multiline
               textAlignVertical="top"
@@ -994,13 +1050,24 @@ export default function PostDetailScreen() {
         statusBarTranslucent
         onRequestClose={() => setEditVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Pressable style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} onPress={() => setEditVisible(false)} />
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+          }}
+        >
+          <Pressable
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            onPress={() => setEditVisible(false)}
+          />
           <EditBox>
             <EditHeader>
               <EditTitle>
                 <AntDesign name="edit" size={16} color="#cfd4da" />
-                <EditTitleText>  Edit My Comments</EditTitleText>
+                <EditTitleText> Edit My Comments</EditTitleText>
               </EditTitle>
               <CloseBtn onPress={() => setEditVisible(false)}>
                 <AntDesign name="close" size={18} color="#cfd4da" />
@@ -1027,22 +1094,78 @@ export default function PostDetailScreen() {
   );
 }
 
-const Safe = styled.SafeAreaView`flex: 1; background: #1d1e1f;`;
-const Header = styled.View`height: 48px; padding: 0 12px; flex-direction: row; align-items: center; justify-content: space-between;`;
-const Back = styled.Pressable`width: 40px; align-items: flex-start;`;
-const HeaderTitle = styled.Text`color: #fff; font-size: 18px; font-family: 'PlusJakartaSans_500Bold'; text-align: center; flex: 1;`;
-const RightPlaceholder = styled.View`width: 40px;`;
-const Center = styled.View`flex: 1; align-items: center; justify-content: center;`;
-const Dim = styled.Text`color: #cfd4da;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
+const Header = styled.View`
+  height: 48px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const Back = styled.Pressable`
+  width: 40px;
+  align-items: flex-start;
+`;
+const HeaderTitle = styled.Text`
+  color: #fff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_500Bold';
+  text-align: center;
+  flex: 1;
+`;
+const RightPlaceholder = styled.View`
+  width: 40px;
+`;
+const Center = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+const Dim = styled.Text`
+  color: #cfd4da;
+`;
 
-const Card = styled.View`background: #1d1e1f; padding: 12px 16px 10px 16px; border-bottom-width: 1px; border-bottom-color: #222426;`;
-const Row = styled.View`flex-direction: row; align-items: center;`;
-const Avatar = styled.Image`width: 34px; height: 34px; border-radius: 17px; background: #2a2b2c;`;
-const Meta = styled.View`margin-left: 10px; flex: 1;`;
-const Author = styled.Text`color: #fff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
-const MetaRow = styled.View`margin-top: 2px; flex-direction: row; align-items: center;`;
-const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
-const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
+const Card = styled.View`
+  background: #1d1e1f;
+  padding: 12px 16px 10px 16px;
+  border-bottom-width: 1px;
+  border-bottom-color: #222426;
+`;
+const Row = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const Avatar = styled.Image`
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  background: #2a2b2c;
+`;
+const Meta = styled.View`
+  margin-left: 10px;
+  flex: 1;
+`;
+const Author = styled.Text`
+  color: #fff;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const MetaRow = styled.View`
+  margin-top: 2px;
+  flex-direction: row;
+  align-items: center;
+`;
+const Sub = styled.Text`
+  color: #9aa0a6;
+  font-size: 11px;
+`;
+const Dot = styled.Text`
+  color: #9aa0a6;
+  margin: 0 6px;
+`;
 
 const BookmarkWrap = styled.Pressable<{ $active?: boolean }>`
   padding: 6px;
@@ -1050,24 +1173,95 @@ const BookmarkWrap = styled.Pressable<{ $active?: boolean }>`
 `;
 
 const Counter = styled.Text`
-  position: absolute; right: 14px; bottom: 14px; color: #fff;
-  background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 10px; font-size: 12px;
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 12px;
 `;
 
-const Body = styled.Text`color: #d9dcdf; font-size: 14px; line-height: 20px; margin-top: 10px;`;
-const Footer = styled.View`margin-top: 8px; flex-direction: row; align-items: center;`;
-const Act = styled.Pressable<{ disabled?: boolean }>`flex-direction: row; align-items: center; margin-right: 16px; opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};`;
-const ActText = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
-const Grow = styled.View`flex: 1;`;
-const MoreBtn = styled.Pressable`padding: 6px;`;
+const Body = styled.Text`
+  color: #d9dcdf;
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 10px;
+`;
+const Footer = styled.View`
+  margin-top: 8px;
+  flex-direction: row;
+  align-items: center;
+`;
+const Act = styled.Pressable<{ disabled?: boolean }>`
+  flex-direction: row;
+  align-items: center;
+  margin-right: 16px;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+`;
+const ActText = styled.Text`
+  color: #cfd4da;
+  margin-left: 6px;
+  font-size: 12px;
+`;
+const Grow = styled.View`
+  flex: 1;
+`;
+const MoreBtn = styled.Pressable`
+  padding: 6px;
+`;
 
-const SortWrap = styled.View`background: #171818; padding: 10px 16px 0 16px; margin-bottom: 15px;`;
-const InputBar = styled.View`padding: 10px 12px 14px 12px; background: #1d1e1f; border-top-width: 1px; border-top-color: #222426; flex-direction: row; align-items: flex-end; gap: 10px;`;
-const Composer = styled.View`flex: 1; background: #414142; border-radius: 8px; padding: 10px 12px; flex-direction: row; align-items: center;`;
-const BottomInput = styled(RNTextInput)`flex: 1; color: #ffffff; font-size: 14px; padding: 0; background: transparent;`;
-const AnonToggle = styled.Pressable`flex-direction: row; align-items: center; margin-left: 10px;`;
-const AnonLabel = styled.Text`color: #cccfd5; font-size: 14px; margin-right: 8px; font-family: 'PlusJakartaSans_Light';`;
-const Check = styled.View<{ $active?: boolean }>`width: 16px; height: 16px; border-radius: 2px; border-width: 1.1px; border-color: #cccfd5; background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')}; align-items: center; justify-content: center;`;
+const SortWrap = styled.View`
+  background: #171818;
+  padding: 10px 16px 0 16px;
+  margin-bottom: 15px;
+`;
+const InputBar = styled.View`
+  padding: 10px 12px 14px 12px;
+  background: #1d1e1f;
+  border-top-width: 1px;
+  border-top-color: #222426;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+`;
+const Composer = styled.View`
+  flex: 1;
+  background: #414142;
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-direction: row;
+  align-items: center;
+`;
+const BottomInput = styled(RNTextInput)`
+  flex: 1;
+  color: #ffffff;
+  font-size: 14px;
+  padding: 0;
+  background: transparent;
+`;
+const AnonToggle = styled.Pressable`
+  flex-direction: row;
+  align-items: center;
+  margin-left: 10px;
+`;
+const AnonLabel = styled.Text`
+  color: #cccfd5;
+  font-size: 14px;
+  margin-right: 8px;
+  font-family: 'PlusJakartaSans_Light';
+`;
+const Check = styled.View<{ $active?: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border-width: 1.1px;
+  border-color: #cccfd5;
+  background: ${({ $active }) => ($active ? '#30f59b' : 'transparent')};
+  align-items: center;
+  justify-content: center;
+`;
 
 const SendBtn = styled.Pressable<{ disabled?: boolean }>`
   width: 36px;
@@ -1077,18 +1271,69 @@ const SendBtn = styled.Pressable<{ disabled?: boolean }>`
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 
-const SheetHandle = styled.View`align-self: center; width: 44px; height: 4px; border-radius: 2px; background: #44484d; margin-bottom: 8px;`;
-const SheetItem = styled.Pressable`flex-direction: row; align-items: center; padding: 14px 20px;`;
-const SheetIcon = styled.View`width: 28px; align-items: center; margin-right: 8px;`;
-const SheetLabel = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e6e9ed')}; font-size: 16px;`;
-const SheetDivider = styled.View`height: 1px; background: #2c2f33; margin: 4px 0;`;
+const SheetHandle = styled.View`
+  align-self: center;
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: #44484d;
+  margin-bottom: 8px;
+`;
+const SheetItem = styled.Pressable`
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 20px;
+`;
+const SheetIcon = styled.View`
+  width: 28px;
+  align-items: center;
+  margin-right: 8px;
+`;
+const SheetLabel = styled.Text<{ $danger?: boolean }>`
+  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e6e9ed')};
+  font-size: 16px;
+`;
+const SheetDivider = styled.View`
+  height: 1px;
+  background: #2c2f33;
+  margin: 4px 0;
+`;
 
-const Dialog = styled.View`width: 100%; max-width: 360px; background: #2a2b2c; border-radius: 12px; padding: 12px 12px 16px 12px;`;
-const DialogHeader = styled.View`flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px;`;
-const DialogTitle = styled.View`flex-direction: row; align-items: center;`;
-const DialogTitleText = styled.Text<{ $danger?: boolean }>`color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')}; font-size: 14px; font-weight: 700;`;
-const CloseBtn = styled.Pressable`padding: 4px;`;
-const DialogTextarea = styled.TextInput`min-height: 220px; border-radius: 8px; padding: 12px; background: #1f2021; color: #e7eaed; font-size: 14px; border-width: 1px; border-color: #3a3d40;`;
+const Dialog = styled.View`
+  width: 100%;
+  max-width: 360px;
+  background: #2a2b2c;
+  border-radius: 12px;
+  padding: 12px 12px 16px 12px;
+`;
+const DialogHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+const DialogTitle = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const DialogTitleText = styled.Text<{ $danger?: boolean }>`
+  color: ${({ $danger }) => ($danger ? '#ff4d4f' : '#e7eaed')};
+  font-size: 14px;
+  font-weight: 700;
+`;
+const CloseBtn = styled.Pressable`
+  padding: 4px;
+`;
+const DialogTextarea = styled.TextInput`
+  min-height: 220px;
+  border-radius: 8px;
+  padding: 12px;
+  background: #1f2021;
+  color: #e7eaed;
+  font-size: 14px;
+  border-width: 1px;
+  border-color: #3a3d40;
+`;
 const SubmitBtn = styled.Pressable<{ disabled?: boolean }>`
   background: #ff4d4f;
   padding: 12px;
@@ -1098,10 +1343,41 @@ const SubmitBtn = styled.Pressable<{ disabled?: boolean }>`
   margin-top: 12px;
   opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
-const SubmitText = styled.Text`color: #ffffff; font-weight: 700;`;
-const EditBox = styled.View`width: 100%; max-width: 360px; background: #2a2b2c; border-radius: 12px; padding: 12px 12px 16px 12px;`;
-const EditHeader = styled.View`flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 10px;`;
-const EditTitle = styled.View`flex-direction: row; align-items: center;`;
-const EditTitleText = styled.Text`color: #cfd4da; font-size: 14px; font-weight: 700;`;
-const SaveBtn = styled.Pressable`background: #30f59b; padding: 12px; border-radius: 8px; align-items: center; justify-content: center; margin-top: 12px;`;
-const SaveText = styled.Text`color: #000; font-weight: 700;`;
+const SubmitText = styled.Text`
+  color: #ffffff;
+  font-weight: 700;
+`;
+const EditBox = styled.View`
+  width: 100%;
+  max-width: 360px;
+  background: #2a2b2c;
+  border-radius: 12px;
+  padding: 12px 12px 16px 12px;
+`;
+const EditHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+const EditTitle = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const EditTitleText = styled.Text`
+  color: #cfd4da;
+  font-size: 14px;
+  font-weight: 700;
+`;
+const SaveBtn = styled.Pressable`
+  background: #30f59b;
+  padding: 12px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+`;
+const SaveText = styled.Text`
+  color: #000;
+  font-weight: 700;
+`;

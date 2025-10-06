@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5, AntDesign, Feather } from '@expo/vector-icons';
-import {useProfile} from '../../contexts/ProfileContext'
+import { useProfile } from '../../contexts/ProfileContext';
 
 export default function PurposeStepScreen({ navigation }) {
   const [selectedPurpose, setSelectedPurpose] = useState(null);
@@ -18,7 +18,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'school',
       title: 'Study',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Educational exchange'
+      description: 'Educational exchange',
     },
     {
       id: 2,
@@ -26,7 +26,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'work',
       title: 'Work',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Professional opportunities'
+      description: 'Professional opportunities',
     },
     {
       id: 3,
@@ -34,7 +34,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'heart',
       title: 'Marriage',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Finding life partner'
+      description: 'Finding life partner',
     },
     {
       id: 4,
@@ -42,7 +42,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'plane',
       title: 'Travel',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Exploring Korea'
+      description: 'Exploring Korea',
     },
     {
       id: 5,
@@ -50,7 +50,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'business',
       title: 'Business',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Business ventures'
+      description: 'Business ventures',
     },
     {
       id: 6,
@@ -58,7 +58,7 @@ export default function PurposeStepScreen({ navigation }) {
       iconName: 'family-restroom',
       title: 'Family',
       ageRange: 'D-2, D-4, D-2-5',
-      description: 'Family reunion'
+      description: 'Family reunion',
     },
   ];
 
@@ -70,7 +70,7 @@ export default function PurposeStepScreen({ navigation }) {
 
   const handleNext = () => {
     if (canProceed) {
-      updateProfile('purpose',selectedPurpose.title);
+      updateProfile('purpose', selectedPurpose.title);
       router.push('./TagStepScreen');
     }
   };
@@ -79,7 +79,7 @@ export default function PurposeStepScreen({ navigation }) {
     const iconProps = {
       name: iconName,
       size: 24,
-      color: '#FFFFFF'
+      color: '#FFFFFF',
     };
 
     switch (iconFamily) {
@@ -108,7 +108,7 @@ export default function PurposeStepScreen({ navigation }) {
         </TitleWrapper>
 
         <Subtitle>find friends who get your journey</Subtitle>
-        
+
         <PurposeGrid>
           {purposes.map((purpose) => (
             <PurposeCard
@@ -117,14 +117,12 @@ export default function PurposeStepScreen({ navigation }) {
               onPress={() => handlePurposeSelect(purpose)}
             >
               <IconContainer>
-                <PurposeIconContainer>
-                  {renderIcon(purpose.iconFamily, purpose.iconName)}
-                </PurposeIconContainer>
+                <PurposeIconContainer>{renderIcon(purpose.iconFamily, purpose.iconName)}</PurposeIconContainer>
                 <InfoButton>
                   <AntDesign name="infocirlceo" size={16} color="#949899" />
                 </InfoButton>
               </IconContainer>
-              
+
               <PurposeTitle>{purpose.title}</PurposeTitle>
               <AgeRange>{purpose.ageRange}</AgeRange>
             </PurposeCard>
@@ -132,12 +130,8 @@ export default function PurposeStepScreen({ navigation }) {
         </PurposeGrid>
 
         <Spacer />
-        
-        <NextButton
-          onPress={handleNext}
-          disabled={!canProceed}
-          canProceed={canProceed}
-        >
+
+        <NextButton onPress={handleNext} disabled={!canProceed} canProceed={canProceed}>
           <ButtonText>Next</ButtonText>
         </NextButton>
 
@@ -161,7 +155,7 @@ const Container = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5BD08D;
+  color: #5bd08d;
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
@@ -173,7 +167,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 40px;
   line-height: 45px;
   letter-spacing: 0.2px;
@@ -197,12 +191,12 @@ const PurposeGrid = styled.View`
 const PurposeCard = styled.TouchableOpacity`
   width: 48%;
   height: 120px;
-  background-color: ${props => props.isSelected ? '#2A2B2D' : '#1A1B1D'};
+  background-color: ${(props) => (props.isSelected ? '#2A2B2D' : '#1A1B1D')};
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  border-width: ${props => props.isSelected ? '2px' : '1px'};
-  border-color: ${props => props.isSelected ? '#02F59B' : '#2A2B2D'};
+  border-width: ${(props) => (props.isSelected ? '2px' : '1px')};
+  border-color: ${(props) => (props.isSelected ? '#02F59B' : '#2A2B2D')};
   position: relative;
 `;
 
@@ -229,7 +223,7 @@ const InfoButton = styled.TouchableOpacity`
 `;
 
 const PurposeTitle = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 16px;
   font-weight: 600;
   font-family: 'PlusJakartaSans-SemiBold';
@@ -252,13 +246,13 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: #02F59B;
+  background-color: #02f59b;
   margin-bottom: 8px;
   opacity: ${(props) => (props.canProceed ? 1 : 0.5)};
 `;
 
 const ButtonText = styled.Text`
-  color: #1D1E1F;
+  color: #1d1e1f;
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';

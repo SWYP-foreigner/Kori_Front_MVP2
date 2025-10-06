@@ -1,39 +1,33 @@
-import { Config } from "@/src/lib/config";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import { Config } from '@/src/lib/config';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
-import Feather from "@expo/vector-icons/Feather";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import axios from "axios";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  Alert,
-  Modal, StatusBar,
-  TouchableOpacity
-} from "react-native";
+import axios from 'axios';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, StatusBar, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import styled from "styled-components/native";
+import styled from 'styled-components/native';
 
 enum isDuplicatedEmail {
-  Init = "Init",
-  Exist = "Exist",
-  NotExist = "NotExist",
+  Init = 'Init',
+  Exist = 'Exist',
+  NotExist = 'NotExist',
 }
 
 enum isCorrectCode {
-  Init = "Init",
-  Fail = "Fail",
-  Success = "Success",
+  Init = 'Init',
+  Fail = 'Fail',
+  Success = 'Success',
 }
-
-
 
 const CreateAccountScreen = () => {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
   const [lookPassword, setLookPassword] = useState(true);
   const [lookRepeatPassword, setLookRepeatPassword] = useState(true);
   const [isExistEmail, setIsExistEmail] = useState<isDuplicatedEmail>(isDuplicatedEmail.Init);
@@ -59,11 +53,15 @@ const CreateAccountScreen = () => {
 
   const [isSamePassword, setIsSamePassword] = useState({
     isnull: true,
-    isSame: false
+    isSame: false,
   });
 
   const completeCondition =
-    (isCorrect === isCorrectCode.Success) && checks.length && checks.uppercase && checks.special && (isSamePassword.isSame === true);
+    isCorrect === isCorrectCode.Success &&
+    checks.length &&
+    checks.uppercase &&
+    checks.special &&
+    isSamePassword.isSame === true;
 
   useEffect(() => {
     setChecks({
@@ -84,11 +82,11 @@ const CreateAccountScreen = () => {
   useEffect(() => {
     setIsSamePassword({
       isnull: repeatPassword.length === 0,
-      isSame: repeatPassword === password
+      isSame: repeatPassword === password,
     });
   }, [repeatPassword]);
 
-  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const isEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   // 가입된 이메일 중복 체크 후 -> 이메일 인증 코드 발송
   const VerifyEmail = async () => {
@@ -97,37 +95,39 @@ const CreateAccountScreen = () => {
       const { exists } = res.data.data;
       if (exists) {
         setIsExistEmail(isDuplicatedEmail.Exist);
-      }
-      else {
+      } else {
         // 이메일 인증 시작
-        const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/send-verification-email`, { email: email, lang: "en" });
+        const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/send-verification-email`, {
+          email: email,
+          lang: 'en',
+        });
         setIsExistEmail(isDuplicatedEmail.NotExist);
-        console.log("이메일 인증 코드 발송", res.data);
-
+        console.log('이메일 인증 코드 발송', res.data);
       }
     } catch (err) {
-      console.error("이메일 확인 중 에러 발생", err);
+      console.error('이메일 확인 중 에러 발생', err);
     }
   };
 
-  // 이메일 인증 코드 보내서 검증 받음 
+  // 이메일 인증 코드 보내서 검증 받음
   const verifyCode = async () => {
     try {
-      const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/verify-code`,
-        { email: email, verificationCode: code });
-      console.log("이메일 인증 코드 검증", res.data);
-      const data = res.data.data
-      console.log("잘왔나?", data);
+      const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/verify-code`, {
+        email: email,
+        verificationCode: code,
+      });
+      console.log('이메일 인증 코드 검증', res.data);
+      const data = res.data.data;
+      console.log('잘왔나?', data);
       if (data) {
         setIsCorrect(isCorrectCode.Success);
-      }
-      else {
+      } else {
         setIsCorrect(isCorrectCode.Fail);
       }
     } catch (err) {
-      console.error("코드 확인 중 에러 발생", err);
+      console.error('코드 확인 중 에러 발생', err);
     }
-  }
+  };
 
   const JoinMember = async () => {
     try {
@@ -139,14 +139,14 @@ const CreateAccountScreen = () => {
 
       // 서버에서 성공 응답 코드 확인 (예: status 200)
       if (res.status === 200) {
-        console.log("회원가입 성공", res.data);
-        router.replace("./SignUpDoneScreen");
+        console.log('회원가입 성공', res.data);
+        router.replace('./SignUpDoneScreen');
       } else {
-        console.log("회원가입 실패", res.data);
-        Alert.alert("Signup Failed", "Please try again.");
+        console.log('회원가입 실패', res.data);
+        Alert.alert('Signup Failed', 'Please try again.');
       }
     } catch (err) {
-      console.error("회원가입 중 에러 발생", err);
+      console.error('회원가입 중 에러 발생', err);
       // 에러 처리
     }
   };
@@ -156,11 +156,11 @@ const CreateAccountScreen = () => {
   };
 
   const showTermsAndConditions = () => {
-    router.push("./TermsAndConditionsScreen");
+    router.push('./TermsAndConditionsScreen');
   };
 
   const showPrivacyPolicy = () => {
-    router.push("./PrivacyPolicyScreen");
+    router.push('./PrivacyPolicyScreen');
   };
 
   return (
@@ -195,7 +195,7 @@ const CreateAccountScreen = () => {
                     setIsExistEmail(isDuplicatedEmail.Init); // 입력값 바뀔 때마다 초기화
                   }}
                   placeholder="Enter email address"
-                  placeholderTextColor={"#616262"}
+                  placeholderTextColor={'#616262'}
                 />
                 <CloseErrorBox>
                   {!EmailChecks.isEmail && !EmailChecks.isnull && (
@@ -205,42 +205,26 @@ const CreateAccountScreen = () => {
               </EmailContainer>
 
               {isExistEmail === isDuplicatedEmail.NotExist ? (
-
                 <ShowVerifiedBox>
                   <Entypo name="check" size={24} color="#949899" />
                 </ShowVerifiedBox>
-
               ) : (
-                <VerifyButton
-                  onPress={VerifyEmail}
-                  disabled={!EmailChecks.isEmail}
-                  canVerify={EmailChecks.isEmail}
-                >
+                <VerifyButton onPress={VerifyEmail} disabled={!EmailChecks.isEmail} canVerify={EmailChecks.isEmail}>
                   <VerifyText>Verify</VerifyText>
                 </VerifyButton>
               )}
-
-
             </VerifyContainer>
             <ErrorBox>
               {!EmailChecks.isEmail && !EmailChecks.isnull && (
                 <>
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={18}
-                    color="#FF4F4F"
-                  />
+                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
                   <ErrorText>Not the correct email format.</ErrorText>
                 </>
               )}
 
-              {EmailChecks.isEmail && (isExistEmail === isDuplicatedEmail.Exist) && (
+              {EmailChecks.isEmail && isExistEmail === isDuplicatedEmail.Exist && (
                 <>
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={18}
-                    color="#FF4F4F"
-                  />
+                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
                   <ErrorText>This email is already in use.</ErrorText>
                 </>
               )}
@@ -256,41 +240,34 @@ const CreateAccountScreen = () => {
                   onChangeText={(text) => {
                     setCode(text);
                     setIsCorrect(isCorrectCode.Init);
-                  }
-                  }
+                  }}
                   placeholder="Enter Code"
-                  placeholderTextColor={"#616262"}
+                  placeholderTextColor={'#616262'}
                 />
-
               </CodeVerifyContainer>
               {isCorrect === isCorrectCode.Success ? (
                 <ShowVerifiedBox>
                   <Entypo name="check" size={24} color="#949899" />
-                </ShowVerifiedBox>)
-                : (
-                  <VerifyButton
-                    onPress={verifyCode}
-                    disabled={(isExistEmail === isDuplicatedEmail.Exist)}
-                    canVerify={isExistEmail === isDuplicatedEmail.NotExist}
-                  >
-                    <VerifyText>Verify</VerifyText>
-                  </VerifyButton>
-                )}
-
+                </ShowVerifiedBox>
+              ) : (
+                <VerifyButton
+                  onPress={verifyCode}
+                  disabled={isExistEmail === isDuplicatedEmail.Exist}
+                  canVerify={isExistEmail === isDuplicatedEmail.NotExist}
+                >
+                  <VerifyText>Verify</VerifyText>
+                </VerifyButton>
+              )}
             </VerifyContainer>
-            {(isCorrect === isCorrectCode.Fail) && (
+            {isCorrect === isCorrectCode.Fail && (
               <>
                 <ErrorBox>
-                  <Ionicons
-                    name="information-circle-outline"
-                    size={18}
-                    color="#FF4F4F"
-                  />
+                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
                   <ErrorText>Fail Code Verification</ErrorText>
                 </ErrorBox>
               </>
             )}
-            {(isCorrect === isCorrectCode.Success) && (
+            {isCorrect === isCorrectCode.Success && (
               <>
                 <NotErrorBox>
                   <AntDesign name="check" size={18} color="#02F59B" />
@@ -308,16 +285,12 @@ const CreateAccountScreen = () => {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Enter Password"
-                placeholderTextColor={"#616262"}
-              //secureTextEntry={lookPassword}
+                placeholderTextColor={'#616262'}
+                //secureTextEntry={lookPassword}
               />
               <EyeIconBox>
                 <TouchableOpacity onPress={() => setLookPassword(!lookPassword)}>
-                  <Ionicons
-                    name={lookPassword ? "eye-off-outline" : "eye-outline"}
-                    size={25}
-                    color="#616262"
-                  />
+                  <Ionicons name={lookPassword ? 'eye-off-outline' : 'eye-outline'} size={25} color="#616262" />
                 </TouchableOpacity>
               </EyeIconBox>
             </PasswordContainer>
@@ -412,50 +385,35 @@ const CreateAccountScreen = () => {
                 value={repeatPassword}
                 onChangeText={setRepeatPassword}
                 placeholder="Enter Password"
-                placeholderTextColor={"#616262"}
+                placeholderTextColor={'#616262'}
                 secureTextEntry={lookRepeatPassword}
               />
               <EyeIconBox>
-                <TouchableOpacity
-                  onPress={() => setLookRepeatPassword(!lookRepeatPassword)}
-                >
-                  <Ionicons
-                    name={lookRepeatPassword ? "eye-off-outline" : "eye-outline"}
-                    size={25}
-                    color="#616262"
-                  />
+                <TouchableOpacity onPress={() => setLookRepeatPassword(!lookRepeatPassword)}>
+                  <Ionicons name={lookRepeatPassword ? 'eye-off-outline' : 'eye-outline'} size={25} color="#616262" />
                 </TouchableOpacity>
               </EyeIconBox>
             </PasswordContainer>
-            {!(isSamePassword.isnull) && (isSamePassword.isSame) &&
+            {!isSamePassword.isnull && isSamePassword.isSame && (
               <NotErrorBox>
                 <AntDesign name="check" size={18} color="#02F59B" />
                 <NotErrorText>Your password match.</NotErrorText>
-              </NotErrorBox>}
+              </NotErrorBox>
+            )}
 
-            {!(isSamePassword.isnull) && !(isSamePassword.isSame) &&
+            {!isSamePassword.isnull && !isSamePassword.isSame && (
               <ErrorBox>
                 <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
                 <ErrorText>Your password do not match.</ErrorText>
-              </ErrorBox>}
+              </ErrorBox>
+            )}
           </GeneralLoginContainer>
         </KeyboardAwareScrollView>
-        <NextButtonContainer
-          disabled={!completeCondition}
-          completeCondition={completeCondition}
-          onPress={showModal}
-        >
+        <NextButtonContainer disabled={!completeCondition} completeCondition={completeCondition} onPress={showModal}>
           <NextText>Next</NextText>
         </NextButtonContainer>
-
-
       </Container>
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <ModalOverlay activeOpacity={1}>
           <BottomSheetContent>
             <BottomSheetHeader>
@@ -470,43 +428,39 @@ const CreateAccountScreen = () => {
                   setCheck1(newValue);
                   setCheck2(newValue);
                   setCheck3(newValue);
-
                 }}
                 check={allCheck}
-              >{allCheck && <Entypo name="check" size={15} color="#02F59B" />}</CheckBox><AllCheckText>I agree to all.</AllCheckText>
-
+              >
+                {allCheck && <Entypo name="check" size={15} color="#02F59B" />}
+              </CheckBox>
+              <AllCheckText>I agree to all.</AllCheckText>
             </AllCheckBoxContainer>
             <Divider />
             <CheckBoxContainer>
-              <CheckBox
-                onPress={() => setCheck1(!check1)}
-                check={check1}
-              >{check1 && <Entypo name="check" size={15} color="#02F59B" />}</CheckBox><CheckText>(Required) I am over 14 years old.</CheckText>
-
+              <CheckBox onPress={() => setCheck1(!check1)} check={check1}>
+                {check1 && <Entypo name="check" size={15} color="#02F59B" />}
+              </CheckBox>
+              <CheckText>(Required) I am over 14 years old.</CheckText>
             </CheckBoxContainer>
             <CheckBoxContainer>
-              <CheckBox onPress={() => setCheck2(!check2)}
-                check={check2}
-              >
+              <CheckBox onPress={() => setCheck2(!check2)} check={check2}>
                 {check2 && <Entypo name="check" size={15} color="#02F59B" />}
-              </CheckBox><CheckText>(Required) Terms & Conditions</CheckText>
+              </CheckBox>
+              <CheckText>(Required) Terms & Conditions</CheckText>
               <TouchableOpacity onPress={showTermsAndConditions}>
-                <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+                <MaterialIcons name="navigate-next" size={35} color="#848687" />
+              </TouchableOpacity>
             </CheckBoxContainer>
             <CheckBoxContainer>
-              <CheckBox onPress={() => setCheck3(!check3)}
-                check={check3}
-              >
+              <CheckBox onPress={() => setCheck3(!check3)} check={check3}>
                 {check3 && <Entypo name="check" size={15} color="#02F59B" />}
-              </CheckBox><CheckText>(Required) Privacy Policy</CheckText>
+              </CheckBox>
+              <CheckText>(Required) Privacy Policy</CheckText>
               <TouchableOpacity onPress={showPrivacyPolicy}>
-                <MaterialIcons name="navigate-next" size={35} color="#848687" /></TouchableOpacity>
+                <MaterialIcons name="navigate-next" size={35} color="#848687" />
+              </TouchableOpacity>
             </CheckBoxContainer>
-            <ConfirmButton
-              disabled={!allCheck}
-              allCheck={allCheck}
-              onPress={JoinMember}
-            >
+            <ConfirmButton disabled={!allCheck} allCheck={allCheck} onPress={JoinMember}>
               <ConfirmText>Confirm</ConfirmText>
             </ConfirmButton>
           </BottomSheetContent>
@@ -554,7 +508,6 @@ const GeneralLoginContainer = styled.View`
 `;
 
 const TitleContainer = styled.View`
-  
   justify-content: flex-end;
   height: 50px;
 `;
@@ -600,7 +553,6 @@ const VerifyContainer = styled.View`
 `;
 
 const EmailContainer = styled.View`
-  
   background-color: #353637;
   width: 75%;
   height: 50px;
@@ -642,9 +594,8 @@ const ShowVerifiedBox = styled.View`
   align-items: center;
   justify-content: center;
   margin-left: 5px;
-  border-color:#949899;
-  border-width: 2px; 
-    
+  border-color: #949899;
+  border-width: 2px;
 `;
 
 const VerifyText = styled.Text`
@@ -654,7 +605,6 @@ const VerifyText = styled.Text`
 `;
 
 const ErrorBox = styled.View`
-  
   height: 20px;
   margin-top: 10px;
   flex-direction: row;
@@ -697,14 +647,12 @@ const CodeInputBox = styled.TextInput`
 `;
 
 const CheckPasswordContainer = styled.View`
-
   margin: 10px 0px;
   height: 70px;
 `;
 const CodeInput = styled.TextInput`
   width: 80%;
-  height:50px;
-
+  height: 50px;
 `;
 
 const CheckPasswordBox = styled.View`
@@ -715,8 +663,7 @@ const CheckPasswordBox = styled.View`
 
 const CheckPasswordText = styled.Text`
   margin-left: 9px;
-  color: ${(props) =>
-    props.isnull ? "#848687" : props.check ? "#ffffff" : "#FF4F4F"};
+  color: ${(props) => (props.isnull ? '#848687' : props.check ? '#ffffff' : '#FF4F4F')};
   font-size: 13px;
   font-family: PlusJakartaSans_400Regular;
 `;
@@ -770,75 +717,71 @@ const BottomSheetHandle = styled.View`
 const BottomSheetTitle = styled.Text`
   color: #ffffff;
   font-size: 15px;
-  font-family:PlusJakartaSans_600SemiBold;
-  margin-left:30px;
+  font-family: PlusJakartaSans_600SemiBold;
+  margin-left: 30px;
 `;
 
 const AllCheckBoxContainer = styled.View`
-    height:60px;
-    margin:20px 5px 10px 5px;
-    flex-direction:row;
-    padding-left:20px;
-    align-items:center;
-
-  `;
+  height: 60px;
+  margin: 20px 5px 10px 5px;
+  flex-direction: row;
+  padding-left: 20px;
+  align-items: center;
+`;
 const AllCheckText = styled.Text`
-    color: #FFFFFF;
-    font-size:15px;
-    font-family:PlusJakartaSans_600SemiBold;
-    margin-left:15px;
-    
-  `;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: PlusJakartaSans_600SemiBold;
+  margin-left: 15px;
+`;
 
 const Divider = styled.View`
-    width: 90%;
-    align-self:center;
-    height: 2px;
-    background-color: #616262;
-    margin-bottom:10px;
-  `;
+  width: 90%;
+  align-self: center;
+  height: 2px;
+  background-color: #616262;
+  margin-bottom: 10px;
+`;
 
 const CheckBoxContainer = styled.View`
-   
-    height:50px;
-    margin:5px;
-    flex-direction:row;
-    align-items:center;
-    padding-left:20px;
-    padding-right: 15px;
-  `;
+  height: 50px;
+  margin: 5px;
+  flex-direction: row;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 15px;
+`;
 
 const CheckBox = styled.TouchableOpacity`
-    border-color: ${(props) => (props.check ? "#02F59B" : "#CCCFD0")};
-    border-width:1.25px;
-    width:20px;
-    height:20px;
-    align-items:center;
-    justify-content:center;
-
+  border-color: ${(props) => (props.check ? '#02F59B' : '#CCCFD0')};
+  border-width: 1.25px;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
 `;
 const CheckText = styled.Text`
-    color: #FFFFFF;
-    font-size:13px;
-    font-family:PlusJakartaSans_500Medium;
-    margin-left:15px;
-    flex:1;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: PlusJakartaSans_500Medium;
+  margin-left: 15px;
+  flex: 1;
 `;
 
 const ConfirmButton = styled.TouchableOpacity`
-    opacity:${(props) => (props.allCheck ? 1 : 0.5)};
-    background-color:#02F59B;
-    height:50px;
-    width:90%;
-    align-self:center;
-    border-radius:8px;
-    align-items:center;
-    justify-content:center;
-    margin:20px 0px;
+  opacity: ${(props) => (props.allCheck ? 1 : 0.5)};
+  background-color: #02f59b;
+  height: 50px;
+  width: 90%;
+  align-self: center;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0px;
 `;
 
 const ConfirmText = styled.Text`
-    color:#1D1E1F;
-    font-size:15px;
-    font-family:PlusJakartaSans_500Medium;
+  color: #1d1e1f;
+  font-size: 15px;
+  font-family: PlusJakartaSans_500Medium;
 `;

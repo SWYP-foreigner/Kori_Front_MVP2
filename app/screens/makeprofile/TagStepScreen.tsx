@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert ,ScrollView} from 'react-native';
+import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import {useProfile} from '../../contexts/ProfileContext'
-import axios from "axios";
+import { useProfile } from '../../contexts/ProfileContext';
+import axios from 'axios';
 import { Platform } from 'react-native';
 
 const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
@@ -13,9 +13,7 @@ const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
       <TagTitle>
         <TagTitleText>{title}</TagTitleText>
         {title === 'Entertainment & Hobbies' && (
-          <SelectedText selected={selectedTags.length > 0}>
-            {selectedTags.length}/5 selected
-          </SelectedText>
+          <SelectedText selected={selectedTags.length > 0}>{selectedTags.length}/5 selected</SelectedText>
         )}
       </TagTitle>
 
@@ -25,16 +23,10 @@ const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
           const emoji = imogi[index] ?? ''; // 안전하게 꺼내기
 
           return (
-            <HobbyTag
-              key={tag}
-              onPress={() => selectTag(tag)}
-              selected={isSelected}
-            >
+            <HobbyTag key={tag} onPress={() => selectTag(tag)} selected={isSelected}>
               {emoji !== '' && <Imogi>{emoji}</Imogi>}
               <HobbyTagText selected={isSelected}>{tag}</HobbyTagText>
-              {isSelected && (
-                <AntDesign name="close" size={14} color="#02F59B" />
-              )}
+              {isSelected && <AntDesign name="close" size={14} color="#02F59B" />}
             </HobbyTag>
           );
         })}
@@ -52,7 +44,7 @@ export default function TagStepScreen() {
   const selectTag = (tag) => {
     if (selectedTags.includes(tag)) {
       // 이미 선택되어 있으면 제거
-      setSelectedTags(selectedTags.filter(t => t !== tag));
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
     } else {
       // 최대 선택 개수 제한
       if (selectedTags.length >= maxSelections) {
@@ -62,60 +54,59 @@ export default function TagStepScreen() {
       setSelectedTags([...selectedTags, tag]);
     }
   };
-  const handleNext=()=>{
-    updateProfile('hobby',selectedTags);
+  const handleNext = () => {
+    updateProfile('hobby', selectedTags);
     router.push('./AddPhotoStepScreen');
   };
- 
 
   return (
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container>
         <ScrollableContainer>
-        <HeaderSection>
-          <StepText>Step 8 / 9</StepText>
+          <HeaderSection>
+            <StepText>Step 8 / 9</StepText>
 
-          <TitleWrapper>
-            <Title>Tell us about</Title>
-            <Title>your interest</Title>
-          </TitleWrapper>
-          <Subtitle>You can choose up to {maxSelections} interests.</Subtitle>
-        </HeaderSection>
+            <TitleWrapper>
+              <Title>Tell us about</Title>
+              <Title>your interest</Title>
+            </TitleWrapper>
+            <Subtitle>You can choose up to {maxSelections} interests.</Subtitle>
+          </HeaderSection>
 
           <TagContainer>
             <HobbyBox
-              imogi={["🎵","🎬","📚","🎬","🎮"]}
+              imogi={['🎵', '🎬', '📚', '🎬', '🎮']}
               title="Entertainment & Hobbies"
-              tags={['Music','Movies','Reading','Anime','Gaming']}
+              tags={['Music', 'Movies', 'Reading', 'Anime', 'Gaming']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
-              imogi={["🍺","☕️","✈️","🧩","🛍️","💄️","🛏️"]}
+              imogi={['🍺', '☕️', '✈️', '🧩', '🛍️', '💄️', '🛏️']}
               title="LifeStyle & Social"
-              tags={['Drinking','Exploring Cafes','Traveling','Board Games','Shopping','Beauty','Doing Nothing']}
+              tags={['Drinking', 'Exploring Cafes', 'Traveling', 'Board Games', 'Shopping', 'Beauty', 'Doing Nothing']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
-              imogi={["🧘","🏃","🏋️","🥾","💃","⛰️"]}
+              imogi={['🧘', '🏃', '🏋️', '🥾', '💃', '⛰️']}
               title="Activities & Wellness"
-              tags={['Yoga','Running','Fitness','Camping','Dancing','Hiking']}
+              tags={['Yoga', 'Running', 'Fitness', 'Camping', 'Dancing', 'Hiking']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
-              imogi={["🎨","🎤","🍳","🐶","💼","📸"]}
+              imogi={['🎨', '🎤', '🍳', '🐶', '💼', '📸']}
               title="Creativity & Personal Growth"
-              tags={['Exhibition','Singing','Cooking','Pets','Career','Photography']}
+              tags={['Exhibition', 'Singing', 'Cooking', 'Pets', 'Career', 'Photography']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
             <HobbyBox
-              imogi={["💖","💖","🍚"]}
+              imogi={['💖', '💖', '🍚']}
               title="Korean Culture"
-              tags={['K-Pop Lover','K-Drama Lover','K-Food Lover']}
+              tags={['K-Pop Lover', 'K-Drama Lover', 'K-Food Lover']}
               selectedTags={selectedTags}
               selectTag={selectTag}
             />
@@ -123,10 +114,7 @@ export default function TagStepScreen() {
         </ScrollableContainer>
 
         <ButtonSection>
-          <NextButton
-            onPress={handleNext}
-            disabled={selectedTags.length === 0}
-          >
+          <NextButton onPress={handleNext} disabled={selectedTags.length === 0}>
             <ButtonText>Next</ButtonText>
           </NextButton>
         </ButtonSection>
@@ -140,7 +128,7 @@ export default function TagStepScreen() {
 // ------------------------
 const SafeArea = styled(SafeAreaView)`
   flex: 1;
-  background-color: #0F0F10;
+  background-color: #0f0f10;
 `;
 
 const Container = styled.View`
@@ -151,7 +139,7 @@ const Container = styled.View`
 const HeaderSection = styled.View``;
 
 const ScrollableContainer = styled.ScrollView.attrs(() => ({
-  showsVerticalScrollIndicator: false, 
+  showsVerticalScrollIndicator: false,
 }))`
   flex: 1;
 `;
@@ -161,11 +149,11 @@ const ButtonSection = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5BD08D;
+  color: #5bd08d;
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
-  margin-top:40px;
+  margin-top: 40px;
 `;
 
 const TitleWrapper = styled.View`
@@ -173,7 +161,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 40px;
   line-height: 40px;
   letter-spacing: 0.2px;
@@ -190,11 +178,11 @@ const Subtitle = styled.Text`
 const TagContainer = styled.View`
   flex: 1;
   justify-content: space-between;
-  margin-top:30px;
+  margin-top: 30px;
 `;
 
 const TagTitle = styled.View`
-  margin-top:10px;
+  margin-top: 10px;
   margin-bottom: 8px;
   width: 100%;
   justify-content: space-between;
@@ -207,10 +195,10 @@ const TagTitleText = styled.Text`
   padding-right: 20px;
   font-size: 14px;
   font-weight: 600;
-  font-family:  PlusJakartaSans_600SemiBold
+  font-family: PlusJakartaSans_600SemiBold;
 `;
-const SelectedText=styled.Text`
-  color:${props => (props.selected ? '#02F59B' : '#848687')};
+const SelectedText = styled.Text`
+  color: ${(props) => (props.selected ? '#02F59B' : '#848687')};
 `;
 const HobbyTagWrapper = styled.View`
   width: 100%;
@@ -219,25 +207,22 @@ const HobbyTagWrapper = styled.View`
   margin-bottom: 15px;
 `;
 
-
 const HobbyTag = styled.TouchableOpacity`
   margin: 5px 10px 5px 0px;
   padding: 5px 10px;
   height: 35px;
   border-radius: 30px;
   justify-content: center;
-  border-color: ${props => (props.selected ? '#02F59B' : '#848687')};
+  border-color: ${(props) => (props.selected ? '#02F59B' : '#848687')};
   border-width: 1px;
   flex-direction: row;
   align-items: center;
 `;
-const Imogi = styled.Text`
-
-`;
+const Imogi = styled.Text``;
 const HobbyTagText = styled.Text`
-  color: ${props => (props.selected ? '#02F59B' : '#ffffff')};
+  color: ${(props) => (props.selected ? '#02F59B' : '#ffffff')};
   font-size: 13px;
-  margin:0px 7px;
+  margin: 0px 7px;
   font-family: PlusJakartaSans-Regular;
 `;
 
@@ -246,13 +231,13 @@ const NextButton = styled.TouchableOpacity`
   border-radius: 8px;
   align-items: center;
   justify-content: center;
-  background-color: #02F59B;
+  background-color: #02f59b;
   margin-bottom: 8px;
-  opacity: ${props => (props.disabled ? 0.5 : 1)};
+  opacity: ${(props) => (props.disabled ? 0.5 : 1)};
 `;
 
 const ButtonText = styled.Text`
-  color: #1D1E1F;
+  color: #1d1e1f;
   font-size: 15px;
   font-weight: 500;
   font-family: 'PlusJakartaSans-Medium';

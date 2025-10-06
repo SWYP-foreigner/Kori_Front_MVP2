@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import Svg, { Path } from 'react-native-svg';
-import {ActivityIndicator} from "react-native";
+import { ActivityIndicator } from 'react-native';
 type Props = {
   onPress?: () => void;
   loading?: boolean;
@@ -49,21 +49,17 @@ export default function GoogleSignInButton({ onPress, loading, disabled }: Props
     <GoogleLoginButton
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        pressed && { opacity: 0.8 },
-        disabled && { opacity: 0.6 }
-      ]}
+      style={({ pressed }) => [pressed && { opacity: 0.8 }, disabled && { opacity: 0.6 }]}
     >
-     
       {loading ? (
         <ActivityIndicator size="large" color="#02F59B" />
       ) : (
-      <>
-         <IconWrapper>
-        <GoogleIcon />
-        </IconWrapper>
-        <ButtonText>Continue with Google</ButtonText>
-      </>
+        <>
+          <IconWrapper>
+            <GoogleIcon />
+          </IconWrapper>
+          <ButtonText>Continue with Google</ButtonText>
+        </>
       )}
     </GoogleLoginButton>
   );
@@ -73,8 +69,8 @@ export default function GoogleSignInButton({ onPress, loading, disabled }: Props
 const GoogleLoginButton = styled.Pressable`
   flex-direction: row;
   align-items: center;
-  justify-content:center;
-  width : 100%;
+  justify-content: center;
+  width: 100%;
   height: 50px;
   border-radius: 8px;
   border-width: 1px;
@@ -83,7 +79,6 @@ const GoogleLoginButton = styled.Pressable`
 `;
 
 const IconWrapper = styled.View`
-  
   margin-right: 10px;
 `;
 
@@ -92,5 +87,3 @@ const ButtonText = styled.Text`
   color: #ffffff;
   font-family: PlusJakartaSans_500Medium;
 `;
-
-

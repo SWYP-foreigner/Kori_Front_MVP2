@@ -8,11 +8,12 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  DeviceEventEmitter, Dimensions,
+  DeviceEventEmitter,
+  Dimensions,
   FlatList,
   FlatListProps,
   NativeScrollEvent,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -32,7 +33,9 @@ type FriendItem = {
   imageUrl?: string;
 };
 
-function HListBase(props: FlatListProps<FriendItem>) { return <FlatList {...props} />; }
+function HListBase(props: FlatListProps<FriendItem>) {
+  return <FlatList {...props} />;
+}
 const HList = styled(HListBase)``;
 
 const yearFromAny = (v?: unknown): number | undefined => {
@@ -77,8 +80,13 @@ const dedupById = (arr: any[]): FriendItem[] => {
 export default function FollowListScreen() {
   const [tab, setTab] = useState<Tab>('received');
   const [inFlight, setInFlight] = useState<Set<number>>(new Set());
-  const lock = (id: number) => setInFlight(s => new Set(s).add(id));
-  const unlock = (id: number) => setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
+  const lock = (id: number) => setInFlight((s) => new Set(s).add(id));
+  const unlock = (id: number) =>
+    setInFlight((s) => {
+      const n = new Set(s);
+      n.delete(id);
+      return n;
+    });
 
   const {
     data: receivedRaw = [],
@@ -111,8 +119,12 @@ export default function FollowListScreen() {
   const [rPage, setRPage] = useState(1);
   const [sPage, setSPage] = useState(1);
 
-  useEffect(() => { setRPage(1); }, [receivedList.length]);
-  useEffect(() => { setSPage(1); }, [sentList.length]);
+  useEffect(() => {
+    setRPage(1);
+  }, [receivedList.length]);
+  useEffect(() => {
+    setSPage(1);
+  }, [sentList.length]);
 
   useEffect(() => {
     if (tab === 'received' && !loadingReceived && receivedList.length > 0) {
@@ -162,18 +174,17 @@ export default function FollowListScreen() {
     }
   };
 
-  const goToIndex = <T,>(
-    ref: { current: FlatList<T> | null },
-    total: number,
-    idx0: number
-  ) => {
+  const goToIndex = <T,>(ref: { current: FlatList<T> | null }, total: number, idx0: number) => {
     if (total === 0) return;
     const safe = Math.max(0, Math.min(total - 1, idx0));
     ref.current?.scrollToIndex?.({ index: safe, animated: true });
   };
 
-  const getLayout: FlatListProps<FriendItem>['getItemLayout'] =
-    (_data, index) => ({ length: SCREEN_WIDTH, offset: SCREEN_WIDTH * index, index });
+  const getLayout: FlatListProps<FriendItem>['getItemLayout'] = (_data, index) => ({
+    length: SCREEN_WIDTH,
+    offset: SCREEN_WIDTH * index,
+    index,
+  });
 
   const onScrollReceived = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setRPage(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH) + 1);
@@ -198,7 +209,9 @@ export default function FollowListScreen() {
         <BackBtn onPress={() => router.back()}>
           <AntDesign name="left" size={20} color="#fff" />
         </BackBtn>
-        <HeaderCenter><Title>Friends List</Title></HeaderCenter>
+        <HeaderCenter>
+          <Title>Friends List</Title>
+        </HeaderCenter>
         <RightSlot />
       </Header>
 
@@ -249,7 +262,7 @@ export default function FollowListScreen() {
                     mode="received"
                     onAccept={handleAccept}
                     onCancel={handleDecline}
-                    onChat={() => { }}
+                    onChat={() => {}}
                     isFollowed={false}
                   />
                 </Inner>
@@ -269,7 +282,10 @@ export default function FollowListScreen() {
                 <PagerArrow>‹</PagerArrow>
               </PagerBtn>
               <PagerText>{`${rPage} / ${receivedList.length}`}</PagerText>
-              <PagerBtn disabled={rPage >= receivedList.length} onPress={() => goToIndex(rRef, receivedList.length, rPage)}>
+              <PagerBtn
+                disabled={rPage >= receivedList.length}
+                onPress={() => goToIndex(rRef, receivedList.length, rPage)}
+              >
                 <PagerArrow>›</PagerArrow>
               </PagerBtn>
             </Pager>
@@ -308,7 +324,7 @@ export default function FollowListScreen() {
                     imageUrl={item.imageUrl}
                     collapsible={false}
                     mode="sent"
-                    onAccept={() => { }}
+                    onAccept={() => {}}
                     onCancel={() => handleCancelSent(item.id)}
                     onChat={async () => {
                       try {
@@ -356,22 +372,94 @@ export default function FollowListScreen() {
 }
 
 /* styles 그대로 */
-const Safe = styled.SafeAreaView`flex:1;background:#1d1e1f;`;
-const Header = styled.View`flex-direction:row;align-items:center;padding:12px 16px;`;
-const BackBtn = styled.Pressable`width:40px;align-items:flex-start;`;
-const HeaderCenter = styled.View`flex:1;align-items:center;justify-content:center;`;
-const RightSlot = styled.View`width:40px;`;
-const Title = styled.Text`color:#fff;font-size:20px;font-family:'PlusJakartaSans_700Bold';`;
-const TabsWrap = styled.View`position:relative;padding:0 16px;margin-top:4px;`;
-const TabsRow = styled.View`flex-direction:row;`;
-const TabItem = styled.Pressable<{ active: boolean }>`flex:1;align-items:center;padding:12px 6px;border-bottom-width:2px;border-bottom-color:${p => p.active ? '#30F59B' : 'transparent'};`;
-const TabText = styled.Text<{ active: boolean }>`color:${p => p.active ? '#30F59B' : '#cfcfcf'};font-size:16px;font-family:'PlusJakartaSans_600SemiBold';`;
-const TabsBottomLine = styled.View`position:absolute;left:16px;right:16px;bottom:0;height:1px;background:#212325;`;
-const Page = styled.View`justify-content:center;`;
-const Inner = styled.View`padding:0 16px;margin-top:-27px;`;
-const Pager = styled.View`position:absolute;bottom:10px;left:0;right:0;flex-direction:row;align-items:center;justify-content:center;`;
-const PagerBtn = styled.Pressable<{ disabled?: boolean }>`opacity:${p => p.disabled ? 0.3 : 1};padding:6px 10px;`;
-const PagerArrow = styled.Text`color:#b7babd;font-size:20px;padding:0 4px;`;
-const PagerText = styled.Text`color:#b7babd;font-size:12px;font-family:'PlusJakartaSans_400Regular';`;
-const Empty = styled.View`padding:40px 16px;align-items:center;`;
-const EmptyText = styled.Text`color:#cfcfcf;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
+const Header = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 16px;
+`;
+const BackBtn = styled.Pressable`
+  width: 40px;
+  align-items: flex-start;
+`;
+const HeaderCenter = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+const RightSlot = styled.View`
+  width: 40px;
+`;
+const Title = styled.Text`
+  color: #fff;
+  font-size: 20px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const TabsWrap = styled.View`
+  position: relative;
+  padding: 0 16px;
+  margin-top: 4px;
+`;
+const TabsRow = styled.View`
+  flex-direction: row;
+`;
+const TabItem = styled.Pressable<{ active: boolean }>`
+  flex: 1;
+  align-items: center;
+  padding: 12px 6px;
+  border-bottom-width: 2px;
+  border-bottom-color: ${(p) => (p.active ? '#30F59B' : 'transparent')};
+`;
+const TabText = styled.Text<{ active: boolean }>`
+  color: ${(p) => (p.active ? '#30F59B' : '#cfcfcf')};
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_600SemiBold';
+`;
+const TabsBottomLine = styled.View`
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: #212325;
+`;
+const Page = styled.View`
+  justify-content: center;
+`;
+const Inner = styled.View`
+  padding: 0 16px;
+  margin-top: -27px;
+`;
+const Pager = styled.View`
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+const PagerBtn = styled.Pressable<{ disabled?: boolean }>`
+  opacity: ${(p) => (p.disabled ? 0.3 : 1)};
+  padding: 6px 10px;
+`;
+const PagerArrow = styled.Text`
+  color: #b7babd;
+  font-size: 20px;
+  padding: 0 4px;
+`;
+const PagerText = styled.Text`
+  color: #b7babd;
+  font-size: 12px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const Empty = styled.View`
+  padding: 40px 16px;
+  align-items: center;
+`;
+const EmptyText = styled.Text`
+  color: #cfcfcf;
+`;

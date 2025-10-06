@@ -27,16 +27,18 @@ export default function HomeScreen() {
 
   const [requested, setRequested] = useState<Set<number>>(new Set());
   const [inFlight, setInFlight] = useState<Set<number>>(new Set());
-  const lock = (id: number) => setInFlight(s => new Set(s).add(id));
-  const unlock = (id: number) => setInFlight(s => { const n = new Set(s); n.delete(id); return n; });
-
+  const lock = (id: number) => setInFlight((s) => new Set(s).add(id));
+  const unlock = (id: number) =>
+    setInFlight((s) => {
+      const n = new Set(s);
+      n.delete(id);
+      return n;
+    });
 
   const { data: accepted } = useAcceptedFollowing(); // [{ id: number, ... }]
   const followingSet = useMemo(
-    () => new Set((accepted ?? [])
-      .map(u => Number((u as any)?.id ?? (u as any)?.userId))
-      .filter(Number.isFinite)),
-    [accepted]
+    () => new Set((accepted ?? []).map((u) => Number((u as any)?.id ?? (u as any)?.userId)).filter(Number.isFinite)),
+    [accepted],
   );
 
   const { set: sentSet } = useSentFollowRequestsSet();
@@ -44,15 +46,26 @@ export default function HomeScreen() {
   useEffect(() => {
     const subCancel = DeviceEventEmitter.addListener('FOLLOW_REQUEST_CANCELLED', (p: { userId: number }) => {
       if (p?.userId) {
-        setRequested(prev => { const n = new Set(prev); n.delete(p.userId); return n; });
+        setRequested((prev) => {
+          const n = new Set(prev);
+          n.delete(p.userId);
+          return n;
+        });
       }
     });
     const subSent = DeviceEventEmitter.addListener('FOLLOW_REQUEST_SENT', (p: { userId: number }) => {
       if (p?.userId) {
-        setRequested(prev => { const n = new Set(prev); n.add(p.userId); return n; });
+        setRequested((prev) => {
+          const n = new Set(prev);
+          n.add(p.userId);
+          return n;
+        });
       }
     });
-    return () => { subCancel.remove(); subSent.remove(); };
+    return () => {
+      subCancel.remove();
+      subSent.remove();
+    };
   }, []);
 
   const myId = useMemo(() => {
@@ -61,11 +74,9 @@ export default function HomeScreen() {
     return Number.isFinite(n) ? n : undefined;
   }, [me]);
 
-
-
   const list = useMemo(() => {
     const arr = friends ?? [];
-    return arr.filter(u => {
+    return arr.filter((u) => {
       const id = Number((u as any)?.id);
       if (!Number.isFinite(id)) return false;
       if (myId && id === myId) return false;
@@ -76,13 +87,12 @@ export default function HomeScreen() {
     });
   }, [friends, myId, followingSet, sentSet, requested]);
 
-
   const onRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
 
   const markRequested = useCallback((id: number) => {
-    setRequested(prev => {
+    setRequested((prev) => {
       const next = new Set(prev);
       next.add(id);
       return next;
@@ -90,7 +100,7 @@ export default function HomeScreen() {
   }, []);
 
   const unmarkRequested = useCallback((id: number) => {
-    setRequested(prev => {
+    setRequested((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
@@ -112,9 +122,7 @@ export default function HomeScreen() {
         <FlatList
           data={list}
           keyExtractor={(item) => String(item.id)}
-          refreshControl={
-            <RefreshControl refreshing={Boolean(isFetching && !isLoading)} onRefresh={onRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={Boolean(isFetching && !isLoading)} onRefresh={onRefresh} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           renderItem={({ item }) => {
             const uid = Number(item.id);
@@ -136,7 +144,6 @@ export default function HomeScreen() {
                   imageKey={(item as any).imageKey}
                   defaultExpanded={false}
                   mode={isSent ? 'sent' : 'friend'}
-
                   onFollow={async (id) => {
                     if ((myId && id === myId) || inFlight.has(id)) return;
 
@@ -155,7 +162,6 @@ export default function HomeScreen() {
                       unlock(id);
                     }
                   }}
-
                   onCancel={async (id) => {
                     if ((myId && id === myId) || inFlight.has(id)) return;
                     const wasSent = requested.has(id);
@@ -176,19 +182,17 @@ export default function HomeScreen() {
                       unlock(id);
                     }
                   }}
-
                   onChat={async () => {
                     const roomId = await createRoom({ otherUserId: uid });
                     router.push({
                       pathname: '/screens/chatscreen/ChattingRoomScreen',
-                      params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId }
+                      params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId },
                     });
                   }}
                 />
               </CardWrap>
             );
           }}
-
           ListEmptyComponent={
             <EmptyWrap>
               <EmptyText>No recommendations yet.</EmptyText>
@@ -201,11 +205,38 @@ export default function HomeScreen() {
 }
 
 /* styles */
-const Safe = styled.SafeAreaView`flex:1;background-color:#1d1e1f;`;
-const Header = styled.View`padding:12px 18px 8px 18px;flex-direction:row;align-items:center;`;
-const Title = styled.Text`color:#ffffff;font-size:32px;font-family:'InstrumentSerif_400Regular';letter-spacing:-0.2px;`;
-const IconImage = styled.Image`margin-left:4px;width:20px;height:20px;`;
-const LoaderWrap = styled.View`flex:1;align-items:center;justify-content:center;`;
-const CardWrap = styled.View`margin-top:16px;`;
-const EmptyWrap = styled.View`padding:40px 16px;align-items:center;`;
-const EmptyText = styled.Text`color:#cfcfcf;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background-color: #1d1e1f;
+`;
+const Header = styled.View`
+  padding: 12px 18px 8px 18px;
+  flex-direction: row;
+  align-items: center;
+`;
+const Title = styled.Text`
+  color: #ffffff;
+  font-size: 32px;
+  font-family: 'InstrumentSerif_400Regular';
+  letter-spacing: -0.2px;
+`;
+const IconImage = styled.Image`
+  margin-left: 4px;
+  width: 20px;
+  height: 20px;
+`;
+const LoaderWrap = styled.View`
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+`;
+const CardWrap = styled.View`
+  margin-top: 16px;
+`;
+const EmptyWrap = styled.View`
+  padding: 40px 16px;
+  align-items: center;
+`;
+const EmptyText = styled.Text`
+  color: #cfcfcf;
+`;

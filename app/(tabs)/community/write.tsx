@@ -3,11 +3,16 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Image as RNImage, Keyboard, KeyboardAvoidingView, Modal,
+  Image as RNImage,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
-  TextInput as RNTextInput, TouchableWithoutFeedback, View
+  TextInput as RNTextInput,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -26,7 +31,6 @@ const CATS: Category[] = ['News', 'Tip', 'Q&A', 'Event', 'Free talk', 'Activity'
 const GREEN = '#30F59B';
 
 export default function WriteScreen() {
-
   const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
 
@@ -40,14 +44,18 @@ export default function WriteScreen() {
   const { data: writeOpt, isFetching: loadingOpt, isError, error } = useBoardWriteOptions(boardId);
   const serverAnonymousAllowed = writeOpt?.anonymousWritable ?? false;
 
-  useEffect(() => { console.log('[write-options:request]', { boardId }); }, [boardId]);
-  useEffect(() => { if (loadingOpt) console.log('[write-options:loading]', { boardId }); }, [loadingOpt, boardId]);
+  useEffect(() => {
+    console.log('[write-options:request]', { boardId });
+  }, [boardId]);
+  useEffect(() => {
+    if (loadingOpt) console.log('[write-options:loading]', { boardId });
+  }, [loadingOpt, boardId]);
   useEffect(() => {
     if (writeOpt) {
       console.log('[write-options:success]', {
         boardId,
         response: writeOpt,
-        serverAnonymousAllowed
+        serverAnonymousAllowed,
       });
     }
   }, [writeOpt, boardId, serverAnonymousAllowed]);
@@ -87,24 +95,17 @@ export default function WriteScreen() {
 
   async function confirmPurposeAndPick(setImages: React.Dispatch<React.SetStateAction<string[]>>) {
     const proceed = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        'Pick photo',
-        'The selected photos will be used only to attach to your post. Continue?',
-        [
-          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-          { text: 'Continue', onPress: () => resolve(true) },
-        ]
-      );
+      Alert.alert('Pick photo', 'The selected photos will be used only to attach to your post. Continue?', [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Continue', onPress: () => resolve(true) },
+      ]);
     });
     if (!proceed) return;
 
     const { status, granted, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) {
       if (!canAskAgain) {
-        Alert.alert(
-          'Permission Required',
-          'Please allow Photos access in Settings > [App Name] > Photos.'
-        );
+        Alert.alert('Permission Required', 'Please allow Photos access in Settings > [App Name] > Photos.');
       }
       return;
     }
@@ -116,8 +117,8 @@ export default function WriteScreen() {
       quality: 0.9,
     });
     if (!res.canceled) {
-      const uris = res.assets.map(a => a.uri);
-      setImages(prev => [...prev, ...uris]);
+      const uris = res.assets.map((a) => a.uri);
+      setImages((prev) => [...prev, ...uris]);
     }
   }
 
@@ -127,10 +128,9 @@ export default function WriteScreen() {
     await confirmPurposeAndPick(setImages);
   };
 
-
   const removeImage = (uri: string) => {
     console.log('[image:remove]', uri);
-    setImages(prev => prev.filter(u => u !== uri));
+    setImages((prev) => prev.filter((u) => u !== uri));
   };
 
   const onSave = async () => {
@@ -168,12 +168,10 @@ export default function WriteScreen() {
               putUrl: p.putUrl,
               headers: p.headers ?? {},
               fileUri: images[i],
-            })
-          )
+            }),
+          ),
         );
-        uploadedKeys = presignRes.map(p => p.key);
-
-
+        uploadedKeys = presignRes.map((p) => p.key);
 
         console.log('[upload:done]', { uploadedKeys });
       }
@@ -206,7 +204,6 @@ export default function WriteScreen() {
           payload,
         });
 
-
         const res = await createMutation.mutateAsync(payload);
         console.log('[post:create:response]', res);
 
@@ -234,14 +231,15 @@ export default function WriteScreen() {
           <AntDesign name="left" size={20} color="#fff" />
         </IconBtn>
         <HeaderTitle>{isEdit ? 'Edit Post' : 'Write'}</HeaderTitle>
-        <SaveBtn
-          onPress={onSave}
-          disabled={!canSave || saving || updateMutation.isPending || createMutation.isPending}
-        >
+        <SaveBtn onPress={onSave} disabled={!canSave || saving || updateMutation.isPending || createMutation.isPending}>
           <SaveText $enabled={canSave && !updateMutation.isPending && !createMutation.isPending}>
             {isEdit
-              ? (updateMutation.isPending ? 'Saving...' : 'Save')
-              : (createMutation.isPending ? 'Saving...' : 'Save')}
+              ? updateMutation.isPending
+                ? 'Saving...'
+                : 'Save'
+              : createMutation.isPending
+                ? 'Saving...'
+                : 'Save'}
           </SaveText>
         </SaveBtn>
       </Header>
@@ -253,7 +251,6 @@ export default function WriteScreen() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={{ flex: 1 }}>
-
             <CatRow onPress={() => !isEdit && setCatOpen(true)} disabled={isEdit}>
               <CatLabel>Category</CatLabel>
               <CatChip style={isEdit ? { opacity: 0.5 } : undefined}>
@@ -280,7 +277,7 @@ export default function WriteScreen() {
             {images.length > 0 && (
               <PreviewWrap>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {images.map(uri => (
+                  {images.map((uri) => (
                     <Thumb key={uri}>
                       <ThumbImage source={{ uri }} />
                       <RemoveBtn onPress={() => removeImage(uri)}>
@@ -340,12 +337,7 @@ export default function WriteScreen() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      <Modal
-        visible={pickerOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPickerOpen(false)}
-      >
+      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
         <SheetBackdrop onPress={() => setPickerOpen(false)} />
         <Sheet>
           <SheetBtn onPress={pickImage}>
@@ -357,15 +349,10 @@ export default function WriteScreen() {
         </Sheet>
       </Modal>
 
-      <Modal
-        visible={catOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCatOpen(false)}
-      >
+      <Modal visible={catOpen} transparent animationType="fade" onRequestClose={() => setCatOpen(false)}>
         <SheetBackdrop onPress={() => setCatOpen(false)} />
         <CatSheet>
-          {CATS.map(c => {
+          {CATS.map((c) => {
             const active = c === category;
             return (
               <CatItem
@@ -377,11 +364,7 @@ export default function WriteScreen() {
                 }}
               >
                 <CatItemText $active={active}>{c}</CatItemText>
-                {active ? (
-                  <AntDesign name="check" size={16} color="#9aa0a6" />
-                ) : (
-                  <View style={{ width: 16 }} />
-                )}
+                {active ? <AntDesign name="check" size={16} color="#9aa0a6" /> : <View style={{ width: 16 }} />}
               </CatItem>
             );
           })}
@@ -391,43 +374,184 @@ export default function WriteScreen() {
   );
 }
 
-const Safe = styled.SafeAreaView`flex:1;background:#1d1e1f;`;
-const Header = styled.View`height:48px;padding:0 12px;flex-direction:row;align-items:center;justify-content:space-between;`;
-const IconBtn = styled.Pressable`padding:6px;`;
-const HeaderTitle = styled.Text`color:#fff;font-size:18px;font-family:'PlusJakartaSans_500Bold';`;
-const SaveBtn = styled.Pressable<{ disabled?: boolean }>`padding:6px;opacity:${p => p.disabled ? 0.4 : 1};`;
-const SaveText = styled.Text<{ $enabled: boolean }>`color:${p => p.$enabled ? '#30F59B' : '#9aa0a6'};font-size:16px;font-family:'PlusJakartaSans_700Bold';`;
-const DebugText = styled.Text`color:#9aa0a6;font-size:12px;`;
-const CatRow = styled.Pressable<{ disabled?: boolean }>`padding:10px 12px 8px;opacity:${p => p.disabled ? 0.5 : 1};`;
-const CatLabel = styled.Text`color:#9aa0a6;font-size:13px;font-family:'PlusJakartaSans_400Regular';`;
-const CatChip = styled.View`height:24px;padding:0 10px;flex-direction:row;align-items:center;gap:6px;`;
-const CatText = styled.Text`color:#cfd4da;font-size:16px;`;
-const Divider = styled.View`height:1px;background:#222426;`;
-const BodyWrap = styled.View`flex:1;padding:10px 12px 0;`;
-const StyledRNInput = styled(RNTextInput)`flex:1;min-height:150px;color:#e6e9ec;font-size:14px;line-height:20px;padding:0;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
+const Header = styled.View`
+  height: 48px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const IconBtn = styled.Pressable`
+  padding: 6px;
+`;
+const HeaderTitle = styled.Text`
+  color: #fff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_500Bold';
+`;
+const SaveBtn = styled.Pressable<{ disabled?: boolean }>`
+  padding: 6px;
+  opacity: ${(p) => (p.disabled ? 0.4 : 1)};
+`;
+const SaveText = styled.Text<{ $enabled: boolean }>`
+  color: ${(p) => (p.$enabled ? '#30F59B' : '#9aa0a6')};
+  font-size: 16px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const DebugText = styled.Text`
+  color: #9aa0a6;
+  font-size: 12px;
+`;
+const CatRow = styled.Pressable<{ disabled?: boolean }>`
+  padding: 10px 12px 8px;
+  opacity: ${(p) => (p.disabled ? 0.5 : 1)};
+`;
+const CatLabel = styled.Text`
+  color: #9aa0a6;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_400Regular';
+`;
+const CatChip = styled.View`
+  height: 24px;
+  padding: 0 10px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+`;
+const CatText = styled.Text`
+  color: #cfd4da;
+  font-size: 16px;
+`;
+const Divider = styled.View`
+  height: 1px;
+  background: #222426;
+`;
+const BodyWrap = styled.View`
+  flex: 1;
+  padding: 10px 12px 0;
+`;
+const StyledRNInput = styled(RNTextInput)`
+  flex: 1;
+  min-height: 150px;
+  color: #e6e9ec;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0;
+`;
 const Input = React.forwardRef<RNTextInput, any>((p, ref) => <StyledRNInput ref={ref} {...p} />);
 Input.displayName = 'Input';
-const PreviewWrap = styled.View`padding:8px 12px 0;`;
-const Thumb = styled.View`width:96px;height:96px;border-radius:10px;overflow:hidden;background:#111213;margin-right:8px;`;
-const ThumbImage = styled(RNImage)`width:96px;height:96px;`;
-const RemoveBtn = styled.Pressable`position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:10px;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;`;
-const BottomBar = styled.View`padding:8px 10px 12px;border-top-width:1px;border-top-color:#222426;flex-direction:row;align-items:center;justify-content:space-between;`;
-const BarLeft = styled.View`flex-direction:row;align-items:center;gap:12px;`;
-const BarRight = styled.View`flex-direction:row;align-items:center;gap:10px;`;
-const BarIcon = styled.Pressable`width:32px;height:32px;border-radius:6px;align-items:center;justify-content:center;`;
+const PreviewWrap = styled.View`
+  padding: 8px 12px 0;
+`;
+const Thumb = styled.View`
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111213;
+  margin-right: 8px;
+`;
+const ThumbImage = styled(RNImage)`
+  width: 96px;
+  height: 96px;
+`;
+const RemoveBtn = styled.Pressable`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+`;
+const BottomBar = styled.View`
+  padding: 8px 10px 12px;
+  border-top-width: 1px;
+  border-top-color: #222426;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const BarLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+`;
+const BarRight = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+`;
+const BarIcon = styled.Pressable`
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+`;
 const Anon = styled.Pressable<{ $active?: boolean; $disabled?: boolean }>`
-  height:32px;padding:0 10px;flex-direction:row;align-items:center;justify-content:center;
-  opacity:${p => p.$disabled ? 0.5 : 1};
+  height: 32px;
+  padding: 0 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  opacity: ${(p) => (p.$disabled ? 0.5 : 1)};
 `;
 const AnonText = styled.Text<{ $active?: boolean }>`
-  color:${p => p.$active ? '#30F59B' : '#cfd4da'};
-  font-family:'PlusJakartaSans_600SemiBold';font-size:12px;
+  color: ${(p) => (p.$active ? '#30F59B' : '#cfd4da')};
+  font-family: 'PlusJakartaSans_600SemiBold';
+  font-size: 12px;
 `;
-const SheetBackdrop = styled(Pressable)`flex:1;background:rgba(0,0,0,0.35);`;
-const SheetBase = styled.View`background:#111213;border-top-left-radius:16px;border-top-right-radius:16px;padding:8px 10px 20px;`;
-const Sheet = styled(SheetBase)`position:absolute;left:0;right:0;bottom:0;`;
-const SheetBtn = styled.Pressable`height:52px;border-radius:12px;background:#1a1b1c;border:1px solid #2a2b2c;align-items:center;justify-content:center;margin:6px 12px 0;`;
-const SheetBtnText = styled.Text`color:#cfd4da;font-size:15px;`;
-const CatSheet = styled(SheetBase)`position:absolute;left:0;right:0;bottom:0;padding-top:12px;`;
-const CatItem = styled.Pressable`height:48px;padding:0 16px;flex-direction:row;align-items:center;justify-content:space-between;`;
-const CatItemText = styled.Text<{ $active?: boolean }>`color:${p => p.$active ? '#e6e9ec' : '#cfd4da'};font-size:15px;`;
+const SheetBackdrop = styled(Pressable)`
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+`;
+const SheetBase = styled.View`
+  background: #111213;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 8px 10px 20px;
+`;
+const Sheet = styled(SheetBase)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+`;
+const SheetBtn = styled.Pressable`
+  height: 52px;
+  border-radius: 12px;
+  background: #1a1b1c;
+  border: 1px solid #2a2b2c;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 12px 0;
+`;
+const SheetBtnText = styled.Text`
+  color: #cfd4da;
+  font-size: 15px;
+`;
+const CatSheet = styled(SheetBase)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-top: 12px;
+`;
+const CatItem = styled.Pressable`
+  height: 48px;
+  padding: 0 16px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const CatItemText = styled.Text<{ $active?: boolean }>`
+  color: ${(p) => (p.$active ? '#e6e9ec' : '#cfd4da')};
+  font-size: 15px;
+`;

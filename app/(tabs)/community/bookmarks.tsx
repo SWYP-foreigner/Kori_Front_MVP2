@@ -7,16 +7,8 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  ListRenderItem,
-  TouchableOpacity,
-  View,
-  type FlatListProps
-} from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItem, TouchableOpacity, View, type FlatListProps } from 'react-native';
 import styled from 'styled-components/native';
-
 
 const AV = require('@/assets/images/character1.png');
 
@@ -75,9 +67,7 @@ export default function BookmarksScreen() {
   const toAbs = (u?: string) => (u ? (u.startsWith('http') ? u : keyToUrl(u)) : undefined);
 
   const mapItem = useCallback((raw: ApiItem, respTs?: string): Row => {
-    const postId =
-      (raw.postId as number | undefined) ??
-      (typeof raw.id === 'number' ? raw.id : undefined);
+    const postId = (raw.postId as number | undefined) ?? (typeof raw.id === 'number' ? raw.id : undefined);
 
     const avatarUrl = toAbs(raw.userImageUrl ?? raw.userImage);
 
@@ -94,33 +84,36 @@ export default function BookmarksScreen() {
     };
   }, []);
 
-  const fetchPage = useCallback(async (after?: string) => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-    setLoading(true);
-    try {
-      const params = { size: 20, ...(after ? { cursor: after } : {}) };
-      const { data } = await api.get<ApiResp>('/api/v1/my/bookmarks', { params });
-      const respTs = data?.timestamp;
-      const list = (data?.data?.items ?? []).map((it) => mapItem(it, respTs));
+  const fetchPage = useCallback(
+    async (after?: string) => {
+      if (loadingRef.current) return;
+      loadingRef.current = true;
+      setLoading(true);
+      try {
+        const params = { size: 20, ...(after ? { cursor: after } : {}) };
+        const { data } = await api.get<ApiResp>('/api/v1/my/bookmarks', { params });
+        const respTs = data?.timestamp;
+        const list = (data?.data?.items ?? []).map((it) => mapItem(it, respTs));
 
-      setItems(prev => {
-        if (!after) return list;
-        const seen = new Set(prev.map(r => r.displayId));
-        const appended = list.filter(r => !seen.has(r.displayId));
-        return [...prev, ...appended];
-      });
+        setItems((prev) => {
+          if (!after) return list;
+          const seen = new Set(prev.map((r) => r.displayId));
+          const appended = list.filter((r) => !seen.has(r.displayId));
+          return [...prev, ...appended];
+        });
 
-      setHasNext(Boolean(data?.data?.hasNext));
-      setCursor(data?.data?.nextCursor ?? undefined);
-    } catch (e) {
-      console.log('[bookmarks:list] error', e);
-    } finally {
-      loadingRef.current = false;
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [mapItem]);
+        setHasNext(Boolean(data?.data?.hasNext));
+        setCursor(data?.data?.nextCursor ?? undefined);
+      } catch (e) {
+        console.log('[bookmarks:list] error', e);
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [mapItem],
+  );
 
   const refresh = useCallback(() => {
     setRefreshing(true);
@@ -141,7 +134,7 @@ export default function BookmarksScreen() {
     busyRef.current[key] = true;
 
     const before = items;
-    setItems(prev => prev.filter(r => r.displayId !== key));
+    setItems((prev) => prev.filter((r) => r.displayId !== key));
     setBookmarked(row.postId, false);
 
     try {
@@ -214,7 +207,7 @@ export default function BookmarksScreen() {
         <EmptyText>No bookmarked posts.</EmptyText>
       </Empty>
     ),
-    []
+    [],
   );
 
   return (
@@ -267,44 +260,130 @@ function toDateLabel(raw?: unknown): string {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    }).format(d).replace(/-/g, '/');
+    })
+      .format(d)
+      .replace(/-/g, '/');
   } catch {
     const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
     return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
   }
 }
 
-const Safe = styled.SafeAreaView`flex: 1; background: #1D1E1F;`;
-const Header = styled.View`height: 48px; padding: 0 12px; flex-direction: row; align-items: center; justify-content: space-between;`;
-const Back = styled.Pressable`width: 40px; align-items: flex-start;`;
-const Title = styled.Text`color: #ffffff; font-size: 18px; font-family: 'PlusJakartaSans_500Bold';`;
-const RightSpace = styled.View`width: 40px;`;
+const Safe = styled.SafeAreaView`
+  flex: 1;
+  background: #1d1e1f;
+`;
+const Header = styled.View`
+  height: 48px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const Back = styled.Pressable`
+  width: 40px;
+  align-items: flex-start;
+`;
+const Title = styled.Text`
+  color: #ffffff;
+  font-size: 18px;
+  font-family: 'PlusJakartaSans_500Bold';
+`;
+const RightSpace = styled.View`
+  width: 40px;
+`;
 
 const List = styled(FlatList as React.ComponentType<FlatListProps<Row>>)``;
 
-const Cell = styled(TouchableOpacity)`padding: 12px 16px 8px 16px;`;
-const RowTop = styled.View`flex-direction: row; align-items: center; justify-content: space-between;`;
-const RowLeft = styled.View`flex-direction: row; align-items: center; flex: 1; padding-right: 8px;`;
+const Cell = styled(TouchableOpacity)`
+  padding: 12px 16px 8px 16px;
+`;
+const RowTop = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+const RowLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  padding-right: 8px;
+`;
 
-const Avatar = styled.Image`width: 36px; height: 36px; border-radius: 18px; background: #2a2b2c;`;
-const Meta = styled.View`margin-left: 10px; flex: 1;`;
-const Author = styled.Text`color: #ffffff; font-size: 13px; font-family: 'PlusJakartaSans_700Bold';`;
-const MetaRow = styled.View`flex-direction: row; align-items: center; margin-top: 2px;`;
-const Sub = styled.Text`color: #9aa0a6; font-size: 11px;`;
-const Dot = styled.Text`color: #9aa0a6; margin: 0 6px;`;
+const Avatar = styled.Image`
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: #2a2b2c;
+`;
+const Meta = styled.View`
+  margin-left: 10px;
+  flex: 1;
+`;
+const Author = styled.Text`
+  color: #ffffff;
+  font-size: 13px;
+  font-family: 'PlusJakartaSans_700Bold';
+`;
+const MetaRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 2px;
+`;
+const Sub = styled.Text`
+  color: #9aa0a6;
+  font-size: 11px;
+`;
+const Dot = styled.Text`
+  color: #9aa0a6;
+  margin: 0 6px;
+`;
 
-const IconBtn = styled.Pressable`padding: 6px;`;
+const IconBtn = styled.Pressable`
+  padding: 6px;
+`;
 
-const Body = styled.Text`color: #d9dcdf; font-size: 14px; line-height: 20px; margin-top: 10px;`;
+const Body = styled.Text`
+  color: #d9dcdf;
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 10px;
+`;
 
-const Footer = styled.View`margin-top: 10px; margin-bottom: 8px; flex-direction: row; align-items: center;`;
-const FootItem = styled.View`flex-direction: row; align-items: center;`;
-const FootText = styled.Text`color: #cfd4da; margin-left: 6px; font-size: 12px;`;
-const MoreBtn = styled(View)`margin-left: auto;`;
+const Footer = styled.View`
+  margin-top: 10px;
+  margin-bottom: 8px;
+  flex-direction: row;
+  align-items: center;
+`;
+const FootItem = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+const FootText = styled.Text`
+  color: #cfd4da;
+  margin-left: 6px;
+  font-size: 12px;
+`;
+const MoreBtn = styled(View)`
+  margin-left: auto;
+`;
 
-const Divider = styled.View`height: 1px; background: #222426; margin-top: 10px;`;
+const Divider = styled.View`
+  height: 1px;
+  background: #222426;
+  margin-top: 10px;
+`;
 
-const FooterLoading = styled.View`padding: 16px 0;`;
+const FooterLoading = styled.View`
+  padding: 16px 0;
+`;
 
-const Empty = styled.View`padding: 40px 16px; align-items: center;`;
-const EmptyText = styled.Text`color: #cfd4da; font-size: 14px;`;
+const Empty = styled.View`
+  padding: 40px 16px;
+  align-items: center;
+`;
+const EmptyText = styled.Text`
+  color: #cfd4da;
+  font-size: 14px;
+`;

@@ -1,9 +1,9 @@
-import React, { useEffect, useState, memo } from "react";
-import styled from "styled-components/native";
-import BuzzingRoomBox from "@/components/BuzzingRoomBox";
-import AllSpaceRoomBox from "@/components/AllSpaceRoomBox";
-import { FlatList, View } from "react-native";
-import api from "@/api/axiosInstance";
+import React, { useEffect, useState, memo } from 'react';
+import styled from 'styled-components/native';
+import BuzzingRoomBox from '@/components/BuzzingRoomBox';
+import AllSpaceRoomBox from '@/components/AllSpaceRoomBox';
+import { FlatList, View } from 'react-native';
+import api from '@/api/axiosInstance';
 import { useRouter } from 'expo-router';
 
 // 🔹 데이터 타입
@@ -15,17 +15,12 @@ type BuzzingData = {
   userCount: string;
 };
 
-
 type AllSpaceData = BuzzingData;
 
 // 🔹 memo 적용
-const MemoizedBuzzingRoomBox = memo(({ data }: { data: BuzzingData }) => (
-  <BuzzingRoomBox data={data} />
-));
+const MemoizedBuzzingRoomBox = memo(({ data }: { data: BuzzingData }) => <BuzzingRoomBox data={data} />);
 
-const MemoizedAllSpaceRoomBox = memo(({ data }: { data: AllSpaceData }) => (
-  <AllSpaceRoomBox data={data} />
-));
+const MemoizedAllSpaceRoomBox = memo(({ data }: { data: AllSpaceData }) => <AllSpaceRoomBox data={data} />);
 
 const GroupChatRoomBox = () => {
   const [buzzingSpaces, setBuzzingSpaces] = useState<BuzzingData[]>([]);
@@ -39,17 +34,14 @@ const GroupChatRoomBox = () => {
 
   const getAllSpaceData = async () => {
     const res = await api.get('/api/v1/chat/group/latest');
-    
+
     return res.data.data;
   };
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const [Buzzing_Data, AllSpace_Data] = await Promise.all([
-          getBuzzingData(),
-          getAllSpaceData(),
-        ]);
+        const [Buzzing_Data, AllSpace_Data] = await Promise.all([getBuzzingData(), getAllSpaceData()]);
         setBuzzingSpaces(Buzzing_Data);
         setAllSpaces(AllSpace_Data);
       } catch (err) {
@@ -73,9 +65,9 @@ const GroupChatRoomBox = () => {
           keyExtractor={(item) => item.roomId.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
-          initialNumToRender={5}       // 초기 렌더링 아이템 수
-          maxToRenderPerBatch={5}      // 배치당 렌더링 아이템 수
-          windowSize={5}               // 렌더링 범위
+          initialNumToRender={5} // 초기 렌더링 아이템 수
+          maxToRenderPerBatch={5} // 배치당 렌더링 아이템 수
+          windowSize={5} // 렌더링 범위
         />
       </BuzzingContainer>
 
@@ -96,7 +88,7 @@ const GroupChatRoomBox = () => {
         initialNumToRender={5}
         maxToRenderPerBatch={5}
         windowSize={5}
-        removeClippedSubviews={true}  // 화면 밖 요소 메모리 해제
+        removeClippedSubviews={true} // 화면 밖 요소 메모리 해제
       />
     </Container>
   );
