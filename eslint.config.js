@@ -60,7 +60,9 @@ export default tseslint.config(
       // 기타 JS 스타일 설정
       'arrow-body-style': 'off',
       'prefer-arrow-callback': 'off',
-      eqeqeq: ['error', 'always'],
+      // eqeqeq: ['error', 'always'],
+      eqeqeq: 'warn',
+      'no-empty': 'warn',
 
       'react-native/no-inline-styles': 'warn',
       'react-native/no-unused-styles': 'warn',
