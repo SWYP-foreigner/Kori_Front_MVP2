@@ -30,12 +30,19 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# iOS
+ios/build
+ios/Pods
+
 # local env files
 .env*.local
 .env
 
 # typescript
 *.tsbuildinfo
+
+# github
+.github
 
 app-example
 .env
