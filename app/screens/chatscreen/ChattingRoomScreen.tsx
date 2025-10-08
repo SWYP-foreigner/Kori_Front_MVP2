@@ -4,15 +4,7 @@ import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { useRouter } from 'expo-router';
-import {
-  SafeAreaView,
-  StatusBar,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { StatusBar, FlatList, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
@@ -22,7 +14,6 @@ import { Dimensions, Image, InteractionManager } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from '@/src/lib/config';
 import { useNavigation } from 'expo-router';
-import axios from 'axios';
 type ChatHistory = {
   id: number;
   roomId: number;
