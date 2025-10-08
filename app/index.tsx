@@ -6,6 +6,7 @@ import CustomSplashScreen from './screens/splash/CustomSplashScreen';
 // import LoginScreen from './login';
 import messaging from '@react-native-firebase/messaging';
 import { Alert } from 'react-native';
+import { requestUserPermission } from '@/lib/fcm/requestPermission';
 SplashScreen.preventAutoHideAsync(); // 자동 숨김 방지
 
 export default function Index() {
@@ -28,9 +29,19 @@ export default function Index() {
     }
     loadResources();
 
+    // ------------ OS 알림 허용 요청 ------------ //
+    requestUserPermission();
+    async function getFcmToken() {
+      await messaging().registerDeviceForRemoteMessages();
+      const token = await messaging().getToken();
+      console.log('fcm token = ', token);
+    }
+    getFcmToken();
     // ------------ FCM onMessage 초기화 ------------ //
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      console.log('🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱🎱');
+      console.log(JSON.stringify(remoteMessage));
+      Alert.alert('💭💭💭💭💭💭💭💭💭 A new FCM message arrived!', JSON.stringify(remoteMessage));
     });
 
     return unsubscribe;
