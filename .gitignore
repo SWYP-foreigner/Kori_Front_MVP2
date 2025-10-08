@@ -41,6 +41,10 @@ ios/Pods
 # typescript
 *.tsbuildinfo
 
+# Firebase keys
+GoogleService-Info.plist
+google-services.json
+
 # github
 .github
 
