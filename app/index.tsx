@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { Redirect } from 'expo-router';
+// import { Redirect } from 'expo-router';
 import CustomSplashScreen from './screens/splash/CustomSplashScreen';
-import LoginScreen from './login';
+// import LoginScreen from './login';
+import messaging from '@react-native-firebase/messaging';
+import { Alert } from 'react-native';
 SplashScreen.preventAutoHideAsync(); // 자동 숨김 방지
 
 export default function Index() {
@@ -25,6 +27,13 @@ export default function Index() {
       }
     }
     loadResources();
+
+    // ------------ FCM onMessage 초기화 ------------ //
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    });
+
+    return unsubscribe;
   }, []);
 
   const onReady = useCallback(async () => {
