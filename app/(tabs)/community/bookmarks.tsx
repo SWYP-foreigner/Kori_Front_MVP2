@@ -140,7 +140,7 @@ export default function BookmarksScreen() {
     try {
       await apiRemoveBookmark(row.postId);
     } catch (e) {
-      console.log('[bookmarks:remove] error', e);
+      console.error('[bookmarks:remove] error', e);
       setItems(before);
       setBookmarked(row.postId, true);
     } finally {

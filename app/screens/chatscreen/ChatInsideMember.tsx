@@ -152,7 +152,7 @@ const ChatInsideMember = () => {
         text1: 'Blocking this user success',
       });
     } catch (error) {
-      console.log('block error', error);
+      console.error('block error', error);
       Toast.show({
         type: 'error',
         text1: 'Blocking this user fail',

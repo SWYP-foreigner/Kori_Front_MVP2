@@ -12,7 +12,7 @@ export default function useProfileEdit() {
     },
 
     onError: (err: any) => {
-      console.log('[useProfileEdit] error', err?.response?.status, err?.message);
+      console.error('[useProfileEdit] error', err?.response?.status, err?.message);
     },
   });
 }

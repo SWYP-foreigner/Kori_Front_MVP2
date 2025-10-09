@@ -150,7 +150,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
                       source={{ uri: item }}
                       style={{ width: '100%', height: h, borderRadius: 12 }}
                       resizeMode="contain"
-                      onError={(e) => console.log('[PostCard:image:error]', item, e.nativeEvent?.error)}
+                      onError={(e) => console.error('[PostCard:image:error]', item, e.nativeEvent?.error)}
                     />
                   </Slide>
                 );

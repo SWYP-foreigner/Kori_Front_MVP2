@@ -168,7 +168,7 @@ export default function FollowListScreen() {
       DeviceEventEmitter.emit('FOLLOW_REQUEST_CANCELLED', { userId });
       await refetchSent();
     } catch (e) {
-      console.log('[cancel-follow-request] error', e);
+      console.error('[cancel-follow-request] error', e);
     } finally {
       unlock(userId);
     }
@@ -338,7 +338,7 @@ export default function FollowListScreen() {
                           },
                         });
                       } catch (e: any) {
-                        console.log('[chat]', e?.message ?? '채팅방 생성 실패');
+                        console.error('[chat]', e?.message ?? '채팅방 생성 실패');
                       }
                     }}
                     isFollowed={false}

@@ -46,9 +46,6 @@ api.interceptors.request.use(
     const method = (config.method || 'GET').toUpperCase();
     const base = config.baseURL || BASE_URL;
     const fullUrl = new URL(config.url || '', base).toString();
-    console.log(`[axios:req] ${method} ${fullUrl} auth=${maskToken(token)}`);
-
-    if (config.params) console.log('[axios:req] params', config.params);
     if (config.data && !isFormData) {
       try {
         const s = JSON.stringify(config.data);

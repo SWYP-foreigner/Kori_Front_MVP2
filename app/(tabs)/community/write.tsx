@@ -183,7 +183,6 @@ export default function WriteScreen() {
           postId: postIdNum,
           body: { content, images: uploadedKeys, removedImages: [] },
         });
-        console.log('[post:update:response]', res);
         Alert.alert('Saved', 'Post updated successfully.');
       } else {
         const payload = {
