@@ -15,7 +15,7 @@ export default function useSendChat() {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message ?? (status ? `status ${status}` : '잠시 후 다시 시도해주세요.');
       Toast.show({ type: 'error', text1: '메시지 전송 실패', text2: msg });
-      console.log('[sendChat:error]', status, err?.response?.data || err?.message);
+      console.error('[sendChat:error]', status, err?.response?.data || err?.message);
     },
   });
 }

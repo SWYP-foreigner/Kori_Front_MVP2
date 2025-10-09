@@ -136,27 +136,24 @@ const LoginScreen = () => {
         const code = response.data.serverAuthCode;
         if (!code) {
           setGoogleLoading(false); // 로딩 끝
-          console.log('serverAuthCode 없음 (Google 설정 확인 필요)');
+
           return;
         }
         await sendGoogleTokenToServer(code);
       } else {
-        console.log('사용자가 로그인 취소');
+        console.error('사용자가 로그인 취소');
       }
     } catch (error: any) {
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:
-            console.log('이미 로그인 진행 중');
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.log('Play Services 문제 (Android)');
             break;
           default:
-            console.log('기타 로그인 오류', error);
         }
       } else {
-        console.log('Google Sign-In 이외 오류', error);
+        console.error('Google Sign-In 이외 오류', error);
       }
     } finally {
       setGoogleLoading(false); // 로딩 끝
@@ -191,7 +188,6 @@ const LoginScreen = () => {
         },
       );
 
-      console.log('데이터', res.data.data);
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
@@ -218,14 +214,13 @@ const LoginScreen = () => {
             setIsAppleLogin(true);
           }
         } catch (error) {
-          console.log('error', error);
+          console.error('error', error);
         }
       } else {
         router.replace('/(tabs)');
       }
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') {
-        console.log('사용자가 취소함');
       } else {
         console.error('에러코드', e);
       }

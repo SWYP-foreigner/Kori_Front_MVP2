@@ -432,11 +432,7 @@ export default function PostDetailScreen() {
 
   try {
     console.groupCollapsed('[post-meta]');
-    console.log('postId', postId);
-    console.log('authorId', authorId, 'authorName', authorName);
-    console.log('postType', postType, 'isAnonymous', isAnonymous, 'isBlocked', isBlocked, 'isDeleted', isDeleted);
     const keys = Object.keys(post || {});
-    console.log('post.keys', keys);
     console.groupEnd();
   } catch {}
 
@@ -495,7 +491,7 @@ export default function PostDetailScreen() {
       // 롤백
       setLiked(postId, prevLiked);
       setLikeCount(postId, prevCount);
-      console.log('[like detail] error', e);
+      console.error('[like detail] error', e);
     }
   };
 

@@ -193,7 +193,6 @@ export default function CommunityScreen() {
     setLoading(true);
     try {
       const params = { sort: sortServer, size: 20, ...(after ? { cursor: after } : {}) };
-      console.log('[community:list] GET', `/api/v1/boards/${boardId}/posts`, params);
       const { data } = await api.get<PostsListResp>(`/api/v1/boards/${boardId}/posts`, { params });
       const respTimestamp = data?.timestamp;
       const list = (data?.data?.items ?? []).map((item) => mapItem(item, respTimestamp));
@@ -221,7 +220,7 @@ export default function CommunityScreen() {
       setHasNext(Boolean(data?.data?.hasNext));
       setCursor(data?.data?.nextCursor ?? undefined);
     } catch (e) {
-      console.log('[community:list] error', e);
+      console.error('[community:list] error', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -263,7 +262,7 @@ export default function CommunityScreen() {
       setLiked(postId, prevLiked);
       setLikeCount(postId, prevCount);
       setItems((prev) => prev.map((p) => (p.postId === postId ? { ...p, likedByMe: prevLiked, likes: prevCount } : p)));
-      console.log('[like:list] error', e);
+      console.error('[like:list] error', e);
     }
   };
 
@@ -288,7 +287,7 @@ export default function CommunityScreen() {
     } catch (e) {
       setBookmarked(postId, before);
       setItems((prev) => prev.map((p) => (p.postId === postId ? { ...p, bookmarked: before } : p)));
-      console.log('[bookmark:list] error', e);
+      console.error('[bookmark:list] error', e);
     } finally {
       bmBusyRef.current[postId] = false;
     }

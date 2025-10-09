@@ -79,7 +79,7 @@ export default function FriendsOnlyScreen() {
               await unfollowMutation.mutateAsync(userId);
               await refetch();
             } catch (e) {
-              console.log('[unfollow] error', e);
+              console.error('[unfollow] error', e);
               Alert.alert('Failed to unfollow', 'Please try again later.');
             }
           },
@@ -155,7 +155,7 @@ export default function FriendsOnlyScreen() {
                       },
                     });
                   } catch (e: any) {
-                    console.log('[chat]', e?.message ?? '채팅방 생성 실패');
+                    console.error('[chat]', e?.message ?? '채팅방 생성 실패');
                   }
                 }}
               />

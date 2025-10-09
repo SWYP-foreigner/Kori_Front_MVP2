@@ -42,7 +42,7 @@ export default function ChatScreen() {
       if (newToken) {
         await SecureStore.setItemAsync('jwt', newToken);
         await SecureStore.setItemAsync('refresh', newRefreshToken);
-        console.log('[AUTH] accessToken 재발급 성공');
+
         return newToken;
       }
       return null;
@@ -91,7 +91,6 @@ export default function ChatScreen() {
       });
 
       stompClient.current.onConnect = () => {
-        console.log('✅ STOMP connected');
         stompClient.current?.subscribe(`/topic/user/${MyuserId}/rooms`, (msg) => {
           const updatedRoom: ChatRoom = JSON.parse(msg.body);
           setChatRooms((prev) => {
@@ -103,21 +102,18 @@ export default function ChatScreen() {
 
       // 🔹 STOMP Error → 토큰 만료 시 refresh 후 재연결
       stompClient.current.onStompError = async (frame) => {
-        console.log('❌ STOMP 오류', frame.headers['message']);
-        console.log('[AUTH] 토큰 만료 감지, refresh 시도');
         const newToken = await refreshTokenIfNeeded();
         if (!newToken) return console.log('[AUTH] 토큰 재발급 실패');
         stompClient.current?.deactivate();
         connectStomp();
       };
       stompClient.current.onWebSocketClose = () => {
-        console.log('웹소켓 끊김');
+        console.warn('웹소켓 끊김');
       };
 
       stompClient.current.onWebSocketError = (evt) => console.error('WebSocket ERROR', evt);
       stompClient.current.onWebSocketClose = (evt) => console.log('WebSocket CLOSE', evt);
 
-      console.log('🚀 STOMP 연결 시도...');
       stompClient.current.activate();
     };
 

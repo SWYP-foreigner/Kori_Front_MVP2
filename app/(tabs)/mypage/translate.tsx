@@ -220,9 +220,7 @@ export default function TranslateScreen() {
     let mounted = true;
     (async () => {
       try {
-        console.log('[lang:init] GET /api/v1/member/profile/setting');
         const res = await api.get('/api/v1/member/profile/setting', { validateStatus: () => true });
-        console.log('[lang:init] res', res.status, res.data);
         if (!mounted) return;
 
         if (res.status === 200) {
@@ -252,7 +250,6 @@ export default function TranslateScreen() {
         { language: serverCode },
         { validateStatus: () => true },
       );
-      console.log('[lang:save] res', res.status, res.data);
 
       if (res.status === 200 || res.status === 204) {
         setSelected(uiCode);

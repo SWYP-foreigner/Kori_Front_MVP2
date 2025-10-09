@@ -13,7 +13,6 @@ const AllSpaceRoomBox = ({ data }) => {
       },
     });
   };
-  console.log('AllSpaceRoom', data);
   return (
     <AllSpacesBox onPress={onhandleNext}>
       <AllSpaceTitleContainer>

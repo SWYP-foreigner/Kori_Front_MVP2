@@ -19,11 +19,6 @@ const NewSpaceCreated = () => {
   const { index } = useLocalSearchParams<{ index: string }>();
   const [Loading, setLoading] = useState(false);
   const router = useRouter();
-  console.log('spaceName', spaceName);
-  console.log('spaceDescription', spaceDescription);
-  console.log('spaceIamgeUrl', spaceImageUrl);
-  console.log('index', index);
-
   const doneCreateSpace = async () => {
     setLoading(true);
     const isIcon = Number(index);
@@ -58,7 +53,7 @@ const NewSpaceCreated = () => {
       // 기본 아이콘 선택시
       let url;
       if (isIcon === 0) {
-        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png';
+        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/l';
       } else if (isIcon === 1) {
         url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png';
       } else {

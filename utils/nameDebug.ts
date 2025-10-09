@@ -48,7 +48,7 @@ export function logName(where: string, id: number | string, probe: NameProbe, ex
   if (!DEBUG_NAME) return;
   try {
     console.groupCollapsed(`[name:${where}] postId=${id} → "${probe.picked}" (${probe.reason})`);
-    console.log('isAnonymousFlag', probe.isAnonymousFlag);
+
     console.table(probe.candidates);
     if (extra) console.log('extra', extra);
     console.groupEnd();

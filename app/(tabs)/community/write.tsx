@@ -159,9 +159,6 @@ export default function WriteScreen() {
           uploadSessionId,
           files,
         });
-
-        console.log('[presign:response]', presignRes);
-
         await Promise.all(
           presignRes.map((p, i) =>
             uploadImageToPresignedUrl({
@@ -186,7 +183,6 @@ export default function WriteScreen() {
           postId: postIdNum,
           body: { content, images: uploadedKeys, removedImages: [] },
         });
-        console.log('[post:update:response]', res);
         Alert.alert('Saved', 'Post updated successfully.');
       } else {
         const payload = {

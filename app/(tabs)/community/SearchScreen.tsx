@@ -260,7 +260,7 @@ export default function CommunityScreen() {
       setImagesById({});
       fetchedRef.current.clear();
     } catch (e) {
-      console.log('[community:list] error', e);
+      console.error('[community:list] error', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -323,7 +323,7 @@ export default function CommunityScreen() {
           p.postId === postId ? { ...p, likes: Math.max(0, (p.likes ?? 0) - delta), likedByMe: prevLiked } : p,
         ),
       );
-      console.log('[like:list] error', e);
+      console.error('[like:list] error', e);
     }
   };
 

@@ -4,6 +4,7 @@ import { SafeAreaView, StatusBar, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '../../contexts/ProfileContext';
+import SkipHeader from './components/SkipHeader';
 
 export default function BirthdaySelectionScreen() {
   const router = useRouter();
@@ -42,6 +43,10 @@ export default function BirthdaySelectionScreen() {
     return true;
   };
 
+  const handleSkip = () => {
+    router.push('./PurposeStepScreen');
+  };
+
   const moveNextScreen = () => {
     updateProfile('birthday', text);
     router.push('./PurposeStepScreen');
@@ -51,6 +56,7 @@ export default function BirthdaySelectionScreen() {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 6 / 9</StepText>
 
         <TitleWrapper>

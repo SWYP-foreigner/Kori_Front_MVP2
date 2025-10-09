@@ -1,19 +1,28 @@
 import React, { useState } from 'react';
 import styled from 'styled-components/native';
+import { Platform } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '../../contexts/ProfileContext';
 import { useRouter } from 'expo-router';
-
+import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen
 // ------------------------
+
 export default function NameStepScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const canProceed = firstName && lastName;
   const router = useRouter();
   const { profileData, updateProfile } = useProfile();
+
+  // Android일 때만 이름이 필수 처리
+  const isAndroid = Platform.OS === 'android';
+  const canProceed = isAndroid ? firstName && lastName : true;
+
+  const handleSkip = () => {
+    router.push('./GenderStepScreen');
+  };
 
   const handleNext = () => {
     updateProfile('firstname', firstName);
@@ -25,6 +34,7 @@ export default function NameStepScreen() {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        {Platform.OS === 'ios' && <SkipHeader onSkip={handleSkip} />}
         <StepText>Step 1 / 9</StepText>
 
         <TitleWrapper>

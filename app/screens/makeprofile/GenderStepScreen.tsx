@@ -4,6 +4,7 @@ import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-n
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '../../contexts/ProfileContext';
 import { useRouter } from 'expo-router';
+import SkipHeader from './components/SkipHeader';
 
 // ------------------------
 // NameStepScreen
@@ -15,6 +16,10 @@ export default function GenderStepScreen({ navigation }) {
   const { profileData, updateProfile } = useProfile();
   const canProceed = FemaleClicked || MaleClicked || NotSayingClicked;
   const router = useRouter();
+
+  const handleSkip = () => {
+    router.push('./CountryStepScreen');
+  };
 
   const handleGenderClick = (gender) => {
     setFemaleClicked(gender === 'Female');
@@ -38,6 +43,7 @@ export default function GenderStepScreen({ navigation }) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 2 / 9</StepText>
 
         <TitleWrapper>
