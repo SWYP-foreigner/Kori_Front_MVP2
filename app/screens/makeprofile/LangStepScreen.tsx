@@ -225,7 +225,6 @@ export default function LanguageStepScreen({ navigation }) {
   };
 
   const handleNext = () => {
-    console.log('Selected languages:', selectedLanguages);
     updateProfile('language', selectedLanguages);
     router.push('./AboutMeStepScreen');
   };

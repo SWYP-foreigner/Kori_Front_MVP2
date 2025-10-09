@@ -117,11 +117,8 @@ export function useFollowList(status: FollowStatus, tab: Tab) {
     queryKey: ['follow-list', status, tab] as const,
     queryFn: async () => {
       const params = { status, isFollowers: isFollowers ? 'true' : 'false' };
-      console.log('[follow-list] ▶ request params:', params);
-
       const res = await api.get('/api/v1/mypage/follows', { params });
       const data = res?.data;
-      console.log('[follow-list] ◀ raw response:', Array.isArray(data) ? `Array(${data.length})` : data);
 
       const arr: unknown = Array.isArray(data) ? data : ((data as any)?.data ?? []);
       if (!Array.isArray(arr)) {
@@ -133,7 +130,6 @@ export function useFollowList(status: FollowStatus, tab: Tab) {
         .filter((x) => x && (typeof x.id !== 'undefined' || typeof x.userId !== 'undefined'))
         .map(adapt);
 
-      console.log('[follow-list] ✓ adapted length:', adapted.length);
       if (adapted[0]) console.log('[follow-list] ✓ adapted[0]:', adapted[0]);
 
       return adapted.filter((x) => Number.isFinite(x.userId) && x.userId > 0);

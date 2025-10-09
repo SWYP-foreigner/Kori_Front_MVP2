@@ -46,7 +46,6 @@ const ResetPasswordScreen = () => {
         email: email,
         newPassword: password,
       });
-      console.log('비밀번호 재설정 완료', res.data);
       router.replace('./GeneralLoginScreen');
     } catch (error) {
       console.error('비밀번호 재설정 실패', error);

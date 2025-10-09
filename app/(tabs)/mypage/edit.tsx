@@ -230,7 +230,7 @@ export default function EditProfileScreen() {
       await queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
       router.back();
     } catch (e) {
-      console.log('[Profile Save Error]', e);
+      console.error('[Profile Save Error]', e);
       Alert.alert('Save failed', 'Please try again.');
     }
   };

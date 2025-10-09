@@ -159,9 +159,6 @@ export default function WriteScreen() {
           uploadSessionId,
           files,
         });
-
-        console.log('[presign:response]', presignRes);
-
         await Promise.all(
           presignRes.map((p, i) =>
             uploadImageToPresignedUrl({

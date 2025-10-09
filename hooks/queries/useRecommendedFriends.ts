@@ -38,11 +38,10 @@ export default function useRecommendedFriends(limit = 20) {
           languages: Array.isArray(raw?.languages) ? raw.languages : [],
           personalities: Array.isArray(raw?.personalities) ? raw.personalities : [],
           bio: (raw as any)?.bio ?? (raw as any)?.introduction ?? '',
-          imageUrl: (raw as any)?.imageUrl, // ✅ FriendCard로 그대로 전달
+          imageUrl: (raw as any)?.imageUrl,
         };
       });
 
-      console.log('✅[recommend:list]', result);
       return result;
     },
     staleTime: 60_000,

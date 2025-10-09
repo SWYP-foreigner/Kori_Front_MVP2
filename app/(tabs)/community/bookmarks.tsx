@@ -105,7 +105,7 @@ export default function BookmarksScreen() {
         setHasNext(Boolean(data?.data?.hasNext));
         setCursor(data?.data?.nextCursor ?? undefined);
       } catch (e) {
-        console.log('[bookmarks:list] error', e);
+        console.error('[bookmarks:list] error', e);
       } finally {
         loadingRef.current = false;
         setLoading(false);

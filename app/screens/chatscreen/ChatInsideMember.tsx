@@ -45,11 +45,10 @@ const ChatInsideMember = () => {
       try {
         // 멤버 데이터 받기
         const res = await api.get(`/api/v1/chat/rooms/${roomId}/participants`);
-        console.log('멤버들', res.data);
         const data: ChatMembers[] = res.data.data;
         setMembers(data);
       } catch (err) {
-        console.log('멤버 가져오기 실패', err);
+        console.error('멤버 가져오기 실패', err);
       }
     };
     getMembers();
@@ -59,11 +58,10 @@ const ChatInsideMember = () => {
   const onLeaveChat = async () => {
     try {
       const res = await api.delete(`/api/v1/chat/rooms/${roomId}/leave`);
-      console.log('퇴장 성공', res.data);
       // 퇴장 후 화면 이동 등 처리
       router.replace('/(tabs)/chat');
     } catch (err) {
-      console.log('퇴장 실패', err);
+      console.error('퇴장 실패', err);
     }
   };
 
@@ -102,7 +100,6 @@ const ChatInsideMember = () => {
 
   const completeReport = async () => {
     try {
-      console.log('버튼');
       await api.post(`${Config.SERVER_URL}/api/v1/chat/declaration`, {
         ignored: text,
       });
@@ -147,7 +144,6 @@ const ChatInsideMember = () => {
     try {
       await api.post(`${Config.SERVER_URL}/api/v1/chat/block/${reportId}`);
       if (isGroup) {
-        console.log('User Block success');
       } else {
         onLeaveChat();
       }

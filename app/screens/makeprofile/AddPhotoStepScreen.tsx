@@ -41,7 +41,6 @@ export default function AddPhotoStepScreen({}) {
   ];
 
   const handleAvatarSelect = async (index) => {
-    console.log('index', index);
     setSelectedAvatar(index);
     setSelectedPhoto(null);
 
@@ -222,12 +221,10 @@ export default function AddPhotoStepScreen({}) {
 
       // 서버로 전송
       const res = await api.patch('/api/v1/member/profile/setup', payload);
-      console.log('프로필 업데이트 성공', res);
       router.dismissAll(); // 네비게이션 스택 다 비움
       router.replace('/screens/makeprofile/ProfileSetUpDoneScreen');
     } catch (err) {
       console.error('프로필 업데이트 실패', err);
-      console.log('error', err);
       throw err;
     }
   };

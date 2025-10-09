@@ -22,7 +22,7 @@ const MyChatRoomBox = ({ data }) => {
           },
         });
       } else {
-        console.log('채팅방 리스트 읽음 표시 오류');
+        console.error('채팅방 리스트 읽음 표시 오류');
       }
     } catch (error) {
       console.error('채팅방 리스트 읽음 처리 실패', error);

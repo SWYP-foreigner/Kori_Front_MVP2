@@ -175,7 +175,7 @@ export default function MyHistoryScreen() {
                 refetchComments();
               }
             } catch (e) {
-              console.log('[delete] error', e);
+              console.error('[delete] error', e);
               showToast('Delete failed');
             }
           },

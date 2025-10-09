@@ -48,19 +48,14 @@ const CreateAccountScreen = () => {
   const VerifyEmail = async () => {
     try {
       const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/email/check`, { email: email });
-      console.log('테스트', res.data);
       const { exists } = res.data.data;
       if (exists) {
-        console.log('들어옴12313');
         const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/password/forgot`, {
           email: email,
           lang: 'en',
         });
-        console.log('테스트2', res.data);
         setIsExistEmail(isKoriEmail.Exist);
-        console.log('이메일 인증 코드 발송', res.data);
       } else {
-        console.log('들어옴');
         setIsExistEmail(isKoriEmail.NotExist);
       }
     } catch (err) {
@@ -75,14 +70,12 @@ const CreateAccountScreen = () => {
         email: email,
         verificationCode: code,
       });
-      console.log('이메일 인증 코드 검증', res.data);
       const { data } = res.data;
 
       if (data) {
         setIsCorrect(isCorrectCode.Success);
       } else {
         setIsCorrect(isCorrectCode.Fail);
-        console.log('인증실패');
       }
     } catch (err) {
       console.error('코드 확인 중 에러 발생', err);
