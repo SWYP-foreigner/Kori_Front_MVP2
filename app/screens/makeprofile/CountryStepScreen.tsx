@@ -12,6 +12,7 @@ import {
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
 import { useProfile } from '../../contexts/ProfileContext';
+import SkipHeader from './components/SkipHeader';
 
 export default function CountryStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -222,6 +223,10 @@ export default function CountryStepScreen({ navigation }) {
     setIsModalVisible(false);
   };
 
+  const handleSkip = () => {
+    router.push('./LangStepScreen');
+  };
+
   const handleNext = () => {
     updateProfile('country', selectedCountry);
     router.push('./LangStepScreen');
@@ -242,6 +247,7 @@ export default function CountryStepScreen({ navigation }) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 3 / 9</StepText>
 
         <TitleWrapper>

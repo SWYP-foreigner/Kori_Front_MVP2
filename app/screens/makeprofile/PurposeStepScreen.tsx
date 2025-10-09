@@ -4,6 +4,7 @@ import { SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5, AntDesign, Feather } from '@expo/vector-icons';
 import { useProfile } from '../../contexts/ProfileContext';
+import SkipHeader from './components/SkipHeader';
 
 export default function PurposeStepScreen({ navigation }) {
   const [selectedPurpose, setSelectedPurpose] = useState(null);
@@ -68,6 +69,10 @@ export default function PurposeStepScreen({ navigation }) {
     setSelectedPurpose(purpose);
   };
 
+  const handleSkip = () => {
+    router.push('./TagStepScreen');
+  };
+
   const handleNext = () => {
     if (canProceed) {
       updateProfile('purpose', selectedPurpose.title);
@@ -100,6 +105,7 @@ export default function PurposeStepScreen({ navigation }) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 7 / 9</StepText>
 
         <TitleWrapper>

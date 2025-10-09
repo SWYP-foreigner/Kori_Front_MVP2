@@ -58,7 +58,7 @@ const NewSpaceCreated = () => {
       // 기본 아이콘 선택시
       let url;
       if (isIcon === 0) {
-        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png';
+        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/l';
       } else if (isIcon === 1) {
         url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png';
       } else {

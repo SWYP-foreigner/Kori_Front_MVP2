@@ -12,6 +12,7 @@ import api from '@/api/axiosInstance';
 import axios from 'axios';
 import { Buffer } from 'buffer';
 import * as FileSystem from 'expo-file-system';
+import SkipHeader from './components/SkipHeader';
 
 // ------------------------
 // AddPhotoStepScreen
@@ -202,8 +203,6 @@ export default function AddPhotoStepScreen({}) {
           'Content-Type': photo.typeMime,
         },
       });
-
-      console.log('✅ 업로드 성공');
     } catch (err) {
       console.error('❌ 업로드 실패:', err);
     }
@@ -233,10 +232,15 @@ export default function AddPhotoStepScreen({}) {
     }
   };
 
+  const handleSkip = () => {
+    router.replace('./ProfileSetUpDoneScreen');
+  };
+
   return (
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 9 / 9</StepText>
 
         <TitleWrapper>

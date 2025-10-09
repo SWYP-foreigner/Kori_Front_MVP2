@@ -4,6 +4,7 @@ import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } fro
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
 import { useProfile } from '../../contexts/ProfileContext';
+import SkipHeader from './components/SkipHeader';
 
 export default function LanguageStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -263,6 +264,7 @@ export default function LanguageStepScreen({ navigation }) {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 4 / 9</StepText>
 
         <TitleWrapper>

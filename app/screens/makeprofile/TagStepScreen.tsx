@@ -6,6 +6,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '../../contexts/ProfileContext';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import SkipHeader from './components/SkipHeader';
 
 const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
   return (
@@ -54,6 +55,11 @@ export default function TagStepScreen() {
       setSelectedTags([...selectedTags, tag]);
     }
   };
+
+  const handleSkip = () => {
+    router.push('./AddPhotoStepScreen');
+  };
+
   const handleNext = () => {
     updateProfile('hobby', selectedTags);
     router.push('./AddPhotoStepScreen');
@@ -63,6 +69,7 @@ export default function TagStepScreen() {
     <SafeArea>
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <ScrollableContainer>
           <HeaderSection>
             <StepText>Step 8 / 9</StepText>
