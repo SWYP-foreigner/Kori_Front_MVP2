@@ -30,7 +30,7 @@ export default {
         UIBackgroundModes: ['remote-notification'],
       },
       entitlements: {
-        'aps-environment': 'production',
+        'aps-environment': 'development', // NOTE 릴리즈 빌드 시 production으로 변경 필요
       },
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || './GoogleService-Info.plist',
     },

@@ -31,8 +31,12 @@ yarn-error.*
 *.pem
 
 # iOS
+ios/
 ios/build
 ios/Pods
+
+# android
+android/
 
 # local env files
 .env*.local
