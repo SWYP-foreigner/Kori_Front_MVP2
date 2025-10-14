@@ -53,8 +53,7 @@ export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolea
   justify-content: space-between;
   padding: 0 16px;
   border-width: 1px;
-  /* 기본 하얀색 테두리, 선택 상태는 살짝 짙게 */
-  border-color: ${({ selected }) => (selected ? '#949899' : '#EDEDED')};
+  border-color: #949899;
 `;
 
 export const PurposeDropdownText = styled.Text<{ selected?: boolean }>`
