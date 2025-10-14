@@ -33,12 +33,9 @@ const GeneralLoginScreen = () => {
       });
 
       const { accessToken, refreshToken, userId, isNewUser } = res.data;
-
-      console.log('로그인 여부2', res.data);
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', refreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
-      console.log('로그인 성공');
       if (isNewUser) {
         router.push('/screens/makeprofile/NameStepScreen');
       } else {

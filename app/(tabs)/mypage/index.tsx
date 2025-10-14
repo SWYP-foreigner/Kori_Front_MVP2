@@ -70,9 +70,8 @@ export default function MyPageScreen() {
       const { received, sent } = extractCounts(res);
       setPendingReceived(received);
       setPendingSent(sent);
-      console.log('[pending/count] received:', received, 'sent:', sent);
     } catch (e: any) {
-      console.log('[pending/count] error', e?.response?.data || e?.message || e);
+      console.error('[pending/count] error', e?.response?.data || e?.message || e);
       setPendingReceived(0);
       setPendingSent(0);
     }

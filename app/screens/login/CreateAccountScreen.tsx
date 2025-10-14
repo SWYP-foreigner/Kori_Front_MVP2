@@ -102,7 +102,6 @@ const CreateAccountScreen = () => {
           lang: 'en',
         });
         setIsExistEmail(isDuplicatedEmail.NotExist);
-        console.log('이메일 인증 코드 발송', res.data);
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -120,9 +119,9 @@ const CreateAccountScreen = () => {
         email: email,
         verificationCode: code,
       });
-      console.log('이메일 인증 코드 검증', res.data);
+
       const data = res.data.data;
-      console.log('잘왔나?', data);
+
       if (data) {
         setIsCorrect(isCorrectCode.Success);
       } else {
@@ -143,10 +142,9 @@ const CreateAccountScreen = () => {
 
       // 서버에서 성공 응답 코드 확인 (예: status 200)
       if (res.status === 200) {
-        console.log('회원가입 성공', res.data);
         router.replace('./SignUpDoneScreen');
       } else {
-        console.log('회원가입 실패', res.data);
+        console.error('회원가입 실패', res.data);
         Alert.alert('Signup Failed', 'Please try again.');
       }
     } catch (err) {

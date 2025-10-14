@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
 import { useProfile } from '../../contexts/ProfileContext';
+import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen
 // ------------------------
@@ -15,6 +16,10 @@ export default function NameStepScreen() {
   const isOverLimit = AboutMe.length == 70;
   const canProceed = AboutMe.trim().length > 0 && !isOverLimit;
 
+  const handleSkip = () => {
+    router.push('./BirthStepScreen');
+  };
+
   const handleNext = () => {
     if (canProceed) {
       updateProfile('introduction', AboutMe);
@@ -26,6 +31,7 @@ export default function NameStepScreen() {
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
       <Container>
+        <SkipHeader onSkip={handleSkip} />
         <StepText>Step 5 / 9</StepText>
 
         <TitleWrapper>

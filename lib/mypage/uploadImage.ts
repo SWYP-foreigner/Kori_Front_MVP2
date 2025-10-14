@@ -20,7 +20,7 @@ export async function uploadLocalImageAndGetKey(uri: string): Promise<string> {
   const type = name.endsWith('.png') ? 'image/png' : 'image/jpeg';
 
   const presign = await getPresignedForProfile({ filename: name, contentType: type });
-  console.log('[presign]', presign);
+
   const { uploadUrl, key, headers } = presign;
   if (!uploadUrl || !key) throw new Error('Failed to get presigned URL.');
 
@@ -40,12 +40,13 @@ export async function uploadLocalImageAndGetKey(uri: string): Promise<string> {
   console.log('[presign:put]', putRes.status, putRes.statusText, putText?.slice(0, 400));
 
   if (!putRes.ok) {
+    console.error('[presign:put error]', putRes.status, putRes.statusText, putText?.slice(0, 400));
     throw new Error(`PUT ${putRes.status} ${putRes.statusText}\n${putText}`);
+  } else {
+    console.log('[presign:put success]', putRes.status, putRes.statusText);
   }
-
   return key;
 }
-
 export async function uploadBundledAvatarAndGetKey(moduleId: number): Promise<string> {
   const asset = Asset.fromModule(moduleId);
   await asset.downloadAsync();

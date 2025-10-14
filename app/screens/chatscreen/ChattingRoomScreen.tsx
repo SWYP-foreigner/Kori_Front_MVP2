@@ -4,15 +4,7 @@ import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { useRouter } from 'expo-router';
-import {
-  SafeAreaView,
-  StatusBar,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { StatusBar, FlatList, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
@@ -22,7 +14,6 @@ import { Dimensions, Image, InteractionManager } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from '@/src/lib/config';
 import { useNavigation } from 'expo-router';
-import axios from 'axios';
 type ChatHistory = {
   id: number;
   roomId: number;
@@ -79,7 +70,7 @@ const ChattingRoomScreen = () => {
       if (newToken) {
         await SecureStore.setItemAsync('jwt', newToken);
         await SecureStore.setItemAsync('refresh', newRefreshToken);
-        console.log('[AUTH] accessToken 재발급 성공');
+
         return newToken;
       }
       return null;
@@ -94,12 +85,12 @@ const ChattingRoomScreen = () => {
     let token = await SecureStore.getItemAsync('jwt');
     const myId = await SecureStore.getItemAsync('MyuserId');
 
-    if (!myId) return console.log('[AUTH] 유저ID 없음');
+    if (!myId) return console.warn('[AUTH] 유저ID 없음');
 
     // token 없으면 refresh
     if (!token) {
       token = await refreshTokenIfNeeded();
-      if (!token) return console.log('[AUTH] 유효한 토큰 없음, 연결 실패');
+      if (!token) return console.error('[AUTH] 유효한 토큰 없음, 연결 실패');
     }
 
     setMyUserId(myId);
@@ -117,7 +108,6 @@ const ChattingRoomScreen = () => {
     });
 
     stompClient.current.onConnect = (frame) => {
-      console.log('✅ STOMP 연결 성공');
       setStompConnected(true);
       subscribeToMessages(myId);
       subscribeDeleteMessages();
@@ -125,18 +115,15 @@ const ChattingRoomScreen = () => {
 
     // STOMP 오류 처리
     stompClient.current.onStompError = async (frame) => {
-      console.log('❌ STOMP 오류', frame.headers['message']);
-      console.log('[AUTH] 토큰 만료 감지, refresh 시도');
+      console.error('❌ STOMP 오류', frame.headers['message']);
       const newToken = await refreshTokenIfNeeded();
-      if (!newToken) return console.log('[AUTH] 토큰 재발급 실패');
+      if (!newToken) return console.error('[AUTH] 토큰 재발급 실패');
       stompClient.current?.deactivate();
       connectStomp();
     };
 
-    stompClient.current.onWebSocketError = (evt) => console.log('WebSocket 오류', evt);
+    stompClient.current.onWebSocketError = (evt) => console.error('WebSocket 오류', evt);
     stompClient.current.onWebSocketClose = (evt) => console.log('WebSocket 종료', evt);
-
-    console.log('🚀 STOMP 연결 시도...');
     stompClient.current.activate();
   };
 
@@ -152,11 +139,9 @@ const ChattingRoomScreen = () => {
   const subscribeDeleteMessages = () => {
     stompClient.current?.subscribe(`/topic/rooms/${roomId}`, (message) => {
       const body = JSON.parse(message.body);
-      console.log('삭제 바디', body);
 
       if (body.type === 'delete') {
         setMessages((prev) => prev.filter((m) => m.id.toString() !== body.id.toString()));
-        console.log('메시지 삭제 성공:', body.id);
       }
     });
   };
@@ -167,7 +152,6 @@ const ChattingRoomScreen = () => {
 
     return () => {
       if (stompClient.current?.connected) {
-        console.log('🧹 STOMP 연결 해제');
         stompClient.current.deactivate();
       }
       setStompConnected(false);
@@ -185,7 +169,7 @@ const ChattingRoomScreen = () => {
       }
       setIsTranslate(false);
     } catch (err) {
-      console.log('채팅 기록 불러오기 실패', err);
+      console.error('채팅 기록 불러오기 실패', err);
     }
   };
 
@@ -203,10 +187,10 @@ const ChattingRoomScreen = () => {
       });
       setInputText('');
     } catch (err: any) {
-      console.log('메시지 전송 실패', err);
+      console.error('메시지 전송 실패', err);
       if (err.message?.includes('401')) {
         const newToken = await refreshTokenIfNeeded();
-        if (!newToken) return console.log('[AUTH] 토큰 재발급 실패');
+        if (!newToken) return console.error('[AUTH] 토큰 재발급 실패');
         connectStomp();
         stompClient.current?.publish({
           destination: '/app/chat.sendMessage',
@@ -226,12 +210,10 @@ const ChattingRoomScreen = () => {
         destination: '/app/chat.deleteMessage',
         body: JSON.stringify(msg),
       });
-      console.log('메세지 삭제 성공');
     } catch (err: any) {
-      console.log('메시지 삭제 실패', err);
       if (err.message?.includes('401')) {
         const newToken = await refreshTokenIfNeeded();
-        if (!newToken) return console.log('[AUTH] 토큰 재발급 실패');
+        if (!newToken) return console.error('[AUTH] 토큰 재발급 실패');
         connectStomp();
         stompClient.current?.publish({
           destination: '/app/chat.deleteMessage',
@@ -250,7 +232,7 @@ const ChattingRoomScreen = () => {
       setMessages([...translatedChatMessage]);
       setIsTranslate(true);
     } catch (err) {
-      console.log('번역된 채팅 기록 불러오기 실패', err);
+      console.error('번역된 채팅 기록 불러오기 실패', err);
     }
   };
 
@@ -270,10 +252,9 @@ const ChattingRoomScreen = () => {
         setHasMore(false);
       } else {
         setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
-        console.log('무한 스크롤 발생');
       }
     } catch (err) {
-      console.log('이전 메시지 불러오기 실패', err);
+      console.error('이전 메시지 불러오기 실패', err);
     } finally {
       setIsFetchingMore(false);
     }
@@ -290,7 +271,7 @@ const ChattingRoomScreen = () => {
     try {
       await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
     } catch (error) {
-      console.log('뒤로가기 실패', error);
+      console.error('뒤로가기 실패', error);
     }
   };
 
@@ -329,8 +310,7 @@ const ChattingRoomScreen = () => {
 
     const index = messages.findIndex((msg) => msg.id === messageId);
     if (index === -1) return;
-    console.log('포인터', pointerRef.current);
-    console.log('index', index);
+
     if (index === 0 && index === messages.length - 1) {
       // 첫 메시지면 viewPosition 없이 스크롤
       flatListRef.current.scrollToIndex({
@@ -419,7 +399,7 @@ const ChattingRoomScreen = () => {
         scrollToHighlightMessage(messageId);
       });
     } catch (err) {
-      console.log('위로 이동 후 메시지 불러오기 실패', err);
+      console.error('위로 이동 후 메시지 불러오기 실패', err);
     }
   };
 
@@ -440,7 +420,7 @@ const ChattingRoomScreen = () => {
         scrollToHighlightMessage(messageId);
       });
     } catch (err) {
-      console.log('아래로 이동 후 메시지 불러오기 실패', err);
+      console.error('아래로 이동 후 메시지 불러오기 실패', err);
     }
   };
   //검색시 호출되는 함수
@@ -451,16 +431,14 @@ const ChattingRoomScreen = () => {
       const res = await api.get(`/api/v1/chat/search?roomId=${roomId}&keyword=${searchText}`);
       const SearchResult: ChatHistory[] = res.data.data;
       setSearchMessages(SearchResult);
-      console.log('메시지 검색 결과', SearchResult);
+
       const messageId = SearchResult[pointerRef.current]?.id;
-      console.log('포인터', pointerRef.current);
-      console.log('보내는 메세지 ID ', messageId);
+
       try {
         const res = await api.get(
           `${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/messages/around?messageId=${messageId}`,
         );
         const resultMessages: ChatHistory[] = res.data.data;
-        console.log('검색 버튼 누른 후 메시지', resultMessages);
         setMessages([...resultMessages].reverse());
         // 중앙으로 스크롤
         // FlatList 렌더링 후 스크롤
@@ -468,10 +446,10 @@ const ChattingRoomScreen = () => {
           scrollToHighlightMessage(messageId);
         });
       } catch (err) {
-        console.log('검색 버튼 누른 후 메시지 불러오기 실패', err);
+        console.error('검색 버튼 누른 후 메시지 불러오기 실패', err);
       }
     } catch (err) {
-      console.log('검색 결과 불러오기 실패', err);
+      console.error('검색 결과 불러오기 실패', err);
     }
   };
 
@@ -588,8 +566,6 @@ const ChattingRoomScreen = () => {
                   index === messages.length - 1 ||
                   (messages[index + 1] && formatDate(messages[index + 1].sentAt) !== formatDate(item.sentAt));
 
-                // console.log(index,item);
-                // console.log(formatDate(item.sentAt))
                 if (isMyMessage) {
                   return showProfile ? (
                     <>

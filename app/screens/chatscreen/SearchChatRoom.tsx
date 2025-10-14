@@ -39,14 +39,14 @@ const SearchChatRoom = () => {
   const getGroupChatRoom = async () => {
     const res = await api.get(`/api/v1/chat/rooms/group/search?keyword=${encodeURIComponent(searchText)}`);
     const data: GroupChatRoom[] = res.data.data;
-    console.log('그룹 톡방 검색', data);
+
     return data;
   };
 
   const getMyChatRoom = async () => {
     const res = await api.get(`/api/v1/chat/rooms/search?roomName=${encodeURIComponent(searchText)}`);
     const data: MyChatRoom[] = res.data.data;
-    console.log('내 채팅방 검색', data);
+
     return data;
   };
 

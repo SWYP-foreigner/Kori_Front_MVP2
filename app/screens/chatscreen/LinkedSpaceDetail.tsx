@@ -25,17 +25,14 @@ const LinkedSpaceDetail = () => {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
 
   const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
-  console.log('roomId', roomId);
   const router = useRouter();
 
   const getChatRoomDetail = async () => {
     const res = await api.get(`/api/v1/chat/rooms/group/${roomId}`);
-    console.log('Detail', res.data);
     return res.data.data;
   };
 
   const JoinRoom = async () => {
-    console.log('Join 함');
     try {
       const res = await api.post(`/api/v1/chat/rooms/group/${roomId}/join`);
       router.push({
@@ -48,7 +45,6 @@ const LinkedSpaceDetail = () => {
     } catch (error: any) {
       if (error.response) {
         const message = error.response.data?.message;
-        console.log('서버 응답 에러:', message);
 
         if (message === '이미 현재의 그룹채팅방에 참여하고 있습니다.') {
           Toast.show({

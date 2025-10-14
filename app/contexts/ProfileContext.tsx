@@ -19,7 +19,6 @@ export const ProfileProvider = ({ children }) => {
   const updateProfile = (key, value) => {
     setProfileData((prev) => {
       const newData = { ...prev, [key]: value };
-      console.log('업데이트 직후 profileData:', newData); // 여기서 최신값 확인 가능
       return newData;
     });
   };
