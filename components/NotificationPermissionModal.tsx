@@ -16,7 +16,9 @@ const NotificationPermissionModal = ({ visible, onClose, onYesPress }: Notificat
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <ModalBackground>
         <ModalArea>
-          {/* <Icon type="alarmOn" size="20px" /> */}
+          <IconContainer>
+            <Icon type="alarmOn" size={24} color="#171818" />
+          </IconContainer>
           <ModalTitle>
             <Text>Turn on notifications?</Text>
           </ModalTitle>
@@ -46,7 +48,7 @@ const ModalArea = styled.View`
   display: flex;
   flex-direction: column;
   width: 344px;
-  height: 220px;
+  height: 244px;
   border-radius: 12px;
   display: flex;
   padding: 20px;
@@ -78,4 +80,9 @@ const TextButton = styled.Text`
   border-bottom-width: 1px;
   border-bottom-color: #cccfd0;
   padding-bottom: 1px;
+`;
+
+const IconContainer = styled.View`
+  width: 100%;
+  align-items: center;
 `;
