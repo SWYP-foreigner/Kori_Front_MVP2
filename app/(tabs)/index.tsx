@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, DeviceEventEmitter, FlatList, RefreshControl } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  AppStateStatus,
+  DeviceEventEmitter,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
 import styled from 'styled-components/native';
 
 import FriendCard from '@/components/FriendCard';
@@ -11,6 +19,17 @@ import { useSentFollowRequestsSet } from '@/hooks/queries/useFollowList';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
 import { router } from 'expo-router';
+import {
+  getNotificationsSettingStatus,
+  initNotificationsSettingStatus,
+  postFcmDeviceToken,
+  putOSPushAgreement,
+} from '@/api/notifications/notifications';
+import messaging from '@react-native-firebase/messaging';
+import NotificationPermissionModal from '@/components/NotificationPermissionModal';
+import { useNotificationStore } from '@/src/store/useNotificationStore';
+import { Text } from '@react-navigation/elements';
+import { getOSNotificationPermissionStatus } from '@/lib/fcm/getOSPermissionStatus';
 
 const toBirthNumber = (v: unknown): number | undefined => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
@@ -19,6 +38,7 @@ const toBirthNumber = (v: unknown): number | undefined => {
 };
 
 export default function HomeScreen() {
+  const appState = useRef<AppStateStatus>(AppState.currentState);
   const { data: friends, isLoading, isFetching, refetch } = useRecommendedFriends(20);
   const followMutation = useFollowUser();
   const cancelReqMutation = useCancelFollowRequest();
@@ -27,6 +47,9 @@ export default function HomeScreen() {
 
   const [requested, setRequested] = useState<Set<number>>(new Set());
   const [inFlight, setInFlight] = useState<Set<number>>(new Set());
+  const [isNotificationPermissionModalOpen, setIsNotificationPermissionModalOpen] = useState<boolean>(false);
+  const { isNotificationNeedsSetup, setIsNotificationNeedsSetup } = useNotificationStore();
+
   const lock = (id: number) => setInFlight((s) => new Set(s).add(id));
   const unlock = (id: number) =>
     setInFlight((s) => {
@@ -107,10 +130,70 @@ export default function HomeScreen() {
     });
   }, []);
 
+  /* 1. FCM 토큰 발급 및 업데이트 */
+  const updateFcmToken = async () => {
+    await messaging().registerDeviceForRemoteMessages();
+    const token = await messaging().getToken();
+    await postFcmDeviceToken(token);
+  };
+
+  /* 2. 알림 설정 상태 확인 */
+  const checkNotificationStatus = async () => {
+    const serverStatus = await getNotificationsSettingStatus();
+    const osStatus = await getOSNotificationPermissionStatus();
+
+    const needsSetupFromServer = serverStatus === 'NEEDS_SETUP';
+    const needsSetupFromOS = osStatus === 'undetermined';
+
+    const needsSetup = needsSetupFromServer || needsSetupFromOS;
+
+    if (needsSetup) {
+      setIsNotificationPermissionModalOpen(true);
+    } else {
+      updateOSPermissionStatus();
+    }
+  };
+
+  /* 3. OS 권한 요청 및 서버 동기화 */
+  const updateOSPermissionStatus = async () => {
+    try {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      await putOSPushAgreement(enabled);
+
+      setIsNotificationPermissionModalOpen(false);
+
+      if (!enabled) {
+        Alert.alert('Notifications are turned off', 'You can enable notifications for Kori in Setting.');
+        setIsNotificationNeedsSetup(false);
+        return;
+      }
+
+      await initNotificationsSettingStatus();
+      setIsNotificationNeedsSetup(false);
+    } catch (error) {
+      console.error('[ERROR] 알림 권한 요청 및 서버 동기화 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    console.log('isNotificationNeedsSetup:', isNotificationNeedsSetup);
+    if (isNotificationNeedsSetup) {
+      (async () => {
+        await updateFcmToken();
+        await checkNotificationStatus();
+      })();
+    }
+  }, []);
+
   return (
     <Safe>
       <Header>
-        <Title>Find Friends</Title>
+        <Title>
+          <Text>Find Friends</Text>
+        </Title>
         <IconImage source={require('../../assets/images/IsolationMode.png')} />
       </Header>
 
@@ -195,11 +278,26 @@ export default function HomeScreen() {
           }}
           ListEmptyComponent={
             <EmptyWrap>
-              <EmptyText>No recommendations yet.</EmptyText>
+              <EmptyText>
+                <Text>No recommendations yet.</Text>
+              </EmptyText>
             </EmptyWrap>
           }
         />
       )}
+      {/* 알림 허용 모달 */}
+      <NotificationPermissionModal
+        visible={isNotificationPermissionModalOpen}
+        onClose={() => setIsNotificationPermissionModalOpen(false)}
+        onYesPress={async () => {
+          await updateOSPermissionStatus();
+          setIsNotificationPermissionModalOpen(false);
+        }}
+        onLaterPress={async () => {
+          await putOSPushAgreement(false);
+          setIsNotificationPermissionModalOpen(false);
+        }}
+      />
     </Safe>
   );
 }
