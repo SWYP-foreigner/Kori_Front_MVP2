@@ -41,8 +41,6 @@ export default function useRecommendedFriends(limit = 20) {
           imageUrl: (raw as any)?.imageUrl, // ✅ FriendCard로 그대로 전달
         };
       });
-
-      console.log('✅[recommend:list]', result);
       return result;
     },
     staleTime: 60_000,
