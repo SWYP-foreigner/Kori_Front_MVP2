@@ -1,8 +1,10 @@
-// LanguagePicker.tsx
 import AntDesign from '@expo/vector-icons/AntDesign';
-import React from 'react';
-import { Alert, FlatList, Modal } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Modal, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
+import searchIconImg from '@/assets/images/search.png';
+import cancelIconImg from '@/assets/images/cancel.png';
+import { LANGUAGES } from '@/src/utils/languages';
 
 export const MAX_LANGUAGES = 5;
 
@@ -11,108 +13,24 @@ type Props = {
   value: string[];
   onClose: () => void;
   onChange: (next: string[]) => void;
-  /** 선택지 커스터마이즈: 안 넘기면 기본 LANGUAGES 사용 */
   languages?: string[];
 };
 
-/** ✅ 대괄호 버전 기본 옵션 */
-const LANGUAGES = [
-  'Afrikaans [AF]',
-  'Albanian [SQ]',
-  'Amharic [AM]',
-  'Arabic [AR]',
-  'Armenian [HY]',
-  'Azerbaijani [AZ]',
-  'Basque [EU]',
-  'Belarusian [BE]',
-  'Bengali [BN]',
-  'Bosnian [BS]',
-  'Bulgarian [BG]',
-  'Burmese [MY]',
-  'Catalan [CA]',
-  'Chinese [ZH]',
-  'Croatian [HR]',
-  'Czech [CS]',
-  'Danish [DA]',
-  'Dutch [NL]',
-  'English [EN]',
-  'Estonian [ET]',
-  'Finnish [FI]',
-  'French [FR]',
-  'Galician [GL]',
-  'Georgian [KA]',
-  'German [DE]',
-  'Greek [EL]',
-  'Gujarati [GU]',
-  'Hebrew [HE]',
-  'Hindi [HI]',
-  'Hungarian [HU]',
-  'Icelandic [IS]',
-  'Indonesian [ID]',
-  'Irish [GA]',
-  'Italian [IT]',
-  'Japanese [JA]',
-  'Kannada [KN]',
-  'Kazakh [KK]',
-  'Khmer [KM]',
-  'Korean [KO]',
-  'Kurdish [KU]',
-  'Kyrgyz [KY]',
-  'Lao [LO]',
-  'Latin [LA]',
-  'Latvian [LV]',
-  'Lithuanian [LT]',
-  'Luxembourgish [LB]',
-  'Macedonian [MK]',
-  'Malay [MS]',
-  'Malayalam [ML]',
-  'Maltese [MT]',
-  'Marathi [MR]',
-  'Mongolian [MN]',
-  'Nepali [NE]',
-  'Norwegian [NO]',
-  'Pashto [PS]',
-  'Persian [FA]',
-  'Polish [PL]',
-  'Portuguese [PT]',
-  'Punjabi [PA]',
-  'Romanian [RO]',
-  'Russian [RU]',
-  'Serbian [SR]',
-  'Sinhala [SI]',
-  'Slovak [SK]',
-  'Slovenian [SL]',
-  'Somali [SO]',
-  'Spanish [ES]',
-  'Swahili [SW]',
-  'Swedish [SV]',
-  'Tajik [TG]',
-  'Tamil [TA]',
-  'Telugu [TE]',
-  'Thai [TH]',
-  'Turkish [TR]',
-  'Turkmen [TK]',
-  'Ukrainian [UK]',
-  'Urdu [UR]',
-  'Uzbek [UZ]',
-  'Vietnamese [VI]',
-  'Welsh [CY]',
-  'Yiddish [YI]',
-  'Zulu [ZU]',
-].sort();
-
 export default function LanguagePicker({ visible, value, onClose, onChange, languages }: Props) {
-  const OPTIONS = (languages ?? LANGUAGES).slice().sort();
+  const [search, setSearch] = useState('');
+
+  const OPTIONS = useMemo(() => {
+    const list = (languages ?? LANGUAGES).slice().sort();
+    if (!search.trim()) return list;
+    return list.filter((lang) => lang.toLowerCase().includes(search.toLowerCase()));
+  }, [languages, search]);
 
   const toggle = (lang: string) => {
     const exists = value.includes(lang);
     if (exists) {
       onChange(value.filter((v) => v !== lang));
     } else {
-      if (value.length >= MAX_LANGUAGES) {
-        Alert.alert('Maximum Selection', `You can select up to ${MAX_LANGUAGES} languages!`);
-        return;
-      }
+      if (value.length >= MAX_LANGUAGES) return;
       onChange([...value, lang]);
     }
   };
@@ -127,25 +45,52 @@ export default function LanguagePicker({ visible, value, onClose, onChange, lang
     );
   };
 
+  const handleSearchPress = () => {
+    console.log('Searching:', search);
+  };
+
+  const handleClearSearch = () => {
+    setSearch('');
+  };
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <ModalOverlay onPress={onClose} activeOpacity={1}>
-        <BottomSheet>
-          <HandleWrap>
-            <Handle />
-          </HandleWrap>
+        <BottomSheet onStartShouldSetResponder={() => true}>
+          <BottomSheetHeader>
+            <BottomSheetHandle />
+            <SearchContainer>
+              <SearchInput
+                placeholder="Search your language"
+                placeholderTextColor="#949899"
+                value={search}
+                onChangeText={setSearch}
+              />
+              <TouchableOpacity onPress={handleClearSearch} disabled={!search}>
+                <CancelIcon source={cancelIconImg} resizeMode="contain" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSearchPress}>
+                <SearchIcon source={searchIconImg} resizeMode="contain" />
+              </TouchableOpacity>
+            </SearchContainer>
+          </BottomSheetHeader>
 
-          <List
-            data={OPTIONS}
-            renderItem={renderItem}
-            keyExtractor={(it, idx) => `${it}-${idx}`}
-            showsVerticalScrollIndicator={false}
-          />
+          {OPTIONS.length > 0 ? (
+            <FlatList
+              data={OPTIONS}
+              renderItem={renderItem}
+              keyExtractor={(item, index) => `${item}-${index}`}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 400 }}
+            />
+          ) : (
+            <NoResultText>No languages found</NoResultText>
+          )}
 
           {value.length >= MAX_LANGUAGES && (
             <Warn>
               <AntDesign name="closecircle" size={16} color="#FF6B6B" />
-              <WarnText>You can select up to five languages!</WarnText>
+              <WarnText>You can select up to {MAX_LANGUAGES} languages!</WarnText>
             </Warn>
           )}
         </BottomSheet>
@@ -153,6 +98,109 @@ export default function LanguagePicker({ visible, value, onClose, onChange, lang
     </Modal>
   );
 }
+
+// ---------------- Styled Components ----------------
+
+const ModalOverlay = styled.TouchableOpacity`
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: flex-end;
+`;
+
+const BottomSheet = styled.View`
+  background-color: #353637;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  max-height: 70%;
+  padding-bottom: 20px;
+`;
+
+const BottomSheetHeader = styled.View`
+  align-items: center;
+  padding: 20px 20px 10px 20px;
+`;
+
+const BottomSheetHandle = styled.View`
+  width: 50px;
+  height: 4px;
+  background-color: #949899;
+  border-radius: 2px;
+  margin-bottom: 16px;
+`;
+
+const SearchContainer = styled.View`
+  width: 100%;
+  height: 50px;
+  border-radius: 30px;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 15px;
+  border-width: 1px;
+  border-color: #949899;
+`;
+
+const SearchInput = styled.TextInput`
+  flex: 1;
+  color: #ededed;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
+`;
+
+const CancelIcon = styled.Image`
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  tint-color: #949899;
+`;
+
+const LanguageItem = styled.TouchableOpacity<{ selected?: boolean }>`
+  padding: 16px 20px;
+  border-bottom-width: 0.5px;
+  border-bottom-color: #4a4b4c;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background-color: ${({ selected }) => (selected ? '#4A4B4C' : 'transparent')};
+  border-radius: ${({ selected }) => (selected ? 12 : 0)}px;
+`;
+
+const LanguageText = styled.Text`
+  color: #ededed;
+  font-size: 16px;
+  font-family: 'PlusJakartaSans-Regular';
+  flex: 1;
+`;
+
+const NoResultText = styled.Text`
+  text-align: center;
+  color: #949899;
+  margin-top: 20px;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
+`;
+
+const Warn = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  background: rgba(255, 107, 107, 0.1);
+  margin: 16px 20px 0 20px;
+  border-radius: 8px;
+`;
+
+const WarnText = styled.Text`
+  color: #ff6b6b;
+  font-size: 14px;
+  font-family: 'PlusJakartaSans-Regular';
+  margin-left: 8px;
+`;
+
+const SearchIcon = styled.Image`
+  width: 20px;
+  height: 20px;
+  tint-color: #949899;
+`;
 
 export const LanguageDropdownButton = styled.TouchableOpacity<{ selected?: boolean }>`
   width: 100%;
@@ -163,7 +211,8 @@ export const LanguageDropdownButton = styled.TouchableOpacity<{ selected?: boole
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  border: 1px solid ${({ selected }) => (selected ? '#949899' : '#02F59B99')};
+  border-width: 1px;
+  border-color: #949899;
 `;
 
 export const LanguageDropdownText = styled.Text<{ selected?: boolean }>`
@@ -171,69 +220,4 @@ export const LanguageDropdownText = styled.Text<{ selected?: boolean }>`
   font-size: 15px;
   font-family: 'PlusJakartaSans-Regular';
   flex: 1;
-`;
-
-const ModalOverlay = styled.TouchableOpacity`
-  flex: 1;
-  background: rgba(0, 0, 0, 0.5);
-  justify-content: flex-end;
-`;
-
-const BottomSheet = styled.View`
-  background: #353637;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  max-height: 70%;
-  padding-bottom: 20px;
-`;
-
-const HandleWrap = styled.View`
-  align-items: center;
-  padding: 20px 20px 10px 20px;
-`;
-
-const Handle = styled.View`
-  width: 40px;
-  height: 4px;
-  background: #949899;
-  border-radius: 2px;
-`;
-
-const List = styled(FlatList as new () => FlatList<string>)`
-  max-height: 400px;
-  padding: 0 20px;
-`;
-
-const LanguageItem = styled.TouchableOpacity<{ selected?: boolean }>`
-  padding: 16px 0;
-  border-bottom-width: 0.5px;
-  border-bottom-color: #4a4b4c;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const LanguageText = styled.Text`
-  color: #ededed;
-  font-size: 16px;
-  font-family: 'PlusJakartaSans-Regular';
-  flex: 1;
-`;
-
-const Warn = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  background: rgba(255, 107, 107, 0.1);
-  margin: 0 20px;
-  border-radius: 8px;
-  margin-top: 16px;
-`;
-
-const WarnText = styled.Text`
-  color: #ff6b6b;
-  font-size: 14px;
-  font-family: 'PlusJakartaSans-Regular';
-  margin-left: 8px;
 `;
