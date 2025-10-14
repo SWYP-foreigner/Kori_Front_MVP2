@@ -17,7 +17,7 @@ import LanguagePicker, {
   MAX_LANGUAGES,
 } from '@/components/LanguagePicker';
 import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
-
+import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { Config } from '@/src/lib/config';
@@ -139,6 +139,9 @@ export default function EditProfileScreen() {
   const [country, setCountry] = useState('');
   const [showCountry, setShowCountry] = useState(false);
 
+  const [gender, setGender] = useState('');
+  const [showGender, setShowGender] = useState(false);
+
   const [langs, setLangs] = useState<string[]>([]);
   const [showLang, setShowLang] = useState(false);
 
@@ -174,6 +177,7 @@ export default function EditProfileScreen() {
     setLangs(me.language ?? []);
     setSelectedInterests(me.hobby ?? []);
     setAboutMe(me.introduction ?? '');
+    setGender(me.gender ?? '');
 
     const initial = (me as any)?.imageKey || (me as any)?.imageUrl || undefined;
     setAvatarKeyOrUrl(initial);
@@ -214,7 +218,7 @@ export default function EditProfileScreen() {
     const body: any = {
       firstname,
       lastname,
-      gender: 'unspecified',
+      gender: gender || '',
       birthday: birth || '',
       country: country || '',
       introduction: aboutMe || '',
@@ -229,8 +233,8 @@ export default function EditProfileScreen() {
       await editMutation.mutateAsync(body);
       await queryClient.invalidateQueries({ queryKey: ['mypage', 'profile'] });
       router.back();
-    } catch (e) {
-      console.error('[Profile Save Error]', e);
+    } catch (error) {
+      console.error('[Profile Save Error]', error);
       Alert.alert('Save failed', 'Please try again.');
     }
   };
@@ -325,7 +329,6 @@ export default function EditProfileScreen() {
           <SaveText>Save</SaveText>
         </Side>
       </Header>
-
       <Scroll showsVerticalScrollIndicator={false}>
         <Center>
           <AvatarPress onPress={openAvatarSheet}>
@@ -351,6 +354,14 @@ export default function EditProfileScreen() {
             placeholder="Your name"
             placeholderTextColor="#EDEDED99"
           />
+        </Field>
+
+        <Field>
+          <LabelText>Gender</LabelText>
+          <GenderDropdownButton selected={!!gender} onPress={() => setShowGender(true)}>
+            <GenderDropdownText selected={!!gender}>{gender || 'Select your gender'}</GenderDropdownText>
+            <AntDesign name="down" size={16} color="#949899" />
+          </GenderDropdownButton>
         </Field>
 
         <Field>
@@ -429,10 +440,8 @@ export default function EditProfileScreen() {
             multiline
           />
         </Field>
-
         <BottomPad />
       </Scroll>
-
       <CountryPicker
         visible={showCountry}
         value={country}
@@ -452,6 +461,16 @@ export default function EditProfileScreen() {
           setShowPurpose(false);
         }}
       />
+      <GenderPicker
+        visible={showGender}
+        value={gender}
+        onClose={() => setShowGender(false)}
+        onSelect={(g) => {
+          setGender(g);
+          setShowGender(false);
+        }}
+      />
+
       <BottomSheetTagPicker
         visible={showTagPicker}
         value={selectedInterests}
