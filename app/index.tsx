@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { Redirect } from 'expo-router';
+// import { Redirect } from 'expo-router';
 import CustomSplashScreen from './screens/splash/CustomSplashScreen';
-import LoginScreen from './login';
+// import LoginScreen from './login';
+// import { requestUserPermission } from '@/lib/fcm/requestPermission';
+// import { messageHandler } from '@/lib/fcm/messageHandler';
 SplashScreen.preventAutoHideAsync(); // 자동 숨김 방지
 
 export default function Index() {
