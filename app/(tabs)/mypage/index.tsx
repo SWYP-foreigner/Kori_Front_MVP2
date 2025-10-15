@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Image as RNImage, ImageSourcePropType } from 'react-native';
+import { Alert, Image, Image as RNImage, ImageSourcePropType, Text } from 'react-native';
 import styled from 'styled-components/native';
 
 import api from '@/api/axiosInstance';
@@ -274,7 +274,9 @@ export default function MyPageScreen() {
     <Safe>
       <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <Header>
-          <Title>My page</Title>
+          <Title>
+            <Text>My page</Text>
+          </Title>
           <IconImage source={require('@/assets/images/IsolationMode.png')} />
         </Header>
 
@@ -294,48 +296,89 @@ export default function MyPageScreen() {
 
         <SectionTitleRow>
           <SectionTitleIcon />
-          <SectionTitle>My Friends</SectionTitle>
+          <SectionTitle>
+            <Text>My Friends</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={() => router.push('/mypage/friends')}>
-          <RowLeft>Friends List</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Friends List</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
-        <RowHeader>Follow List</RowHeader>
+        <RowHeader>
+          <Text>Follow List</Text>
+        </RowHeader>
 
         <CountCard>
           <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
-            <CountLabel>Received</CountLabel>
+            <CountLabel>
+              <Text>Received</Text>
+            </CountLabel>
             <CountNumber>{pendingReceived}</CountNumber>
           </CountItem>
           <Divider />
           <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
-            <CountLabel>Sent</CountLabel>
+            <CountLabel>
+              <Text>Sent</Text>
+            </CountLabel>
             <CountNumber>{pendingSent}</CountNumber>
           </CountItem>
         </CountCard>
 
         <SectionTitleRow>
           <SectionTitleIconGlobe />
-          <SectionTitle>Translate Setting</SectionTitle>
+          <SectionTitle>
+            <Text>Translate Setting</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={() => router.push('/mypage/translate')}>
-          <RowLeft>Chat Translation Language</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Chat Translation Language</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
         <SectionTitleRow>
           <SectionTitleIconGlobe />
-          <SectionTitle>My Account</SectionTitle>
+          <SectionTitle>
+            <Text>Alarm Setting</Text>
+          </SectionTitle>
+        </SectionTitleRow>
+
+        <RowLink onPress={() => router.push('/mypage/notification')}>
+          <RowLeft>
+            <Text>Notification</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
+        </RowLink>
+        <RowSeparator />
+
+        <SectionTitleRow>
+          <SectionTitleIconGlobe />
+          <SectionTitle>
+            <Text>My Account</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={AccountLogout}>
-          <RowLeft>Account Logout</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Account Logout</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
