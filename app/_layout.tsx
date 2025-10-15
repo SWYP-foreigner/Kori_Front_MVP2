@@ -23,6 +23,8 @@ import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import messaging from '@react-native-firebase/messaging';
 import { messageHandler } from '@/lib/fcm/messageHandler';
+import { ThemeProvider } from 'styled-components';
+import { theme } from '@/src/styles/theme';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -87,18 +89,20 @@ export default function RootLayout() {
   if (!loaded || checkingToken) return null;
 
   return (
-    <SafeAreaProvider>
-      <AppLayout>
-        <ProfileProvider>
-          <QueryClientProvider client={queryClient}>
-            <Stack screenOptions={{ headerShown: false }}>
-              {isLoggedIn ? <Stack.Screen name="(tabs)" /> : <Stack.Screen name="login" />}
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <Toast />
-          </QueryClientProvider>
-        </ProfileProvider>
-      </AppLayout>
-    </SafeAreaProvider>
+    <ThemeProvider theme={theme}>
+      <SafeAreaProvider>
+        <AppLayout>
+          <ProfileProvider>
+            <QueryClientProvider client={queryClient}>
+              <Stack screenOptions={{ headerShown: false }}>
+                {isLoggedIn ? <Stack.Screen name="(tabs)" /> : <Stack.Screen name="login" />}
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <Toast />
+            </QueryClientProvider>
+          </ProfileProvider>
+        </AppLayout>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
