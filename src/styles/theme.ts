@@ -1,5 +1,3 @@
-import { DefaultTheme } from 'styled-components/native';
-
 /* ------------ color styles ------------ */
 const colors = {
   primary: {
@@ -105,10 +103,12 @@ const fonts = {
 };
 
 /* -------------- default theme -------------- */
-export const theme: DefaultTheme = {
-  colors: colors,
-  fonts: fonts,
-};
+export const theme = {
+  colors,
+  fonts,
+} as const;
+
+export type ThemeType = typeof theme;
 
 /**
  * Styled Text에서 빠르게 텍스트 스타일을 적용할 수 있는 함수입니다.

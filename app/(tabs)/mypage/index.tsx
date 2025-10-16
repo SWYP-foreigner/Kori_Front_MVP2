@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Image as RNImage, ImageSourcePropType } from 'react-native';
+import { Alert, Image, Image as RNImage, ImageSourcePropType, Text } from 'react-native';
 import styled from 'styled-components/native';
 
 import api from '@/api/axiosInstance';
@@ -17,6 +17,8 @@ import { Config } from '@/src/lib/config';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { DeviceEventEmitter } from 'react-native';
+import Icon from '@/components/Icon';
+import { useTheme, DefaultTheme } from 'styled-components';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -40,6 +42,7 @@ const toUrl = (u?: string) => {
 
 export default function MyPageScreen() {
   const qc = useQueryClient();
+  const theme = useTheme() as DefaultTheme;
 
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
@@ -274,7 +277,9 @@ export default function MyPageScreen() {
     <Safe>
       <Scroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <Header>
-          <Title>My page</Title>
+          <Title>
+            <Text>My page</Text>
+          </Title>
           <IconImage source={require('@/assets/images/IsolationMode.png')} />
         </Header>
 
@@ -294,48 +299,89 @@ export default function MyPageScreen() {
 
         <SectionTitleRow>
           <SectionTitleIcon />
-          <SectionTitle>My Friends</SectionTitle>
+          <SectionTitle>
+            <Text>My Friends</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={() => router.push('/mypage/friends')}>
-          <RowLeft>Friends List</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Friends List</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
-        <RowHeader>Follow List</RowHeader>
+        <RowHeader>
+          <Text>Follow List</Text>
+        </RowHeader>
 
         <CountCard>
           <CountItem onPress={() => router.push('/mypage/follows?tab=received')}>
-            <CountLabel>Received</CountLabel>
+            <CountLabel>
+              <Text>Received</Text>
+            </CountLabel>
             <CountNumber>{pendingReceived}</CountNumber>
           </CountItem>
           <Divider />
           <CountItem onPress={() => router.push('/mypage/follows?tab=sent')}>
-            <CountLabel>Sent</CountLabel>
+            <CountLabel>
+              <Text>Sent</Text>
+            </CountLabel>
             <CountNumber>{pendingSent}</CountNumber>
           </CountItem>
         </CountCard>
 
         <SectionTitleRow>
           <SectionTitleIconGlobe />
-          <SectionTitle>Translate Setting</SectionTitle>
+          <SectionTitle>
+            <Text>Translate Setting</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={() => router.push('/mypage/translate')}>
-          <RowLeft>Chat Translation Language</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Chat Translation Language</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
+        </RowLink>
+        <RowSeparator />
+
+        <SectionTitleRow>
+          <Icon type={'alarmOn'} size={16} color={theme.colors.gray.gray_1} />
+          <SectionTitle>
+            <Text>Alarm Setting</Text>
+          </SectionTitle>
+        </SectionTitleRow>
+
+        <RowLink onPress={() => router.push('/mypage/notification')}>
+          <RowLeft>
+            <Text>Notification</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
         <SectionTitleRow>
           <SectionTitleIconGlobe />
-          <SectionTitle>My Account</SectionTitle>
+          <SectionTitle>
+            <Text>My Account</Text>
+          </SectionTitle>
         </SectionTitleRow>
 
         <RowLink onPress={AccountLogout}>
-          <RowLeft>Account Logout</RowLeft>
-          <Chevron>›</Chevron>
+          <RowLeft>
+            <Text>Account Logout</Text>
+          </RowLeft>
+          <Chevron>
+            <Text>›</Text>
+          </Chevron>
         </RowLink>
         <RowSeparator />
 
@@ -408,6 +454,7 @@ const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin: 28px 16px 10px 16px;
+  gap: 4px;
 `;
 function SectionTitleIcon() {
   return (

@@ -1,5 +1,6 @@
 import React from 'react';
 import AlarmOn from '@/assets/icons/alarmOn.svg';
+import { theme } from '@/src/styles/theme';
 
 // TODO 일부 아이콘(알림, 좋아요, 카메라 아이콘 등)은 status props 추가
 
@@ -29,10 +30,10 @@ interface IconProps {
  * - type: 아이콘 종류
  * - color: 아이콘 색상
  */
-const Icon = ({ size, type, color }: IconProps) => {
+const Icon = ({ size, type, color = theme.colors.primary.white }: IconProps) => {
   const SelectedIcon = iconMap[type];
 
-  return <SelectedIcon width={size} height={size} fill={color} />;
+  return <SelectedIcon width={size} height={size} color={color} />;
 };
 
 export default Icon;
