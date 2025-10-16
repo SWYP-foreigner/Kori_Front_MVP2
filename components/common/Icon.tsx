@@ -34,6 +34,7 @@ import ThumbsUpNonSelected from '@/assets/icons/thumbs-up-non-selected.svg';
 import ThumbsUpSelected from '@/assets/icons/thumbs-up-selected.svg';
 import Translate from '@/assets/icons/translate.svg';
 import TrashCan from '@/assets/icons/trash can.svg';
+import { theme } from '@/src/styles/theme';
 
 const iconMap = {
   alarmOff: AlarmOff,
@@ -96,10 +97,10 @@ interface IconProps {
  * - color: 아이콘 색상
  */
 
-const Icon = ({ size, type, color }: IconProps) => {
+const Icon = ({ size, type, color = theme.colors.primary.white }: IconProps) => {
   const SelectedIcon = iconMap[type];
 
-  return <SelectedIcon width={size} height={size} fill={color} />;
+  return <SelectedIcon width={size} height={size} color={color} />;
 };
 
 export default Icon;
