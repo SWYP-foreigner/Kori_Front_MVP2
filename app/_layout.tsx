@@ -23,7 +23,7 @@ import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import messaging from '@react-native-firebase/messaging';
 import { messageHandler } from '@/lib/fcm/messageHandler';
-import { ThemeProvider } from 'styled-components';
+import { ThemeProvider } from 'styled-components/native';
 import { theme } from '@/src/styles/theme';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
