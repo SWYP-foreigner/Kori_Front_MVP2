@@ -191,9 +191,7 @@ export default function HomeScreen() {
   return (
     <Safe>
       <Header>
-        <Title>
-          <Text>Find Friends</Text>
-        </Title>
+        <Title>Find Friends</Title>
         <IconImage source={require('../../assets/images/IsolationMode.png')} />
       </Header>
 
