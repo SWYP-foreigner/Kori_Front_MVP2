@@ -17,6 +17,8 @@ import { Config } from '@/src/lib/config';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { DeviceEventEmitter } from 'react-native';
+import Icon from '@/components/Icon';
+import { useTheme, DefaultTheme } from 'styled-components';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -40,6 +42,7 @@ const toUrl = (u?: string) => {
 
 export default function MyPageScreen() {
   const qc = useQueryClient();
+  const theme = useTheme() as DefaultTheme;
 
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
@@ -451,6 +454,7 @@ const SectionTitleRow = styled.View`
   flex-direction: row;
   align-items: center;
   margin: 28px 16px 10px 16px;
+  gap: 4px;
 `;
 function SectionTitleIcon() {
   return (
