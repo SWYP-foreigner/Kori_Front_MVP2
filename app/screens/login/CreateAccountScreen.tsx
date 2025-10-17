@@ -104,6 +104,10 @@ const CreateAccountScreen = () => {
         setIsExistEmail(isDuplicatedEmail.NotExist);
       }
     } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error('message:', err.message); // 예: "Network Error"
+        console.error('code:', err.code); // 예: "ERR_NETWORK" (axios 1.x)
+      }
       console.error('이메일 확인 중 에러 발생', err);
     }
   };

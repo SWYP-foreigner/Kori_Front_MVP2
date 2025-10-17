@@ -31,8 +31,12 @@ yarn-error.*
 *.pem
 
 # iOS
+ios/
 ios/build
 ios/Pods
+
+# android
+android/
 
 # local env files
 .env*.local
@@ -40,6 +44,10 @@ ios/Pods
 
 # typescript
 *.tsbuildinfo
+
+# Firebase keys
+GoogleService-Info.plist
+google-services.json
 
 # github
 .github

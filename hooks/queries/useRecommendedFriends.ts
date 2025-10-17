@@ -41,7 +41,6 @@ export default function useRecommendedFriends(limit = 20) {
           imageUrl: (raw as any)?.imageUrl,
         };
       });
-
       return result;
     },
     staleTime: 60_000,

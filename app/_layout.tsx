@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import queryClient from '@/api/queryClient';
 import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif';
 import {
@@ -16,14 +17,19 @@ import { ProfileProvider } from './contexts/ProfileContext';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import axios from 'axios';
 import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
+import messaging from '@react-native-firebase/messaging';
+import { messageHandler } from '@/lib/fcm/messageHandler';
+import { ThemeProvider } from 'styled-components/native';
+import { theme } from '@/src/styles/theme';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
+    // eslint-disable-next-line react-native/no-color-literals
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: '#1D1E1F' }}>
       {children}
     </View>
@@ -40,6 +46,12 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
+
+  useEffect(() => {
+    /* ------------ foreground 메시지 수신 메서드 초기화 ------------ */
+    const unsubscribeOnMessage = messaging().onMessage(messageHandler);
+    return unsubscribeOnMessage;
+  }, []);
 
   const router = useRouter();
   const [checkingToken, setCheckingToken] = useState(true);
@@ -77,18 +89,20 @@ export default function RootLayout() {
   if (!loaded || checkingToken) return null;
 
   return (
-    <SafeAreaProvider>
-      <AppLayout>
-        <ProfileProvider>
-          <QueryClientProvider client={queryClient}>
-            <Stack screenOptions={{ headerShown: false }}>
-              {isLoggedIn ? <Stack.Screen name="(tabs)" /> : <Stack.Screen name="login" />}
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <Toast />
-          </QueryClientProvider>
-        </ProfileProvider>
-      </AppLayout>
-    </SafeAreaProvider>
+    <ThemeProvider theme={theme}>
+      <SafeAreaProvider>
+        <AppLayout>
+          <ProfileProvider>
+            <QueryClientProvider client={queryClient}>
+              <Stack screenOptions={{ headerShown: false }}>
+                {isLoggedIn ? <Stack.Screen name="(tabs)" /> : <Stack.Screen name="login" />}
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <Toast />
+            </QueryClientProvider>
+          </ProfileProvider>
+        </AppLayout>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
