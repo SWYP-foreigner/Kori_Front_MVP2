@@ -10,13 +10,13 @@ type Props = {
   onSelect: (purpose: string) => void;
 };
 
-const PURPOSE_OPTIONS = ['Study', 'Work', 'Marriage', 'Travel', 'Business', 'Family'];
+const GENDER_OPTIONS = ['Female', 'Male', 'Prefer not to say'];
 
-export default function PurposePicker({ visible, value, onClose, onSelect }: Props) {
+export default function GenderPicker({ visible, value, onClose, onSelect }: Props) {
   const renderItem = ({ item }: { item: string }) => {
     const selected = value === item;
     return (
-      <Row onPress={() => onSelect(item)} selected={selected}>
+      <Row onPress={() => onSelect(item)}>
         <RowText>{item}</RowText>
         {selected && <AntDesign name="check" size={20} color="#02F59B" />}
       </Row>
@@ -31,7 +31,7 @@ export default function PurposePicker({ visible, value, onClose, onSelect }: Pro
             <Handle />
           </HandleWrap>
           <List
-            data={PURPOSE_OPTIONS}
+            data={GENDER_OPTIONS}
             keyExtractor={(it, idx) => `${it}-${idx}`}
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
@@ -43,7 +43,7 @@ export default function PurposePicker({ visible, value, onClose, onSelect }: Pro
   );
 }
 
-export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolean }>`
+export const GenderDropdownButton = styled.TouchableOpacity<{ selected?: boolean }>`
   width: 100%;
   height: 50px;
   border-radius: 8px;
@@ -56,7 +56,7 @@ export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolea
   border-color: #949899;
 `;
 
-export const PurposeDropdownText = styled.Text<{ selected?: boolean }>`
+export const GenderDropdownText = styled.Text<{ selected?: boolean }>`
   color: ${({ selected }) => (selected ? '#EDEDED' : '#949899')};
   font-size: 15px;
   font-family: 'PlusJakartaSans-Regular';
