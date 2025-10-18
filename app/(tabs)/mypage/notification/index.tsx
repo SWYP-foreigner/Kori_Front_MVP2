@@ -2,7 +2,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DetailHeader from '@/components/common/DetailHeader';
 import Toggle from '@/components/common/Toggle';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { textStyle } from '@/src/styles/theme';
 import { Text, View } from 'react-native';
 import { NotificationSetting, NotificationType } from '@/api/notifications/notifications';
@@ -60,22 +60,28 @@ export default function NotificationSettingPage() {
   }
 
   /* -------------- 개별 알림 토글 핸들러 콜백 함수 -------------- */
-  function handleToggle({ notificationType, enabled }: NotificationSetting) {
-    if (!isAllEnabled) return;
+  const handleToggle = useCallback(
+    ({ notificationType, enabled }: NotificationSetting) => {
+      if (!isAllEnabled) return;
 
-    const updatedSettings = notificationSettings.map((s) =>
-      s.notificationType === notificationType ? { ...s, enabled: enabled } : s,
-    );
+      const updatedSettings = notificationSettings.map((s) =>
+        s.notificationType === notificationType ? { ...s, enabled: enabled } : s,
+      );
 
-    mutate(updatedSettings);
-  }
+      mutate(updatedSettings);
+    },
+    [isAllEnabled, notificationSettings, mutate],
+  );
 
   /* -------------- 전체 알림 토글 핸들러 콜백 함수 -------------- */
-  const handleAllToggle = (next: boolean) => {
-    setIsAllEnabled(next);
-    const updatedSettings = notificationSettings.map((s) => ({ ...s, enabled: next }));
-    mutate(updatedSettings);
-  };
+  const handleAllToggle = useCallback(
+    (next: boolean) => {
+      setIsAllEnabled(next);
+      const updatedSettings = notificationSettings.map((s) => ({ ...s, enabled: next }));
+      mutate(updatedSettings);
+    },
+    [notificationSettings, mutate],
+  );
 
   interface NotificationSettingListProps {
     notificationType: NotificationType | 'all';
