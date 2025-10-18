@@ -1,13 +1,167 @@
 import styled from 'styled-components/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DetailHeader from '@/components/common/DetailHeader';
+import Toggle from '@/components/common/Toggle';
+import { useEffect, useState } from 'react';
+import { textStyle } from '@/src/styles/theme';
+import { Text, View } from 'react-native';
+import { NotificationSetting, NotificationType } from '@/api/notifications/notifications';
+import { useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
+import useUpdateNotificationSettings from '@/hooks/mutations/notifications/useUpdateNotifications';
+
+type NotificationSettingListText = {
+  title: string;
+  subtitle?: string;
+};
+
+const NOTIFICATION_SETTING_LIST_TEXT: Record<NotificationType | 'all', NotificationSettingListText> = {
+  all: {
+    title: 'All notifications',
+    subtitle: 'Enable all push notifications',
+  },
+  newuser: {
+    title: 'New member join notifications',
+    subtitle: 'Get notified when new users join Kori',
+  },
+  receive: {
+    title: 'Follow Request Accepted',
+  },
+  follow: {
+    title: 'New Follower Request',
+    subtitle: 'Enable all push notifications',
+  },
+  followuserpost: {
+    title: 'All notifications',
+    subtitle: 'Enable all push notifications',
+  },
+  post: {
+    title: 'All notifications',
+    subtitle: 'Enable all push notifications',
+  },
+  comment: {
+    title: 'All notifications',
+    subtitle: 'Enable all push notifications',
+  },
+  chat: {
+    title: 'All notifications',
+    subtitle: 'Enable all push notifications',
+  },
+};
+
+const defaultSettings: NotificationSetting[] = [
+  { notificationType: 'post', enabled: false },
+  { notificationType: 'comment', enabled: false },
+  { notificationType: 'chat', enabled: false },
+  { notificationType: 'follow', enabled: false },
+  { notificationType: 'receive', enabled: false },
+  { notificationType: 'followuserpost', enabled: false },
+  { notificationType: 'newuser', enabled: false },
+];
 
 export default function NotificationSettingPage() {
+  const { data, isLoading } = useNotificationSettings();
+  const { mutate } = useUpdateNotificationSettings();
+
+  const [notificationSettingState, setNotificationSettingState] = useState<NotificationSetting[]>(defaultSettings);
+  const [isAllEnabled, setIsAllEnabled] = useState<boolean>(false);
+
+  /* -------------- state에서 특정 type의 enabled를 찾음 -------------- */
+  function findEnabled(type: NotificationType | 'all'): boolean {
+    if (!Array.isArray(notificationSettingState)) return false;
+
+    if (type === 'all') {
+      return isAllEnabled;
+    }
+    return notificationSettingState.find((s) => s.notificationType === type)!.enabled;
+  }
+
+  /* -------------- 개별 알림 토글 핸들러 콜백 함수 -------------- */
+  function handleToggle({ notificationType, enabled }: NotificationSetting) {
+    if (!isAllEnabled) return;
+
+    const updatedSettings = notificationSettingState.map((s) =>
+      s.notificationType === notificationType ? { ...s, enabled: enabled } : s,
+    );
+    setNotificationSettingState(updatedSettings);
+    // mutate(updatedSettings);
+  }
+
+  /* -------------- 전체 알림 토글 핸들러 콜백 함수 -------------- */
+  const handleAllToggle = (next: boolean) => {
+    setIsAllEnabled(next);
+    const updatedSettings = notificationSettingState.map((s) => ({ ...s, enabled: next }));
+    setNotificationSettingState(updatedSettings);
+    // mutate(updatedSettings);
+  };
+
+  interface NotificationSettingListProps {
+    notificationType: NotificationType | 'all';
+    isBorderBottom?: boolean;
+  }
+
+  /* -------------- 알림 설정 리스트 컴포넌트 -------------- */
+  const NotificationSettingList = ({ notificationType, isBorderBottom }: NotificationSettingListProps) => {
+    const title = NOTIFICATION_SETTING_LIST_TEXT[notificationType].title;
+    const subtitle = NOTIFICATION_SETTING_LIST_TEXT[notificationType]?.subtitle;
+
+    return (
+      <ListItem isBorderBottom={isBorderBottom}>
+        <View>
+          <ListTitle>
+            <Text>{title}</Text>
+          </ListTitle>
+          {subtitle && (
+            <ListSubTitle>
+              <Text>{subtitle}</Text>
+            </ListSubTitle>
+          )}
+        </View>
+        <Toggle
+          isPressed={findEnabled(notificationType)}
+          onPress={(enabled) => {
+            notificationType === 'all' ? handleAllToggle(enabled) : handleToggle({ notificationType, enabled });
+          }}
+          disabled={notificationType !== 'all' && !isAllEnabled}
+        />
+      </ListItem>
+    );
+  };
+
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      console.log('query data:', data);
+      setNotificationSettingState(data);
+      setIsAllEnabled(notificationSettingState.some((s) => s.enabled));
+    }
+  }, [data, notificationSettingState]);
+
   return (
     <Safe edges={[]}>
       <DetailHeader title="Notification" />
       <Body>
-        <ListItem></ListItem>
+        <NotificationSettingList notificationType={'all'} isBorderBottom={true} />
+        <NotificationSettingList notificationType={'newuser'} isBorderBottom={true} />
+        <ListSection>
+          <ListSectionLabel>
+            <Text>Follow Received / Sent</Text>
+          </ListSectionLabel>
+          <NotificationSettingList notificationType={'receive'} />
+          <NotificationSettingList notificationType={'follow'} />
+        </ListSection>
+        <ListSection>
+          <ListSectionLabel>
+            <Text>Community</Text>
+          </ListSectionLabel>
+          <NotificationSettingList notificationType={'followuserpost'} />
+          <NotificationSettingList notificationType={'post'} />
+          <NotificationSettingList notificationType={'comment'} isBorderBottom={true} />
+        </ListSection>
+        <ListSection>
+          <ListSectionLabel>
+            <Text>Chat</Text>
+          </ListSectionLabel>
+          <NotificationSettingList notificationType={'chat'} />
+        </ListSection>
       </Body>
     </Safe>
   );
@@ -15,14 +169,47 @@ export default function NotificationSettingPage() {
 
 const Safe = styled(SafeAreaView)`
   flex: 1;
-  background-color: #1d1e1f;
+  background-color: ${({ theme }) => theme.colors.primary.black};
 `;
 
-const Body = styled.View`
+const Body = styled.ScrollView.attrs({
+  contentContainerStyle: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingBottom: 40,
+  },
+})`
   flex: 1;
-  padding: 16px;
 `;
 
-const ListItem = styled.View``;
+const ListItem = styled.View<{ isBorderBottom?: boolean }>`
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 20px 0;
+  border-bottom-width: ${({ isBorderBottom }) => (isBorderBottom ? 1 : 0)}px;
+  border-bottom-color: ${({ theme, isBorderBottom }) =>
+    isBorderBottom ? theme.colors.gray.darkGray_1 : 'transparent'};
+`;
 
-const ListTitle = styled.Text``;
+const ListTitle = styled.Text`
+  margin-bottom: 4px;
+  ${({ theme }) => textStyle(theme.fonts.body.B3_M)}
+  color: ${({ theme }) => theme.colors.primary.white}
+`;
+
+const ListSubTitle = styled.Text`
+  ${({ theme }) => textStyle(theme.fonts.body.B4_L)}
+  color: ${({ theme }) => theme.colors.primary.white}
+`;
+
+const ListSection = styled.View`
+  margin-top: 20px;
+`;
+
+const ListSectionLabel = styled.Text`
+  padding: 4px 0;
+  ${({ theme }) => textStyle(theme.fonts.body.B5_SB)}
+  color: ${({ theme }) => theme.colors.gray.gray_1}
+`;
