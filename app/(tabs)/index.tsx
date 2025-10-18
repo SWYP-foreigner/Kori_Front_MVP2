@@ -155,7 +155,7 @@ export default function HomeScreen() {
   };
 
   /* 3. OS 권한 요청 및 서버 동기화 */
-  const updateOSPermissionStatus = async () => {
+  const updateOSPermissionStatus = async (needsToInitStatus: boolean = false) => {
     try {
       const authStatus = await messaging().requestPermission();
       const enabled =
@@ -171,7 +171,9 @@ export default function HomeScreen() {
         return;
       }
 
-      await initNotificationsSettingStatus();
+      if (needsToInitStatus) {
+        await initNotificationsSettingStatus();
+      }
       setIsNotificationNeedsSetup(false);
     } catch (error) {
       console.error('[ERROR] 알림 권한 요청 및 서버 동기화 실패:', error);
@@ -179,7 +181,6 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    console.log('isNotificationNeedsSetup:', isNotificationNeedsSetup);
     if (isNotificationNeedsSetup) {
       (async () => {
         await updateFcmToken();
@@ -288,7 +289,7 @@ export default function HomeScreen() {
         visible={isNotificationPermissionModalOpen}
         onClose={() => setIsNotificationPermissionModalOpen(false)}
         onYesPress={async () => {
-          await updateOSPermissionStatus();
+          await updateOSPermissionStatus(true);
           setIsNotificationPermissionModalOpen(false);
         }}
         onLaterPress={async () => {
