@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { textStyle } from '@/src/styles/theme';
 import { Text, View } from 'react-native';
 import { NotificationSetting, NotificationType } from '@/api/notifications/notifications';
-import { useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
+import { defaultSettings, useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
 import useUpdateNotificationSettings from '@/hooks/mutations/notifications/useUpdateNotifications';
 
 type NotificationSettingListText = {
@@ -48,50 +48,38 @@ const NOTIFICATION_SETTING_LIST_TEXT: Record<NotificationType | 'all', Notificat
   },
 };
 
-const defaultSettings: NotificationSetting[] = [
-  { notificationType: 'post', enabled: false },
-  { notificationType: 'comment', enabled: false },
-  { notificationType: 'chat', enabled: false },
-  { notificationType: 'follow', enabled: false },
-  { notificationType: 'receive', enabled: false },
-  { notificationType: 'followuserpost', enabled: false },
-  { notificationType: 'newuser', enabled: false },
-];
-
 export default function NotificationSettingPage() {
   const { data, isLoading } = useNotificationSettings();
+  const notificationSettings = data ?? defaultSettings;
   const { mutate } = useUpdateNotificationSettings();
-
-  const [notificationSettingState, setNotificationSettingState] = useState<NotificationSetting[]>(defaultSettings);
   const [isAllEnabled, setIsAllEnabled] = useState<boolean>(false);
 
   /* -------------- state에서 특정 type의 enabled를 찾음 -------------- */
   function findEnabled(type: NotificationType | 'all'): boolean {
-    if (!Array.isArray(notificationSettingState)) return false;
+    if (!Array.isArray(data)) return false;
 
     if (type === 'all') {
       return isAllEnabled;
     }
-    return notificationSettingState.find((s) => s.notificationType === type)!.enabled;
+    return data.find((s) => s.notificationType === type)!.enabled;
   }
 
   /* -------------- 개별 알림 토글 핸들러 콜백 함수 -------------- */
   function handleToggle({ notificationType, enabled }: NotificationSetting) {
     if (!isAllEnabled) return;
 
-    const updatedSettings = notificationSettingState.map((s) =>
+    const updatedSettings = notificationSettings.map((s) =>
       s.notificationType === notificationType ? { ...s, enabled: enabled } : s,
     );
-    setNotificationSettingState(updatedSettings);
-    // mutate(updatedSettings);
+
+    mutate(updatedSettings);
   }
 
   /* -------------- 전체 알림 토글 핸들러 콜백 함수 -------------- */
   const handleAllToggle = (next: boolean) => {
     setIsAllEnabled(next);
-    const updatedSettings = notificationSettingState.map((s) => ({ ...s, enabled: next }));
-    setNotificationSettingState(updatedSettings);
-    // mutate(updatedSettings);
+    const updatedSettings = notificationSettings.map((s) => ({ ...s, enabled: next }));
+    mutate(updatedSettings);
   };
 
   interface NotificationSettingListProps {
@@ -129,11 +117,9 @@ export default function NotificationSettingPage() {
 
   useEffect(() => {
     if (Array.isArray(data)) {
-      console.log('query data:', data);
-      setNotificationSettingState(data);
-      setIsAllEnabled(notificationSettingState.some((s) => s.enabled));
+      setIsAllEnabled(data.some((s) => s.enabled));
     }
-  }, [data, notificationSettingState]);
+  }, [data]);
 
   return (
     <Safe edges={[]}>
