@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import CustomButton from './CustomButton';
 import { Text, Modal } from 'react-native';
-import Icon from './Icon';
+import Icon from './common/Icon';
 
 interface NotificationPermissionModalProps {
   visible: boolean;
@@ -11,7 +11,12 @@ interface NotificationPermissionModalProps {
   onLaterPress: () => void;
 }
 
-const NotificationPermissionModal = ({ visible, onClose, onYesPress }: NotificationPermissionModalProps) => {
+const NotificationPermissionModal = ({
+  visible,
+  onClose,
+  onYesPress,
+  onLaterPress,
+}: NotificationPermissionModalProps) => {
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <ModalBackground>
@@ -25,9 +30,20 @@ const NotificationPermissionModal = ({ visible, onClose, onYesPress }: Notificat
           <ModalContent>
             <Text>{`Enable notifications\nso you won’t miss new messages,\nfollower requests, or community posts.`}</Text>
           </ModalContent>
-          <CustomButton label={`Let's do it`} onPress={onYesPress} />
+          <CustomButton
+            label={`Let's do it`}
+            onPress={() => {
+              onYesPress();
+              onClose();
+            }}
+          />
         </ModalArea>
-        <TextButton onPress={onClose}>
+        <TextButton
+          onPress={() => {
+            onLaterPress();
+            onClose();
+          }}
+        >
           <Text>Maybe later</Text>
         </TextButton>
       </ModalBackground>

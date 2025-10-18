@@ -1,7 +1,10 @@
 import api from '../axiosInstance';
 
+const notificationType = ['post', 'comment', 'chat', 'follow', 'receive', 'followuserpost', 'newuser'] as const;
+
+export type NotificationType = (typeof notificationType)[number];
 export interface NotificationSetting {
-  notificationType: 'post' | 'comment' | 'chat' | 'follow' | 'receive';
+  notificationType: NotificationType;
   enabled: boolean;
 }
 
@@ -20,16 +23,53 @@ export async function postFcmDeviceToken(fcmDeviceToken: string) {
   }
 }
 
-/* ---------- 알림 설정 상태 확인 ----------- */
-export async function getNotificationsSettingStatus() {
+/* ---------- 사용자 알림 설정 조회 ----------- */
+export async function getNotifications(): Promise<NotificationSetting[]> {
   try {
-    const { data } = await api.get(`/api/v1/user/notification/settings-status`);
+    const { data } = await api.get(`/api/v1/user/notification`);
+
+    if (data && data.message === 'success') {
+      console.log('[SUCCESS] 알림 설정 상태 확인 성공:', data);
+      return data.data as NotificationSetting[];
+    } else {
+      console.log('[ERROR] 알림 설정 상태 확인 실패:', data.message);
+      throw new Error(data?.message || '[ERROR] 알림 설정 상태를 불러오지 못했습니다.');
+    }
+  } catch (error) {
+    console.error('[ERROR] 요청 중 에러 발생:', error);
+    throw error;
+  }
+}
+
+/* ---------- 사용자 알림 설정 수정 ----------- */
+export async function putNotifications(notificationSettings: NotificationSetting[]) {
+  try {
+    const { data } = await api.put(`/api/v1/user/notification`, {
+      settings: notificationSettings,
+    });
+
+    if (data) {
+      console.log('[SUCCESS] 알림 상세 설정 변경 완료:', data);
+    } else {
+      throw new Error(data?.message || '알림 상세 설정을 변경하지 못했습니다.');
+    }
+  } catch (error) {
+    console.error('[ERROR] 알림 상세 설정 변경 실패:', error);
+    throw error;
+  }
+}
+
+/* ---------- 알림 설정 상태 확인 ----------- */
+export async function getNotificationsSettingStatus(): Promise<string> {
+  try {
+    const { data } = await api.get(`/api/v1/user/notification`);
 
     if (data && data.message === 'success') {
       console.log('[SUCCESS] 알림 설정 상태 확인 성공:', data);
       return data.data.status;
     } else {
       console.log('[ERROR] 알림 설정 상태 확인 실패:', data.message);
+      throw new Error(data?.message || '[ERROR] 알림 설정 상태를 불러오지 못했습니다.');
     }
   } catch (error) {
     console.error('[ERROR] 요청 중 에러 발생:', error);
@@ -55,29 +95,11 @@ export async function putOSPushAgreement(osPermissionGranted: boolean) {
 }
 
 /* ---------- 알림 상세 설정 초기화 ----------- */
-export async function initNotificationsSettingStatus() {
-  const settings: NotificationSetting[] = [
-    {
-      notificationType: 'post',
-      enabled: true,
-    },
-    {
-      notificationType: 'comment',
-      enabled: true,
-    },
-    {
-      notificationType: 'chat',
-      enabled: true,
-    },
-    {
-      notificationType: 'follow',
-      enabled: true,
-    },
-    {
-      notificationType: 'receive',
-      enabled: true,
-    },
-  ];
+export async function initNotificationsSettingStatus(enabled: boolean) {
+  const settings: NotificationSetting[] = notificationType.map((type) => ({
+    notificationType: type,
+    enabled: enabled,
+  }));
 
   try {
     const { data } = await api.post(`/api/v1/user/notification/init`, { settings: settings });

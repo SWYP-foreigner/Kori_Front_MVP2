@@ -17,8 +17,8 @@ import { Config } from '@/src/lib/config';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { DeviceEventEmitter } from 'react-native';
-import Icon from '@/components/Icon';
-import { useTheme, DefaultTheme } from 'styled-components';
+import Icon from '@/components/common/Icon';
+import { useTheme } from 'styled-components';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),
@@ -42,7 +42,7 @@ const toUrl = (u?: string) => {
 
 export default function MyPageScreen() {
   const qc = useQueryClient();
-  const theme = useTheme() as DefaultTheme;
+  const theme = useTheme();
 
   const { data: me, isLoading } = useMyProfile();
   const deleteAccountMut = useDeleteAccount();
