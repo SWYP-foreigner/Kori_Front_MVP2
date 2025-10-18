@@ -172,7 +172,7 @@ export default function HomeScreen() {
       }
 
       if (needsToInitStatus) {
-        await initNotificationsSettingStatus();
+        await initNotificationsSettingStatus(true);
       }
       setIsNotificationNeedsSetup(false);
     } catch (error) {
@@ -290,11 +290,10 @@ export default function HomeScreen() {
         onClose={() => setIsNotificationPermissionModalOpen(false)}
         onYesPress={async () => {
           await updateOSPermissionStatus(true);
-          setIsNotificationPermissionModalOpen(false);
         }}
         onLaterPress={async () => {
           await putOSPushAgreement(false);
-          setIsNotificationPermissionModalOpen(false);
+          await initNotificationsSettingStatus(false);
         }}
       />
     </Safe>
