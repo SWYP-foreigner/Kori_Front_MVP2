@@ -5,9 +5,11 @@ import Toggle from '@/components/common/Toggle';
 import { useCallback, useEffect, useState } from 'react';
 import { textStyle } from '@/src/styles/theme';
 import { Text, View } from 'react-native';
-import { NotificationSetting, NotificationType } from '@/api/notifications/notifications';
+import { NotificationSetting, NotificationType, putOSPushAgreement } from '@/api/notifications/notifications';
 import { defaultSettings, useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
 import useUpdateNotificationSettings from '@/hooks/mutations/notifications/useUpdateNotifications';
+import { getOSNotificationPermissionStatus } from '@/lib/fcm/getOSPermissionStatus';
+import { showNotificationPermissionAlert } from '@/lib/fcm/showNotificationPermissionAlert';
 
 type NotificationSettingListText = {
   title: string;
@@ -75,7 +77,17 @@ export default function NotificationSettingPage() {
 
   /* -------------- 전체 알림 토글 핸들러 콜백 함수 -------------- */
   const handleAllToggle = useCallback(
-    (next: boolean) => {
+    async (next: boolean) => {
+      const osStatus = await getOSNotificationPermissionStatus();
+      const needsSetupFromOS = osStatus === 'undetermined' || 'denied';
+
+      if (needsSetupFromOS) {
+        const updatedosStatus = await showNotificationPermissionAlert();
+
+        if (updatedosStatus !== 'granted') return;
+        else await putOSPushAgreement(true);
+      }
+
       setIsAllEnabled(next);
       const updatedSettings = notificationSettings.map((s) => ({ ...s, enabled: next }));
       mutate(updatedSettings);
