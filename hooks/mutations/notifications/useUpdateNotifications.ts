@@ -1,11 +1,11 @@
-import { NotificationSetting, putNotificationsSettingStatus } from '@/api/notifications/notifications';
+import { NotificationSetting, putNotifications } from '@/api/notifications/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function useUpdateNotificationSettings() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (notificationSettings: NotificationSetting[]) => putNotificationsSettingStatus(notificationSettings),
+    mutationFn: (notificationSettings: NotificationSetting[]) => putNotifications(notificationSettings),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['notificationSettings'] });
     },

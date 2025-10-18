@@ -1,4 +1,4 @@
-import { getNotificationsSettingStatus, NotificationSetting } from '@/api/notifications/notifications';
+import { getNotifications, NotificationSetting } from '@/api/notifications/notifications';
 import { useQuery } from '@tanstack/react-query';
 
 export const defaultSettings: NotificationSetting[] = [
@@ -14,7 +14,7 @@ export const defaultSettings: NotificationSetting[] = [
 export function useNotificationSettings() {
   return useQuery<NotificationSetting[]>({
     queryKey: ['notificationSettings'],
-    queryFn: getNotificationsSettingStatus,
+    queryFn: getNotifications,
     placeholderData: defaultSettings,
     staleTime: 1000 * 60 * 5,
   });
