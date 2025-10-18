@@ -1,5 +1,4 @@
-import { Alert, AppState, Linking, Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import { Alert, Linking, Platform } from 'react-native';
 
 export async function showNotificationPermissionAlert() {
   return new Promise((resolve) => {
@@ -11,14 +10,6 @@ export async function showNotificationPermissionAlert() {
         {
           text: 'Go to Settings',
           onPress: async () => {
-            const subscriptAppState = AppState.addEventListener('change', async (state) => {
-              if (state === 'active') {
-                const { status } = await Notifications.getPermissionsAsync();
-                subscriptAppState.remove();
-                resolve(status);
-              }
-            });
-
             try {
               if (Platform.OS === 'ios') {
                 await Linking.openURL('app-settings:');

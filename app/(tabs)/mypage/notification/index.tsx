@@ -8,8 +8,8 @@ import { Text, View } from 'react-native';
 import { NotificationSetting, NotificationType, putOSPushAgreement } from '@/api/notifications/notifications';
 import { defaultSettings, useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
 import useUpdateNotificationSettings from '@/hooks/mutations/notifications/useUpdateNotifications';
-import { getOSNotificationPermissionStatus } from '@/lib/fcm/getOSPermissionStatus';
 import { showNotificationPermissionAlert } from '@/lib/fcm/showNotificationPermissionAlert';
+import * as Notifications from 'expo-notifications';
 
 type NotificationSettingListText = {
   title: string;
@@ -78,8 +78,8 @@ export default function NotificationSettingPage() {
   /* -------------- 전체 알림 토글 핸들러 콜백 함수 -------------- */
   const handleAllToggle = useCallback(
     async (next: boolean) => {
-      const osStatus = await getOSNotificationPermissionStatus();
-      const needsSetupFromOS = osStatus === 'undetermined' || 'denied';
+      const { status } = await Notifications.getPermissionsAsync();
+      const needsSetupFromOS = status === 'undetermined' || status === 'denied';
 
       if (needsSetupFromOS) {
         const updatedosStatus = await showNotificationPermissionAlert();
