@@ -95,37 +95,11 @@ export async function putOSPushAgreement(osPermissionGranted: boolean) {
 }
 
 /* ---------- 알림 상세 설정 초기화 ----------- */
-export async function initNotificationsSettingStatus() {
-  const settings: NotificationSetting[] = [
-    {
-      notificationType: 'post',
-      enabled: true,
-    },
-    {
-      notificationType: 'comment',
-      enabled: true,
-    },
-    {
-      notificationType: 'chat',
-      enabled: true,
-    },
-    {
-      notificationType: 'follow',
-      enabled: true,
-    },
-    {
-      notificationType: 'receive',
-      enabled: true,
-    },
-    {
-      notificationType: 'followuserpost',
-      enabled: true,
-    },
-    {
-      notificationType: 'newuser',
-      enabled: true,
-    },
-  ];
+export async function initNotificationsSettingStatus(enabled: boolean) {
+  const settings: NotificationSetting[] = notificationType.map((type) => ({
+    notificationType: type,
+    enabled: enabled,
+  }));
 
   try {
     const { data } = await api.post(`/api/v1/user/notification/init`, { settings: settings });
