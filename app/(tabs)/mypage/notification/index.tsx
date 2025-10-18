@@ -28,23 +28,18 @@ const NOTIFICATION_SETTING_LIST_TEXT: Record<NotificationType | 'all', Notificat
   },
   follow: {
     title: 'New Follower Request',
-    subtitle: 'Enable all push notifications',
   },
   followuserpost: {
-    title: 'All notifications',
-    subtitle: 'Enable all push notifications',
+    title: 'Post notifications from followed users',
   },
   post: {
-    title: 'All notifications',
-    subtitle: 'Enable all push notifications',
+    title: 'Comment on Your Post',
   },
   comment: {
-    title: 'All notifications',
-    subtitle: 'Enable all push notifications',
+    title: 'Reply to your comment',
   },
   chat: {
-    title: 'All notifications',
-    subtitle: 'Enable all push notifications',
+    title: 'Allow Chat Notifications',
   },
 };
 
