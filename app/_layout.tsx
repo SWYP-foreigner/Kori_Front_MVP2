@@ -22,7 +22,7 @@ import axios from 'axios';
 import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import messaging from '@react-native-firebase/messaging';
-import { messageHandler } from '@/lib/fcm/messageHandler';
+import { handleNotificationPress, messageHandler, notificationRouterReplace } from '@/lib/fcm/messageHandler';
 import { ThemeProvider } from 'styled-components/native';
 import { theme } from '@/src/styles/theme';
 
@@ -50,7 +50,11 @@ export default function RootLayout() {
   useEffect(() => {
     /* ------------ foreground 메시지 수신 메서드 초기화 ------------ */
     const unsubscribeOnMessage = messaging().onMessage(messageHandler);
-    return unsubscribeOnMessage;
+    const unsubscribeNotifee = handleNotificationPress();
+    return () => {
+      unsubscribeOnMessage();
+      unsubscribeNotifee();
+    };
   }, []);
 
   const router = useRouter();

@@ -17,7 +17,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import {
@@ -134,12 +134,16 @@ const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => <Style
 EditInput.displayName = 'EditInput';
 
 export default function PostDetailScreen() {
-  const { id, focusCommentId, intent } = useLocalSearchParams<{
+  const navigation = useNavigation();
+  const { id, focusCommentId, intent, commentId } = useLocalSearchParams<{
     id: string;
     focusCommentId?: string;
     intent?: string;
+    commentId?: string;
   }>();
   const postId = Number(id);
+
+  console.log(id, commentId);
 
   const {
     bookmarked: bmMap,
