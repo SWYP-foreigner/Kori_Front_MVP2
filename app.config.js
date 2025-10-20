@@ -13,7 +13,7 @@ export default {
     newArchEnabled: true,
 
     splash: {
-      image: './assets/images/character_02.png',
+      image: './assets/images/character2.png',
       resizeMode: 'contain',
       backgroundColor: '#0f0f10',
     },
@@ -41,7 +41,7 @@ export default {
       usesCleartextTraffic: false,
       softwareKeyboardLayoutMode: 'resize',
       edgeToEdgeEnabled: true,
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
+      //googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
     },
 
     web: {

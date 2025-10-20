@@ -20,6 +20,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
+import ProfileModal from '@/components/ProfileModal';
+
 import {
   Alert,
   Animated,
@@ -154,6 +156,24 @@ export default function PostDetailScreen() {
     hydrateLikeFromServer,
   } = usePostUI();
 
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  const fetchUserProfile = async (userId: number) => {
+    try {
+      setIsLoadingProfile(true);
+      const res = await api.get(`/api/v1/member/${userId}/info`);
+      setSelectedUser(res.data);
+      setIsProfileVisible(true);
+    } catch (err) {
+      console.error('프로필 불러오기 실패', err);
+      Alert.alert('Error', 'Failed to load user profile');
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
   const postBookmarked = bmMap[postId] ?? false;
 
   const { data, isLoading, isError } = usePostDetail(Number.isFinite(postId) ? postId : undefined);
@@ -203,7 +223,7 @@ export default function PostDetailScreen() {
   const [imgIndex, setImgIndex] = useState(0);
   const heightAnim = useRef(new Animated.Value(IMG_W / DEFAULT_RATIO)).current;
 
-  //댓글 바로 숨기기 (임시로 )
+  //댓글 바로 숨기기 (임시로)
   const [hiddenCommentIds, setHiddenCommentIds] = useState<Set<number>>(new Set());
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -281,7 +301,7 @@ export default function PostDetailScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportCommentId, setReportCommentId] = useState<number | null>(null); // ✅ 추가
+  const [reportCommentId, setReportCommentId] = useState<number | null>(null);
   type ReportTarget = 'post' | 'user' | 'comment';
   const [reportTarget, setReportTarget] = useState<ReportTarget>('post');
 
@@ -731,7 +751,6 @@ export default function PostDetailScreen() {
         <HeaderTitle>Post</HeaderTitle>
         <RightPlaceholder />
       </Header>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -747,6 +766,7 @@ export default function PostDetailScreen() {
               isFirst={index === 0}
               onPressLike={() => toggleCommentLike(item)}
               onPressMore={(c) => openCommentSheet(c)}
+              onPressProfile={(userId) => fetchUserProfile(userId)}
             />
           )}
           keyboardShouldPersistTaps="handled"
@@ -890,7 +910,6 @@ export default function PostDetailScreen() {
           </SendBtn>
         </InputBar>
       </KeyboardAvoidingView>
-
       <Modal transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)} animationType="none">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
@@ -981,7 +1000,6 @@ export default function PostDetailScreen() {
           </Animated.View>
         </View>
       </Modal>
-
       <Modal
         visible={reportOpen}
         transparent
@@ -1038,7 +1056,6 @@ export default function PostDetailScreen() {
           </Dialog>
         </View>
       </Modal>
-
       <Modal
         visible={editVisible}
         transparent
@@ -1086,6 +1103,17 @@ export default function PostDetailScreen() {
           </EditBox>
         </View>
       </Modal>
+      <ProfileModal
+        visible={isProfileVisible}
+        userData={selectedUser}
+        onClose={() => setIsProfileVisible(false)}
+        onFollow={(id) => console.log('follow', id)}
+        onUnfollow={(id) => console.log('unfollow', id)}
+        onChat={() => {
+          setIsProfileVisible(false);
+          console.log('chat start with user:', selectedUser?.userId);
+        }}
+      />{' '}
     </Safe>
   );
 }

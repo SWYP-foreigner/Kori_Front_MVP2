@@ -17,13 +17,15 @@ export type Comment = {
   isChild?: boolean;
   hotScore?: number;
   anonymous?: boolean;
+  userId?: number;
 };
 
 type Props = {
   data: Comment | any;
   onPressLike?: () => void;
   isFirst?: boolean;
-  onPressMore?: (c: Comment) => void; // ✅ 더보기 콜백
+  onPressMore?: (c: Comment) => void;
+  onPressProfile?: (userId: number) => void;
 };
 
 function isAnon(row: any): boolean {
@@ -76,6 +78,12 @@ function resolveLikedByMe(row: any): boolean {
   return Boolean(row?.likedByMe ?? row?.isLiked ?? row?.isLike ?? false);
 }
 
+function resolveUserId(row: any): number | undefined {
+  const id = row?.userId ?? row?.authorId ?? row?.memberId ?? row?.writerId ?? row?.ownerId;
+  const num = Number(id);
+  return Number.isFinite(num) && num > 0 ? num : undefined;
+}
+
 function formatDate(rawIn: any): string {
   const raw = String(rawIn ?? '').trim();
   if (!raw) return '';
@@ -93,7 +101,7 @@ function formatDate(rawIn: any): string {
   return raw;
 }
 
-export default function CommentItem({ data, onPressLike, isFirst, onPressMore }: Props) {
+export default function CommentItem({ data, onPressLike, isFirst, onPressMore, onPressProfile }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
 
@@ -105,6 +113,15 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
   const bodyText = resolveBody(data);
   const likeCount = resolveLikes(data);
   const likedByMe = resolveLikedByMe(data);
+  const userId = resolveUserId(data);
+
+  // 프로필 클릭 핸들러
+  const handlePressProfile = () => {
+    if (anon) return; // 익명이면 클릭 무시
+    if (userId && onPressProfile) {
+      onPressProfile(userId);
+    }
+  };
 
   return (
     <Wrap $child={child} $first={isFirst}>
@@ -124,13 +141,26 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
             <Feather name="corner-down-right" size={18} color="#9aa0a6" />
           </ReplyIcon>
         )}
-        <Avatar source={avatarSrc} />
+        <AvatarButton
+          onPress={handlePressProfile}
+          disabled={anon || !userId || !onPressProfile}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="View profile"
+        >
+          <Avatar source={avatarSrc} />
+        </AvatarButton>
+
         <Meta>
-          <Author>
-            {anon ? <AnonBadge>익명</AnonBadge> : null}
-            {authorLabel}
-          </Author>
-          <Sub>{dateLabel}</Sub>
+          <AuthorRow>
+            {anon && (
+              <AnonBadgeWrapper>
+                <AnonBadgeText>익명</AnonBadgeText>
+              </AnonBadgeWrapper>
+            )}
+            <Author>{authorLabel}</Author>
+          </AuthorRow>
+          <Sub>{dateLabel || '—'}</Sub>
         </Meta>
       </Row>
 
@@ -156,69 +186,84 @@ const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
+
 const Row = styled.View`
   flex-direction: row;
   align-items: center;
 `;
+
 const ReplyIcon = styled.View`
   width: 22px;
   align-items: center;
   justify-content: center;
   margin-right: 6px;
 `;
+
 const Avatar = styled.Image`
   width: 28px;
   height: 28px;
   border-radius: 14px;
   background: #2a2b2c;
 `;
+
 const Meta = styled.View`
   margin-left: 10px;
   flex: 1;
 `;
+
+const AuthorRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
 const Author = styled.Text`
   color: #fff;
   font-size: 13px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const Sub = styled.Text`
   color: #9aa0a6;
   font-size: 11px;
   margin-top: 2px;
 `;
-const More = styled.Text`
-  color: #9aa0a6;
-  font-size: 18px;
-  padding: 4px 6px;
-`;
+
 const Body = styled.Text`
   color: #d9dcdf;
   font-size: 13px;
   line-height: 18px;
   margin-top: 6px;
 `;
+
 const Footer = styled.View`
   margin-top: 6px;
   flex-direction: row;
   align-items: center;
 `;
+
 const Act = styled.Pressable`
   flex-direction: row;
   align-items: center;
   margin-right: 16px;
 `;
+
 const Count = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
   margin-left: 6px;
   font-size: 12px;
 `;
-const AnonBadge = styled.Text`
-  color: #000;
+
+const AnonBadgeWrapper = styled.View`
   background: #30f59b;
   border-radius: 4px;
   padding: 1px 6px;
   margin-right: 6px;
+`;
+
+const AnonBadgeText = styled.Text`
+  color: #000;
   font-size: 10px;
+  font-family: 'PlusJakartaSans_700Bold';
 `;
 
 const MoreBtn = styled.Pressable`
@@ -227,4 +272,8 @@ const MoreBtn = styled.Pressable`
   right: 10px;
   padding: 6px;
   z-index: 10;
+`;
+
+const AvatarButton = styled.Pressable`
+  border-radius: 14px;
 `;
