@@ -65,6 +65,7 @@ export default tseslint.config(
       'no-empty': 'warn',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
 
+      'react-native/no-raw-text': 'off',
       'react-native/no-inline-styles': 'warn',
       'react-native/no-unused-styles': 'warn',
       'react-native/split-platform-components': 'off',
