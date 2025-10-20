@@ -30,6 +30,8 @@ import {
 import { PageIndicator } from 'react-native-page-indicator';
 import styled from 'styled-components/native';
 import api from '@/api/axiosInstance';
+import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
+import { patchLocation } from '@/api/member/location';
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -94,7 +96,10 @@ const LoginScreen = () => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const animatedCurrent = useRef(Animated.divide(scrollX, width)).current;
 
-  const goSetProfilePage = () => {
+  const confirmAndGoSetProfilePage = async () => {
+    const { latitude, longitude } = await requestLocationPermission();
+    await patchLocation(latitude, longitude);
+
     setModalVisible(false);
     if (isAppleLogin) {
       setIsAppleLogin(false);
@@ -344,7 +349,7 @@ const LoginScreen = () => {
                   <MaterialIcons name="navigate-next" size={35} color="#848687" />
                 </TouchableOpacity>
               </CheckBoxContainer>
-              <ConfirmButton disabled={!allCheck} allCheck={allCheck} onPress={goSetProfilePage}>
+              <ConfirmButton disabled={!allCheck} allCheck={allCheck} onPress={confirmAndGoSetProfilePage}>
                 <ConfirmText>Confirm</ConfirmText>
               </ConfirmButton>
             </BottomSheetContent>

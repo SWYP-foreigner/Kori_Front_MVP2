@@ -10,6 +10,11 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, StatusBar, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styled from 'styled-components/native';
+import api from '@/api/axiosInstance';
+import * as SecureStore from 'expo-secure-store';
+import { ACCESS_KEY, REFRESH_KEY } from '@/src/lib/auth/session';
+import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
+import { patchLocation } from '@/api/member/location';
 
 enum isDuplicatedEmail {
   Init = 'Init',
@@ -38,6 +43,7 @@ const CreateAccountScreen = () => {
   const [check1, setCheck1] = useState(false);
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
+  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
 
   const [checks, setChecks] = useState({
     isnull: true,
@@ -133,23 +139,28 @@ const CreateAccountScreen = () => {
   };
 
   const JoinMember = async () => {
+    const { latitude, longitude } = await requestLocationPermission();
+
     try {
-      const res = await axios.post(`${Config.SERVER_URL}/api/v1/member/signup`, {
-        email: email,
-        password: password,
+      const response = await axios.post(`${Config.SERVER_URL}/api/v1/member/signup`, {
+        email,
+        password,
         agreedToTerms: true,
       });
-
-      // 서버에서 성공 응답 코드 확인 (예: status 200)
-      if (res.status === 200) {
-        router.replace('./SignUpDoneScreen');
-      } else {
-        console.error('회원가입 실패', res.data);
+      if (response.status !== 200) {
         Alert.alert('Signup Failed', 'Please try again.');
+        return;
       }
+
+      const { accessToken, refreshToken } = response.data;
+      await SecureStore.setItemAsync(ACCESS_KEY, accessToken);
+      await SecureStore.setItemAsync(REFRESH_KEY, refreshToken);
+
+      await patchLocation(latitude, longitude);
+      router.replace('./SignUpDoneScreen');
     } catch (err) {
       console.error('회원가입 중 에러 발생', err);
-      // 에러 처리
+      Alert.alert('Error', '회원가입 중 문제가 발생했습니다.');
     }
   };
 
