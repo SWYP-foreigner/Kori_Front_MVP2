@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 
 const SignUpDoneScreen = () => {
   const router = useRouter();
-  const goLoginScreen = () => {
+  const goMakeProfile = () => {
     router.dismissAll(); // 네비게이션 스택 다 비움
-    router.replace('./GeneralLoginScreen');
+    router.replace('../makeprofile/NameStepScreen');
   };
 
   return (
@@ -16,7 +16,7 @@ const SignUpDoneScreen = () => {
       <Container source={require('@/assets/images/SignUpDone.png')} resizeMode="cover">
         <TitleText>Sign up Done!</TitleText>
         <SubTitleText>Now,you can use Kori</SubTitleText>
-        <Button onPress={goLoginScreen}>
+        <Button onPress={goMakeProfile}>
           <ButtonText>Start</ButtonText>
         </Button>
       </Container>
