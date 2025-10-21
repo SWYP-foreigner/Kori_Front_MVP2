@@ -41,7 +41,7 @@ export default {
       usesCleartextTraffic: false,
       softwareKeyboardLayoutMode: 'resize',
       edgeToEdgeEnabled: true,
-      //googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON || './google-services.json',
     },
 
     web: {
