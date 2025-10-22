@@ -777,7 +777,9 @@ export default function PostDetailScreen() {
             <>
               <Card>
                 <Row>
-                  <Avatar source={avatarSrc} />
+                  <Pressable onPress={() => !isAnonymous && post?.memberId && fetchUserProfile(post.memberId)}>
+                    <Avatar source={avatarSrc} />
+                  </Pressable>
                   <Meta>
                     <Author>{author}</Author>
                     <MetaRow>
