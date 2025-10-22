@@ -142,7 +142,8 @@ export default function FriendCard(props: Props) {
 
           <MetaLine>
             <MetaDim>Birth </MetaDim>
-            <MetaStrong>{birth ?? '-'}</MetaStrong>
+            <MetaStrong>{birth ? String(birth) : '-'}</MetaStrong>
+
             <GenderIconSpacer>
               <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
             </GenderIconSpacer>
