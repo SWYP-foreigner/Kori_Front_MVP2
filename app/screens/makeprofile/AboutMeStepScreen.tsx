@@ -14,7 +14,8 @@ export default function NameStepScreen() {
   const maxLength = 70;
 
   const isOverLimit = AboutMe.length == 70;
-  const canProceed = AboutMe.trim().length > 0 && !isOverLimit;
+  const minLength = 1;
+  const canProceed = AboutMe.trim().length >= minLength && !isOverLimit;
 
   const handleSkip = () => {
     router.push('./BirthStepScreen');

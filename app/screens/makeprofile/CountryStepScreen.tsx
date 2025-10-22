@@ -18,14 +18,22 @@ import { COUNTRIES } from '@/src/utils/countries';
 export default function CountryStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [search, setSearch] = useState('');
   const { profileData, updateProfile } = useProfile();
 
   const canProceed = selectedCountry !== '';
   const router = useRouter();
 
+  // 검색 기능 추가
+  const filteredCountries = useMemo(() => {
+    if (!search.trim()) return COUNTRIES;
+    return COUNTRIES.filter((country) => country.toLowerCase().includes(search.toLowerCase()));
+  }, [search]);
+
   const handleCountrySelect = (country) => {
     setSelectedCountry(country);
     setIsModalVisible(false);
+    setSearch(''); // 모달 닫을 때 검색창 초기화
   };
 
   const handleSkip = () => {
@@ -33,12 +41,10 @@ export default function CountryStepScreen({ navigation }) {
   };
 
   const handleNext = () => {
-    updateProfile('country', selectedCountry);
-    router.push('./LangStepScreen');
-    // router.push({
-    //   pathname: './NextStepScreen',
-    //   params: { selectedCountry },
-    // });
+    if (canProceed) {
+      updateProfile('country', selectedCountry);
+      router.push('./LangStepScreen');
+    }
   };
 
   const renderCountryItem = ({ item }) => (
@@ -70,7 +76,7 @@ export default function CountryStepScreen({ navigation }) {
         </Form>
 
         <Spacer />
-        <NextButton onPress={handleNext} disabled={!canProceed} canProceed={canProceed}>
+        <NextButton onPress={handleNext} disabled={!canProceed}>
           <ButtonText>Next</ButtonText>
         </NextButton>
 
@@ -80,17 +86,35 @@ export default function CountryStepScreen({ navigation }) {
       {/* Country Selection Bottom Sheet */}
       <Modal visible={isModalVisible} transparent animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
         <ModalOverlay onPress={() => setIsModalVisible(false)} activeOpacity={1}>
-          <BottomSheetContent>
+          <BottomSheetContent onStartShouldSetResponder={() => true}>
             <BottomSheetHeader>
               <BottomSheetHandle />
+              <SearchContainer>
+                <AntDesign name="search1" size={16} color="#949899" />
+                <SearchInput
+                  placeholder="Search your country"
+                  placeholderTextColor="#616262"
+                  value={search}
+                  onChangeText={setSearch}
+                />
+                {search.length > 0 && (
+                  <ClearButton onPress={() => setSearch('')}>
+                    <AntDesign name="close" size={16} color="#949899" />
+                  </ClearButton>
+                )}
+              </SearchContainer>
             </BottomSheetHeader>
-            <FlatList
-              data={COUNTRIES}
-              renderItem={renderCountryItem}
-              keyExtractor={(item, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 400 }}
-            />
+            {filteredCountries.length > 0 ? (
+              <FlatList
+                data={filteredCountries}
+                renderItem={renderCountryItem}
+                keyExtractor={(item, index) => `${item}-${index}`}
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 400 }}
+              />
+            ) : (
+              <NoResultText>No countries found</NoResultText>
+            )}
           </BottomSheetContent>
         </ModalOverlay>
       </Modal>
@@ -171,7 +195,7 @@ const BottomSheetContent = styled.View`
   background-color: #353637;
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
-  max-height: 60%;
+  max-height: 70%;
   padding-bottom: 40px;
 `;
 
@@ -188,21 +212,47 @@ const BottomSheetHandle = styled.View`
   margin-bottom: 16px;
 `;
 
-const BottomSheetTitle = styled.Text`
+const SearchContainer = styled.View`
+  width: 95%;
+  height: 44px;
+  border-radius: 8px;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px 12px;
+  background-color: #2a2b2d;
+  border-width: 1px;
+  border-color: #4a4b4c;
+`;
+
+const SearchInput = styled.TextInput`
+  flex: 1;
+  margin-left: 8px;
   color: #ededed;
-  font-size: 18px;
-  font-weight: 600;
-  font-family: 'PlusJakartaSans-SemiBold';
+  font-size: 14px;
+  font-family: 'PlusJakartaSans-Regular';
+`;
+
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px;
+`;
+
+const NoResultText = styled.Text`
+  text-align: center;
+  color: #949899;
+  margin-top: 20px;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
 `;
 
 const CountryItem = styled.TouchableOpacity`
-  padding: 20px;
+  padding: 16px 20px;
   border-bottom-width: 0.5px;
   border-bottom-color: #4a4b4c;
-  margin: 0 20px;
   flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   background-color: ${(props) => (props.selected ? '#4A4B4C' : 'transparent')};
-  border-radius: ${(props) => (props.selected ? 12 : 0)}px;
+  border-radius: ${(props) => (props.selected ? 8 : 0)}px;
 `;
 
 const CountryText = styled.Text`
@@ -223,7 +273,7 @@ const NextButton = styled.TouchableOpacity`
   justify-content: center;
   background-color: #02f59b;
   margin-bottom: 8px;
-  opacity: ${(props) => (props.canProceed ? 1 : 0.4)};
+  opacity: ${(props) => (props.disabled ? 0.5 : 1)};
 `;
 
 const ButtonText = styled.Text`

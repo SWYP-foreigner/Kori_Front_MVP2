@@ -41,6 +41,7 @@ export default function TagStepScreen() {
   const maxSelections = 5;
   const [selectedTags, setSelectedTags] = useState([]);
   const { profileData, updateProfile } = useProfile();
+  const canProceed = selectedTags.length > 0;
 
   const selectTag = (tag) => {
     if (selectedTags.includes(tag)) {
@@ -121,7 +122,7 @@ export default function TagStepScreen() {
         </ScrollableContainer>
 
         <ButtonSection>
-          <NextButton onPress={handleNext} disabled={selectedTags.length === 0}>
+          <NextButton onPress={handleNext} disabled={!canProceed}>
             <ButtonText>Next</ButtonText>
           </NextButton>
         </ButtonSection>

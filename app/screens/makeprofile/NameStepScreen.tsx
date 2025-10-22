@@ -17,8 +17,7 @@ export default function NameStepScreen() {
   const { profileData, updateProfile } = useProfile();
 
   // Android일 때만 이름이 필수 처리
-  const isAndroid = Platform.OS === 'android';
-  const canProceed = isAndroid ? firstName && lastName : true;
+  const canProceed = firstName.trim().length > 0 && lastName.trim().length > 0;
 
   const handleSkip = () => {
     router.push('./GenderStepScreen');
