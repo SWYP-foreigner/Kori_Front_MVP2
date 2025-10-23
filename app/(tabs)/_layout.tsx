@@ -11,7 +11,6 @@ import {
 } from '@/api/notifications/notifications';
 import NotificationPermissionModal from '@/components/NotificationPermissionModal';
 import queryClient from '@/api/queryClient';
-import { notificationRouterReplace } from '@/lib/fcm/messageHandler';
 
 const { height: screenHeight } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = screenHeight * 0.117; // 화면 높이의 15%
@@ -93,27 +92,6 @@ export default function TabLayout() {
     handleAppStateChange('active');
 
     return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    console.log('tlqkf련아', isNotificationPermissionModalOpen);
-  }, [isNotificationPermissionModalOpen]);
-
-  /* 4. 백그라운드, quit 상태에서 알림 클릭 시 관련 라우터로 이동 */
-  useEffect(() => {
-    const handleNotificationNavigation = async (data: any) => {
-      notificationRouterReplace(data);
-    };
-
-    messaging()
-      .getInitialNotification()
-      .then((message) => message && handleNotificationNavigation(message?.data))
-      .catch((error) => console.error('[ERROR] 앱 종료 시점에 알림 클릭 시 이동 실패:', error));
-
-    const unsubscribe = messaging().onNotificationOpenedApp(
-      (message) => message && handleNotificationNavigation(message?.data),
-    );
-    return unsubscribe;
   }, []);
 
   return (

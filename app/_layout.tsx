@@ -10,21 +10,23 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
 import { ProfileProvider } from './contexts/ProfileContext';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import axios from 'axios';
 import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import messaging from '@react-native-firebase/messaging';
-import { handleNotificationPress, messageHandler, notificationRouterReplace } from '@/lib/fcm/messageHandler';
+import { handleNotificationPress, messageHandler } from '@/lib/fcm/messageHandler';
 import { ThemeProvider } from 'styled-components/native';
 import { theme } from '@/src/styles/theme';
+import * as Linking from 'expo-linking';
+import { getNotificationDeeplink } from '@/src/utils/getNotificationDeeplink';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -47,19 +49,11 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
   });
 
-  useEffect(() => {
-    /* ------------ foreground 메시지 수신 메서드 초기화 ------------ */
-    const unsubscribeOnMessage = messaging().onMessage(messageHandler);
-    const unsubscribeNotifee = handleNotificationPress();
-    return () => {
-      unsubscribeOnMessage();
-      unsubscribeNotifee();
-    };
-  }, []);
-
+  const pathname = usePathname();
   const router = useRouter();
   const [checkingToken, setCheckingToken] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const currentPushMessageId = useRef<string | null>(null);
 
   const checkAndRefreshToken = useCallback(async () => {
     try {
@@ -72,6 +66,7 @@ export default function RootLayout() {
       const res = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URL}/api/v1/member/refresh`, { refreshToken });
       const { accessToken, refreshToken: newRefreshToken, userId } = res.data.data;
 
+      console.log(refreshToken);
       await SecureStore.setItemAsync('jwt', accessToken);
       await SecureStore.setItemAsync('refresh', newRefreshToken);
       await SecureStore.setItemAsync('MyuserId', userId.toString());
@@ -89,6 +84,31 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) checkAndRefreshToken();
   }, [loaded]);
+
+  /* ------------ foreground 메시지 수신 메서드 초기화 ------------ */
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const unsubscribeOnMessage = messaging().onMessage(messageHandler);
+    const unsubscribeNotifee = handleNotificationPress(pathname);
+    return () => {
+      unsubscribeOnMessage();
+      unsubscribeNotifee();
+    };
+  }, []);
+
+  /* 백그라운드, quit 상태에서 알림 클릭 시 관련 라우터로 이동 */
+  useEffect(() => {
+    messaging()
+      .getInitialNotification()
+      .then((message) => message && Linking.openURL(getNotificationDeeplink(message?.data!) ?? '/'))
+      .catch((error) => console.error('[ERROR] 앱 종료 시점에 알림 클릭 시 이동 실패:', error));
+
+    const unsubscribe = messaging().onNotificationOpenedApp(
+      (message) => message && Linking.openURL(getNotificationDeeplink(message?.data!) ?? '/'),
+    );
+    return unsubscribe;
+  }, []);
 
   if (!loaded || checkingToken) return null;
 
