@@ -14,6 +14,12 @@
                 "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "86972168076-m7l8vrcmav3v3pofhu6ssheq39s9kvht.apps.googleusercontent.com",
                 "GOOGLE_SERVICES_JSON": "GOOGLE_SERVICES_JSON",
                 "GOOGLE_SERVICE_INFO_PLIST": "GOOGLE_SERVICE_INFO_PLIST"
+            },
+            "ios": {
+                "image": "latest"
+            },
+            "android": {
+                "image": "latest"
             }
         },
         "preview": {
