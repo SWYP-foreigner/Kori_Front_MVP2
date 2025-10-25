@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import { useRouter } from 'expo-router';
 import SkipHeader from './components/SkipHeader';
 

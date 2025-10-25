@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import axios from 'axios';
 import { Platform } from 'react-native';
 import SkipHeader from './components/SkipHeader';

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 import { COUNTRIES } from '@/src/utils/countries';
 

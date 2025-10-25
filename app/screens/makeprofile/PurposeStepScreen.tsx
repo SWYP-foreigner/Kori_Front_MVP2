@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5, AntDesign, Feather } from '@expo/vector-icons';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 
 export default function PurposeStepScreen({ navigation }) {
