@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, View, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
+import styled from 'styled-components/native';
 import FriendCard from '@/components/FriendCard';
 
 type ProfileModalProps = {
@@ -30,31 +31,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, userData, onClose,
   };
 
   return (
-    <TouchableOpacity
-      style={{
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-      }}
-      onPress={onClose}
-      activeOpacity={1}
-    >
-      <View
-        style={{
-          width: '90%',
-          backgroundColor: '#fff',
-          borderRadius: 20,
-          padding: 10,
-          maxHeight: '80%',
-        }}
-        onStartShouldSetResponder={() => true}
-      >
+    <Backdrop onPress={onClose} activeOpacity={1}>
+      <ModalContainer onStartShouldSetResponder={() => true}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <FriendCard
             {...mapApiDataToFriendCardProps(userData)}
@@ -64,9 +42,29 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, userData, onClose,
             onChat={onChat || (() => console.log('chat start'))}
           />
         </ScrollView>
-      </View>
-    </TouchableOpacity>
+      </ModalContainer>
+    </Backdrop>
   );
 };
 
 export default ProfileModal;
+
+const Backdrop = styled.TouchableOpacity`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContainer = styled.View`
+  width: 90%;
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 10px;
+  max-height: 80%;
+`;

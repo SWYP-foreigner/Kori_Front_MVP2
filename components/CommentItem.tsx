@@ -1,14 +1,19 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import styled from 'styled-components/native';
+import ProfileModal from './ProfileModal';
+import api from '@/api/axiosInstance';
+import { Alert } from 'react-native';
+import { formatShortDate } from '@/src/utils/dateUtils';
 
 const DEFAULT_AV = require('@/assets/images/character1.png');
 
 export type Comment = {
   id: string | number;
   author?: string;
+  authorId?: number;
   avatar?: ImageSourcePropType;
   createdAt: string;
   body: string;
@@ -84,42 +89,40 @@ function resolveUserId(row: any): number | undefined {
   return Number.isFinite(num) && num > 0 ? num : undefined;
 }
 
-function formatDate(rawIn: any): string {
-  const raw = String(rawIn ?? '').trim();
-  if (!raw) return '';
-  if (/^\d{4}-\d{2}-\d{2}(?!T)/.test(raw)) return raw.slice(5, 10).replace('-', '/');
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw.slice(5, 10).replace('-', '/');
-  const n = Number(raw);
-  if (Number.isFinite(n)) {
-    const d = new Date(n > 1e12 ? n : n * 1000);
-    if (!isNaN(d.getTime())) {
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${mm}/${dd}`;
-    }
-  }
-  return raw;
-}
-
 export default function CommentItem({ data, onPressLike, isFirst, onPressMore, onPressProfile }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
-
   const authorLabel = resolveAuthor(data);
   const avatarResolved = resolveAvatar(data);
   const avatarSrc = anon ? DEFAULT_AV : avatarResolved || DEFAULT_AV;
-  const dateLabel = useMemo(() => formatDate(data?.createdAt), [data?.createdAt]);
-
+  const dateLabel = useMemo(() => formatShortDate(data?.createdAt), [data?.createdAt]);
   const bodyText = resolveBody(data);
   const likeCount = resolveLikes(data);
   const likedByMe = resolveLikedByMe(data);
   const userId = resolveUserId(data);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
-  // 프로필 클릭 핸들러
-  const handlePressProfile = () => {
-    if (anon) return; // 익명이면 클릭 무시
-    if (userId && onPressProfile) {
+  const handlePressProfile = async () => {
+    if (anon || !userId) {
+      return;
+    }
+    if (onPressProfile) {
       onPressProfile(userId);
+      return;
+    }
+
+    try {
+      setIsLoadingProfile(true);
+      const res = await api.get(`/api/v1/member/${userId}/info`);
+      setSelectedUser(res.data);
+      setIsProfileVisible(true);
+    } catch (err) {
+      console.error('[Profile] fetch error:', err);
+      Alert.alert('Error', 'try again');
+    } finally {
+      setIsLoadingProfile(false);
     }
   };
 
@@ -143,7 +146,6 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore, o
         )}
         <AvatarButton
           onPress={handlePressProfile}
-          disabled={anon || !userId || !onPressProfile}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="View profile"
@@ -172,6 +174,8 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore, o
           <Count $active={likedByMe}>{likeCount}</Count>
         </Act>
       </Footer>
+
+      <ProfileModal visible={isProfileVisible} onClose={() => setIsProfileVisible(false)} userData={selectedUser} />
     </Wrap>
   );
 }

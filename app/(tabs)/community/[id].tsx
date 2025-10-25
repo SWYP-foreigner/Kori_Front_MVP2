@@ -17,11 +17,13 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
+import styled from 'styled-components/native';
 import ProfileModal from '@/components/ProfileModal';
-
+import { loadAspectRatios } from '@/src/utils/image';
+import { formatCreatedYMD } from '@/src/utils/dateUtils';
 import {
   Alert,
   Animated,
@@ -39,21 +41,6 @@ import {
   View,
   ViewToken,
 } from 'react-native';
-import styled from 'styled-components/native';
-
-async function loadAspectRatios(urls: string[], fallback = 16 / 9): Promise<number[]> {
-  const jobs = urls.map(
-    (uri) =>
-      new Promise<number>((resolve) => {
-        RNImage.getSize(
-          uri,
-          (w, h) => resolve(w > 0 && h > 0 ? w / h : fallback),
-          () => resolve(fallback),
-        );
-      }),
-  );
-  return Promise.all(jobs);
-}
 
 const SCREEN_W = Dimensions.get('window').width;
 const H_PADDING = 32;
@@ -94,34 +81,6 @@ function ResponsiveImage({ uri, width, radius = 12 }: { uri: string; width: numb
 const AV = require('@/assets/images/character1.png');
 const DANGER = '#FF4D4F';
 
-function parseDateFlexible(v?: unknown): Date | null {
-  if (v == null) return null;
-  let s = String(v).trim();
-  if (/^\d+(\.\d+)?$/.test(s)) return new Date(parseFloat(s) * 1000);
-  if (!s.includes('T') && s.includes(' ')) s = s.replace(' ', 'T');
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : String(n);
-}
-function formatCreatedYMD(v?: unknown): string {
-  const d = parseDateFlexible(v);
-  if (!d) return '';
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Seoul',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-      .format(d)
-      .replace(/-/g, '/');
-  } catch {
-    return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
-  }
-}
-
 const StyledEditInput = styled(RNTextInput)`
   min-height: 220px;
   border-radius: 8px;
@@ -136,13 +95,17 @@ const EditInput = forwardRef<RNTextInput, TextInputProps>((props, ref) => <Style
 EditInput.displayName = 'EditInput';
 
 export default function PostDetailScreen() {
-  const { id, focusCommentId, intent } = useLocalSearchParams<{
+  const navigation = useNavigation();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const { id, focusCommentId, intent, commentId } = useLocalSearchParams<{
     id: string;
     focusCommentId?: string;
     intent?: string;
+    commentId?: string;
   }>();
   const postId = Number(id);
-
   const {
     bookmarked: bmMap,
     toggleBookmarked,
@@ -156,15 +119,21 @@ export default function PostDetailScreen() {
     hydrateLikeFromServer,
   } = usePostUI();
 
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [isProfileVisible, setIsProfileVisible] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const postBookmarked = bmMap[postId] ?? false;
+
+  const { data, isLoading, isError } = usePostDetail(Number.isFinite(postId) ? postId : undefined);
 
   const fetchUserProfile = async (userId: number) => {
     try {
+      console.log('[Profile] fetching user:', userId);
       setIsLoadingProfile(true);
       const res = await api.get(`/api/v1/member/${userId}/info`);
-      setSelectedUser(res.data);
+      console.log('[Profile] raw response:', res); // <-- 전체 응답 찍기
+      console.log('[Profile] res.data:', res.data); // <-- 이 라인 중요
+      // 안전하게 실제 user 객체를 꺼내서 저장
+      const userObj = (res.data && (res.data.data ?? res.data)) || res;
+      console.log('[Profile] resolved userObj:', userObj);
+      setSelectedUser(userObj);
       setIsProfileVisible(true);
     } catch (err) {
       console.error('프로필 불러오기 실패', err);
@@ -173,10 +142,6 @@ export default function PostDetailScreen() {
       setIsLoadingProfile(false);
     }
   };
-
-  const postBookmarked = bmMap[postId] ?? false;
-
-  const { data, isLoading, isError } = usePostDetail(Number.isFinite(postId) ? postId : undefined);
 
   const post = data as any;
 
@@ -751,6 +716,7 @@ export default function PostDetailScreen() {
         <HeaderTitle>Post</HeaderTitle>
         <RightPlaceholder />
       </Header>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -764,9 +730,9 @@ export default function PostDetailScreen() {
             <CommentItem
               data={item}
               isFirst={index === 0}
+              onPressProfile={fetchUserProfile}
               onPressLike={() => toggleCommentLike(item)}
               onPressMore={(c) => openCommentSheet(c)}
-              onPressProfile={(userId) => fetchUserProfile(userId)}
             />
           )}
           keyboardShouldPersistTaps="handled"
@@ -777,17 +743,22 @@ export default function PostDetailScreen() {
             <>
               <Card>
                 <Row>
-                  <Pressable onPress={() => !isAnonymous && post?.memberId && fetchUserProfile(post.memberId)}>
-                    <Avatar source={avatarSrc} />
-                  </Pressable>
                   <Meta>
-                    <Author>{author}</Author>
-                    <MetaRow>
-                      <Sub>{createdLabel || '—'}</Sub>
-                      <Dot>·</Dot>
-                      <AntDesign name="eyeo" size={12} color="#9aa0a6" />
-                      <Sub style={{ marginLeft: 6 }}>{views}</Sub>
-                    </MetaRow>
+                    <Pressable
+                      onPress={() => fetchUserProfile(Number(authorId))}
+                      style={{ flexDirection: 'row', alignItems: 'center' }}
+                    >
+                      <Avatar source={avatarSrc} />
+                      <Meta>
+                        <Author>{author}</Author>
+                        <MetaRow>
+                          <Sub>{createdLabel || '—'}</Sub>
+                          <Dot>·</Dot>
+                          <AntDesign name="eyeo" size={12} color="#9aa0a6" />
+                          <Sub style={{ marginLeft: 6 }}>{views}</Sub>
+                        </MetaRow>
+                      </Meta>
+                    </Pressable>
                   </Meta>
 
                   <BookmarkWrap
@@ -912,6 +883,7 @@ export default function PostDetailScreen() {
           </SendBtn>
         </InputBar>
       </KeyboardAvoidingView>
+
       <Modal transparent visible={menuVisible} onRequestClose={() => setMenuVisible(false)} animationType="none">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
@@ -1002,6 +974,7 @@ export default function PostDetailScreen() {
           </Animated.View>
         </View>
       </Modal>
+
       <Modal
         visible={reportOpen}
         transparent
@@ -1058,6 +1031,7 @@ export default function PostDetailScreen() {
           </Dialog>
         </View>
       </Modal>
+
       <Modal
         visible={editVisible}
         transparent
@@ -1111,11 +1085,8 @@ export default function PostDetailScreen() {
         onClose={() => setIsProfileVisible(false)}
         onFollow={(id) => console.log('follow', id)}
         onUnfollow={(id) => console.log('unfollow', id)}
-        onChat={() => {
-          setIsProfileVisible(false);
-          console.log('chat start with user:', selectedUser?.userId);
-        }}
-      />{' '}
+        onChat={() => console.log('chat start')}
+      />
     </Safe>
   );
 }
