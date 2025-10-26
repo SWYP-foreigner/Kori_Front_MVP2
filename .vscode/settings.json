@@ -4,7 +4,6 @@
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit",
   },
-  
   "editor.formatOnSave": true,
   "eslint.format.enable": true,
   "eslint.validate": [
@@ -14,4 +13,6 @@
     "typescriptreact"
   ],
   "prettier.enable": false,
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.compile.nullAnalysis.mode": "automatic",
 }
