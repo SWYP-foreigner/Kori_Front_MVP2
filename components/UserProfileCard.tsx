@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import defaultAvatar from '@/assets/images/default-avatar.png';
-import closeButton from '@/assets/images/close.png';
+import Icon from './common/Icon';
 
 type Props = {
   onClose: () => void;
@@ -26,7 +26,7 @@ const UserProfileCard = ({ onClose }: Props) => {
   return (
     <Container>
       <CloseButton onPress={onClose}>
-        <CloseIcon source={closeButton} />
+        <Icon type="close" size={24} />
       </CloseButton>
 
       <ScrollView contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}>
