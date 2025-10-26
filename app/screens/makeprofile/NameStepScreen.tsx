@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { Platform } from 'react-native';
-import { SafeAreaView, StatusBar } from 'react-native';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfile } from '../../contexts/ProfileContext';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Platform, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
+import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen
@@ -52,7 +52,9 @@ export default function NameStepScreen() {
               placeholderTextColor="#616262"
               autoCapitalize="words"
             />
-            {firstName && firstName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {firstName && firstName.trim().length > 0 && (
+              <Icon type="check" size={20} color={theme.colors.primary.mint} />
+            )}
           </InputWrapper>
           <InputWrapper>
             <Input
@@ -62,7 +64,9 @@ export default function NameStepScreen() {
               placeholderTextColor="#616262"
               autoCapitalize="words"
             />
-            {lastName && lastName.trim().length > 0 && <AntDesign name="check" size={20} color="#02F59B" />}
+            {lastName && lastName.trim().length > 0 && (
+              <Icon type="check" size={20} color={theme.colors.primary.mint} />
+            )}
           </InputWrapper>
         </Form>
 
