@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 import { LANGUAGES } from '@/src/utils/languages';
 export default function LanguageStepScreen({ navigation }) {

@@ -1,14 +1,19 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import styled from 'styled-components/native';
+import ProfileModal from './ProfileModal';
+import api from '@/api/axiosInstance';
+import { Alert } from 'react-native';
+import { formatShortDate } from '@/src/utils/dateUtils';
 
 const DEFAULT_AV = require('@/assets/images/character1.png');
 
 export type Comment = {
   id: string | number;
   author?: string;
+  authorId?: number;
   avatar?: ImageSourcePropType;
   createdAt: string;
   body: string;
@@ -17,13 +22,15 @@ export type Comment = {
   isChild?: boolean;
   hotScore?: number;
   anonymous?: boolean;
+  userId?: number;
 };
 
 type Props = {
   data: Comment | any;
   onPressLike?: () => void;
   isFirst?: boolean;
-  onPressMore?: (c: Comment) => void; // ✅ 더보기 콜백
+  onPressMore?: (c: Comment) => void;
+  onPressProfile?: (userId: number) => void;
 };
 
 function isAnon(row: any): boolean {
@@ -76,35 +83,48 @@ function resolveLikedByMe(row: any): boolean {
   return Boolean(row?.likedByMe ?? row?.isLiked ?? row?.isLike ?? false);
 }
 
-function formatDate(rawIn: any): string {
-  const raw = String(rawIn ?? '').trim();
-  if (!raw) return '';
-  if (/^\d{4}-\d{2}-\d{2}(?!T)/.test(raw)) return raw.slice(5, 10).replace('-', '/');
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw.slice(5, 10).replace('-', '/');
-  const n = Number(raw);
-  if (Number.isFinite(n)) {
-    const d = new Date(n > 1e12 ? n : n * 1000);
-    if (!isNaN(d.getTime())) {
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${mm}/${dd}`;
-    }
-  }
-  return raw;
+function resolveUserId(row: any): number | undefined {
+  const id = row?.userId ?? row?.authorId ?? row?.memberId ?? row?.writerId ?? row?.ownerId;
+  const num = Number(id);
+  return Number.isFinite(num) && num > 0 ? num : undefined;
 }
 
-export default function CommentItem({ data, onPressLike, isFirst, onPressMore }: Props) {
+export default function CommentItem({ data, onPressLike, isFirst, onPressMore, onPressProfile }: Props) {
   const child = !!data?.isChild;
   const anon = isAnon(data);
-
   const authorLabel = resolveAuthor(data);
   const avatarResolved = resolveAvatar(data);
   const avatarSrc = anon ? DEFAULT_AV : avatarResolved || DEFAULT_AV;
-  const dateLabel = useMemo(() => formatDate(data?.createdAt), [data?.createdAt]);
-
+  const dateLabel = useMemo(() => formatShortDate(data?.createdAt), [data?.createdAt]);
   const bodyText = resolveBody(data);
   const likeCount = resolveLikes(data);
   const likedByMe = resolveLikedByMe(data);
+  const userId = resolveUserId(data);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  const handlePressProfile = async () => {
+    if (anon || !userId) {
+      return;
+    }
+    if (onPressProfile) {
+      onPressProfile(userId);
+      return;
+    }
+
+    try {
+      setIsLoadingProfile(true);
+      const res = await api.get(`/api/v1/member/${userId}/info`);
+      setSelectedUser(res.data);
+      setIsProfileVisible(true);
+    } catch (err) {
+      console.error('[Profile] fetch error:', err);
+      Alert.alert('Error', 'try again');
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
 
   return (
     <Wrap $child={child} $first={isFirst}>
@@ -124,13 +144,25 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
             <Feather name="corner-down-right" size={18} color="#9aa0a6" />
           </ReplyIcon>
         )}
-        <Avatar source={avatarSrc} />
+        <AvatarButton
+          onPress={handlePressProfile}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="View profile"
+        >
+          <Avatar source={avatarSrc} />
+        </AvatarButton>
+
         <Meta>
-          <Author>
-            {anon ? <AnonBadge>익명</AnonBadge> : null}
-            {authorLabel}
-          </Author>
-          <Sub>{dateLabel}</Sub>
+          <AuthorRow>
+            {anon && (
+              <AnonBadgeWrapper>
+                <AnonBadgeText>익명</AnonBadgeText>
+              </AnonBadgeWrapper>
+            )}
+            <Author>{authorLabel}</Author>
+          </AuthorRow>
+          <Sub>{dateLabel || '—'}</Sub>
         </Meta>
       </Row>
 
@@ -142,6 +174,8 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore }:
           <Count $active={likedByMe}>{likeCount}</Count>
         </Act>
       </Footer>
+
+      <ProfileModal visible={isProfileVisible} onClose={() => setIsProfileVisible(false)} userData={selectedUser} />
     </Wrap>
   );
 }
@@ -156,69 +190,84 @@ const Wrap = styled.View<{ $child: boolean; $first?: boolean }>`
   border-bottom-width: 1px;
   border-bottom-color: #222426;
 `;
+
 const Row = styled.View`
   flex-direction: row;
   align-items: center;
 `;
+
 const ReplyIcon = styled.View`
   width: 22px;
   align-items: center;
   justify-content: center;
   margin-right: 6px;
 `;
+
 const Avatar = styled.Image`
   width: 28px;
   height: 28px;
   border-radius: 14px;
   background: #2a2b2c;
 `;
+
 const Meta = styled.View`
   margin-left: 10px;
   flex: 1;
 `;
+
+const AuthorRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+`;
+
 const Author = styled.Text`
   color: #fff;
   font-size: 13px;
   font-family: 'PlusJakartaSans_700Bold';
 `;
+
 const Sub = styled.Text`
   color: #9aa0a6;
   font-size: 11px;
   margin-top: 2px;
 `;
-const More = styled.Text`
-  color: #9aa0a6;
-  font-size: 18px;
-  padding: 4px 6px;
-`;
+
 const Body = styled.Text`
   color: #d9dcdf;
   font-size: 13px;
   line-height: 18px;
   margin-top: 6px;
 `;
+
 const Footer = styled.View`
   margin-top: 6px;
   flex-direction: row;
   align-items: center;
 `;
+
 const Act = styled.Pressable`
   flex-direction: row;
   align-items: center;
   margin-right: 16px;
 `;
+
 const Count = styled.Text<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? '#30F59B' : '#cfd4da')};
   margin-left: 6px;
   font-size: 12px;
 `;
-const AnonBadge = styled.Text`
-  color: #000;
+
+const AnonBadgeWrapper = styled.View`
   background: #30f59b;
   border-radius: 4px;
   padding: 1px 6px;
   margin-right: 6px;
+`;
+
+const AnonBadgeText = styled.Text`
+  color: #000;
   font-size: 10px;
+  font-family: 'PlusJakartaSans_700Bold';
 `;
 
 const MoreBtn = styled.Pressable`
@@ -227,4 +276,8 @@ const MoreBtn = styled.Pressable`
   right: 10px;
   padding: 6px;
   z-index: 10;
+`;
+
+const AvatarButton = styled.Pressable`
+  border-radius: 14px;
 `;

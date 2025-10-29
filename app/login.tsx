@@ -115,9 +115,15 @@ const LoginScreen = () => {
       const res = await axios.post<AppLoginResponse>(`${Config.SERVER_URL}/api/v1/member/google/app-login`, { code });
 
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
-      await SecureStore.setItemAsync('jwt', accessToken);
-      await SecureStore.setItemAsync('refresh', refreshToken);
-      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      await SecureStore.setItemAsync('jwt', accessToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('refresh', refreshToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('MyuserId', userId.toString(), {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
 
       if (isNewUser) {
         showModal();
@@ -194,9 +200,15 @@ const LoginScreen = () => {
       );
 
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
-      await SecureStore.setItemAsync('jwt', accessToken);
-      await SecureStore.setItemAsync('refresh', refreshToken);
-      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      await SecureStore.setItemAsync('jwt', accessToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('refresh', refreshToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('MyuserId', userId.toString(), {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
 
       if (isNewUser) {
         try {
