@@ -23,7 +23,7 @@ const colors = {
     lightGray_1: '#CCCFD0',
     lightGray_2: '#E9E9E9',
   },
-} as const;
+};
 
 /* -------------- font styles -------------- */
 // font family를 상수로 선언
@@ -55,7 +55,7 @@ const FONT = ({ fontFamily, size, weight, lineHeight }: Font) => {
     fontFamily: (FONT_FAMILY[fontFamily] as any)[weight],
     fontSize: size,
     lineHeight: lineHeight,
-  } as const;
+  };
 };
 
 // font style에 따라 fonts 선언
@@ -106,9 +106,12 @@ const fonts = {
 export const theme = {
   colors,
   fonts,
-} as const;
+};
 
-export type ThemeType = typeof theme;
+export type ColorType = typeof colors;
+export type FontType = typeof fonts;
+
+// export type ThemeType = typeof theme;
 
 /**
  * Styled Text에서 빠르게 텍스트 스타일을 적용할 수 있는 함수입니다.
