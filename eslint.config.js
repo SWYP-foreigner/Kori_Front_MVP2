@@ -9,7 +9,7 @@ import importPlugin from 'eslint-plugin-import';
 export default tseslint.config(
   { ignores: ['dist'] },
   {
-    files: ['*/.{ts,tsx}'],
+    files: ['**/*.{ts,tsx}'],
 
     languageOptions: {
       parser: tseslint.parser,
