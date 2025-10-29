@@ -1,3 +1,4 @@
+// 1. api를 import 합니다.
 import api from '@/api/axiosInstance';
 import { authLocalCleanup, blockTokenRefresh } from '@/src/lib/auth/session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +18,8 @@ export function useDeleteAccount() {
     mutationFn: deleteAccount,
     onSuccess: async () => {
       blockTokenRefresh();
-      await authLocalCleanup(qc);
+      // 2. authLocalCleanup에 'api'를 첫 번째 인자로 전달합니다.
+      await authLocalCleanup(api, qc);
     },
   });
 }
