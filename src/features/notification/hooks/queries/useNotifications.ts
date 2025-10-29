@@ -1,4 +1,4 @@
-import { getNotifications, NotificationSetting } from '@/api/notifications/notifications';
+import { getNotifications, NotificationSetting } from '@/src/features/notification/api/notifications';
 import { useQuery } from '@tanstack/react-query';
 
 export const defaultSettings: NotificationSetting[] = [

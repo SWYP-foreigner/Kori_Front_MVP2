@@ -1,12 +1,5 @@
-import api from '../axiosInstance';
-
-const notificationType = ['post', 'comment', 'chat', 'follow', 'receive', 'followuserpost', 'newuser'] as const;
-
-export type NotificationType = (typeof notificationType)[number];
-export interface NotificationSetting {
-  notificationType: NotificationType;
-  enabled: boolean;
-}
+import api from '../../../../api/axiosInstance';
+import { NotificationSetting, notificationType } from '../types/notification';
 
 /* ---------- FCM 기기 토큰 등록/갱신 ----------- */
 export async function postFcmDeviceToken(fcmDeviceToken: string) {
@@ -113,3 +106,4 @@ export async function initNotificationsSettingStatus(enabled: boolean) {
     throw error;
   }
 }
+export { NotificationSetting };

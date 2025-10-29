@@ -1,4 +1,4 @@
-import { NotificationSetting, putNotifications } from '@/api/notifications/notifications';
+import { NotificationSetting, putNotifications } from '@/src/features/notification/api/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function useUpdateNotificationSettings() {

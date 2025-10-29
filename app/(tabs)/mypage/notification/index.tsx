@@ -5,11 +5,12 @@ import Toggle from '@/components/common/Toggle';
 import { useCallback, useEffect, useState } from 'react';
 import { textStyle } from '@/src/styles/theme';
 import { Text, View } from 'react-native';
-import { NotificationSetting, NotificationType, putOSPushAgreement } from '@/api/notifications/notifications';
-import { defaultSettings, useNotificationSettings } from '@/hooks/queries/notifications/useNotifications';
-import useUpdateNotificationSettings from '@/hooks/mutations/notifications/useUpdateNotifications';
-import { showNotificationPermissionAlert } from '@/lib/fcm/showNotificationPermissionAlert';
+import { putOSPushAgreement } from '@/src/features/notification/api/notifications';
+import { defaultSettings, useNotificationSettings } from '@/src/features/notification/hooks/queries/useNotifications';
+import useUpdateNotificationSettings from '@/src/features/notification/hooks/mutations/useUpdateNotifications';
+import { showNotificationPermissionAlert } from '@/src/features/notification/lib/showNotificationPermissionAlert';
 import * as Notifications from 'expo-notifications';
+import { NotificationSetting, NotificationType } from '@/src/features/notification/types/notification';
 
 type NotificationSettingListText = {
   title: string;
@@ -46,7 +47,7 @@ const NOTIFICATION_SETTING_LIST_TEXT: Record<NotificationType | 'all', Notificat
 };
 
 export default function NotificationSettingPage() {
-  const { data, isLoading } = useNotificationSettings();
+  const { data } = useNotificationSettings();
   const notificationSettings = data ?? defaultSettings;
   const { mutate } = useUpdateNotificationSettings();
   const [isAllEnabled, setIsAllEnabled] = useState<boolean>(false);

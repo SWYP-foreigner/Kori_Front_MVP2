@@ -22,11 +22,11 @@ import axios from 'axios';
 import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 import messaging from '@react-native-firebase/messaging';
-import { handleNotificationPress, messageHandler } from '@/lib/fcm/messageHandler';
+import { handleNotificationPress, messageHandler } from '@/src/features/notification/lib/messageHandler';
 import { ThemeProvider } from 'styled-components/native';
 import { theme } from '@/src/styles/theme';
 import * as Linking from 'expo-linking';
-import { getNotificationDeeplink } from '@/src/utils/getNotificationDeeplink';
+import { getNotificationDeeplink } from '@/src/features/notification/lib/getNotificationDeeplink';
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`

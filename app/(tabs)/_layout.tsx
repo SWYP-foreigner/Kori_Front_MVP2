@@ -8,7 +8,7 @@ import {
   getNotificationsSettingStatus,
   initNotificationsSettingStatus,
   putOSPushAgreement,
-} from '@/api/notifications/notifications';
+} from '@/src/features/notification/api/notifications';
 import NotificationPermissionModal from '@/components/NotificationPermissionModal';
 import queryClient from '@/api/queryClient';
 
