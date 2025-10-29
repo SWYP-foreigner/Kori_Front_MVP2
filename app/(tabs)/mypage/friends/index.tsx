@@ -147,7 +147,7 @@ export default function FriendsOnlyScreen() {
                   try {
                     const roomId = await createRoom({ otherUserId: item.id });
                     router.push({
-                      pathname: '/screens/chatscreen/ChattingRoomScreen',
+                      pathname: '/(tabs)/chat/ChattingRoomScreen',
                       params: {
                         userId: String(item.id),
                         roomName: encodeURIComponent(item.name || 'Unknown'),
