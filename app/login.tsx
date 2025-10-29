@@ -13,7 +13,7 @@ import {
 import axios from 'axios';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { randomUUID } from 'expo-crypto';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from 'react';
 import {
@@ -32,6 +32,7 @@ import styled from 'styled-components/native';
 import api from '@/api/axiosInstance';
 import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
 import { patchLocation } from '@/api/member/location';
+import { CommonActions } from '@react-navigation/native';
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -61,6 +62,7 @@ const { width } = Dimensions.get('window');
 
 const LoginScreen = () => {
   const router = useRouter();
+  const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [allCheck, setAllCheck] = useState(false);
@@ -128,7 +130,13 @@ const LoginScreen = () => {
       if (isNewUser) {
         showModal();
       } else {
-        router.replace('/(tabs)');
+        // 기존 화면 스택 삭제 후 tab으로 이동
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: '(tabs)' }],
+          }),
+        );
       }
     } catch (error) {
       console.error('서버 요청 실패', error);
@@ -210,6 +218,8 @@ const LoginScreen = () => {
         keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       });
 
+      console.log('✨✨✨✨✨✨✨✨apple login data:', res.data.data);
+
       if (isNewUser) {
         try {
           const res = await api.get(`${Config.SERVER_URL}/api/v1/member/${userId}/is-apple`);
@@ -234,7 +244,13 @@ const LoginScreen = () => {
           console.error('error', error);
         }
       } else {
-        router.replace('/(tabs)');
+        // 기존 화면 스택 삭제 후 tab으로 이동
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: '(tabs)' }],
+          }),
+        );
       }
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') {

@@ -45,7 +45,7 @@ const ChattingRoomScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { userId, roomName } = useLocalSearchParams<{ userId: string; roomName: string }>();
+  const { roomName } = useLocalSearchParams<{ roomName: string }>();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
