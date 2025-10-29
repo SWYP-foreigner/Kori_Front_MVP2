@@ -126,7 +126,7 @@ const CreateSpaceScreen = () => {
 
   const handleSave = () => {
     router.push({
-      pathname: '../../screens/chatscreen/NewSpaceCreated',
+      pathname: '/screens/chatscreen/NewSpaceCreated',
       params: {
         spaceName: text,
         spaceDescription: explainText,
