@@ -187,7 +187,7 @@ export default function HomeScreen() {
                   onChat={async () => {
                     const roomId = await createRoom({ otherUserId: uid });
                     router.push({
-                      pathname: '/screens/chatscreen/ChattingRoomScreen',
+                      pathname: '/(tabs)/chat/ChattingRoomScreen',
                       params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId },
                     });
                   }}

@@ -36,7 +36,7 @@ const LinkedSpaceDetail = () => {
     try {
       const res = await api.post(`/api/v1/chat/rooms/group/${roomId}/join`);
       router.push({
-        pathname: '/screens/chatscreen/ChattingRoomScreen',
+        pathname: '/(tabs)/chat/ChattingRoomScreen',
         params: {
           roomId: roomId, // props에서 바로 가져옴
           roomName: roomDetail?.roomName, // props에서 바로 가져옴
