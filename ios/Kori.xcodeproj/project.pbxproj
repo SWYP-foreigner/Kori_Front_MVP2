@@ -9,26 +9,26 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		69E330B317C3A05A49DB3D6D /* Pods_Kori.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 844C522C301859DB79027B28 /* Pods_Kori.framework */; };
-		872B3172133A1C280D409C59 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AE82EEA1279FF28048912EE7 /* PrivacyInfo.xcprivacy */; };
-		A71D807C1D5143FDA050648E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 08A7B33830A14572AC334EF1 /* GoogleService-Info.plist */; };
+		819BF2C99E8E4664B7A52723 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 734322B83C8747A6B722AD3B /* GoogleService-Info.plist */; };
+		847DD902F22A41A9FD1FF949 /* Pods_Kori.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A704A036B7868AD4379116F4 /* Pods_Kori.framework */; };
+		8499FFB3BC9C10D778B170D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A238C7022B38A4FA43D4DE4B /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C419ACF9D502E7C10326B1E5 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FFA71ADF75C2C23DE7478B /* ExpoModulesProvider.swift */; };
+		BBE3B48FEB1EBCDDF6D4C72E /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80F132DB6C2AC26523BF708 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		08A7B33830A14572AC334EF1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Kori/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Kori.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kori.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Kori/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Kori/Info.plist; sourceTree = "<group>"; };
-		25BD7511292F95EF4E0483A2 /* Pods-Kori.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Kori.release.xcconfig"; path = "Target Support Files/Pods-Kori/Pods-Kori.release.xcconfig"; sourceTree = "<group>"; };
-		27FFA71ADF75C2C23DE7478B /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Kori/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		4851B3E4BE86D48D32CF7BBF /* Pods-Kori.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Kori.debug.xcconfig"; path = "Target Support Files/Pods-Kori/Pods-Kori.debug.xcconfig"; sourceTree = "<group>"; };
-		844C522C301859DB79027B28 /* Pods_Kori.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Kori.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		18B5D08B475259985999D84F /* Pods-Kori.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Kori.debug.xcconfig"; path = "Target Support Files/Pods-Kori/Pods-Kori.debug.xcconfig"; sourceTree = "<group>"; };
+		734322B83C8747A6B722AD3B /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Kori/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A238C7022B38A4FA43D4DE4B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Kori/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A704A036B7868AD4379116F4 /* Pods_Kori.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Kori.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Kori/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AE82EEA1279FF28048912EE7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Kori/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		BCD304E2DC896612D49F62F3 /* Pods-Kori.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Kori.release.xcconfig"; path = "Target Support Files/Pods-Kori/Pods-Kori.release.xcconfig"; sourceTree = "<group>"; };
+		E80F132DB6C2AC26523BF708 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Kori/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Kori/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Kori-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Kori-Bridging-Header.h"; path = "Kori/Kori-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				69E330B317C3A05A49DB3D6D /* Pods_Kori.framework in Frameworks */,
+				847DD902F22A41A9FD1FF949 /* Pods_Kori.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,8 +55,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				08A7B33830A14572AC334EF1 /* GoogleService-Info.plist */,
-				AE82EEA1279FF28048912EE7 /* PrivacyInfo.xcprivacy */,
+				734322B83C8747A6B722AD3B /* GoogleService-Info.plist */,
+				A238C7022B38A4FA43D4DE4B /* PrivacyInfo.xcprivacy */,
 			);
 			name = Kori;
 			sourceTree = "<group>";
@@ -65,27 +65,25 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				844C522C301859DB79027B28 /* Pods_Kori.framework */,
+				A704A036B7868AD4379116F4 /* Pods_Kori.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		34426A51CE80BDC0A7F8FACA /* ExpoModulesProviders */ = {
+		2E219A45F98EBFC8E5FB3E89 /* Kori */ = {
 			isa = PBXGroup;
 			children = (
-				E4B67E6200423126647B7E33 /* Kori */,
+				E80F132DB6C2AC26523BF708 /* ExpoModulesProvider.swift */,
 			);
-			name = ExpoModulesProviders;
+			name = Kori;
 			sourceTree = "<group>";
 		};
-		6CFA2B70BC76CA6D242FC51E /* Pods */ = {
+		75EF9B8FF95C6DD85A4C0314 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				4851B3E4BE86D48D32CF7BBF /* Pods-Kori.debug.xcconfig */,
-				25BD7511292F95EF4E0483A2 /* Pods-Kori.release.xcconfig */,
+				2E219A45F98EBFC8E5FB3E89 /* Kori */,
 			);
-			name = Pods;
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -102,8 +100,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				6CFA2B70BC76CA6D242FC51E /* Pods */,
-				34426A51CE80BDC0A7F8FACA /* ExpoModulesProviders */,
+				92D9EC4E5A9440B52E9211D1 /* Pods */,
+				75EF9B8FF95C6DD85A4C0314 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -118,6 +116,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		92D9EC4E5A9440B52E9211D1 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				18B5D08B475259985999D84F /* Pods-Kori.debug.xcconfig */,
+				BCD304E2DC896612D49F62F3 /* Pods-Kori.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -125,14 +133,6 @@
 			);
 			name = Supporting;
 			path = Kori/Supporting;
-			sourceTree = "<group>";
-		};
-		E4B67E6200423126647B7E33 /* Kori */ = {
-			isa = PBXGroup;
-			children = (
-				27FFA71ADF75C2C23DE7478B /* ExpoModulesProvider.swift */,
-			);
-			name = Kori;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,14 +143,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Kori" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				23848ADF287C98CDD3AD49E8 /* [Expo] Configure project */,
+				D937E3D7A037701EBD8CCD41 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				B73AED625B043B567424E7D1 /* [CP] Embed Pods Frameworks */,
-				4EE1CD600042BD78B473A0F3 /* [CP-User] [RNFB] Core Configuration */,
+				E693219B84FD30D4965111B5 /* [CP] Embed Pods Frameworks */,
+				6B3338E3330B4160B7C675AB /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
@@ -170,9 +170,7 @@
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						DevelopmentTeam = 3PVV8DQPL6;
 						LastSwiftMigration = 1250;
-						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -202,8 +200,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				A71D807C1D5143FDA050648E /* GoogleService-Info.plist in Resources */,
-				872B3172133A1C280D409C59 /* PrivacyInfo.xcprivacy in Resources */,
+				819BF2C99E8E4664B7A52723 /* GoogleService-Info.plist in Resources */,
+				8499FFB3BC9C10D778B170D7 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,26 +245,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		23848ADF287C98CDD3AD49E8 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Kori/expo-configure-project.sh\"\n";
-		};
-		4EE1CD600042BD78B473A0F3 /* [CP-User] [RNFB] Core Configuration */ = {
+		6B3338E3330B4160B7C675AB /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -353,7 +332,26 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Kori/Pods-Kori-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B73AED625B043B567424E7D1 /* [CP] Embed Pods Frameworks */ = {
+		D937E3D7A037701EBD8CCD41 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Kori/expo-configure-project.sh\"\n";
+		};
+		E693219B84FD30D4965111B5 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -379,7 +377,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				C419ACF9D502E7C10326B1E5 /* ExpoModulesProvider.swift in Sources */,
+				BBE3B48FEB1EBCDDF6D4C72E /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -388,15 +386,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4851B3E4BE86D48D32CF7BBF /* Pods-Kori.debug.xcconfig */;
+			baseConfigurationReference = 18B5D08B475259985999D84F /* Pods-Kori.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Kori/Kori.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3PVV8DQPL6;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -427,15 +422,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 25BD7511292F95EF4E0483A2 /* Pods-Kori.release.xcconfig */;
+			baseConfigurationReference = BCD304E2DC896612D49F62F3 /* Pods-Kori.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Kori/Kori.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3PVV8DQPL6;
 				INFOPLIST_FILE = Kori/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
