@@ -51,9 +51,11 @@ function mapRow(r: RawComment): Comment {
 
   const avatarUrl = (r as any).userImage ?? (r as any).userImageUrl ?? (r as any).avatarUrl;
 
+  const userId = Number((r as any).authorId ?? (r as any).userId ?? (r as any).memberId ?? (r as any).writerId ?? 0);
   return {
     id: String((r as any).commentId ?? (r as any).id),
     author: authorLabel,
+    authorId: userId > 0 ? userId : undefined,
     avatar: avatarUrl ? { uri: avatarUrl } : require('@/assets/images/character1.png'),
     createdAt: toYmd((r as any).createdAt),
     body: String((r as any).content ?? (r as any).comment ?? ''),

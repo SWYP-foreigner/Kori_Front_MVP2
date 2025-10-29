@@ -89,8 +89,8 @@ export default function FriendCard(props: Props) {
     birth,
     gender = 'unspecified',
     purpose,
-    languages,
-    personalities,
+    languages = [],
+    personalities = [],
     personalityEmojis = [],
     bio = 'Hello~ I came to Korea from\nthe U.S. as an exchange student',
 
@@ -136,14 +136,14 @@ export default function FriendCard(props: Props) {
         })}
       >
         <Top>
-          {/* ✅ 아바타에 URL 전달 */}
           <Avatar uri={finalAvatarUrl} />
 
           <Name>{name}</Name>
 
           <MetaLine>
             <MetaDim>Birth </MetaDim>
-            <MetaStrong>{birth ?? '-'}</MetaStrong>
+            <MetaStrong>{birth ? String(birth) : '-'}</MetaStrong>
+
             <GenderIconSpacer>
               <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
             </GenderIconSpacer>
@@ -181,12 +181,16 @@ export default function FriendCard(props: Props) {
                   <Label>Language</Label>
                 </LabelRow>
                 <LangWrap>
-                  {languages.map((lg, i) => (
-                    <React.Fragment key={`${lg}-${i}`}>
-                      {i > 0 && <LangDot>•</LangDot>}
-                      <LangText>{lg}</LangText>
-                    </React.Fragment>
-                  ))}
+                  {languages?.map((lg, i) => {
+                    const match = lg.match(/\[(.*?)\]/);
+                    const code = match ? match[1].toUpperCase() : lg.toUpperCase();
+                    return (
+                      <React.Fragment key={`${lg}-${i}`}>
+                        {i > 0 && <LangDot>•</LangDot>}
+                        <LangText>{code}</LangText>
+                      </React.Fragment>
+                    );
+                  })}
                 </LangWrap>
               </ColRight>
             </RowTop>

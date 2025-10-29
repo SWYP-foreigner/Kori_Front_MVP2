@@ -24,7 +24,6 @@ export type FollowingRow = {
 };
 
 export async function getMyProfile() {
-  // 🔥 변경 (추가)
   const { data } = await api.get<Profile | { data: Profile }>('/api/v1/member/profile/setting');
   return (data as any)?.data ?? (data as Profile);
 }

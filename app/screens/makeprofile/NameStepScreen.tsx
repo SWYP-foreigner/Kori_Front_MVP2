@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { Platform } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import { useRouter } from 'expo-router';
 import SkipHeader from './components/SkipHeader';
 // ------------------------
@@ -17,8 +17,7 @@ export default function NameStepScreen() {
   const { profileData, updateProfile } = useProfile();
 
   // Android일 때만 이름이 필수 처리
-  const isAndroid = Platform.OS === 'android';
-  const canProceed = isAndroid ? firstName && lastName : true;
+  const canProceed = firstName.trim().length > 0 && lastName.trim().length > 0;
 
   const handleSkip = () => {
     router.push('./GenderStepScreen');
