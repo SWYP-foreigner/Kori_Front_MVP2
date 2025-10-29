@@ -1,15 +1,17 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
-export default function MyPageLayout() {
-    return (
-        <Stack>
-            <Stack.Screen
-                name="index"
-                options={{
-                    headerShown: false,
-                    title: "마이페이지",
-                }}
-            />
-        </Stack>
-    )
+// deeplink 클릭 시 먼저 initialRoute로 이동
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
+export default function Layout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#0f1011' },
+      }}
+    ></Stack>
+  );
 }
