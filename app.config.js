@@ -13,7 +13,7 @@ export default {
     newArchEnabled: true,
 
     splash: {
-      image: './assets/images/character_02.png',
+      image: './assets/images/character2.png',
       resizeMode: 'contain',
       backgroundColor: '#0f0f10',
     },
