@@ -41,7 +41,7 @@ const TARGET_ROUTER: Record<string, Href> = {
   post: '/community/[id]',
   comment: '/community/[id]',
   followUserPost: '/community/[id]',
-  chat: '/screens/chatscreen/ChattingRoomScreen',
+  chat: '/chat/ChattingRoomScreen',
   follow: '/(tabs)/mypage/follows',
   receive: '/(tabs)/mypage/friends',
 };
@@ -54,37 +54,58 @@ export function notificationRouterReplace(data: { [key: string]: string | number
   switch (data.type) {
     case 'post':
     case 'comment':
-      if (!pathname.includes('community')) router.dismissAll();
-      return router.navigate({
-        pathname: `/(tabs)/community/[id]`,
-        params: { id: String(data.postId), commentId: String(data.commentId) },
-      });
+      if (!pathname.includes('community')) router.replace('/(tabs)/community');
+      setTimeout(() => {
+        router.navigate({
+          pathname: `/(tabs)/community/[id]`,
+          params: { id: String(data.postId), commentId: String(data.commentId) },
+        });
+      }, 500);
+      break;
+
     case 'followuserpost':
-      if (!pathname.includes('community')) router.dismissAll();
-      return router.navigate({
-        pathname: `/(tabs)/community/[id]`,
-        params: { id: String(data.postId) },
-      });
+      if (!pathname.includes('community')) router.replace('/community');
+      setTimeout(() => {
+        router.navigate({
+          pathname: `/(tabs)/community/[id]`,
+          params: { id: String(data.postId) },
+        });
+      }, 500);
+      break;
+
     case 'chat':
-      if (!pathname.includes('chat')) router.dismissAll();
-      return router.navigate({
-        pathname: `/screens/chatscreen/ChattingRoomScreen`,
-        params: { roomId: String(data.roomId), myId: String(data.myId) },
-      });
+      if (!pathname.includes('chat')) router.replace('/chat');
+      setTimeout(() => {
+        router.navigate({
+          pathname: `/chat/ChattingRoomScreen`,
+          params: { roomId: String(data.roomId), myId: String(data.myId) },
+        });
+      }, 500);
+      break;
+
     case 'follow':
-      if (!pathname.includes('mypage')) router.dismissAll();
-      return router.navigate({
-        pathname: `/(tabs)/mypage/follows`,
-        params: { followerId: String(data.followerId) },
-      });
+      if (!pathname.includes('mypage')) router.replace('/mypage');
+      setTimeout(() => {
+        router.navigate({
+          pathname: `/(tabs)/mypage/follows`,
+          params: { followerId: String(data.followerId) },
+        });
+      }, 500);
+      break;
+
     case 'receive':
-      if (!pathname.includes('mypage')) router.dismissAll();
-      return router.navigate({
-        pathname: `/(tabs)/mypage/friends`,
-        params: { friendId: String(data.friendId) },
-      });
+      if (!pathname.includes('mypage')) router.replace('/mypage');
+      setTimeout(() => {
+        router.navigate({
+          pathname: `/(tabs)/mypage/friends`,
+          params: { friendId: String(data.friendId) },
+        });
+      }, 500);
+      break;
+
     case 'newuser':
       break;
+
     default:
       console.error('[ERROR] 알림 type이 존재하지 않음:', data.type);
       break;

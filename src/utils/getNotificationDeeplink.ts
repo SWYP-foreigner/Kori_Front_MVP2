@@ -8,29 +8,26 @@ export function getNotificationDeeplink(data: { [key: string]: string | number |
     switch (data.type) {
       case 'post':
       case 'comment':
-        return `kori://community/${data.postId}?commentId=${data.commentId ?? ''}`;
+        return `korifront://(tabs)/community/${data.postId}?commentId=${data.commentId ?? ''}`;
 
       case 'followuserpost':
-        return `kori://community/${data.postId}`;
+        return `korifront://(tabs)/community/${data.postId}`;
 
       case 'chat':
-        return `kori://screens/chatscreen/ChattingRoomScreen?roomId=${data.roomId}&myId=${data.myId}`;
+        return `korifront://(tabs)/chat/ChattingRoomScreen?roomId=${data.roomId}&myId=${data.myId}`;
 
       case 'follow':
-        return `kori://mypage/follows?followerId=${data.followerId}`;
+        return `korifront://(tabs)/mypage/follows?followerId=${data.followerId}`;
 
       case 'receive':
-        return `kori://mypage/friends?friendId=${data.friendId}`;
-
-      case 'newuser':
-        return `kori://community`;
+        return `korifront://(tabs)/mypage/friends?friendId=${data.friendId}`;
 
       default:
         console.error('[ERROR] 알림 type이 매칭되지 않음:', data.type);
         return null;
     }
-  } catch (e) {
-    console.error('[ERROR] 딥링크 생성 중 오류 발생:', e);
+  } catch (error) {
+    console.error('[ERROR] 딥링크 생성 중 오류 발생:', error);
     return null;
   }
 }
