@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import Fontisto from '@expo/vector-icons/Fontisto';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import { useProfile } from '@/app/contexts/ProfileContext';
-import { Asset } from 'expo-asset';
-import * as Crypto from 'expo-crypto';
 import api from '@/api/axiosInstance';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import Fontisto from '@expo/vector-icons/Fontisto';
 import axios from 'axios';
 import { Buffer } from 'buffer';
+import { Asset } from 'expo-asset';
+import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
+import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 
 // ------------------------
@@ -174,11 +174,11 @@ export default function AddPhotoStepScreen({}) {
       // 기본 아이콘 선택시
       let url;
       if (selectedAvatar === 0) {
-        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.png';
+        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.svg';
       } else if (selectedAvatar === 1) {
-        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.png';
+        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_02.svg';
       } else {
-        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png';
+        url = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.svg';
       }
       await CompleteProfile(url);
       setLoading(false);

@@ -15,6 +15,7 @@ export default function CountryStepScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const { profileData, updateProfile } = useProfile();
 
+  const isSelected = selectedCountry !== '';
   const canProceed = selectedCountry !== '';
   const router = useRouter();
 
@@ -63,7 +64,7 @@ export default function CountryStepScreen({ navigation }) {
         <Subtitle>Better matches, smoother conversation</Subtitle>
 
         <Form>
-          <DropdownButton selected={selectedCountry} onPress={() => setIsModalVisible(true)}>
+          <DropdownButton selected={isSelected} onPress={() => setIsModalVisible(true)}>
             <DropdownText selected={selectedCountry !== ''}>{selectedCountry || 'Select your country'}</DropdownText>
             <RotatedIcon>
               <Icon type="next" size={16} color={theme.colors.gray.gray_1} />
@@ -163,7 +164,7 @@ const Form = styled.View`
   margin-top: 50px;
 `;
 
-const DropdownButton = styled.TouchableOpacity<{ selected: string }>`
+const DropdownButton = styled.TouchableOpacity<{ selected: boolean }>`
   width: 100%;
   height: 50px;
   border-radius: 8px;

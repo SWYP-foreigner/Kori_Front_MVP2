@@ -1,62 +1,65 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialIcons, FontAwesome5, AntDesign, Feather } from '@expo/vector-icons';
 import { useProfile } from '@/app/contexts/ProfileContext';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
 
 export default function PurposeStepScreen({ navigation }) {
-  const [selectedPurpose, setSelectedPurpose] = useState(null);
+  const [selectedPurpose, setSelectedPurpose] = useState<Purpose | null>(null);
   const router = useRouter();
   const { profileData, updateProfile } = useProfile();
 
+  type Purpose = {
+    id: number;
+    iconName: string; // 🔑 renderIcon에서 비교할 키
+    title: string;
+    ageRange: string;
+    description: string;
+  };
+
   // Journey purposes with vector icons and age ranges
-  const purposes = [
+  const purposes: Purpose[] = [
     {
       id: 1,
-      iconFamily: 'MaterialIcons',
-      iconName: 'school',
+      iconName: 'edit',
       title: 'Study',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Educational exchange',
     },
     {
       id: 2,
-      iconFamily: 'MaterialIcons',
-      iconName: 'work',
+      iconName: 'business',
       title: 'Work',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Professional opportunities',
     },
     {
       id: 3,
-      iconFamily: 'AntDesign',
-      iconName: 'heart',
+      iconName: 'heartNonSelected',
       title: 'Marriage',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Finding life partner',
     },
     {
       id: 4,
-      iconFamily: 'FontAwesome5',
-      iconName: 'plane',
+      iconName: 'send',
       title: 'Travel',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Exploring Korea',
     },
     {
       id: 5,
-      iconFamily: 'MaterialIcons',
-      iconName: 'business',
+      iconName: 'purpose',
       title: 'Business',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Business ventures',
     },
     {
       id: 6,
-      iconFamily: 'MaterialIcons',
-      iconName: 'family-restroom',
+      iconName: 'person',
       title: 'Family',
       ageRange: 'D-2, D-4, D-2-5',
       description: 'Family reunion',
@@ -80,25 +83,12 @@ export default function PurposeStepScreen({ navigation }) {
     }
   };
 
-  const renderIcon = (iconFamily, iconName) => {
-    const iconProps = {
-      name: iconName,
-      size: 24,
-      color: '#FFFFFF',
-    };
+  const renderIcon = (iconFamily: string, iconName: string) => {
+    const isSelected = selectedPurpose?.iconName === iconName;
+    const color = isSelected ? theme.colors.primary.mint : theme.colors.primary.white;
 
-    switch (iconFamily) {
-      case 'MaterialIcons':
-        return <MaterialIcons {...iconProps} />;
-      case 'FontAwesome5':
-        return <FontAwesome5 {...iconProps} />;
-      case 'AntDesign':
-        return <AntDesign {...iconProps} />;
-      case 'Feather':
-        return <Feather {...iconProps} />;
-      default:
-        return <MaterialIcons {...iconProps} />;
-    }
+    // theme.colors.primary.white 키가 없을 수 있으니 안전하게 #FFFFFF 권장
+    return <Icon type={iconName} size={24} color={color} />;
   };
 
   return (
@@ -125,7 +115,7 @@ export default function PurposeStepScreen({ navigation }) {
               <IconContainer>
                 <PurposeIconContainer>{renderIcon(purpose.iconFamily, purpose.iconName)}</PurposeIconContainer>
                 <InfoButton>
-                  <AntDesign name="infocirlceo" size={16} color="#949899" />
+                  <Icon type="info" size={16} color={theme.colors.gray.gray_1} />
                 </InfoButton>
               </IconContainer>
 
@@ -194,7 +184,7 @@ const PurposeGrid = styled.View`
   justify-content: space-between;
 `;
 
-const PurposeCard = styled.TouchableOpacity`
+const PurposeCard = styled.TouchableOpacity<{ isSelected: boolean }>`
   width: 48%;
   height: 120px;
   background-color: ${(props) => (props.isSelected ? '#2A2B2D' : '#1A1B1D')};
