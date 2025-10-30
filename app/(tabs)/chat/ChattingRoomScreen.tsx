@@ -254,6 +254,7 @@ const ChattingRoomScreen = () => {
   };
 
   // 무한 스크롤
+  // TODO: 호출 시점 조정 필요
   const fetchMoreHistory = async () => {
     if (!hasMore) return;
 
