@@ -1,16 +1,16 @@
-import { Tabs } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
-import { Image, Text, AppState, AppStateStatus, Dimensions, Alert } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
-import * as Notifications from 'expo-notifications';
+import queryClient from '@/api/queryClient';
+import NotificationPermissionModal from '@/components/NotificationPermissionModal';
 import {
-  postFcmDeviceToken,
   getNotificationsSettingStatus,
   initNotificationsSettingStatus,
+  postFcmDeviceToken,
   putOSPushAgreement,
 } from '@/src/features/notification/api/notifications';
-import NotificationPermissionModal from '@/components/NotificationPermissionModal';
-import queryClient from '@/api/queryClient';
+import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
+import { Tabs, usePathname } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, AppState, AppStateStatus, Dimensions, Image, Text } from 'react-native';
 
 const { height: screenHeight } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = screenHeight * 0.117; // 화면 높이의 15%
@@ -18,6 +18,10 @@ const TAB_BAR_HEIGHT = screenHeight * 0.117; // 화면 높이의 15%
 export default function TabLayout() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isNotificationPermissionModalOpen, setIsNotificationPermissionModalOpen] = useState(false);
+  const pathname = usePathname();
+
+  // 채팅방 스크린들에서는 탭 바를 숨김
+  const shouldHideTabBar = pathname.includes('/CreateSpaceScreen') || pathname.includes('/ChattingRoomScreen');
 
   /* 1. FCM 토큰 등록 */
   const updateFcmToken = async () => {
@@ -99,7 +103,7 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: {
+          tabBarStyle: shouldHideTabBar ? { display: 'none' } : {
             backgroundColor: '#1D1E1F', // 원하는 배경색
             borderTopWidth: 1,
             borderColor: '#353637',
