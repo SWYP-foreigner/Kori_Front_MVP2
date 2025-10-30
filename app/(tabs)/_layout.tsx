@@ -72,6 +72,7 @@ export default function TabLayout() {
           await updateFcmToken();
 
           const { status } = await Notifications.getPermissionsAsync();
+          console.log('안드로이드 OS 알림 허용 상태:', status);
 
           if (status === 'undetermined') {
             // 아직 권한 설정 전인 경우 설정 요청 모달 표시
