@@ -1,6 +1,9 @@
+import api from '@/api/axiosInstance';
+import { patchLocation } from '@/api/member/location';
 import AppleSignInButton from '@/components/AppleSignInButton';
 import EmailSignButton from '@/components/EmailSignButton';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
 import { Config } from '@/src/lib/config';
 import Entypo from '@expo/vector-icons/Entypo';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -10,6 +13,7 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { randomUUID } from 'expo-crypto';
@@ -17,6 +21,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   ImageBackground,
@@ -25,14 +30,9 @@ import {
   StatusBar,
   TouchableOpacity,
   useWindowDimensions,
-  Alert,
 } from 'react-native';
 import { PageIndicator } from 'react-native-page-indicator';
 import styled from 'styled-components/native';
-import api from '@/api/axiosInstance';
-import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
-import { patchLocation } from '@/api/member/location';
-import { CommonActions } from '@react-navigation/native';
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
