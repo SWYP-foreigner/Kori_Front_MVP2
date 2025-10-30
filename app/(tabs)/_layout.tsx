@@ -37,6 +37,7 @@ export default function TabLayout() {
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      console.log('✨✨✨✨✨✨✨✨✨✨ OS 알림 허용 상태:', authStatus);
       await putOSPushAgreement(enabled);
 
       setIsNotificationPermissionModalOpen(false);
@@ -103,13 +104,15 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: shouldHideTabBar ? { display: 'none' } : {
-            backgroundColor: '#1D1E1F', // 원하는 배경색
-            borderTopWidth: 1,
-            borderColor: '#353637',
-            height: TAB_BAR_HEIGHT,
-            paddingTop: 10,
-          },
+          tabBarStyle: shouldHideTabBar
+            ? { display: 'none' }
+            : {
+                backgroundColor: '#1D1E1F', // 원하는 배경색
+                borderTopWidth: 1,
+                borderColor: '#353637',
+                height: TAB_BAR_HEIGHT,
+                paddingTop: 10,
+              },
         }}
       >
         <Tabs.Screen
