@@ -14,10 +14,25 @@ export default function BirthdaySelectionScreen() {
   const { profileData, updateProfile } = useProfile();
 
   const handleChange = (value) => {
-    setText(value);
+    // 1. 입력값에서 숫자만 추출합니다. (백스페이스 등 처리)
+    const digits = value.replace(/\D/g, '');
 
-    if (value.length === 10) {
-      if (validateDate(value)) {
+    // 2. 길이에 따라 MM/DD/YYYY 형식으로 포맷팅합니다.
+    let formattedValue = digits;
+    if (digits.length > 2 && digits.length <= 4) {
+      // "1234" -> "12/34"
+      formattedValue = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    } else if (digits.length > 4) {
+      // "12345678" -> "12/34/5678"
+      formattedValue = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+    }
+
+    // 3. 포맷팅된 값으로 상태를 업데이트합니다.
+    setText(formattedValue);
+
+    // 4. 포맷팅된 값을 기준으로 유효성을 검사합니다. (기존 로직)
+    if (formattedValue.length === 10) {
+      if (validateDate(formattedValue)) {
         setValidBirth(true);
       } else {
         setValidBirth(false);
@@ -80,6 +95,7 @@ export default function BirthdaySelectionScreen() {
             isValid={validbirth}
             isText={text}
             returnKeyType="done"
+            keyboardType="number-pad"
           />
           {validbirth && text.length === 10 ? (
             <Icon type="check" size={24} color={theme.colors.primary.mint} />
