@@ -10,7 +10,7 @@ import styled from 'styled-components/native';
 
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
-
+type FollowStatus = 'SELF' | 'PENDING' | 'ACCEPTED' | 'NOT_FOLLOWING';
 type RequestMode = 'friend' | 'received' | 'sent';
 
 type Props = {
@@ -28,10 +28,11 @@ type Props = {
   imageKey?: string;
 
   personalityEmojis?: string[];
-
-  isFollowed?: boolean;
-  onFollow?: (userId: number) => void;
-  onUnfollow?: (userId: number) => void;
+  followStatus?: FollowStatus;     // 👈 [추가]
+  isLoadingFollow?: boolean;    // 👈 [추가]
+  isLoadingChat?: boolean;      // 👈 [추가]
+  onFollow?: () => void;      // 👈 [수정] (userId: number) 제거
+  onUnfollow?: () => void;    // 👈 [수정] (userId: number) 제거
 
   mode?: RequestMode;
   onAccept?: (userId: number) => void;
@@ -96,8 +97,9 @@ export default function FriendCard(props: Props) {
 
     imageUrl,
     imageKey,
-
-    isFollowed = false,
+    followStatus = 'NOT_FOLLOWING', // 👈 [추가] 기본값 설정
+    isLoadingFollow = false,      // 👈 [추가]
+    isLoadingChat = false,        // 👈 [추가]
     onFollow,
     onUnfollow,
 
@@ -123,8 +125,9 @@ export default function FriendCard(props: Props) {
       onCancel?.(userId);
       return;
     }
-    if (isFollowed) onUnfollow?.(userId);
-    else onFollow?.(userId);
+    // 'friend' 모드일 때 (이 코드는 현재 사용되지 않지만, 만약을 위해 수정)
+    if (followStatus === 'ACCEPTED') onUnfollow?.();
+    else if (followStatus === 'NOT_FOLLOWING') onFollow?.();
   };
 
   return (
@@ -213,29 +216,33 @@ export default function FriendCard(props: Props) {
         <Actions>
           {mode === 'received' ? (
             <>
-              <CustomButton label="Accept" tone="mint" filled leftIcon="add" onPress={handlePrimaryPress} />
+              <CustomButton label="Accept" tone="mint" filled leftIcon="add" onPress={() => onAccept?.(userId)} />
               <CustomButton label="Decline" tone="danger" filled leftIcon="close" onPress={() => onCancel?.(userId)} />
             </>
           ) : mode === 'sent' ? (
             <>
+              {/* 'sent' 모드에서는 PENDING과 동일한 버튼을 보여줌 */}
               <CustomButton
-                label="Following"
+                label="Pending"
                 tone="muted"
                 filled={false}
                 leftIcon="check"
-                onPress={handlePrimaryPress}
+                disabled={true}
               />
               <CustomButton
                 label="Chat"
                 tone="black"
                 filled
                 leftIcon="chat-bubble-outline"
-                onPress={() => onChat?.()}
+                onPress={onChat}
+                disabled={isLoadingChat}
               />
             </>
           ) : (
+            // 'friend' 모드 (PostDetailScreen에서 사용)
             <>
-              {isFollowed ? (
+              {/* --- Follow/Unfollow/Pending 버튼 --- */}
+              {followStatus === 'ACCEPTED' && (
                 <CustomButton
                   label="Following"
                   tone="black"
@@ -243,18 +250,45 @@ export default function FriendCard(props: Props) {
                   leftIcon="check"
                   borderColor="#949899"
                   labelColor="#949899"
-                  onPress={() => onUnfollow?.(userId)}
+                  onPress={onUnfollow} // 👈 (userId) 제거
+                  disabled={isLoadingFollow} // 👈 로딩 상태 적용
+                  isLoading={isLoadingFollow}// 👈 로딩 인디케이터 (CustomButton이 지원한다면)
                 />
-              ) : (
-                <CustomButton label="Follow" tone="mint" filled leftIcon="add" onPress={() => onFollow?.(userId)} />
               )}
-              <CustomButton
-                label="Chat"
-                tone="black"
-                filled
-                leftIcon="chat-bubble-outline"
-                onPress={() => onChat?.()}
-              />
+              {followStatus === 'NOT_FOLLOWING' && (
+                <CustomButton
+                  label="Follow"
+                  tone="mint"
+                  filled
+                  leftIcon="add"
+                  onPress={onFollow} // 👈 (userId) 제거
+                  disabled={isLoadingFollow} // 👈 로딩 상태 적용
+                  isLoading={isLoadingFollow} // 👈 로딩 인디케이터
+                />
+              )}
+              {followStatus === 'PENDING' && (
+                <CustomButton
+                  label="Pending"
+                  tone="muted"
+                  filled={false}
+                  leftIcon="check"
+                  disabled={true} // 👈 PENDING은 항상 비활성화
+                />
+              )}
+              {/* followStatus === 'SELF'일 경우, 위 3개 버튼 모두 렌더링 안 됨 */}
+
+              {/* --- Chat 버튼 --- */}
+              {followStatus !== 'SELF' && ( // 👈 'SELF'가 아닐 때만 채팅 버튼 표시
+                <CustomButton
+                  label="Chat"
+                  tone="black"
+                  filled
+                  leftIcon="chat-bubble-outline"
+                  onPress={onChat}
+                  disabled={isLoadingChat} // 👈 로딩 상태 적용
+                  isLoading={isLoadingChat}// 👈 로딩 인디케이터
+                />
+              )}
             </>
           )}
         </Actions>

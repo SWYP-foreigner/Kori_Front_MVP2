@@ -1,8 +1,8 @@
-import React from 'react';
-import styled from 'styled-components/native';
-import { ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
-import useMyProfile from '@/hooks/queries/useMyProfile';
 import defaultAvatar from '@/assets/images/default-avatar.png';
+import useMyProfile from '@/hooks/queries/useMyProfile';
+import React from 'react';
+import { ActivityIndicator, Image, ScrollView, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 import Icon from './common/Icon';
 
 type Props = {

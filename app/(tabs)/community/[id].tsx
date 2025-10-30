@@ -2,6 +2,7 @@ import api from '@/api/axiosInstance';
 import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import { blockComment } from '@/api/community/comments';
 import CommentItem, { Comment } from '@/components/CommentItem';
+import ProfileModal from '@/components/ProfileModal';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
 import { useLikeComment } from '@/hooks/mutations/useLikeComment';
@@ -11,6 +12,8 @@ import { useCommentWriteOptions } from '@/hooks/queries/useCommentWriteOptions';
 import { usePostComments } from '@/hooks/queries/usePostComments';
 import { usePostDetail } from '@/hooks/queries/usePostDetail';
 import { usePostUI } from '@/src/store/usePostUI';
+import { formatCreatedYMD } from '@/src/utils/dateUtils';
+import { loadAspectRatios } from '@/src/utils/image';
 import { LOCAL_ALLOW_ANON, resolvePostCategory } from '@/utils/category';
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -21,21 +24,19 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import type { FlatList as RNFlatList } from 'react-native';
 import styled from 'styled-components/native';
-import ProfileModal from '@/components/ProfileModal';
-import { loadAspectRatios } from '@/src/utils/image';
-import { formatCreatedYMD } from '@/src/utils/dateUtils';
+
 import {
   Alert,
   Animated,
   Dimensions,
   Easing,
   FlatList,
-  Image as RNImage,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  Image as RNImage,
   TextInput as RNTextInput,
   TextInputProps,
   View,
@@ -99,6 +100,8 @@ export default function PostDetailScreen() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const { id, focusCommentId, intent, commentId } = useLocalSearchParams<{
     id: string;
     focusCommentId?: string;
@@ -117,6 +120,7 @@ export default function PostDetailScreen() {
     toggleLiked,
     setLikeCount,
     hydrateLikeFromServer,
+
   } = usePostUI();
 
   const postBookmarked = bmMap[postId] ?? false;
@@ -374,14 +378,14 @@ export default function PostDetailScreen() {
 
   const authorId: string = String(
     post.userId ??
-      post.authorId ??
-      post.memberId ??
-      post.writerId ??
-      post.ownerId ??
-      post.creatorId ??
-      post.author?.id ??
-      post.user?.id ??
-      '',
+    post.authorId ??
+    post.memberId ??
+    post.writerId ??
+    post.ownerId ??
+    post.creatorId ??
+    post.author?.id ??
+    post.user?.id ??
+    '',
   );
   const authorName: string =
     post.userName ??
@@ -419,7 +423,7 @@ export default function PostDetailScreen() {
     console.groupCollapsed('[post-meta]');
     const keys = Object.keys(post || {});
     console.groupEnd();
-  } catch {}
+  } catch { }
 
   const toggleCommentLike = (comment: Comment) => {
     const cmtId = Number((comment as any).id ?? (comment as any).commentId);
@@ -699,6 +703,184 @@ export default function PostDetailScreen() {
       },
     ]);
   };
+  const handleStartChat = async () => {
+    // 2. 이미 로딩 중이거나 선택된 유저가 없으면 중단
+    if (isChatLoading || !selectedUser) {
+      console.log('Chat creation in progress or no user selected.');
+      return;
+    }
+
+    // 3. selectedUser에서 상대방 ID 추출 (키 이름은 실제 데이터에 맞게 조정 필요)
+    const otherUserId = (selectedUser as any)?.id ?? (selectedUser as any)?.userId;
+
+    if (!otherUserId) {
+      Alert.alert('Error', 'Could not find user ID to start chat.');
+      return;
+    }
+
+    console.log(`[Chat] Attempting to create room with user: ${otherUserId}`);
+    setIsChatLoading(true);
+
+    try {
+      // 4. API 호출
+      const response = await api.post('/api/v1/chat/rooms/oneTone', {
+        otherUserId: Number(otherUserId),
+      });
+
+      // 5. 응답 데이터에서 채팅방 ID 추출
+      // API 응답 본문이 { "id": ..., "participants": ... } 형태이므로 response.data가 바로 채팅방 객체입니다.
+      console.log('[Chat] API Response Data:', JSON.stringify(response.data, null, 2));
+      const newRoom = response.data.data;
+      const roomId = newRoom?.id;
+
+      if (!roomId) {
+        throw new Error('Chat room ID not found in API response.');
+      }
+
+      console.log(`[Chat] Successfully created room. ID: ${roomId}`);
+
+      // 6. 성공 시 프로필 모달 닫기
+      setIsProfileVisible(false);
+
+      // 7. expo-router를 사용해 채팅방으로 이동
+      //    (경로는 실제 채팅방 스크린 경로에 맞게 수정하세요. 예: '/chat/[id]')
+      router.push({
+        pathname: '/chat/ChattingRoomScreen', // <-- ChatLayout에 등록된 파일 이름
+        params: { roomId: roomId }             // <-- 전달할 데이터 (채팅방 ID)
+      });
+
+    } catch (err: any) {
+      // 8. 에러 처리
+      console.error('[Chat] Failed to create chat room:', err);
+      const status = err.response?.status;
+      const msg =
+        status === 400
+          ? 'Invalid request.'
+          : status === 401
+            ? 'Please log in to chat.'
+            : 'Failed to start chat.';
+      Alert.alert('Chat Error', msg);
+    } finally {
+      // 9. 로딩 상태 해제
+      setIsChatLoading(false);
+    }
+  };
+
+  // 🔽 [추가] 팔로우 요청 함수
+  const handleFollow = async () => {
+    // 로딩 중이거나, 유저 정보가 없으면 중단
+    if (isFollowLoading || !selectedUser) return;
+
+    // selectedUser에서 ID와 현재 팔로우 상태를 가져옵니다.
+    const targetUserId = (selectedUser as any)?.userId;
+    const currentStatus = (selectedUser as any)?.followStatus;
+
+    if (!targetUserId) {
+      Alert.alert('Error', 'Could not find user ID.');
+      return;
+    }
+
+    // "NOT_FOLLOWING" 상태일 때만 팔로우 요청을 보냅니다.
+    if (currentStatus !== 'NOT_FOLLOWING') {
+      console.log(`[Follow] Action ignored. Current status: ${currentStatus}`);
+      return;
+    }
+
+    console.log(`[Follow] Attempting to follow user: ${targetUserId}`);
+    setIsFollowLoading(true);
+
+    try {
+      // 1. API 호출: POST /api/v1/home/follow/{userId}
+      await api.post(`/api/v1/home/follow/${targetUserId}`);
+
+      // 2. API 성공 시, 로컬 state를 "PENDING"으로 즉시 변경 (Optimistic UI)
+      //    (모달이 이 state를 보고 버튼 모양을 "Pending"으로 바꿀 겁니다)
+      setSelectedUser(prevUser => ({
+        ...(prevUser as any),
+        followStatus: 'PENDING'
+      }));
+
+      Alert.alert('Follow', 'Follow request sent!');
+
+    } catch (err: any) {
+      // 3. 에러 처리 (백엔드 로직에 맞게)
+      console.error('[Follow] Failed to send follow request:', err);
+      const errorData = err.response?.data;
+      const errorCode = errorData?.code; // 백엔드에서 보낸 에러 코드
+
+      let msg = 'Failed to send follow request.';
+      if (errorCode === 'PROFILE_SET_NOT_COMPLETED') {
+        msg = 'You must complete your own profile before you can follow others.';
+      } else if (errorCode === 'FOLLOW_ALREADY_EXISTS') {
+        msg = 'You have already sent a request or are already following this user.';
+        // 혹시 모르니 state를 PENDING으로 강제 동기화
+        setSelectedUser(prevUser => ({
+          ...(prevUser as any),
+          followStatus: 'PENDING' // 또는 'ACCEPTED'일 수 있으나 PENDING이 더 가능성 높음
+        }));
+      } else if (errorCode === 'CANNOT_FOLLOW_YOURSELF') {
+        msg = 'You cannot follow yourself.';
+      }
+
+      Alert.alert('Follow Error', msg);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    // 로딩 중이거나, 유저 정보가 없으면 중단
+    if (isFollowLoading || !selectedUser) return;
+
+    // selectedUser에서 ID와 현재 팔로우 상태를 가져옵니다.
+    const targetUserId = (selectedUser as any)?.userId;
+    const currentStatus = (selectedUser as any)?.followStatus;
+
+    // "ACCEPTED" (친구) 상태가 아니면 함수를 실행하지 않습니다.
+    if (currentStatus !== 'ACCEPTED') {
+      console.log(`[Unfollow] Action ignored. Current status: ${currentStatus}`);
+      Alert.alert('Unfollow', 'You can only unfollow users you are already friends with.');
+      return;
+    }
+
+    console.log(`[Unfollow] Attempting to unfollow user: ${targetUserId}`);
+    setIsFollowLoading(true);
+
+    try {
+      // 1. API 호출: DELETE /api/v1/users/follow/accepted/{friendId}
+      await api.delete(`/api/v1/users/follow/accepted/${targetUserId}`);
+
+      // 2. API 성공 시, 로컬 state를 "NOT_FOLLOWING"으로 즉시 변경
+      setSelectedUser(prevUser => ({
+        ...(prevUser as any),
+        followStatus: 'NOT_FOLLOWING'
+      }));
+
+      Alert.alert('Unfollow', 'You have successfully unfollowed this user.');
+
+    } catch (err: any) {
+      // 3. 에러 처리
+      console.error('[Unfollow] Failed to unfollow:', err);
+      const status = err.response?.status;
+      let msg = 'Failed to unfollow user.';
+
+      if (status === 404) {
+        msg = 'User not found or you are not following them.';
+        // 404 에러 시 로컬 state를 강제로 'NOT_FOLLOWING'으로 동기화
+        setSelectedUser(prevUser => ({
+          ...(prevUser as any),
+          followStatus: 'NOT_FOLLOWING'
+        }));
+      } else if (status === 401) {
+        msg = 'Please log in again.';
+      }
+
+      Alert.alert('Unfollow Error', msg);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
 
   const reportTitle =
     reportTarget === 'user'
@@ -1083,9 +1265,11 @@ export default function PostDetailScreen() {
         visible={isProfileVisible}
         userData={selectedUser}
         onClose={() => setIsProfileVisible(false)}
-        onFollow={(id) => console.log('follow', id)}
-        onUnfollow={(id) => console.log('unfollow', id)}
-        onChat={() => console.log('chat start')}
+        onFollow={handleFollow}
+        onUnfollow={handleUnfollow}
+        onChat={handleStartChat}
+        isLoadingFollow={isFollowLoading}
+        isLoadingChat={isChatLoading}
       />
     </Safe>
   );

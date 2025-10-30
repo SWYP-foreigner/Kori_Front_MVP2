@@ -32,8 +32,6 @@ yarn-error.*
 
 # iOS
 ios/
-ios/build
-ios/Pods
 
 # android
 android/

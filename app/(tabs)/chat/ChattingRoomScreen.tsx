@@ -302,7 +302,7 @@ const ChattingRoomScreen = () => {
   // 햄버거 버튼 눌렀을때 이동
   const onhandleNext = () => {
     router.push({
-      pathname: './ChatInsideMember',
+      pathname: '/screens/chatscreen/ChatInsideMember',
       params: { roomId, roomName },
     });
   };
