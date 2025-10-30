@@ -1,20 +1,16 @@
-import { postFollow } from '@/api/follow';
 import defaultAvatar from '@/assets/images/default-avatar.png';
 import useMyProfile from '@/hooks/queries/useMyProfile';
-import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, Image, ScrollView, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
 import Icon from './common/Icon';
 
 type Props = {
   onClose: () => void;
-  userId: number; // 팔로우 대상 ID
 };
 
-const UserProfileCard = ({ onClose, userId }: Props) => {
+const UserProfileCard = ({ onClose }: Props) => {
   const { data: profile, isLoading, isError } = useMyProfile();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [loadingFollow, setLoadingFollow] = useState(false);
 
   if (isLoading)
     return (
@@ -26,22 +22,6 @@ const UserProfileCard = ({ onClose, userId }: Props) => {
   if (isError || !profile) return <ErrorText>Failed to load profile 😢</ErrorText>;
 
   const { firstname, lastname, country, introduction, purpose, language, hobby, imageUrl } = profile;
-
-  const handleFollow = async () => {
-    if (loadingFollow) return;
-    setLoadingFollow(true);
-    try {
-      const res = await postFollow(userId);
-      console.log('팔로우 성공:', res);
-      setIsFollowing(true);
-      Alert.alert('팔로우 완료!');
-    } catch (e) {
-      console.error(e);
-      Alert.alert('팔로우 실패');
-    } finally {
-      setLoadingFollow(false);
-    }
-  };
 
   return (
     <Container>
@@ -86,10 +66,8 @@ const UserProfileCard = ({ onClose, userId }: Props) => {
         )}
 
         <ButtonRow>
-          <FollowButton onPress={handleFollow} disabled={isFollowing || loadingFollow}>
-            <ButtonText style={{ color: isFollowing ? '#fff' : '#000' }}>
-              {isFollowing ? 'Following' : 'Follow'}
-            </ButtonText>
+          <FollowButton>
+            <ButtonText>Following</ButtonText>
           </FollowButton>
           <ChatButton>
             <ButtonText style={{ color: '#fff' }}>Chat</ButtonText>
@@ -105,6 +83,7 @@ const UserProfileCard = ({ onClose, userId }: Props) => {
 };
 
 export default UserProfileCard;
+
 // styled-components
 const Container = styled.View`
   flex: 1;

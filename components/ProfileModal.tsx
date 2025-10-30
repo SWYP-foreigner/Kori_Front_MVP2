@@ -1,6 +1,6 @@
 import FriendCard from '@/components/FriendCard';
 import React from 'react';
-import { ActivityIndicator, ScrollView } from 'react-native'; // 👈 ActivityIndicator 추가
+import { ActivityIndicator, ScrollView } from 'react-native';
 import styled from 'styled-components/native';
 
 // 1. Props 정의 수정
@@ -106,7 +106,7 @@ const ModalContainer = styled.View`
   border-radius: 20px;
   padding: 10px;
   max-height: 100%;
-  overflow: hidden; // 👈 LoadingOverlay를 위해 추가
+  overflow: hidden; 
 `;
 
 // [추가] 로딩 오버레이 스타일
