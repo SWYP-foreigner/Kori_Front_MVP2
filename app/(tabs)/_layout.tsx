@@ -1,9 +1,10 @@
 import queryClient from '@/api/queryClient';
 import NotificationPermissionModal from '@/components/NotificationPermissionModal';
 import {
+  getNotificationsSettingStatus,
   initNotificationsSettingStatus,
   postFcmDeviceToken,
-  putOSPushAgreement
+  putOSPushAgreement,
 } from '@/src/features/notification/api/notifications';
 import messaging from '@react-native-firebase/messaging';
 import * as Notifications from 'expo-notifications';
@@ -64,22 +65,37 @@ export default function TabLayout() {
         (appState.current.match(/inactive|background/) && nextState === 'active') || // 백그라운드에서 포그라운드 진입 시
         (appState.current === 'active' && nextState === 'active'); // 앱 최초 실행 시
 
-      // [2] 잠금(Lock) 상태를 확인하는 조건 추가
       if (isActivated && !isCheckingPermissions.current) {
         try {
-          isCheckingPermissions.current = true; // <--- [3] 함수가 시작될 때 잠그기
+          isCheckingPermissions.current = true;
 
           await updateFcmToken();
 
-          const { status } = await Notifications.requestPermissionsAsync();
-          // ... (if, else if 로직은 그대로 둡니다)
-          // ...
+          const { status } = await Notifications.getPermissionsAsync();
 
+          if (status === 'undetermined') {
+            // 아직 권한 설정 전인 경우 설정 요청 모달 표시
+            setIsNotificationPermissionModalOpen(true);
+            return;
+          }
+
+          if (status === 'denied') {
+            // OS 권한이 거부된 경우 서버 알림 전체 비활성화
+            await initNotificationsSettingStatus(false);
+          } else if (status === 'granted') {
+            // OS 권한이 허용된 경우 서버 상태 점검
+            const serverStatus = await getNotificationsSettingStatus();
+            if (serverStatus === 'NEEDS_SETUP') {
+              // 서버 설정이 필요한 경우 OS 상태 동기화 여부와 알림 상세 설정을 모두 true로 초기화
+              await putOSPushAgreement(true);
+              await initNotificationsSettingStatus(true);
+            }
+          }
           await queryClient.invalidateQueries({ queryKey: ['notificationSettings'] });
         } catch (error) {
           console.error('[ERROR] 알림 권한 갱신 중 오류 발생:', error);
         } finally {
-          isCheckingPermissions.current = false; // <--- [4] 모든 작업(성공/실패)이 끝나면 잠금 해제
+          isCheckingPermissions.current = false;
         }
       }
 
@@ -99,12 +115,12 @@ export default function TabLayout() {
           tabBarStyle: shouldHideTabBar
             ? { display: 'none' }
             : {
-              backgroundColor: '#1D1E1F', // 원하는 배경색
-              borderTopWidth: 1,
-              borderColor: '#353637',
-              height: TAB_BAR_HEIGHT,
-              paddingTop: 10,
-            },
+                backgroundColor: '#1D1E1F', // 원하는 배경색
+                borderTopWidth: 1,
+                borderColor: '#353637',
+                height: TAB_BAR_HEIGHT,
+                paddingTop: 10,
+              },
         }}
       >
         <Tabs.Screen
