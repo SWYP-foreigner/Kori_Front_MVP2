@@ -51,7 +51,7 @@ api.interceptors.request.use(
         const s = JSON.stringify(config.data);
         if (s.length <= 400) console.log('[axios:req] body', JSON.parse(s));
         else console.log('[axios:req] body(len)', s.length);
-      } catch {}
+      } catch { }
     }
 
     return config;
@@ -117,15 +117,26 @@ api.interceptors.response.use(
     try {
       if (!refreshPromise) refreshPromise = doRefresh();
       const newAccess = await refreshPromise;
+
+      // 👇 [로그 1] 새 액세스 토큰을 성공적으로 받았는지 확인
+      console.log('[axios:refresh] 새 액세스 토큰 수신:', newAccess ? '성공 (토큰 있음)' : '실패 (null 반환됨)');
+
       refreshPromise = null;
 
       if (!newAccess) {
+        // 👇 [로그 2] 토큰 갱신이 실패해서 원래 요청을 거부함
+        console.log('[axios:refresh] 새 토큰이 없으므로, 401 에러를 그대로 반환합니다.');
         return Promise.reject(error);
       }
 
       (cfg.headers as any).Authorization = `Bearer ${newAccess}`;
-      return api(cfg);
+      // 👇 [로그 3] 새 토큰으로 원래 요청을 재시도함
+      console.log('[axios:refresh] 새 토큰으로 원래 요청을 재시도합니다:', cfg.url);
+      return api(cfg); // 원래 요청 재시도
+
     } catch (e) {
+      // 👇 [로그 4] 'doRefresh' 함수 자체가 실패(throw error)한 경우
+      console.error('[axios:refresh] 토큰 갱신(doRefresh) 함수 실행 중 예외 발생:', e);
       refreshPromise = null;
       return Promise.reject(e);
     }

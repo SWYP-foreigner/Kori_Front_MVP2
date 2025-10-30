@@ -1,20 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components/native';
+import api from '@/api/axiosInstance';
+import ProfileModal from '@/components/ProfileModal';
+import { Config } from '@/src/lib/config';
+import { formatDate, formatTime } from '@/src/utils/dateUtils';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { useRouter } from 'expo-router';
-import { StatusBar, FlatList, KeyboardAvoidingView, Platform, Alert, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import { Client } from '@stomp/stompjs';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import api from '@/api/axiosInstance';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Dimensions, FlatList, Image, InteractionManager, KeyboardAvoidingView, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dimensions, Image, InteractionManager } from 'react-native';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { Config } from '@/src/lib/config';
-import { useNavigation } from 'expo-router';
-import { formatDate, formatTime } from '@/src/utils/dateUtils';
-import ProfileModal from '@/components/ProfileModal';
+import styled from 'styled-components/native';
 
 type ChatHistory = {
   id: number;
@@ -257,6 +254,7 @@ const ChattingRoomScreen = () => {
   };
 
   // 무한 스크롤
+  // TODO: 호출 시점 조정 필요
   const fetchMoreHistory = async () => {
     if (!hasMore) return;
 
@@ -264,7 +262,7 @@ const ChattingRoomScreen = () => {
 
     try {
       const lastMessageId = messages[messages.length - 1]?.id;
-      const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId}`);
+      const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId ? lastMessageId : ''}`);
 
       const olderMessages: ChatHistory[] = res.data.data;
 
@@ -302,7 +300,7 @@ const ChattingRoomScreen = () => {
   // 햄버거 버튼 눌렀을때 이동
   const onhandleNext = () => {
     router.push({
-      pathname: './ChatInsideMember',
+      pathname: '/screens/chatscreen/ChatInsideMember',
       params: { roomId, roomName },
     });
   };
@@ -638,7 +636,7 @@ const ChattingRoomScreen = () => {
                             <OtherFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                searchMessages[pointerRef.current].id === item.id ? (
+                                  searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}
@@ -673,7 +671,7 @@ const ChattingRoomScreen = () => {
                             <OtherNotFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                searchMessages[pointerRef.current].id === item.id ? (
+                                  searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}

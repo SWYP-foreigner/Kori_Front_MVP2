@@ -10,8 +10,8 @@ import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
 import { useSentFollowRequestsSet } from '@/hooks/queries/useFollowList';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import useRecommendedFriends from '@/hooks/queries/useRecommendedFriends';
-import { router } from 'expo-router';
 import { Text } from '@react-navigation/elements';
+import { router } from 'expo-router';
 
 const toBirthNumber = (v: unknown): number | undefined => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
@@ -146,7 +146,9 @@ export default function HomeScreen() {
                   imageKey={(item as any).imageKey}
                   defaultExpanded={false}
                   mode={isSent ? 'sent' : 'friend'}
-                  onFollow={async (id) => {
+                  // --- 👇 [수정] onFollow ---
+                  onFollow={async () => { // (id) 파라미터 제거
+                    const id = uid; // uid를 직접 사용
                     if ((myId && id === myId) || inFlight.has(id)) return;
 
                     const already = requested.has(id);
@@ -164,7 +166,9 @@ export default function HomeScreen() {
                       unlock(id);
                     }
                   }}
-                  onCancel={async (id) => {
+                  // --- 👇 [수정] onCancel ---
+                  onCancel={async () => { // (id) 파라미터 제거
+                    const id = uid; // uid를 직접 사용
                     if ((myId && id === myId) || inFlight.has(id)) return;
                     const wasSent = requested.has(id);
                     if (wasSent) unmarkRequested(id); // 낙관적 제거
