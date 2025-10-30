@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
 import { StatusBar } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from 'expo-router';
+import { CommonActions } from '@react-navigation/native';
 
 const ProfileSetUpDoneScreen = () => {
-  const router = useRouter();
+  const navigation = useNavigation();
   const startKori = () => {
-    router.replace('/(tabs)');
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: '(tabs)' }],
+      }),
+    );
   };
 
   return (

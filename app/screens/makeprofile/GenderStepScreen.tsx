@@ -1,10 +1,10 @@
+import { useProfile } from '@/app/contexts/ProfileContext';
 import Icon from '@/components/common/Icon';
 import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
-import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 
 // ------------------------

@@ -1,10 +1,10 @@
+import { useProfile } from '@/app/contexts/ProfileContext';
 import Icon from '@/components/common/Icon';
 import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform, SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
-import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen
@@ -17,8 +17,7 @@ export default function NameStepScreen() {
   const { profileData, updateProfile } = useProfile();
 
   // Android일 때만 이름이 필수 처리
-  const isAndroid = Platform.OS === 'android';
-  const canProceed = isAndroid ? firstName && lastName : true;
+  const canProceed = firstName.trim().length > 0 && lastName.trim().length > 0;
 
   const handleSkip = () => {
     router.push('./GenderStepScreen');

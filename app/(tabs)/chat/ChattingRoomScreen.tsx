@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Alert } from 'react-native';
 import styled from 'styled-components/native';
 import Feather from '@expo/vector-icons/Feather';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { useRouter } from 'expo-router';
-import { StatusBar, FlatList, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import { StatusBar, FlatList, KeyboardAvoidingView, Platform, Alert, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Client } from '@stomp/stompjs';
 import * as SecureStore from 'expo-secure-store';
@@ -14,6 +13,9 @@ import { Dimensions, Image, InteractionManager } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Config } from '@/src/lib/config';
 import { useNavigation } from 'expo-router';
+import { formatDate, formatTime } from '@/src/utils/dateUtils';
+import ProfileModal from '@/components/ProfileModal';
+
 type ChatHistory = {
   id: number;
   roomId: number;
@@ -43,7 +45,7 @@ const ChattingRoomScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { userId, roomName } = useLocalSearchParams<{ userId: string; roomName: string }>();
+  const { roomName } = useLocalSearchParams<{ roomName: string }>();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -59,6 +61,10 @@ const ChattingRoomScreen = () => {
   const [searchMessages, setSearchMessages] = useState<any[]>([]);
   const pointerRef = useRef(0);
   const flatListRef = useRef<FlatList>(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
   // ---------------------- 토큰 refresh 함수 ----------------------
   const refreshTokenIfNeeded = async (): Promise<string | null> => {
     try {
@@ -77,6 +83,20 @@ const ChattingRoomScreen = () => {
     } catch (err) {
       console.error('[AUTH] 토큰 재발급 실패', err);
       return null;
+    }
+  };
+
+  const fetchUserProfile = async (userId: number) => {
+    try {
+      setIsLoadingProfile(true);
+      const res = await api.get(`/api/v1/member/${userId}/info`);
+      setSelectedUser(res.data);
+      setIsProfileVisible(true);
+    } catch (err) {
+      console.error('프로필 불러오기 실패', err);
+      Alert.alert('Error', 'Failed to load user profile');
+    } finally {
+      setIsLoadingProfile(false);
     }
   };
 
@@ -251,7 +271,7 @@ const ChattingRoomScreen = () => {
       if (olderMessages.length === 0) {
         setHasMore(false);
       } else {
-        setMessages((prev) => [...prev, ...olderMessages]); // inverted → 배열 뒤쪽에 붙이기
+        setMessages((prev) => [...prev, ...olderMessages]);
       }
     } catch (err) {
       console.error('이전 메시지 불러오기 실패', err);
@@ -453,29 +473,6 @@ const ChattingRoomScreen = () => {
     }
   };
 
-  // 시간 변환 함수
-  const formatTime = (sentAt: string | number) => {
-    const ts = typeof sentAt === 'string' ? Date.parse(sentAt) : sentAt * 1000;
-    const date = new Date(ts);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-  const formatDate = (utcSeconds: number): string => {
-    // 초 단위이므로 밀리초로 변환
-    const date = new Date(utcSeconds * 1000);
-
-    // 요일 배열
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const weekday = weekdays[date.getUTCDay()];
-
-    return `${year}.${month}.${day} (${weekday})`;
-  };
-
   return (
     <SafeArea>
       <StatusBar barStyle="light-content" />
@@ -627,7 +624,12 @@ const ChattingRoomScreen = () => {
                       <ChattingLeftContainer showProfile={showProfile}>
                         <ProfileContainer>
                           <ProfileBox>
-                            <ProfileImage source={{ uri: item.senderImageUrl }} />
+                            <TouchableOpacity
+                              onPress={() => fetchUserProfile(item.senderId)}
+                              disabled={isLoadingProfile}
+                            >
+                              <ProfileImage source={{ uri: item.senderImageUrl }} />
+                            </TouchableOpacity>
                           </ProfileBox>
                         </ProfileContainer>
                         <OtherContainer>
@@ -739,6 +741,14 @@ const ChattingRoomScreen = () => {
                 </SendImageBox>
               </BottomContainer>
             )}
+            <ProfileModal
+              visible={isProfileVisible}
+              userData={selectedUser}
+              onClose={() => setIsProfileVisible(false)}
+              onFollow={(id) => console.log('follow', id)}
+              onUnfollow={(id) => console.log('unfollow', id)}
+              onChat={() => console.log('chat start')}
+            />
 
             {!isTranslate && (
               <TranslateButtonBox onPress={updateTranslateScreen}>
@@ -951,7 +961,6 @@ const TranslatingImage = styled.Image`
 const BottomContainer = styled.View`
   background-color: #1d1e1f;
   height: 50px;
-
   border-top-width: 1px;
   border-top-color: #353637;
   flex-direction: row;
@@ -987,13 +996,6 @@ const DateTimeText = styled.Text`
   color: #848687;
   font-size: 12px;
   font-family: PlusJakartaSans_600SemiBold;
-`;
-
-const LoadingText = styled.Text`
-  color: #ccc;
-  text-align: center;
-  padding: 10px;
-  font-size: 12px;
 `;
 
 const SearchContainer = styled.View`

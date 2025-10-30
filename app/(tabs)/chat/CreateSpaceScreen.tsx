@@ -10,7 +10,6 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';

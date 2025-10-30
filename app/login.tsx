@@ -13,10 +13,11 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { randomUUID } from 'expo-crypto';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from 'react';
 import {
@@ -60,6 +61,7 @@ const { width } = Dimensions.get('window');
 
 const LoginScreen = () => {
   const router = useRouter();
+  const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [allCheck, setAllCheck] = useState(false);
@@ -117,14 +119,26 @@ const LoginScreen = () => {
       const res = await axios.post<AppLoginResponse>(`${Config.SERVER_URL}/api/v1/member/google/app-login`, { code });
 
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
-      await SecureStore.setItemAsync('jwt', accessToken);
-      await SecureStore.setItemAsync('refresh', refreshToken);
-      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      await SecureStore.setItemAsync('jwt', accessToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('refresh', refreshToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('MyuserId', userId.toString(), {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
 
       if (isNewUser) {
         showModal();
       } else {
-        router.replace('/(tabs)');
+        // 기존 화면 스택 삭제 후 tab으로 이동
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: '(tabs)' }],
+          }),
+        );
       }
     } catch (error) {
       console.error('서버 요청 실패', error);
@@ -196,9 +210,17 @@ const LoginScreen = () => {
       );
 
       const { accessToken, refreshToken, userId, isNewUser } = res.data.data;
-      await SecureStore.setItemAsync('jwt', accessToken);
-      await SecureStore.setItemAsync('refresh', refreshToken);
-      await SecureStore.setItemAsync('MyuserId', userId.toString());
+      await SecureStore.setItemAsync('jwt', accessToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('refresh', refreshToken, {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+      await SecureStore.setItemAsync('MyuserId', userId.toString(), {
+        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+
+      console.log('✨✨✨✨✨✨✨✨apple login data:', res.data.data);
 
       if (isNewUser) {
         try {
@@ -224,7 +246,13 @@ const LoginScreen = () => {
           console.error('error', error);
         }
       } else {
-        router.replace('/(tabs)');
+        // 기존 화면 스택 삭제 후 tab으로 이동
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: '(tabs)' }],
+          }),
+        );
       }
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') {

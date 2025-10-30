@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, Text } from 'react-native';
 import styled from 'styled-components/native';
 import Icon, { IconType } from './Icon';
+import { theme } from '@/src/styles/theme';
 
 interface DetailHeaderProps {
   title: string;
@@ -28,7 +29,7 @@ export default function DetailHeader({
   return (
     <Header>
       <BackBtn onPress={() => router.back()}>
-        <Icon type="previous" size={24} color="#CCCFD0" />
+        <Icon type="previous" size={24} color={theme.colors.gray.lightGray_1} />
       </BackBtn>
 
       <TitleWrap pointerEvents="none">
@@ -54,7 +55,7 @@ const Header = styled.View`
 const Title = styled.Text`
   font-family: 'PlusJakartaSans_500Medium';
   font-size: 16px;
-  color: #ffffff;
+  color: ${({ theme }) => theme.colors.primary.white};
 `;
 
 const BackBtn = styled.Pressable`

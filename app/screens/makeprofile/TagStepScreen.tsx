@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfile } from '../../contexts/ProfileContext';
+import { useProfile } from '@/app/contexts/ProfileContext';
 import axios from 'axios';
 import { Platform } from 'react-native';
 import SkipHeader from './components/SkipHeader';
@@ -41,6 +41,7 @@ export default function TagStepScreen() {
   const maxSelections = 5;
   const [selectedTags, setSelectedTags] = useState([]);
   const { profileData, updateProfile } = useProfile();
+  const canProceed = selectedTags.length > 0;
 
   const selectTag = (tag) => {
     if (selectedTags.includes(tag)) {
@@ -121,7 +122,7 @@ export default function TagStepScreen() {
         </ScrollableContainer>
 
         <ButtonSection>
-          <NextButton onPress={handleNext} disabled={selectedTags.length === 0}>
+          <NextButton onPress={handleNext} disabled={!canProceed}>
             <ButtonText>Next</ButtonText>
           </NextButton>
         </ButtonSection>
