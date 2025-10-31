@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components/native';
+import ProfileModal from '@/components/ProfileModal';
 import {
   SafeAreaView,
   StatusBar,
@@ -39,6 +40,11 @@ const ChatInsideMember = () => {
   const [members, setMembers] = useState<ChatMembers[]>([]);
   const [reportId, setReportId] = useState<string | null>(null);
   const [text, setText] = useState(``);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
 
   useEffect(() => {
     const getMembers = async () => {
@@ -53,6 +59,86 @@ const ChatInsideMember = () => {
     };
     getMembers();
   }, [roomId]);
+
+  const handlePressProfile = async (userId: number) => {
+    try {
+      setIsLoadingProfile(true);
+      const res = await api.get(`/api/v1/member/${userId}/info`);
+      setSelectedUser(res.data);
+      setIsProfileVisible(true);
+    } catch (err) {
+      console.error('프로필 불러오기 실패', err);
+      Alert.alert('Error', 'Failed to load user profile');
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!selectedUser) return;
+
+    // userId를 정확히 추출하고 검증
+    const userId = selectedUser.userId || selectedUser.id;
+    const cleanUserId = String(userId).trim();
+
+    if (!cleanUserId || isNaN(Number(cleanUserId))) {
+      console.error('Invalid userId:', userId);
+      Alert.alert('Error', 'Invalid user ID');
+      return;
+    }
+
+    try {
+      console.log('Following userId:', cleanUserId);
+      await api.post(`/api/v1/home/follow/${cleanUserId}`);
+      setSelectedUser((prev) => ({ ...prev, followStatus: 'PENDING' }));
+      Alert.alert('Follow', 'Follow request sent!');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Follow Error', 'Failed to send follow request.');
+    }
+  };
+  const handleUnfollow = async () => {
+    if (!selectedUser) return;
+    const userId = Number(selectedUser.userId);
+    if (!userId) return;
+
+    try {
+      await api.delete(`/api/v1/home/follow/${userId}`);
+      setSelectedUser((prev) => ({ ...prev, followStatus: 'NOT_FOLLOWING' }));
+      Alert.alert('Unfollow', 'Unfollowed successfully.');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Unfollow Error', 'Failed to unfollow user.');
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!selectedUser) return;
+    const userId = Number(selectedUser.userId);
+    try {
+      const response = await api.post('/api/v1/chat/rooms/oneTone', {
+        otherUserId: Number(userId),
+      });
+
+      const newRoom = response.data.data;
+      const roomId = newRoom?.id;
+      if (!roomId) throw new Error('Chat room ID not found');
+
+      setIsProfileVisible(false);
+      router.push({
+        pathname: '/chat/ChattingRoomScreen',
+        params: { roomId: roomId },
+      });
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Chat Error', 'Failed to start chat.');
+    }
+  };
+
+  const goBack = async () => {
+    await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
+    router.back();
+  };
 
   // 채팅방 나가기
   const onLeaveChat = async () => {
@@ -190,14 +276,25 @@ const ChatInsideMember = () => {
                 name={item.firstName + '  ' + item.lastName}
                 isHost={item.isHost}
                 imageUrl={item.userImageUrl}
+                onPressProfile={() => handlePressProfile(item.userId)}
                 onPressMore={() => {
                   setSelectedMember(item.firstName);
                   setModalVisible(true);
+                  handlePressProfile(item.userId);
                   setReportId(item.userId.toString());
                 }}
               />
             )}
             showsVerticalScrollIndicator={false}
+          />
+          <ProfileModal
+            visible={isProfileVisible}
+            userData={selectedUser}
+            onClose={() => setIsProfileVisible(false)}
+            onFollow={handleFollow}
+            onUnfollow={handleUnfollow}
+            onChat={handleStartChat}
+            isLoading={isLoadingProfile}
           />
         </MembersScreen>
         <LeaveChatButton onPress={onLeaveChat}>
@@ -330,7 +427,6 @@ const Right = styled.View`
 `;
 
 const MembersTextContainer = styled.View`
-  height: 50px;
   justify-content: center;
 `;
 const MembersText = styled.Text`

@@ -120,7 +120,6 @@ export default function PostDetailScreen() {
     toggleLiked,
     setLikeCount,
     hydrateLikeFromServer,
-
   } = usePostUI();
 
   const postBookmarked = bmMap[postId] ?? false;
@@ -132,8 +131,6 @@ export default function PostDetailScreen() {
       console.log('[Profile] fetching user:', userId);
       setIsLoadingProfile(true);
       const res = await api.get(`/api/v1/member/${userId}/info`);
-      console.log('[Profile] raw response:', res); // <-- 전체 응답 찍기
-      console.log('[Profile] res.data:', res.data); // <-- 이 라인 중요
       // 안전하게 실제 user 객체를 꺼내서 저장
       const userObj = (res.data && (res.data.data ?? res.data)) || res;
       console.log('[Profile] resolved userObj:', userObj);
@@ -378,14 +375,14 @@ export default function PostDetailScreen() {
 
   const authorId: string = String(
     post.userId ??
-    post.authorId ??
-    post.memberId ??
-    post.writerId ??
-    post.ownerId ??
-    post.creatorId ??
-    post.author?.id ??
-    post.user?.id ??
-    '',
+      post.authorId ??
+      post.memberId ??
+      post.writerId ??
+      post.ownerId ??
+      post.creatorId ??
+      post.author?.id ??
+      post.user?.id ??
+      '',
   );
   const authorName: string =
     post.userName ??
@@ -423,7 +420,7 @@ export default function PostDetailScreen() {
     console.groupCollapsed('[post-meta]');
     const keys = Object.keys(post || {});
     console.groupEnd();
-  } catch { }
+  } catch {}
 
   const toggleCommentLike = (comment: Comment) => {
     const cmtId = Number((comment as any).id ?? (comment as any).commentId);
@@ -746,19 +743,14 @@ export default function PostDetailScreen() {
       //    (경로는 실제 채팅방 스크린 경로에 맞게 수정하세요. 예: '/chat/[id]')
       router.push({
         pathname: '/chat/ChattingRoomScreen', // <-- ChatLayout에 등록된 파일 이름
-        params: { roomId: roomId }             // <-- 전달할 데이터 (채팅방 ID)
+        params: { roomId: roomId }, // <-- 전달할 데이터 (채팅방 ID)
       });
-
     } catch (err: any) {
       // 8. 에러 처리
       console.error('[Chat] Failed to create chat room:', err);
       const status = err.response?.status;
       const msg =
-        status === 400
-          ? 'Invalid request.'
-          : status === 401
-            ? 'Please log in to chat.'
-            : 'Failed to start chat.';
+        status === 400 ? 'Invalid request.' : status === 401 ? 'Please log in to chat.' : 'Failed to start chat.';
       Alert.alert('Chat Error', msg);
     } finally {
       // 9. 로딩 상태 해제
@@ -795,13 +787,12 @@ export default function PostDetailScreen() {
 
       // 2. API 성공 시, 로컬 state를 "PENDING"으로 즉시 변경 (Optimistic UI)
       //    (모달이 이 state를 보고 버튼 모양을 "Pending"으로 바꿀 겁니다)
-      setSelectedUser(prevUser => ({
+      setSelectedUser((prevUser) => ({
         ...(prevUser as any),
-        followStatus: 'PENDING'
+        followStatus: 'PENDING',
       }));
 
       Alert.alert('Follow', 'Follow request sent!');
-
     } catch (err: any) {
       // 3. 에러 처리 (백엔드 로직에 맞게)
       console.error('[Follow] Failed to send follow request:', err);
@@ -814,9 +805,9 @@ export default function PostDetailScreen() {
       } else if (errorCode === 'FOLLOW_ALREADY_EXISTS') {
         msg = 'You have already sent a request or are already following this user.';
         // 혹시 모르니 state를 PENDING으로 강제 동기화
-        setSelectedUser(prevUser => ({
+        setSelectedUser((prevUser) => ({
           ...(prevUser as any),
-          followStatus: 'PENDING' // 또는 'ACCEPTED'일 수 있으나 PENDING이 더 가능성 높음
+          followStatus: 'PENDING', // 또는 'ACCEPTED'일 수 있으나 PENDING이 더 가능성 높음
         }));
       } else if (errorCode === 'CANNOT_FOLLOW_YOURSELF') {
         msg = 'You cannot follow yourself.';
@@ -851,13 +842,12 @@ export default function PostDetailScreen() {
       await api.delete(`/api/v1/users/follow/accepted/${targetUserId}`);
 
       // 2. API 성공 시, 로컬 state를 "NOT_FOLLOWING"으로 즉시 변경
-      setSelectedUser(prevUser => ({
+      setSelectedUser((prevUser) => ({
         ...(prevUser as any),
-        followStatus: 'NOT_FOLLOWING'
+        followStatus: 'NOT_FOLLOWING',
       }));
 
       Alert.alert('Unfollow', 'You have successfully unfollowed this user.');
-
     } catch (err: any) {
       // 3. 에러 처리
       console.error('[Unfollow] Failed to unfollow:', err);
@@ -867,9 +857,9 @@ export default function PostDetailScreen() {
       if (status === 404) {
         msg = 'User not found or you are not following them.';
         // 404 에러 시 로컬 state를 강제로 'NOT_FOLLOWING'으로 동기화
-        setSelectedUser(prevUser => ({
+        setSelectedUser((prevUser) => ({
           ...(prevUser as any),
-          followStatus: 'NOT_FOLLOWING'
+          followStatus: 'NOT_FOLLOWING',
         }));
       } else if (status === 401) {
         msg = 'Please log in again.';
@@ -880,7 +870,6 @@ export default function PostDetailScreen() {
       setIsFollowLoading(false);
     }
   };
-
 
   const reportTitle =
     reportTarget === 'user'
