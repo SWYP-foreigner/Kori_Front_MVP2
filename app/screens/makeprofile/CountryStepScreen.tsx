@@ -1,10 +1,11 @@
+import React, { useMemo, useState } from 'react'; // ✅ 'react'에서
+// 절대 'react-native'에서 훅을 import 하지 마세요.
 import { useProfile } from '@/app/contexts/ProfileContext';
 import Icon from '@/components/common/Icon';
 import { theme } from '@/src/styles/theme';
 import { COUNTRIES } from '@/src/utils/countries';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
 import { FlatList, Modal, SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
@@ -231,6 +232,11 @@ const SearchInput = styled.TextInput`
   font-family: 'PlusJakartaSans-SemiBold';
 `;
 
+// ✅ 여기 ClearButton 정의 추가
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px;
+`;
+
 const CountryItem = styled.TouchableOpacity<{ selected: boolean }>`
   flex-direction: row;
   align-items: center;
@@ -276,4 +282,13 @@ const BottomSpacer = styled.View`
 
 const RotatedIcon = styled.View`
   transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
+`;
+
+// ✅ 여기 NoResultText 정의 추가
+const NoResultText = styled.Text`
+  color: #949899;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
+  text-align: center;
+  padding: 20px;
 `;
