@@ -19,6 +19,7 @@ export default function TabLayout() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isNotificationPermissionModalOpen, setIsNotificationPermissionModalOpen] = useState(false);
   const pathname = usePathname();
+  const isCheckingPermissions = useRef(false);
 
   // 채팅방 스크린들에서는 탭 바를 숨김
   const shouldHideTabBar = pathname.includes('/CreateSpaceScreen') || pathname.includes('/ChattingRoomScreen');
@@ -31,12 +32,17 @@ export default function TabLayout() {
   };
 
   /* 2. OS 권한 요청 및 서버 동기화 */
+  /* 2. OS 권한 요청 및 서버 동기화 (expo-notifications로 통일) */
   const initOSPermissionStatus = async () => {
     try {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      // 1. expo-notifications를 사용해 권한 요청
+      const { status } = await Notifications.requestPermissionsAsync();
+      const enabled = status === 'granted';
+
+      // 2. 로그 확인 (Provisional이 아닌 granted/denied가 찍힙니다)
+      console.log('✨✨✨✨✨✨✨✨✨✨ OS 알림 허용 상태 (Expo):', status);
+
+      // 3. 서버에 OS 권한 상태 동기화
       await putOSPushAgreement(enabled);
 
       setIsNotificationPermissionModalOpen(false);
@@ -46,12 +52,12 @@ export default function TabLayout() {
         return;
       }
 
+      // 4. 서버에 알림 상세 설정 초기화
       await initNotificationsSettingStatus(true);
     } catch (error) {
       console.error('[ERROR] Notification permission or sync failed:', error);
     }
   };
-
   /* 3. 앱 초기화 시마다 OS 알림 권한을 검사 및 서버와 동기화 */
   useEffect(() => {
     const handleAppStateChange = async (nextState: AppStateStatus) => {
@@ -59,11 +65,14 @@ export default function TabLayout() {
         (appState.current.match(/inactive|background/) && nextState === 'active') || // 백그라운드에서 포그라운드 진입 시
         (appState.current === 'active' && nextState === 'active'); // 앱 최초 실행 시
 
-      if (isActivated) {
+      if (isActivated && !isCheckingPermissions.current) {
         try {
+          isCheckingPermissions.current = true;
+
           await updateFcmToken();
 
           const { status } = await Notifications.getPermissionsAsync();
+          console.log('안드로이드 OS 알림 허용 상태:', status);
 
           if (status === 'undetermined') {
             // 아직 권한 설정 전인 경우 설정 요청 모달 표시
@@ -86,12 +95,13 @@ export default function TabLayout() {
           await queryClient.invalidateQueries({ queryKey: ['notificationSettings'] });
         } catch (error) {
           console.error('[ERROR] 알림 권한 갱신 중 오류 발생:', error);
+        } finally {
+          isCheckingPermissions.current = false;
         }
       }
 
       appState.current = nextState;
     };
-
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     handleAppStateChange('active');
 
@@ -103,13 +113,15 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: shouldHideTabBar ? { display: 'none' } : {
-            backgroundColor: '#1D1E1F', // 원하는 배경색
-            borderTopWidth: 1,
-            borderColor: '#353637',
-            height: TAB_BAR_HEIGHT,
-            paddingTop: 10,
-          },
+          tabBarStyle: shouldHideTabBar
+            ? { display: 'none' }
+            : {
+                backgroundColor: '#1D1E1F', // 원하는 배경색
+                borderTopWidth: 1,
+                borderColor: '#353637',
+                height: TAB_BAR_HEIGHT,
+                paddingTop: 10,
+              },
         }}
       >
         <Tabs.Screen

@@ -1,18 +1,35 @@
-import notifee, { EventType } from '@notifee/react-native';
+import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Href, router } from 'expo-router';
+import { Platform } from 'react-native';
 
 /* --------------- push를 notifee로 표시 --------------- */
-export const messageHandler = (message: FirebaseMessagingTypes.RemoteMessage) => {
+export const messageHandler = async (message: FirebaseMessagingTypes.RemoteMessage) => {
   const { notification, data } = message;
 
   const title = notification?.title ?? 'Notification from Kori';
   const body = notification?.body ?? '';
 
+  let channelId: string | undefined;
+
+  // 안드로이드 알림 토픽 설정
+  if (Platform.OS === 'android') {
+    const topic = String(data?.type) ?? 'default';
+
+    channelId = await notifee.createChannel({
+      id: topic,
+      name: topic,
+      importance: AndroidImportance.HIGH,
+      sound: 'default',
+      vibration: true,
+    });
+  }
+
   return notifee.displayNotification({
-    title: title,
-    body: body,
-    data: data,
+    title,
+    body,
+    data,
+    android: { channelId },
     ios: {
       foregroundPresentationOptions: {
         badge: true,
