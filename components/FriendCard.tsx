@@ -1,15 +1,15 @@
+import Icon from '@/components/common/Icon';
 import ProfileImage from '@/components/common/ProfileImage';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
 import { getEmojiFor } from '@/src/lib/interests';
+import { theme } from '@/src/styles/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
 
-const ICON_PURPOSE = require('@/assets/icons/purpose.png');
-const ICON_GLOBAL = require('@/assets/icons/global.png');
 
 const AV = require('@/assets/images/character1.png');
 
@@ -67,12 +67,11 @@ const COL_GAP = 18;
 const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;
 
-const genderIconByType: Record<NonNullable<Props['gender']>, keyof typeof MaterialCommunityIcons.glyphMap> = {
-  male: 'gender-male',
-  female: 'gender-female',
-  unspecified: 'help-circle-outline',
+const genderIconType: Record<NonNullable<Props['gender']>, import('@/components/common/Icon').IconType> = {
+  male: 'male',
+  female: 'female',
+  unspecified: 'nogender',
 };
-
 const toUrl = (u?: string) => {
   if (!u) return undefined;
   if (/^https?:\/\//i.test(u)) return u;
@@ -156,7 +155,7 @@ export default function FriendCard(props: Props) {
             <MetaStrong>{birth ? String(birth) : '-'}</MetaStrong>
 
             <GenderIconSpacer>
-              <MaterialCommunityIcons name={genderIconByType[gender]} size={14} color="#B5B5B5" />
+              <Icon type={genderIconType[gender]} size={16} color={theme.colors.gray.gray_1} />
             </GenderIconSpacer>
 
             <MetaDim>From </MetaDim>
@@ -180,7 +179,9 @@ export default function FriendCard(props: Props) {
             <RowTop>
               <Col>
                 <LabelRow>
-                  <Icon source={ICON_PURPOSE} />
+                  <SmallIconWrap>
+                    <Icon type="purpose" size={16} color={theme.colors.gray.gray_1} />
+                  </SmallIconWrap>
                   <Label>Purpose</Label>
                 </LabelRow>
                 <CategoryValue>{purpose}</CategoryValue>
@@ -188,7 +189,9 @@ export default function FriendCard(props: Props) {
 
               <ColRight>
                 <LabelRow>
-                  <Icon source={ICON_GLOBAL} />
+                  <SmallIconWrap>
+                    <Icon type="global" size={16} color={theme.colors.gray.gray_1}/>
+                  </SmallIconWrap>
                   <Label>Language</Label>
                 </LabelRow>
                 <LangWrap>
@@ -207,7 +210,9 @@ export default function FriendCard(props: Props) {
             </RowTop>
 
             <InterestHeader>
-              <HeartIcon name="heart-outline" size={13} color="#808080" />
+               <SmallIconWrap style={{ marginRight: 4 }}>
+                <Icon type="heartNonSelected" size={16} color={theme.colors.gray.gray_1} />
+              </SmallIconWrap>
               <Label>Interest</Label>
             </InterestHeader>
 
@@ -405,11 +410,6 @@ const LabelRow = styled.View`
   flex-direction: row;
   align-items: center;
 `;
-const Icon = styled.Image`
-  width: 12px;
-  height: 12px;
-  tint-color: #808080;
-`;
 const Label = styled.Text`
   font-size: 12px;
   line-height: 16px;
@@ -467,4 +467,9 @@ const AvatarImg = styled(ProfileImage)`
   height: 88px;
   border-radius: 44px;
   background: #f3f4f5;
+`;
+
+const SmallIconWrap = styled.View`
+  width: 16px;
+  height: 16px;
 `;
