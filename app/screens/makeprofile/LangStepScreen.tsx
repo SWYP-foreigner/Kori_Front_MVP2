@@ -217,7 +217,7 @@ const SelectionText = styled.Text`
 `;
 
 const SelectionCount = styled.Text`
-  color: ${theme.colors.primary.mint}
+  color: ${theme.colors.primary.mint};
   font-size: 13px;
   font-family: 'PlusJakartaSans-Regular';
 `;

@@ -109,7 +109,7 @@ export default function CountryStepScreen({ navigation }) {
                 showsVerticalScrollIndicator={false}
                 style={{ maxHeight: 400 }}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
-            />
+              />
             ) : (
               <NoResultText>No countries found</NoResultText>
             )}
@@ -123,7 +123,7 @@ export default function CountryStepScreen({ navigation }) {
 // ------------------------
 // Styled Components
 // ------------------------
-const SafeArea = styled(SafeAreaView)<{ bgColor?: string }>`
+const SafeArea = styled(SafeAreaView) <{ bgColor?: string }>`
   flex: 1;
   background-color: ${(props) => props.bgColor || '#000'};
 `;
