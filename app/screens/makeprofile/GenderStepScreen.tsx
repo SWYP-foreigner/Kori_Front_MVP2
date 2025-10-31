@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '@/app/contexts/ProfileContext';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
 
 // ------------------------
@@ -55,15 +56,15 @@ export default function GenderStepScreen({ navigation }) {
         <Form>
           <GenderWrapper onPress={() => handleGenderClick('Female')} active={FemaleClicked}>
             <GenderText>Female</GenderText>
-            {FemaleClicked && <AntDesign name="check" size={20} color="#02F59B" />}
+            {FemaleClicked && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
           </GenderWrapper>
           <GenderWrapper onPress={() => handleGenderClick('Male')} active={MaleClicked}>
             <GenderText>Male</GenderText>
-            {MaleClicked && <AntDesign name="check" size={20} color="#02F59B" />}
+            {MaleClicked && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
           </GenderWrapper>
           <GenderWrapper onPress={() => handleGenderClick('NotSaying')} active={NotSayingClicked}>
             <GenderText>Prefer not to say</GenderText>
-            {NotSayingClicked && <AntDesign name="check" size={20} color="#02F59B" />}
+            {NotSayingClicked && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
           </GenderWrapper>
         </Form>
 
@@ -81,7 +82,7 @@ export default function GenderStepScreen({ navigation }) {
 // ------------------------
 // Styled Components
 // ------------------------
-const SafeArea = styled(SafeAreaView)`
+const SafeArea = styled(SafeAreaView)<{ bgColor?: string }>`
   flex: 1;
   background-color: ${(props) => props.bgColor || '#000'};
 `;
@@ -121,7 +122,7 @@ const Subtitle = styled.Text`
 const Form = styled.View`
   margin-top: 50px;
 `;
-const GenderWrapper = styled.TouchableOpacity`
+const GenderWrapper = styled.TouchableOpacity<{ active: boolean }>`
   width: 100%;
   height: 44px;
   border-radius: 4px;
@@ -130,7 +131,7 @@ const GenderWrapper = styled.TouchableOpacity`
   align-items: center;
   margin-top: 16px;
   padding: 0px 12px 0px 0px;
-  opacity: ${(props) => (props.active ? 1 : 0.4)};
+  opacity: ${({ active }) => (active ? 1 : 0.4)};
 `;
 const GenderText = styled.Text`
   flex: 1;
@@ -142,14 +143,14 @@ const Spacer = styled.View`
   flex: 1;
 `;
 
-const NextButton = styled.TouchableOpacity`
+const NextButton = styled.TouchableOpacity<{ canProceed: boolean }>`
   height: 50px;
   border-radius: 8px;
   align-items: center;
   justify-content: center;
   background-color: #02f59b;
   margin-bottom: 8px;
-  opacity: ${(props) => (props.canProceed ? 1 : 0.4)};
+  opacity: ${({ canProceed }) => (canProceed ? 1 : 0.4)};
 `;
 
 const ButtonText = styled.Text`

@@ -1,19 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import styled from 'styled-components/native';
-import {
-  SafeAreaView,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
+import { useProfile } from '@/app/contexts/ProfileContext';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { COUNTRIES } from '@/src/utils/countries';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import { useProfile } from '@/app/contexts/ProfileContext';
+import React, { useState } from 'react';
+import { FlatList, Modal, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
-import { COUNTRIES } from '@/src/utils/countries';
 
 export default function CountryStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -21,6 +15,7 @@ export default function CountryStepScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const { profileData, updateProfile } = useProfile();
 
+  const isSelected = selectedCountry !== '';
   const canProceed = selectedCountry !== '';
   const router = useRouter();
 
@@ -50,7 +45,7 @@ export default function CountryStepScreen({ navigation }) {
   const renderCountryItem = ({ item }) => (
     <CountryItem selected={selectedCountry === item} onPress={() => handleCountrySelect(item)}>
       <CountryText>{item}</CountryText>
-      {selectedCountry === item && <AntDesign name="check" size={20} color="#02F59B" />}
+      {selectedCountry === item && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
     </CountryItem>
   );
 
@@ -69,9 +64,11 @@ export default function CountryStepScreen({ navigation }) {
         <Subtitle>Better matches, smoother conversation</Subtitle>
 
         <Form>
-          <DropdownButton selected={selectedCountry} onPress={() => setIsModalVisible(true)}>
+          <DropdownButton selected={isSelected} onPress={() => setIsModalVisible(true)}>
             <DropdownText selected={selectedCountry !== ''}>{selectedCountry || 'Select your country'}</DropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <RotatedIcon>
+              <Icon type="next" size={16} color={theme.colors.gray.gray_1} />
+            </RotatedIcon>
           </DropdownButton>
         </Form>
 
@@ -111,7 +108,8 @@ export default function CountryStepScreen({ navigation }) {
                 keyExtractor={(item, index) => `${item}-${index}`}
                 showsVerticalScrollIndicator={false}
                 style={{ maxHeight: 400 }}
-              />
+                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+            />
             ) : (
               <NoResultText>No countries found</NoResultText>
             )}
@@ -125,7 +123,7 @@ export default function CountryStepScreen({ navigation }) {
 // ------------------------
 // Styled Components
 // ------------------------
-const SafeArea = styled(SafeAreaView)`
+const SafeArea = styled(SafeAreaView)<{ bgColor?: string }>`
   flex: 1;
   background-color: ${(props) => props.bgColor || '#000'};
 `;
@@ -166,7 +164,7 @@ const Form = styled.View`
   margin-top: 50px;
 `;
 
-const DropdownButton = styled.TouchableOpacity`
+const DropdownButton = styled.TouchableOpacity<{ selected: boolean }>`
   width: 100%;
   height: 50px;
   border-radius: 8px;
@@ -179,7 +177,7 @@ const DropdownButton = styled.TouchableOpacity`
   border-color: ${(props) => (props.selected ? '#02F59B99' : '#949899')};
 `;
 
-const DropdownText = styled.Text`
+const DropdownText = styled.Text<{ selected: boolean }>`
   color: ${(props) => (props.selected ? '#EDEDED' : '#949899')};
   font-size: 15px;
   font-family: 'PlusJakartaSans-Regular';
@@ -228,31 +226,20 @@ const SearchInput = styled.TextInput`
   flex: 1;
   margin-left: 8px;
   color: #ededed;
-  font-size: 14px;
-  font-family: 'PlusJakartaSans-Regular';
+  font-size: 18px;
+  font-weight: 600;
+  font-family: 'PlusJakartaSans-SemiBold';
 `;
 
-const ClearButton = styled.TouchableOpacity`
-  padding: 4px;
-`;
-
-const NoResultText = styled.Text`
-  text-align: center;
-  color: #949899;
-  margin-top: 20px;
-  font-size: 15px;
-  font-family: 'PlusJakartaSans-Regular';
-`;
-
-const CountryItem = styled.TouchableOpacity`
-  padding: 16px 20px;
-  border-bottom-width: 0.5px;
-  border-bottom-color: #4a4b4c;
+const CountryItem = styled.TouchableOpacity<{ selected: boolean }>`
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  background-color: ${(props) => (props.selected ? '#4A4B4C' : 'transparent')};
-  border-radius: ${(props) => (props.selected ? 8 : 0)}px;
+  padding: 14px 16px;
+  margin-vertical: 6px;
+
+  /* 선택됐을 때 캡슐 형태 */
+  background-color: ${({ selected }) => (selected ? '#3F4041' : 'transparent')};
+  border-radius: 12px;
 `;
 
 const CountryText = styled.Text`
@@ -266,7 +253,7 @@ const Spacer = styled.View`
   flex: 1;
 `;
 
-const NextButton = styled.TouchableOpacity`
+const NextButton = styled.TouchableOpacity<{ canProceed: boolean }>`
   height: 50px;
   border-radius: 8px;
   align-items: center;
@@ -285,4 +272,8 @@ const ButtonText = styled.Text`
 
 const BottomSpacer = styled.View`
   height: 25px;
+`;
+
+const RotatedIcon = styled.View`
+  transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
 `;

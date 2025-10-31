@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Modal, FlatList, TouchableOpacity, Alert } from 'react-native';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { LANGUAGES } from '@/src/utils/languages';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import { useProfile } from '@/app/contexts/ProfileContext';
+import React, { useState } from 'react';
+import { Alert, FlatList, Modal, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
+import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
-import { LANGUAGES } from '@/src/utils/languages';
 export default function LanguageStepScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -57,7 +59,7 @@ export default function LanguageStepScreen({ navigation }) {
     return (
       <LanguageItem selected={isSelected} onPress={() => handleLanguageSelect(item)}>
         <LanguageText>{item}</LanguageText>
-        {isSelected && <AntDesign name="check" size={20} color="#02F59B" />}
+        {isSelected && <Icon type="check" size={16} color={theme.colors.primary.mint} />}
       </LanguageItem>
     );
   };
@@ -79,7 +81,9 @@ export default function LanguageStepScreen({ navigation }) {
         <Form>
           <DropdownButton selected={selectedLanguages.length > 0} onPress={() => setIsModalVisible(true)}>
             <DropdownText selected={selectedLanguages.length > 0}>{getDisplayText()}</DropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <RotatedIcon>
+              <Icon type="next" size={16} color={theme.colors.gray.gray_1} />
+            </RotatedIcon>
           </DropdownButton>
 
           {selectedLanguages.length > 0 && (
@@ -146,7 +150,7 @@ const Container = styled.View`
 `;
 
 const StepText = styled.Text`
-  color: #5bd08d;
+  color: ${theme.colors.primary.mint};
   font-size: 13px;
   letter-spacing: 0.2px;
   font-family: 'PlusJakartaSans-Regular';
@@ -158,7 +162,7 @@ const TitleWrapper = styled.View`
 `;
 
 const Title = styled.Text`
-  color: #ffffff;
+  color: ${theme.colors.primary.white};
   font-size: 40px;
   line-height: 45px;
   letter-spacing: 0.2px;
@@ -176,20 +180,24 @@ const Form = styled.View`
   margin-top: 50px;
 `;
 
-const DropdownButton = styled.TouchableOpacity`
+const DropdownButton = styled.TouchableOpacity<{ selected: boolean }>`
   width: 100%;
   height: 50px;
   border-radius: 8px;
-  background-color: #353637;
+
+  background-color: ${theme.colors.gray.darkGray_1};
+
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   padding: 0px 16px;
-  border: 1px solid ${(props) => (props.selected ? '#02F59B99' : '#949899')};
+
+  border-width: 1px;
+  border-color: ${(p) => (p.selected ? theme.colors.primary.mint : theme.colors.gray.gray_1)};
 `;
 
 const DropdownText = styled.Text`
-  color: ${(props) => (props.selected ? '#EDEDED' : '#949899')};
+  color: ${(p) => (p.selected ? theme.colors.primary.white : theme.colors.gray.gray_1)};
   font-size: 15px;
   font-family: 'PlusJakartaSans-Regular';
   flex: 1;
@@ -203,13 +211,13 @@ const SelectionInfo = styled.View`
 `;
 
 const SelectionText = styled.Text`
-  color: #ffffff;
+  color: ${theme.colors.primary.white};
   font-size: 12px;
   font-family: 'PlusJakartaSans-Medium';
 `;
 
 const SelectionCount = styled.Text`
-  color: #02f59b;
+  color: ${theme.colors.primary.mint}
   font-size: 13px;
   font-family: 'PlusJakartaSans-Regular';
 `;
@@ -318,4 +326,8 @@ const SkipText = styled.Text`
 
 const BottomSpacer = styled.View`
   height: 25px;
+`;
+
+const RotatedIcon = styled.View`
+  transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
 `;
