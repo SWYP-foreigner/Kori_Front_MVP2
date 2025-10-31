@@ -9,7 +9,17 @@ import { Client } from '@stomp/stompjs';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, InteractionManager, KeyboardAvoidingView, Platform, StatusBar, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  InteractionManager,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 
@@ -264,7 +274,9 @@ const ChattingRoomScreen = () => {
 
     try {
       const lastMessageId = messages[messages.length - 1]?.id;
-      const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId ? lastMessageId : ''}`);
+      const res = await api.get(
+        `/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId ? lastMessageId : ''}`,
+      );
 
       const olderMessages: ChatHistory[] = res.data.data;
 
@@ -700,7 +712,7 @@ const ChattingRoomScreen = () => {
                             <OtherFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                  searchMessages[pointerRef.current].id === item.id ? (
+                                searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}
@@ -735,7 +747,7 @@ const ChattingRoomScreen = () => {
                             <OtherNotFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                  searchMessages[pointerRef.current].id === item.id ? (
+                                searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}

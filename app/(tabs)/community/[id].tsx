@@ -131,8 +131,6 @@ export default function PostDetailScreen() {
       console.log('[Profile] fetching user:', userId);
       setIsLoadingProfile(true);
       const res = await api.get(`/api/v1/member/${userId}/info`);
-      console.log('[Profile] raw response:', res); // <-- 전체 응답 찍기
-      console.log('[Profile] res.data:', res.data); // <-- 이 라인 중요
       // 안전하게 실제 user 객체를 꺼내서 저장
       const userObj = (res.data && (res.data.data ?? res.data)) || res;
       console.log('[Profile] resolved userObj:', userObj);
