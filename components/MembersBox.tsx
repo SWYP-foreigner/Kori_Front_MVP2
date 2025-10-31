@@ -4,13 +4,17 @@ import { TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
-const MembersBox = ({ name, onPressMore, isHost, imageUrl }) => {
+const MembersBox = ({ name, onPressMore, onPressProfile, isHost, imageUrl }) => {
   const router = useRouter();
+
   return (
     <MemberContainer>
-      <ProfileBox>
-        <ProfileImage source={imageUrl ? { uri: imageUrl } : require('@/assets/images/character1.png')} />
-      </ProfileBox>
+      <TouchableOpacity onPress={onPressProfile}>
+        <ProfileBox>
+          <ProfileImage source={imageUrl ? { uri: imageUrl } : require('@/assets/images/character1.png')} />
+        </ProfileBox>
+      </TouchableOpacity>
+
       <Memberbox>
         <MemberisHostBox>
           <MemberNameText>{name}</MemberNameText>
@@ -20,6 +24,7 @@ const MembersBox = ({ name, onPressMore, isHost, imageUrl }) => {
             </HostBox>
           )}
         </MemberisHostBox>
+
         <TouchableOpacity onPress={onPressMore}>
           <AntDesign name="ellipsis1" size={24} color="#848687" />
         </TouchableOpacity>
@@ -36,29 +41,34 @@ const MemberContainer = styled.View`
   margin: 8px 0px;
   align-items: center;
 `;
+
 const ProfileBox = styled.View`
   width: 50px;
   height: 50px;
   overflow: hidden;
   border-radius: 30px;
 `;
+
 const ProfileImage = styled.Image`
   width: 100%;
   height: 100%;
   resize-mode: contain;
 `;
+
 const Memberbox = styled.View`
   flex: 1;
   flex-direction: row;
-  justify-content: space-between; /* 양쪽 끝으로 요소 배치 */
-  align-items: center; /* 세로 가운데 정렬 */
+  justify-content: space-between;
+  align-items: center;
   padding-right: 6px;
 `;
+
 const MemberisHostBox = styled.View`
   flex-direction: row;
   justify-content: center;
   align-content: center;
 `;
+
 const HostBox = styled.View`
   background-color: #02f59b40;
   border-radius: 4px;
@@ -68,11 +78,13 @@ const HostBox = styled.View`
   width: 36px;
   height: 20px;
 `;
+
 const HostText = styled.Text`
   color: #ffffff;
   font-size: 11px;
   font-family: PlusJakartaSans_500Medium;
 `;
+
 const MemberNameText = styled.Text`
   margin-left: 12px;
   color: #ffffff;
