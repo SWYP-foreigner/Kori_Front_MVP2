@@ -147,7 +147,8 @@ export default function HomeScreen() {
                   defaultExpanded={false}
                   mode={isSent ? 'sent' : 'friend'}
                   // --- 👇 [수정] onFollow ---
-                  onFollow={async () => { // (id) 파라미터 제거
+                  onFollow={async () => {
+                    // (id) 파라미터 제거
                     const id = uid; // uid를 직접 사용
                     if ((myId && id === myId) || inFlight.has(id)) return;
 
@@ -167,7 +168,8 @@ export default function HomeScreen() {
                     }
                   }}
                   // --- 👇 [수정] onCancel ---
-                  onCancel={async () => { // (id) 파라미터 제거
+                  onCancel={async () => {
+                    // (id) 파라미터 제거
                     const id = uid; // uid를 직접 사용
                     if ((myId && id === myId) || inFlight.has(id)) return;
                     const wasSent = requested.has(id);
