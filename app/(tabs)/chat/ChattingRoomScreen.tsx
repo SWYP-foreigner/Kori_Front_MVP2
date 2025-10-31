@@ -9,7 +9,17 @@ import { Client } from '@stomp/stompjs';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, InteractionManager, KeyboardAvoidingView, Platform, StatusBar, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  InteractionManager,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styled from 'styled-components/native';
 
@@ -56,6 +66,8 @@ const ChattingRoomScreen = () => {
   const [searchBox, setSearchBox] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessages, setSearchMessages] = useState<any[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const pointerRef = useRef(0);
   const flatListRef = useRef<FlatList>(null);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -262,7 +274,9 @@ const ChattingRoomScreen = () => {
 
     try {
       const lastMessageId = messages[messages.length - 1]?.id;
-      const res = await api.get(`/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId ? lastMessageId : ''}`);
+      const res = await api.get(
+        `/api/v1/chat/rooms/${roomId}/messages?lastMessageId=${lastMessageId ? lastMessageId : ''}`,
+      );
 
       const olderMessages: ChatHistory[] = res.data.data;
 
@@ -293,10 +307,72 @@ const ChattingRoomScreen = () => {
     }
   };
 
+  const handleFollow = async () => {
+    if (!selectedUser) return;
+
+    // userId를 정확히 추출하고 검증
+    const userId = selectedUser.userId || selectedUser.id;
+    const cleanUserId = String(userId).trim();
+
+    if (!cleanUserId || isNaN(Number(cleanUserId))) {
+      console.error('Invalid userId:', userId);
+      Alert.alert('Error', 'Invalid user ID');
+      return;
+    }
+
+    try {
+      console.log('Following userId:', cleanUserId);
+      await api.post(`/api/v1/home/follow/${cleanUserId}`);
+      setSelectedUser((prev) => ({ ...prev, followStatus: 'PENDING' }));
+      Alert.alert('Follow', 'Follow request sent!');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Follow Error', 'Failed to send follow request.');
+    }
+  };
+  const handleUnfollow = async () => {
+    if (!selectedUser) return;
+    const userId = Number(selectedUser.userId);
+    if (!userId) return;
+
+    try {
+      await api.delete(`/api/v1/home/follow/${userId}`);
+      setSelectedUser((prev) => ({ ...prev, followStatus: 'NOT_FOLLOWING' }));
+      Alert.alert('Unfollow', 'Unfollowed successfully.');
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Unfollow Error', 'Failed to unfollow user.');
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!selectedUser) return;
+    const userId = Number(selectedUser.userId);
+    try {
+      const response = await api.post('/api/v1/chat/rooms/oneTone', {
+        otherUserId: Number(userId),
+      });
+
+      const newRoom = response.data.data;
+      const roomId = newRoom?.id;
+      if (!roomId) throw new Error('Chat room ID not found');
+
+      setIsProfileVisible(false);
+      router.push({
+        pathname: '/chat/ChattingRoomScreen',
+        params: { roomId: roomId },
+      });
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Chat Error', 'Failed to start chat.');
+    }
+  };
+
   const goBack = async () => {
     await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
     router.back();
   };
+
   // 햄버거 버튼 눌렀을때 이동
   const onhandleNext = () => {
     router.push({
@@ -636,7 +712,7 @@ const ChattingRoomScreen = () => {
                             <OtherFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                  searchMessages[pointerRef.current].id === item.id ? (
+                                searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}
@@ -671,7 +747,7 @@ const ChattingRoomScreen = () => {
                             <OtherNotFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                  searchMessages[pointerRef.current].id === item.id ? (
+                                searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}
@@ -743,9 +819,10 @@ const ChattingRoomScreen = () => {
               visible={isProfileVisible}
               userData={selectedUser}
               onClose={() => setIsProfileVisible(false)}
-              onFollow={(id) => console.log('follow', id)}
-              onUnfollow={(id) => console.log('unfollow', id)}
-              onChat={() => console.log('chat start')}
+              onFollow={handleFollow} // 기존에 작성한 안전한 follow 함수
+              onUnfollow={handleUnfollow} // 기존에 작성한 안전한 unfollow 함수
+              onChat={handleStartChat} // 새 채팅방 생성 후 router 이동까지 처리
+              isLoading={isLoadingProfile}
             />
 
             {!isTranslate && (

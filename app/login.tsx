@@ -1,15 +1,19 @@
+import api from '@/api/axiosInstance';
+import { patchLocation } from '@/api/member/location';
 import AppleSignInButton from '@/components/AppleSignInButton';
+import Icon, { type IconType } from '@/components/common/Icon';
 import EmailSignButton from '@/components/EmailSignButton';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
 import { Config } from '@/src/lib/config';
-import Entypo from '@expo/vector-icons/Entypo';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { theme } from '@/src/styles/theme';
 import {
   GoogleSignin,
   isErrorWithCode,
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { randomUUID } from 'expo-crypto';
@@ -17,6 +21,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   ImageBackground,
@@ -25,14 +30,8 @@ import {
   StatusBar,
   TouchableOpacity,
   useWindowDimensions,
-  Alert,
 } from 'react-native';
-import { PageIndicator } from 'react-native-page-indicator';
 import styled from 'styled-components/native';
-import api from '@/api/axiosInstance';
-import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
-import { patchLocation } from '@/api/member/location';
-import { CommonActions } from '@react-navigation/native';
 
 GoogleSignin.configure({
   webClientId: `${Config.GOOGLE_WEB_CLIENT_ID}`,
@@ -110,6 +109,9 @@ const LoginScreen = () => {
       router.push('/screens/makeprofile/NameStepScreen');
     }
   };
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_ICONS = ['page1', 'page2', 'page3'] as const;
 
   // 서버로 구글 로그인 토큰 전송
   const sendGoogleTokenToServer = async (code: string) => {
@@ -295,6 +297,10 @@ const LoginScreen = () => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true })}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / width);
+              setCurrentPage(page);
+            }}
             renderItem={({ item }) => (
               <Slide source={item.image} resizeMode="cover" style={{ width, height: height * 0.55 }}>
                 <Overlay>
@@ -307,13 +313,7 @@ const LoginScreen = () => {
 
           {/* 페이지 인디케이터 */}
           <PageIndicatorWrapper>
-            <PageIndicator
-              count={onBoardingData.length}
-              current={animatedCurrent}
-              dashSize={14}
-              color="#02F59B"
-              activeColor="#02F59B"
-            />
+            <Icon type={(PAGE_ICONS[currentPage] ?? 'page1') as IconType} size={32} color="#02F59B" />
           </PageIndicatorWrapper>
         </OnBoardingContainer>
 
@@ -340,41 +340,40 @@ const LoginScreen = () => {
               <AllCheckBoxContainer>
                 <CheckBox
                   onPress={() => {
-                    const newValue = !allCheck; // 토글 후 값
+                    const newValue = !allCheck;
                     setAllCheck(newValue);
                     setCheck1(newValue);
                     setCheck2(newValue);
                     setCheck3(newValue);
                   }}
-                  check={allCheck}
                 >
-                  {allCheck && <Entypo name="check" size={15} color="#02F59B" />}
+                  <Icon type={allCheck ? 'checkMintBox' : 'box'} size={20} />
                 </CheckBox>
                 <AllCheckText>I agree to all.</AllCheckText>
               </AllCheckBoxContainer>
               <Divider />
               <CheckBoxContainer>
-                <CheckBox onPress={() => setCheck1(!check1)} check={check1}>
-                  {check1 && <Entypo name="check" size={15} color="#02F59B" />}
+                <CheckBox onPress={() => setCheck1(!check1)}>
+                  <Icon type={check1 ? 'checkMintBox' : 'box'} size={20} />
                 </CheckBox>
                 <CheckText>(Required) I am over 14 years old.</CheckText>
               </CheckBoxContainer>
               <CheckBoxContainer>
-                <CheckBox onPress={() => setCheck2(!check2)} check={check2}>
-                  {check2 && <Entypo name="check" size={15} color="#02F59B" />}
+                <CheckBox onPress={() => setCheck2(!check2)}>
+                  <Icon type={check2 ? 'checkMintBox' : 'box'} size={20} />
                 </CheckBox>
                 <CheckText>(Required) Terms & Conditions</CheckText>
                 <TouchableOpacity onPress={showTermsAndConditions}>
-                  <MaterialIcons name="navigate-next" size={35} color="#848687" />
+                  <Icon type="next" size={20} color={theme.colors.gray.gray_1} />
                 </TouchableOpacity>
               </CheckBoxContainer>
               <CheckBoxContainer>
-                <CheckBox onPress={() => setCheck3(!check3)} check={check3}>
-                  {check3 && <Entypo name="check" size={15} color="#02F59B" />}
+                <CheckBox onPress={() => setCheck3(!check3)}>
+                  <Icon type={check3 ? 'checkMintBox' : 'box'} size={20} />
                 </CheckBox>
                 <CheckText>(Required) Privacy Policy</CheckText>
                 <TouchableOpacity onPress={showPrivacyPolicy}>
-                  <MaterialIcons name="navigate-next" size={35} color="#848687" />
+                  <Icon type="next" size={20} color={theme.colors.gray.gray_1} />
                 </TouchableOpacity>
               </CheckBoxContainer>
               <ConfirmButton disabled={!allCheck} allCheck={allCheck} onPress={confirmAndGoSetProfilePage}>
@@ -532,8 +531,6 @@ const CheckBoxContainer = styled.View`
 `;
 
 const CheckBox = styled.TouchableOpacity`
-  border-color: ${(props) => (props.check ? '#02F59B' : '#CCCFD0')};
-  border-width: 1.25px;
   width: 20px;
   height: 20px;
   align-items: center;

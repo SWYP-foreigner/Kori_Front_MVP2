@@ -1,20 +1,19 @@
+import { patchLocation } from '@/api/member/location';
+import Icon from '@/components/common/Icon';
+import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
+import { ACCESS_KEY, REFRESH_KEY } from '@/src/lib/auth/session';
 import { Config } from '@/src/lib/config';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { theme } from '@/src/styles/theme';
 import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, StatusBar, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styled from 'styled-components/native';
-import api from '@/api/axiosInstance';
-import * as SecureStore from 'expo-secure-store';
-import { ACCESS_KEY, REFRESH_KEY } from '@/src/lib/auth/session';
-import { requestLocationPermission } from '@/lib/location/requestLocationPermission';
-import { patchLocation } from '@/api/member/location';
 
 enum isDuplicatedEmail {
   Init = 'Init',
@@ -283,7 +282,7 @@ const CreateAccountScreen = () => {
             {isCorrect === isCorrectCode.Success && (
               <>
                 <NotErrorBox>
-                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <Icon type="check" size={16} color={theme.colors.primary.mint} />
                   <NotErrorText>Authentication successful</NotErrorText>
                 </NotErrorBox>
               </>
@@ -314,22 +313,22 @@ const CreateAccountScreen = () => {
               <CheckPasswordBox>
                 {checks.isnull ? (
                   <>
-                    <AntDesign name="check" size={18} color="#848687" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                    <Icon type="check" size={16} color="#848687" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.uppercase}>
                       Use all case letters
                     </CheckPasswordText>
                   </>
                 ) : checks.uppercase ? (
                   <>
-                    <AntDesign name="check" size={18} color="#02F59B" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                    <Icon type="check" size={16} color="#02F59B" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.uppercase}>
                       Use all case letters
                     </CheckPasswordText>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
+                    <Icon type="close" size={16} color="#FF4F4F" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.uppercase}>
                       Use all case letters
                     </CheckPasswordText>
                   </>
@@ -340,22 +339,22 @@ const CreateAccountScreen = () => {
               <CheckPasswordBox>
                 {checks.isnull ? (
                   <>
-                    <AntDesign name="check" size={18} color="#848687" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                    <Icon type="check" size={16} color="#848687" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.length}>
                       Enter 8-12 letters
                     </CheckPasswordText>
                   </>
                 ) : checks.length ? (
                   <>
-                    <AntDesign name="check" size={18} color="#02F59B" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                    <Icon type="check" size={16} color="#02F59B" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.length}>
                       Enter 8-12 letters
                     </CheckPasswordText>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.length}>
+                    <Icon type="close" size={16} color="#FF4F4F" />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.length}>
                       Enter 8-12 letters
                     </CheckPasswordText>
                   </>
@@ -366,22 +365,22 @@ const CreateAccountScreen = () => {
               <CheckPasswordBox>
                 {checks.isnull ? (
                   <>
-                    <AntDesign name="check" size={18} color="#848687" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                    <Icon type="check" size={16} color={theme.colors.gray.gray_1} />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.special}>
                       Enter special letters (@/!/~)
                     </CheckPasswordText>
                   </>
                 ) : checks.special ? (
                   <>
-                    <AntDesign name="check" size={18} color="#02F59B" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                    <Icon type="check" size={16} color={theme.colors.primary.mint} />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.special}>
                       Enter special letters (@/!/~)
                     </CheckPasswordText>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
-                    <CheckPasswordText isnull={checks.isnull} check={checks.special}>
+                    <Icon type="close" size={16} color={theme.colors.secondary.red} />
+                    <CheckPasswordText $isnull={checks.isnull} $check={checks.special}>
                       Enter special letters (@/!/~)
                     </CheckPasswordText>
                   </>
@@ -409,7 +408,7 @@ const CreateAccountScreen = () => {
             </PasswordContainer>
             {!isSamePassword.isnull && isSamePassword.isSame && (
               <NotErrorBox>
-                <AntDesign name="check" size={18} color="#02F59B" />
+                <Icon type="check" size={16} color={theme.colors.primary.mint} />
                 <NotErrorText>Your password match.</NotErrorText>
               </NotErrorBox>
             )}
@@ -442,35 +441,34 @@ const CreateAccountScreen = () => {
                   setCheck2(newValue);
                   setCheck3(newValue);
                 }}
-                check={allCheck}
               >
-                {allCheck && <Entypo name="check" size={15} color="#02F59B" />}
+                <Icon type={allCheck ? 'checkMintBox' : 'box'} size={20} />
               </CheckBox>
               <AllCheckText>I agree to all.</AllCheckText>
             </AllCheckBoxContainer>
             <Divider />
             <CheckBoxContainer>
-              <CheckBox onPress={() => setCheck1(!check1)} check={check1}>
-                {check1 && <Entypo name="check" size={15} color="#02F59B" />}
+              <CheckBox onPress={() => setCheck1(!check1)}>
+                <Icon type={check1 ? 'checkMintBox' : 'box'} size={20} />
               </CheckBox>
               <CheckText>(Required) I am over 14 years old.</CheckText>
             </CheckBoxContainer>
             <CheckBoxContainer>
-              <CheckBox onPress={() => setCheck2(!check2)} check={check2}>
-                {check2 && <Entypo name="check" size={15} color="#02F59B" />}
+              <CheckBox onPress={() => setCheck2(!check2)}>
+                <Icon type={check2 ? 'checkMintBox' : 'box'} size={20} />
               </CheckBox>
               <CheckText>(Required) Terms & Conditions</CheckText>
               <TouchableOpacity onPress={showTermsAndConditions}>
-                <MaterialIcons name="navigate-next" size={35} color="#848687" />
+                <Icon type="next" size={20} color={theme.colors.gray.gray_1} />
               </TouchableOpacity>
             </CheckBoxContainer>
             <CheckBoxContainer>
-              <CheckBox onPress={() => setCheck3(!check3)} check={check3}>
-                {check3 && <Entypo name="check" size={15} color="#02F59B" />}
+              <CheckBox onPress={() => setCheck3(!check3)}>
+                <Icon type={check3 ? 'checkMintBox' : 'box'} size={20} />
               </CheckBox>
               <CheckText>(Required) Privacy Policy</CheckText>
               <TouchableOpacity onPress={showPrivacyPolicy}>
-                <MaterialIcons name="navigate-next" size={35} color="#848687" />
+                <Icon type="next" size={20} color={theme.colors.gray.gray_1} />
               </TouchableOpacity>
             </CheckBoxContainer>
             <ConfirmButton disabled={!allCheck} allCheck={allCheck} onPress={JoinMember}>
@@ -674,9 +672,16 @@ const CheckPasswordBox = styled.View`
   margin: 2px 0px;
 `;
 
-const CheckPasswordText = styled.Text`
+const CheckPasswordText = styled.Text<{ $isnull: boolean; $check: boolean }>`
   margin-left: 9px;
-  color: ${(props) => (props.isnull ? '#848687' : props.check ? '#ffffff' : '#FF4F4F')};
+  color: ${
+    ({ $isnull, $check, theme }) =>
+      $isnull
+        ? theme.colors.gray.gray_1 // 입력 전: 회색
+        : $check
+          ? theme.colors.primary.white // 통과: 흰색 ✅
+          : theme.colors.secondary.red // 실패: 빨강
+  };
   font-size: 13px;
   font-family: PlusJakartaSans_400Regular;
 `;
@@ -766,8 +771,6 @@ const CheckBoxContainer = styled.View`
 `;
 
 const CheckBox = styled.TouchableOpacity`
-  border-color: ${(props) => (props.check ? '#02F59B' : '#CCCFD0')};
-  border-width: 1.25px;
   width: 20px;
   height: 20px;
   align-items: center;
