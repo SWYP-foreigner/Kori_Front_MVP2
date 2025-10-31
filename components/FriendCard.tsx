@@ -114,6 +114,7 @@ export default function FriendCard(props: Props) {
     onChat,
     footerSlot,
     defaultExpanded = true,
+    
   } = props;
 
   const [expanded, setExpanded] = useState(Boolean(defaultExpanded));
@@ -121,7 +122,7 @@ export default function FriendCard(props: Props) {
 
   const effectiveStatus: FollowStatus =
      (followStatus as FollowStatus) ??
-     (mode === 'friend' ? 'ACCEPTED' : 'NOT_FOLLOWING');
+     (mode === 'received' || mode === 'sent' ? 'PENDING' : 'NOT_FOLLOWING');
 
   const handlePrimaryPress = () => {
     if (mode === 'received') {
