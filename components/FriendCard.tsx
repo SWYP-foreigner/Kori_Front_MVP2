@@ -1,4 +1,4 @@
-import Avatar from '@/components/Avatar';
+import ProfileImage from '@/components/common/ProfileImage';
 import CustomButton from '@/components/CustomButton';
 import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
@@ -10,6 +10,9 @@ import styled from 'styled-components/native';
 
 const ICON_PURPOSE = require('@/assets/icons/purpose.png');
 const ICON_GLOBAL = require('@/assets/icons/global.png');
+
+const AV = require('@/assets/images/character1.png');
+
 type FollowStatus = 'SELF' | 'PENDING' | 'ACCEPTED' | 'NOT_FOLLOWING';
 type RequestMode = 'friend' | 'received' | 'sent';
 
@@ -97,7 +100,7 @@ export default function FriendCard(props: Props) {
 
     imageUrl,
     imageKey,
-    followStatus = 'NOT_FOLLOWING', // 👈 [추가] 기본값 설정
+    followStatus,
     isLoadingFollow = false,      // 👈 [추가]
     isLoadingChat = false,        // 👈 [추가]
     onFollow,
@@ -116,6 +119,10 @@ export default function FriendCard(props: Props) {
   const [expanded, setExpanded] = useState(Boolean(defaultExpanded));
   const finalAvatarUrl = imageUrl || toUrl(imageKey);
 
+  const effectiveStatus: FollowStatus =
+     (followStatus as FollowStatus) ??
+     (mode === 'friend' ? 'ACCEPTED' : 'NOT_FOLLOWING');
+
   const handlePrimaryPress = () => {
     if (mode === 'received') {
       onAccept?.(userId);
@@ -126,8 +133,8 @@ export default function FriendCard(props: Props) {
       return;
     }
     // 'friend' 모드일 때 (이 코드는 현재 사용되지 않지만, 만약을 위해 수정)
-    if (followStatus === 'ACCEPTED') onUnfollow?.();
-    else if (followStatus === 'NOT_FOLLOWING') onFollow?.();
+    if (effectiveStatus === 'ACCEPTED') onUnfollow?.();
+    else if (effectiveStatus === 'NOT_FOLLOWING') onFollow?.();
   };
 
   return (
@@ -139,7 +146,7 @@ export default function FriendCard(props: Props) {
         })}
       >
         <Top>
-          <Avatar uri={finalAvatarUrl} />
+          <AvatarImg source={finalAvatarUrl ? { uri: finalAvatarUrl } : AV} />
 
           <Name>{name}</Name>
 
@@ -242,7 +249,7 @@ export default function FriendCard(props: Props) {
             // 'friend' 모드 (PostDetailScreen에서 사용)
             <>
               {/* --- Follow/Unfollow/Pending 버튼 --- */}
-              {followStatus === 'ACCEPTED' && (
+              {effectiveStatus === 'ACCEPTED' && (
                 <CustomButton
                   label="Following"
                   tone="black"
@@ -255,7 +262,7 @@ export default function FriendCard(props: Props) {
                   isLoading={isLoadingFollow}// 👈 로딩 인디케이터 (CustomButton이 지원한다면)
                 />
               )}
-              {followStatus === 'NOT_FOLLOWING' && (
+              {effectiveStatus === 'NOT_FOLLOWING' && (
                 <CustomButton
                   label="Follow"
                   tone="mint"
@@ -266,7 +273,7 @@ export default function FriendCard(props: Props) {
                   isLoading={isLoadingFollow} // 👈 로딩 인디케이터
                 />
               )}
-              {followStatus === 'PENDING' && (
+              {effectiveStatus === 'PENDING' && (
                 <CustomButton
                   label="Pending"
                   tone="muted"
@@ -278,7 +285,7 @@ export default function FriendCard(props: Props) {
               {/* followStatus === 'SELF'일 경우, 위 3개 버튼 모두 렌더링 안 됨 */}
 
               {/* --- Chat 버튼 --- */}
-              {followStatus !== 'SELF' && ( // 👈 'SELF'가 아닐 때만 채팅 버튼 표시
+              {effectiveStatus !== 'SELF' && ( // 👈 'SELF'가 아닐 때만 채팅 버튼 표시
                 <CustomButton
                   label="Chat"
                   tone="black"
@@ -452,4 +459,11 @@ const InterestHeader = styled.View`
 `;
 const HeartIcon = styled(MaterialCommunityIcons)`
   margin-right: 4px;
+`;
+
+const AvatarImg = styled(ProfileImage)`
+  width: 88px;
+  height: 88px;
+  border-radius: 44px;
+  background: #f3f4f5;
 `;

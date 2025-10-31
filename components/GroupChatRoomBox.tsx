@@ -1,10 +1,10 @@
-import React, { useEffect, useState, memo } from 'react';
-import styled from 'styled-components/native';
-import BuzzingRoomBox from '@/components/BuzzingRoomBox';
-import AllSpaceRoomBox from '@/components/AllSpaceRoomBox';
-import { FlatList, View } from 'react-native';
 import api from '@/api/axiosInstance';
+import AllSpaceRoomBox from '@/components/AllSpaceRoomBox';
+import BuzzingRoomBox from '@/components/BuzzingRoomBox';
 import { useRouter } from 'expo-router';
+import React, { memo, useEffect, useState } from 'react';
+import { FlatList, View } from 'react-native';
+import styled from 'styled-components/native';
 
 // 🔹 데이터 타입
 type BuzzingData = {

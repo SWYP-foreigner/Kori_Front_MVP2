@@ -1,4 +1,5 @@
 import api from '@/api/axiosInstance';
+import RawProfileImage from '@/components/common/ProfileImage';
 import ProfileModal from '@/components/ProfileModal';
 import { Config } from '@/src/lib/config';
 import { formatDate, formatTime } from '@/src/utils/dateUtils';
@@ -73,6 +74,18 @@ const ChattingRoomScreen = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  const toUrl = (u?: string) => {
+    if (!u) return undefined;
+    if (/^https?:\/\//i.test(u)) return u;
+    const base =
+      (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+      (Config as any).NCP_PUBLIC_BASE_URL ||
+      (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+      (Config as any).IMAGE_BASE_URL ||
+      '';
+    return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
+  };
 
   // ---------------------- 토큰 refresh 함수 ----------------------
   const refreshTokenIfNeeded = async (): Promise<string | null> => {
@@ -702,7 +715,7 @@ const ChattingRoomScreen = () => {
                               onPress={() => fetchUserProfile(item.senderId)}
                               disabled={isLoadingProfile}
                             >
-                              <ProfileImage source={{ uri: item.senderImageUrl }} />
+                              <ProfileImg source={{ uri: item.senderImageUrl }} />
                             </TouchableOpacity>
                           </ProfileBox>
                         </ProfileContainer>
@@ -886,7 +899,8 @@ const ChattingScreen = styled.View`
 `;
 const ChattingLeftContainer = styled.TouchableOpacity.attrs({
   activeOpacity: 0.9,
-})`
+  })<{ showProfile?: boolean }>`
+
   margin-top: ${({ showProfile }) => (showProfile ? '30px' : '1px')};
   align-self: flex-start;
   max-width: 280px;
@@ -908,11 +922,11 @@ const ProfileBox = styled.View`
   height: 38px;
   border-radius: 100px;
   overflow: hidden;
+  background-color: #353637;
 `;
-const ProfileImage = styled.Image`
+const ProfileImg = styled(RawProfileImage)`
   width: 100%;
   height: 100%;
-  resize-mode: cover;
 `;
 const OtherContainer = styled.View`
   max-width: 242px;
@@ -957,7 +971,7 @@ const ChatTimeText = styled.Text`
 `;
 const ChattingRightContainer = styled.TouchableOpacity.attrs({
   activeOpacity: 0.9,
-})`
+})<{ showProfile?: boolean }>`
   margin-top: ${({ showProfile }) => (showProfile ? '30px' : '5px')};
   align-self: flex-end;
   max-width: 280px;

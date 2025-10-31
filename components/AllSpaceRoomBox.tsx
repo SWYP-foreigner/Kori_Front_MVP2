@@ -1,6 +1,7 @@
-import styled from 'styled-components/native';
+import ProfileImage from '@/components/common/ProfileImage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
+import styled from 'styled-components/native';
 
 const AllSpaceRoomBox = ({ data }) => {
   const router = useRouter();
@@ -90,7 +91,7 @@ const AllSpaceImageContainer = styled.View`
   justify-content: center;
   overflow: hidden;
 `;
-const AllSpaceImage = styled.Image`
+const AllSpaceImage = styled(ProfileImage)`
   width: 100%;
   height: 100%;
   resize-mode: contain;
