@@ -1,8 +1,8 @@
-import React, { useRef } from 'react';
-import styled from 'styled-components/native';
-import { useRouter } from 'expo-router';
-import { Config } from '@/src/lib/config';
 import api from '@/api/axiosInstance';
+import { Config } from '@/src/lib/config';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import styled from 'styled-components/native';
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
 
@@ -12,6 +12,7 @@ const MyChatRoomBox = ({ data }) => {
   //채팅방 진입
   const enterChattingRoom = async () => {
     try {
+      //TODO: 채팅방 진입 전 읽음 처리 API 호출 x -> 채팅방 내에서 읽음 처리로 변경 필요
       const res = await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${data.roomId}/read-all`);
       if (res.status === 200) {
         router.push({

@@ -1,15 +1,15 @@
-import { SafeAreaView, Text, StatusBar, FlatList, Platform } from 'react-native';
-import styled from 'styled-components/native';
-import Feather from '@expo/vector-icons/Feather';
-import MyChatRoomBox from '@/components/MyChatRoomBox';
-import GroupChatRoomBox from '@/components/GroupChatRoomBox';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { Client } from '@stomp/stompjs';
-import * as SecureStore from 'expo-secure-store';
 import api from '@/api/axiosInstance';
+import GroupChatRoomBox from '@/src/features/chat/components/GroupChatRoomBox';
+import MyChatRoomBox from '@/src/features/chat/components/MyChatRoomBox';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Feather from '@expo/vector-icons/Feather';
+import { useFocusEffect } from '@react-navigation/native';
+import { Client } from '@stomp/stompjs';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList } from 'react-native';
+import styled from 'styled-components/native';
 
 type ChatRoom = {
   roomId: string; // 채팅방 아이디

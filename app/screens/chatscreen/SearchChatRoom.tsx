@@ -1,13 +1,12 @@
-import styled from 'styled-components/native';
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Text, StatusBar, FlatList, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import Feather from '@expo/vector-icons/Feather';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import api from '@/api/axiosInstance';
-import MyChatRoomBox from '@/components/MyChatRoomBox';
-import AllSpaceRoomBox from '@/components/AllSpaceRoomBox';
-import { useLocalSearchParams } from 'expo-router';
+import AllSpaceRoomBox from '@/src/features/chat/components/AllSpaceRoomBox';
+import MyChatRoomBox from '@/src/features/chat/components/MyChatRoomBox';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Feather from '@expo/vector-icons/Feather';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StatusBar, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 type MyChatRoom = {
   roomId: number;
