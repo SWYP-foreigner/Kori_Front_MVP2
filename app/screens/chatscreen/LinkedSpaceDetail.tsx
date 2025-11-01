@@ -45,7 +45,7 @@ const LinkedSpaceDetail = () => {
       if (error.response?.status === 428) {
         Toast.show({
           type: 'error',
-          text1: '프로필을 완성해야 채팅에 참여할 수 있습니다.',
+          text1: '"You need to complete your profile to join the chat.',
         });
         router.push('/(tabs)/mypage/edit');
         return;

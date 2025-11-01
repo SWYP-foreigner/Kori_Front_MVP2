@@ -167,7 +167,7 @@ export default function HomeScreen() {
                         Alert.alert('Profile Setup Required', 'Please complete your profile before following.', [
                           {
                             text: 'Go to Setup',
-                            onPress: () => router.push('/screens/makeprofile/NameStepScreen' as any),
+                            onPress: () => router.push('/(tabs)/mypage/edit' as any)
                           },
                           { text: 'Cancel', style: 'cancel' },
                         ]);
@@ -218,7 +218,7 @@ export default function HomeScreen() {
                           [
                             {
                               text: 'Go to Setup',
-                              onPress: () => router.push('/screens/makeprofile/NameStepScreen' as any),
+                              onPress: () =>router.push('/(tabs)/mypage/edit' as any)
                             },
                             { text: 'Cancel', style: 'cancel' },
                           ],
