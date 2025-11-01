@@ -151,9 +151,10 @@ const CreateAccountScreen = () => {
         return;
       }
 
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, userId} = response.data;
       await SecureStore.setItemAsync(ACCESS_KEY, accessToken);
       await SecureStore.setItemAsync(REFRESH_KEY, refreshToken);
+      await SecureStore.setItemAsync("MyuserId",userId.toString());
 
       await patchLocation(latitude, longitude);
       router.replace('./SignUpDoneScreen');
