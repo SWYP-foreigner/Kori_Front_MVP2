@@ -369,8 +369,11 @@ const ChattingRoomScreen = () => {
   };
 
   const goBack = async () => {
+    //TODO: 채팅방 나가기 전 읽음 처리 API 호출?
     await api.post(`${Config.SERVER_URL}/api/v1/chat/rooms/${roomId}/read-all`);
-    router.back();
+    // 채팅 목록이 아닌 외부에서 채팅방 접근 시 back을 수행하면 의도하지 않은 화면으로 이동
+    // router.back();
+    router.replace('/(tabs)/chat');
   };
 
   // 햄버거 버튼 눌렀을때 이동
@@ -712,7 +715,7 @@ const ChattingRoomScreen = () => {
                             <OtherFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                searchMessages[pointerRef.current].id === item.id ? (
+                                  searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}
@@ -747,7 +750,7 @@ const ChattingRoomScreen = () => {
                             <OtherNotFirstTextBox>
                               {isSearching ? (
                                 searchMessages[pointerRef.current] &&
-                                searchMessages[pointerRef.current].id === item.id ? (
+                                  searchMessages[pointerRef.current].id === item.id ? (
                                   <HighlightOtherText
                                     text={isTranslate ? item.targetContent : item.content || item.originContent}
                                     keyword={searchText}

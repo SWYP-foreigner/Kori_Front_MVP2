@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView, FlatList, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import api from '@/api/axiosInstance';
-import { useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, ScrollView } from 'react-native';
+import Toast from 'react-native-toast-message';
+import styled from 'styled-components/native';
 
 type RoomDetail = {
   chatRoomId: number;
@@ -50,6 +49,12 @@ const LinkedSpaceDetail = () => {
           Toast.show({
             type: 'error',
             text1: 'You are already in the current group chat.',
+          });
+        } else {
+          //TODO: 에러 메시지 노출, if/else 구조 개선 필요
+          Toast.show({
+            type: 'error',
+            text1: message || 'Failed to join the group chat.',
           });
         }
       } else {
