@@ -1,6 +1,8 @@
 import AlarmOff from '@/assets/icons/alarm-off.svg';
 import AlarmOn from '@/assets/icons/alarm-on.svg';
 import Alert from '@/assets/icons/alert.svg';
+import Bookmark from '@/assets/icons/bookmark-non-selected.svg';
+import SelectedBookmark from '@/assets/icons/bookmark-selected.svg';
 import Box from '@/assets/icons/box.svg';
 import Business from '@/assets/icons/business.svg';
 import CameraColored from '@/assets/icons/camera-colored.svg';
@@ -14,6 +16,8 @@ import Close from '@/assets/icons/close.svg';
 import Comment from '@/assets/icons/comment.svg';
 import CommentArrow from '@/assets/icons/comment_arrow.svg';
 import Edit from '@/assets/icons/edit.svg';
+import Eclipsis from '@/assets/icons/ellipsis.svg';
+import EclipsisGaro from '@/assets/icons/ellipsis_garo.svg';
 import Eye from '@/assets/icons/eye.svg';
 import Female from '@/assets/icons/female.svg';
 import Global from '@/assets/icons/global.svg';
@@ -52,6 +56,8 @@ const iconMap = {
   alarmOn: AlarmOn,
   alert: Alert,
   business: Business,
+  bookmarkNonSelcted: Bookmark,
+  bookmarkSelected: SelectedBookmark,
   cameraColored: CameraColored,
   cameraDefault: CameraDefault,
   check: Check,
@@ -60,6 +66,8 @@ const iconMap = {
   comment: Comment,
   commentArrow: CommentArrow,
   edit: Edit,
+  eclipsis: Eclipsis,
+  eclipsisGaro: EclipsisGaro,
   eye: Eye,
   female: Female,
   global: Global,
@@ -80,6 +88,7 @@ const iconMap = {
   purpose: Purpose,
   search: Search,
   send: Send,
+  
   setting: Setting,
   share: Share,
   statusOn: StatusOn,

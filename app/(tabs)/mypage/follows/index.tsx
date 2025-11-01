@@ -1,10 +1,11 @@
+import Icon from '@/components/common/Icon';
 import FriendCard from '@/components/FriendCard';
 import useAcceptFollow from '@/hooks/mutations/useAcceptFollow';
 import useCancelFollowRequest from '@/hooks/mutations/useCancelFollowRequest';
 import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useDeclineFollow from '@/hooks/mutations/useDeclineFollow';
 import { useFollowList } from '@/hooks/queries/useFollowList';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { theme } from '@/src/styles/theme';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -207,7 +208,7 @@ export default function FollowListScreen() {
     <Safe>
       <Header>
         <BackBtn onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
+          <Icon type="previous" size={24} color={theme.colors.primary.white} />
         </BackBtn>
         <HeaderCenter>
           <Title>Friends List</Title>

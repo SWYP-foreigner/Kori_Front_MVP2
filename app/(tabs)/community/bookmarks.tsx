@@ -1,10 +1,9 @@
 import api from '@/api/axiosInstance';
 import { removeBookmark as apiRemoveBookmark } from '@/api/community/bookmarks';
+import Icon from '@/components/common/Icon';
 import { usePostUI } from '@/src/store/usePostUI';
+import { theme } from '@/src/styles/theme';
 import { keyToUrl } from '@/utils/image';
-
-import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, TouchableOpacity, View, type FlatListProps } from 'react-native';
@@ -16,7 +15,6 @@ type ApiItem = {
   postId?: number;
   id?: number;
   bookmarkId?: number;
-
   authorName?: string;
   content?: string;
   likeCount?: number;
@@ -28,6 +26,7 @@ type ApiItem = {
   postImages?: string[];
   createdAt?: string | number;
   createdTime?: string | number;
+  isLiked?: boolean; 
 };
 
 type ApiResp = {
@@ -50,6 +49,7 @@ type Row = {
   likes: number;
   comments: number;
   avatar: any;
+  liked: boolean;  
 };
 
 export default function BookmarksScreen() {
@@ -66,6 +66,8 @@ export default function BookmarksScreen() {
 
   const toAbs = (u?: string) => (u ? (u.startsWith('http') ? u : keyToUrl(u)) : undefined);
 
+  
+
   const mapItem = useCallback((raw: ApiItem, respTs?: string): Row => {
     const postId = (raw.postId as number | undefined) ?? (typeof raw.id === 'number' ? raw.id : undefined);
 
@@ -81,6 +83,7 @@ export default function BookmarksScreen() {
       likes: Number(raw.likeCount ?? 0),
       comments: Number(raw.commentCount ?? 0),
       avatar: avatarUrl ? { uri: avatarUrl } : AV,
+      liked: Boolean(raw.isLiked),
     };
   }, []);
 
@@ -153,68 +156,72 @@ export default function BookmarksScreen() {
     router.push({ pathname: '/community/[id]', params: { id: String(postId) } });
   };
 
-  const renderItem: ListRenderItem<Row> = ({ item }) => (
-    <Cell activeOpacity={item.postId ? 0.8 : 1} onPress={() => goPostDetail(item.postId)}>
-      <RowTop>
-        <RowLeft>
-          <Avatar source={item.avatar} />
-          <Meta>
-            <Author>{item.author}</Author>
-            <MetaRow>
-              <Sub>{item.createdAtLabel}</Sub>
-              <Dot>·</Dot>
-              <AntDesign name="eyeo" size={12} color="#9aa0a6" />
-              <Sub style={{ marginLeft: 6 }}>{item.views}</Sub>
-            </MetaRow>
-          </Meta>
-        </RowLeft>
+  const renderItem: ListRenderItem<Row> = ({ item }) => {
+    const likeIconType = item.liked ? 'thumbsUpSelected' : 'thumbsUpNonSelected';
+    const likeIconColor = item.liked ? theme.colors.primary.mint : theme.colors.gray.lightGray_1;
 
-        <IconBtn
-          onPress={(e: any) => {
-            e.stopPropagation();
-            removeOne(item);
-          }}
-          hitSlop={8}
-        >
-          <MaterialIcons name="bookmark" size={18} color="#30F59B" />
-        </IconBtn>
-      </RowTop>
+    return  (
+      <Cell activeOpacity={item.postId ? 0.8 : 1} onPress={() => goPostDetail(item.postId)}>
+        <RowTop>
+          <RowLeft>
+            <Avatar source={item.avatar} />
+            <Meta>
+              <Author>{item.author}</Author>
+              <MetaRow>
+                <Sub>{item.createdAtLabel}</Sub>
+                <Dot>·</Dot>
+                <Icon type="eye" size={16} color={theme.colors.gray.gray_1} />
+                <Sub style={{ marginLeft: 6 }}>{item.views}</Sub>
+              </MetaRow>
+            </Meta>
+          </RowLeft>
 
-      <Body numberOfLines={3}>{item.body}</Body>
+          <IconBtn
+            onPress={(e: any) => {
+              e.stopPropagation();
+              removeOne(item);
+            }}
+            hitSlop={8}
+          >
+            <Icon type="bookmarkSelected" size={20}  />
+          </IconBtn>
+        </RowTop>
 
-      <Footer>
-        <FootItem>
-          <AntDesign name="like2" size={16} color="#cfd4da" />
-          <FootText>{item.likes}</FootText>
-        </FootItem>
-        <FootItem style={{ marginLeft: 18 }}>
-          <AntDesign name="message1" size={16} color="#cfd4da" />
-          <FootText>{item.comments}</FootText>
-        </FootItem>
+        <Body numberOfLines={3}>{item.body}</Body>
 
-        <MoreBtn>
-          <AntDesign name="ellipsis1" size={16} color="#9aa0a6" />
-        </MoreBtn>
-      </Footer>
+        <Footer>
+          <FootItem>
+            <Icon type={likeIconType} size={20} color={likeIconColor} />
+            <FootText>{item.likes}</FootText>
+          </FootItem>
+          <FootItem style={{ marginLeft: 18 }}>
+            <Icon type="comment" size={20} color={theme.colors.gray.lightGray_1} />
+            <FootText>{item.comments}</FootText>
+          </FootItem>
 
-      <Divider />
-    </Cell>
-  );
+          <MoreBtn>
+            <Icon type="eclipsisGaro" size={20} color={theme.colors.gray.gray_1} />
+          </MoreBtn>
+        </Footer>
 
-  const listEmpty = useMemo(
-    () => (
-      <Empty>
-        <EmptyText>No bookmarked posts.</EmptyText>
-      </Empty>
-    ),
-    [],
-  );
+        <Divider />
+      </Cell>
+    );};
+
+    const listEmpty = useMemo(
+      () => (
+        <Empty>
+          <EmptyText>No bookmarked posts.</EmptyText>
+        </Empty>
+      ),
+      [],
+    );
 
   return (
     <Safe>
       <Header>
         <Back onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
+          <Icon type="previous" size={24} color={theme.colors.gray.lightGray_1} />
         </Back>
         <Title>Bookmarked</Title>
         <RightSpace />

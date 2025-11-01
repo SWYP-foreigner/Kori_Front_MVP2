@@ -1,8 +1,9 @@
+import Icon from '@/components/common/Icon';
 import FriendCard from '@/components/FriendCard';
 import { useCreateOneToOneRoom } from '@/hooks/mutations/useCreateOneToOneRoom';
 import useUnfollowAccepted from '@/hooks/mutations/useUnfollowAccepted'; // ✅ 변경
 import { useAcceptedFollowing } from '@/hooks/queries/useFollowing';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { theme } from '@/src/styles/theme';
 import { router } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import { Alert, Dimensions } from 'react-native';
@@ -98,7 +99,7 @@ export default function FriendsOnlyScreen() {
     <Safe>
       <Header>
         <BackBtn onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
+          <Icon type="previous" size={24} color={theme.colors.primary.white} />
         </BackBtn>
 
         <TitleWrap pointerEvents="none">

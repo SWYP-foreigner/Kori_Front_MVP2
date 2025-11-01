@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import { StatusBar, TouchableOpacity, KeyboardAvoidingView, ScrollView } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import Icon from '@/components/common/Icon';
 import { Config } from '@/src/lib/config';
+import { theme } from '@/src/styles/theme';
+import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useEffect, useState } from 'react';
+import { StatusBar, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 const ResetPasswordScreen = () => {
   const router = useRouter();
@@ -91,21 +91,21 @@ const ResetPasswordScreen = () => {
             <CheckPasswordBox>
               {checks.isnull ? (
                 <>
-                  <AntDesign name="check" size={18} color="#848687" />
+                  <Icon type="check" size={16} color={theme.colors.gray.gray_1} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
                     Use all case letters
                   </CheckPasswordText>
                 </>
               ) : checks.uppercase ? (
                 <>
-                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <Icon type="check" size={16} color={theme.colors.primary.mint} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
                     Use all case letters
                   </CheckPasswordText>
                 </>
               ) : (
                 <>
-                  <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                  <Icon type="close" size={16} color={theme.colors.secondary.red} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.uppercase}>
                     Use all case letters
                   </CheckPasswordText>
@@ -117,21 +117,21 @@ const ResetPasswordScreen = () => {
             <CheckPasswordBox>
               {checks.isnull ? (
                 <>
-                  <AntDesign name="check" size={18} color="#848687" />
+                  <Icon type="check" size={16} color={theme.colors.gray.gray_1} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.length}>
                     Enter 8-12 letters
                   </CheckPasswordText>
                 </>
               ) : checks.length ? (
                 <>
-                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <Icon type="check" size={16} color={theme.colors.primary.mint} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.length}>
                     Enter 8-12 letters
                   </CheckPasswordText>
                 </>
               ) : (
                 <>
-                  <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                  <Icon type="close" size={16} color={theme.colors.secondary.red} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.length}>
                     Enter 8-12 letters
                   </CheckPasswordText>
@@ -143,21 +143,21 @@ const ResetPasswordScreen = () => {
             <CheckPasswordBox>
               {checks.isnull ? (
                 <>
-                  <AntDesign name="check" size={18} color="#848687" />
+                  <Icon type="check" size={16} color={theme.colors.gray.gray_1} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.special}>
                     Enter special letters (@/!/~)
                   </CheckPasswordText>
                 </>
               ) : checks.special ? (
                 <>
-                  <AntDesign name="check" size={18} color="#02F59B" />
+                  <Icon type="check" size={16} color={theme.colors.primary.mint} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.special}>
                     Enter special letters (@/!/~)
                   </CheckPasswordText>
                 </>
               ) : (
                 <>
-                  <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                  <Icon type="close" size={16} color={theme.colors.secondary.red} />
                   <CheckPasswordText isnull={checks.isnull} check={checks.special}>
                     Enter special letters (@/!/~)
                   </CheckPasswordText>
@@ -186,13 +186,13 @@ const ResetPasswordScreen = () => {
           </PasswordContainer>
           {!isSamePassword && (
             <ErrorBox>
-              <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+              <Icon type="close" size={16} color={theme.colors.secondary.red} />
               <ErrorText>Your password do not match.</ErrorText>
             </ErrorBox>
           )}
           {isSamePassword && repeatPassword && (
             <NotErrorBox>
-              <AntDesign name="check" size={18} color="#02F59B" />
+              <Icon type="check" size={16} color={theme.colors.primary.mint} />
               <NotErrorText>Your password match.</NotErrorText>
             </NotErrorBox>
           )}

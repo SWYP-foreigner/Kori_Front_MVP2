@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '@/app/contexts/ProfileContext';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
 
 export default function BirthdaySelectionScreen() {
@@ -81,16 +82,16 @@ export default function BirthdaySelectionScreen() {
             returnKeyType="done"
           />
           {validbirth && text.length === 10 ? (
-            <AntDesign name="check" size={20} color="#02F59B" />
+            <Icon type="check" size={24} color={theme.colors.primary.mint} />
           ) : !validbirth && text.length === 10 ? (
-            <AntDesign name="close" size={20} color="red" />
+            <Icon type="close" size={24} color={theme.colors.secondary.red} />
           ) : null}
         </BirthBox>
 
         {!validbirth && text.length === 10 && (
           <ErrorWrapper>
             <ErrorBox>
-              <AntDesign name="close" size={17} color="red" />
+              <Icon type="close" size={24} color={theme.colors.secondary.red}/>
               <ErrorText>Please insert a valid date</ErrorText>
             </ErrorBox>
           </ErrorWrapper>

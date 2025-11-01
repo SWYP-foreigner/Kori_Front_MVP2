@@ -1,14 +1,14 @@
 import api from '@/api/axiosInstance';
 import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import CategoryChips, { Category } from '@/components/CategoryChips';
+import Icon from '@/components/common/Icon';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
 import { usePostUI } from '@/src/store/usePostUI';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { theme } from '@/src/styles/theme';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, type FlatListProps } from 'react-native';
@@ -317,7 +317,7 @@ export default function CommunityScreen() {
               router.push(`/community/SearchScreen${qs}`);
             }}
           >
-            <AntDesign name="search1" size={18} color="#cfd4da" />
+            <Icon type="search" size={24} color={theme.colors.gray.lightGray_1} />
           </IconBtn>
 
           <IconBtn
@@ -325,11 +325,11 @@ export default function CommunityScreen() {
               router.push('/community/bookmarks');
             }}
           >
-            <MaterialIcons name="bookmark-border" size={20} color="#cfd4da" />
+            <Icon type="bookmarkSelected" size={24} color={theme.colors.gray.lightGray_1} />
           </IconBtn>
 
           <IconBtn onPress={() => router.push('/community/my-history')}>
-            <AntDesign name="user" size={18} color="#cfd4da" />
+            <Icon type='person' size={24} color={theme.colors.gray.lightGray_1} />
           </IconBtn>
         </Right>
       </Header>

@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import ProfileModal from '@/components/ProfileModal';
-import {
-  SafeAreaView,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  Image,
-  Alert,
-} from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { useRouter } from 'expo-router';
-import MembersBox from '@/components/MembersBox';
-import { useLocalSearchParams } from 'expo-router';
-import { FlatList } from 'react-native';
 import api from '@/api/axiosInstance';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Toast from 'react-native-toast-message';
+import Icon from '@/components/common/Icon';
+import MembersBox from '@/components/MembersBox';
+import ProfileModal from '@/components/ProfileModal';
 import { Config } from '@/src/lib/config';
+import { theme } from '@/src/styles/theme';
+import Feather from '@expo/vector-icons/Feather';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StatusBar,
+  TouchableOpacity
+} from 'react-native';
+import Toast from 'react-native-toast-message';
+import styled from 'styled-components/native';
 
 type ChatMembers = {
   userId: number;
@@ -363,7 +361,7 @@ const ChatInsideMember = () => {
                   <Image source={require('@/assets/images/alert.png')} style={{ width: 25, height: 25 }} />
                   <ReportHeaderText>Report this user</ReportHeaderText>
                   <TouchableOpacity onPress={closeReportModal}>
-                    <AntDesign name="close" size={24} color="#CCCFD0" />
+                    <Icon type="close" size={24} color={theme.colors.gray.gray_1} />
                   </TouchableOpacity>
                 </ReportHeader>
                 <ReportBox

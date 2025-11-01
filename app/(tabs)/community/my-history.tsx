@@ -1,6 +1,8 @@
+import Icon from '@/components/common/Icon';
 import { useDeleteComment } from '@/hooks/mutations/useDeleteComment';
 import { useMyComments } from '@/hooks/queries/useMyComments';
 import { useDeletePost, useMyPosts } from '@/hooks/queries/useMyPosts';
+import { theme } from '@/src/styles/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -19,6 +21,7 @@ type PostRow = {
   views: number;
   likes: number;
   comments: number;
+  liked?: boolean;
 };
 
 type CommentRow = {
@@ -74,6 +77,7 @@ export default function MyHistoryScreen() {
         views: Number(row.viewCount ?? 0),
         likes: Number(row.likeCount ?? 0),
         comments: Number(row.commentCount ?? 0),
+        liked: Boolean(row.isLiked ?? row.likedByMe ?? false),
       })),
     [myPostItems],
   );
@@ -192,6 +196,7 @@ export default function MyHistoryScreen() {
 
   const renderPost: ListRenderItem<PostRow> = ({ item }) => {
     const hasDate = !!String(item.createdAt || '').trim();
+    const likeIconType = item.liked ? 'thumbsUpSelected' : 'thumbsUpNonSelected';
 
     return (
       <RowPress onPress={() => goPostDetail(item.id)}>
@@ -199,7 +204,7 @@ export default function MyHistoryScreen() {
           <InlineRow>
             {hasDate && <PostDateText>{item.createdAt}</PostDateText>}
             {hasDate && <Dot>·</Dot>}
-            <AntDesign name="eyeo" size={12} color="#9aa0a6" />
+            <Icon type="eye" size={16} color={theme.colors.gray.gray_1} />
             <Sub style={{ marginLeft: 6 }}>{item.views}</Sub>
           </InlineRow>
 
@@ -209,7 +214,7 @@ export default function MyHistoryScreen() {
               openSheet({ type: 'post', id: item.id });
             }}
           >
-            <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
+            <Icon type="eclipsisGaro" size={16} color={theme.colors.gray.gray_1} />
           </MoreBtn>
         </TopRow>
 
@@ -217,11 +222,11 @@ export default function MyHistoryScreen() {
 
         <ActionRow>
           <Act>
-            <AntDesign name="like2" size={14} color="#30F59B" />
-            <ActText>{item.likes}</ActText>
+            <Icon type={likeIconType} size={20}  />
+          <ActText>{item.likes}</ActText>
           </Act>
           <Act>
-            <AntDesign name="message1" size={14} color="#cfd4da" />
+            <Icon type="comment" size={20} color={theme.colors.gray.gray_1} />
             <ActText>{item.comments}</ActText>
           </Act>
         </ActionRow>
@@ -239,7 +244,7 @@ export default function MyHistoryScreen() {
             openSheet({ type: 'comment', id: item.id });
           }}
         >
-          <AntDesign name="ellipsis1" size={16} color="#cfd4da" />
+          <Icon type="eclipsisGaro" size={20} color={theme.colors.gray.gray_1} />
         </MoreBtn>
       </TopRow>
       {item.myText ? <CommentTitle numberOfLines={1}>{item.myText}</CommentTitle> : null}
@@ -265,7 +270,7 @@ export default function MyHistoryScreen() {
     <Safe>
       <Header>
         <Back onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
+          <Icon type="previous" size={24} color={theme.colors.primary.white} />
         </Back>
         <HeaderTitle>My History</HeaderTitle>
         <RightPlaceholder />
@@ -322,7 +327,7 @@ export default function MyHistoryScreen() {
           </SheetBtn>
           <SheetBtn onPress={closeSheet} disabled={isDeleting}>
             <SheetIcon>
-              <AntDesign name="close" size={18} color="#cfd4da" />
+              <Icon type="close" size={24} color={theme.colors.gray.lightGray_1} />
             </SheetIcon>
             <SheetText>Cancel</SheetText>
           </SheetBtn>

@@ -114,9 +114,6 @@ export default function PurposeStepScreen({ navigation }) {
             >
               <IconContainer>
                 <PurposeIconContainer>{renderIcon(purpose.iconFamily, purpose.iconName)}</PurposeIconContainer>
-                <InfoButton>
-                  <Icon type="info" size={16} color={theme.colors.gray.gray_1} />
-                </InfoButton>
               </IconContainer>
 
               <PurposeTitle>{purpose.title}</PurposeTitle>

@@ -1,12 +1,14 @@
+// 수정될 코드 (기획과 다름)
+
 import api from '@/api/axiosInstance';
 import CategoryChips, { Category } from '@/components/CategoryChips';
+import Icon from '@/components/common/Icon';
 import PostCard, { Post } from '@/components/PostCard';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import WriteFab from '@/components/WriteFab';
 import { useToggleLike } from '@/hooks/mutations/useToggleLike';
 import { useSearchPosts, type PostExFromSearch } from '@/hooks/queries/useSearchPosts';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
-
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -350,13 +352,13 @@ export default function CommunityScreen() {
             </>
           ) : (
             <SearchBox>
-              <Icon>
+              <CustomIcon>
                 {searching ? (
                   <ActivityIndicator size="small" />
                 ) : (
-                  <AntDesign name="search1" size={16} color="#9aa0a6" />
+                  <Icon type="search" size={16} color="#9aa0a6" />
                 )}
-              </Icon>
+              </CustomIcon>
               <RNTextInput
                 ref={inputRef}
                 value={q}
@@ -495,7 +497,7 @@ const SearchBox = styled.View`
   padding: 0 6px 0 12px;
   margin-right: 8px;
 `;
-const Icon = styled.View`
+const CustomIcon = styled.View`
   width: 20px;
   align-items: center;
   margin-right: 8px;

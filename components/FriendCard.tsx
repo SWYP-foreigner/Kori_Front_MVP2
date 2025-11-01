@@ -151,12 +151,18 @@ export default function FriendCard(props: Props) {
           <Name>{name}</Name>
 
           <MetaLine>
-            <MetaDim>Birth </MetaDim>
-            <MetaStrong>{birth ? String(birth) : '-'}</MetaStrong>
+            <MetaRow>
+              <MetaDim>Birth </MetaDim>
+              <MetaStrong>{birth ? String(birth) : '-'}</MetaStrong>       
 
-            <GenderIconSpacer>
-              <Icon type={genderIconType[gender]} size={16} color={theme.colors.gray.gray_1} />
-            </GenderIconSpacer>
+              <GenderIconSpacer>
+                <Icon
+                  type={genderIconType[gender]}
+                  size={16}
+                  color={theme.colors.gray.gray_1}
+                />
+              </GenderIconSpacer>
+            </MetaRow>
 
             <MetaDim>From </MetaDim>
             <MetaStrong>{country}</MetaStrong>
@@ -341,10 +347,23 @@ const Name = styled.Text`
 const MetaLine = styled.View`
   margin-top: ${META_MT}px;
   flex-direction: row;
+  align-items: flex-start;  /* ⬅︎ 세로 가운데 말고 위 기준 */
+  flex-wrap: nowrap;          /* ⬅︎ 줄바꿈 허용 */
+`;
+
+const MetaRow = styled.View`
+  flex-direction: row;
   align-items: center;
 `;
+
 const GenderIconSpacer = styled.View`
-  margin: 1px 4px 0 4px;
+  width: 16px;           /* 아이콘 12~14 추천 */
+  height: 16px;
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.colors.gray.lightGray_2};
+  align-items: center;
+  justify-content: center;
+  margin: 0 6px;         /* 텍스트 사이 간격 */
 `;
 const MetaDim = styled.Text`
   font-family: 'PlusJakartaSans_400Regular';

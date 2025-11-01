@@ -1,31 +1,30 @@
-import axios from 'axios';
-import { Buffer } from 'buffer';
-
 import Avatar from '@/components/Avatar';
 import BottomSheetTagPicker, { TagSection } from '@/components/BottomSheetTagPicker';
-import { Ionicons } from '@expo/vector-icons';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import Icon from '@/components/common/Icon';
 import { useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { Buffer } from 'buffer';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
 import CountryPicker, { CountryDropdownButton, CountryDropdownText } from '@/components/CountryPicker';
+import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import LanguagePicker, {
   LanguageDropdownButton,
   LanguageDropdownText,
   MAX_LANGUAGES,
 } from '@/components/LanguagePicker';
 import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
-import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { Config } from '@/src/lib/config';
 
 import api from '@/api/axiosInstance';
+import { theme } from '@/src/styles/theme';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Image as RNImage, Modal } from 'react-native';
+import { Alert, Modal, Image as RNImage } from 'react-native';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
@@ -57,7 +56,6 @@ const AVATAR_URLS = [
   'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_03.png',
 ] as const;
 
-const CAMERA_IMG = require('@/assets/images/camera.png');
 
 const stripHost = (keyOrUrl?: string) => {
   if (!keyOrUrl) return undefined;
@@ -322,7 +320,7 @@ export default function EditProfileScreen() {
     <Safe>
       <Header>
         <Side onPress={() => router.back()} hitSlop={12} style={{ left: -4 }}>
-          <Ionicons name="chevron-back" size={22} color="#cfd4da" />
+          <Icon type="previous" size={24} color={theme.colors.gray.lightGray_1} />
         </Side>
         <Title>My Profile</Title>
         <Side onPress={onSave} hitSlop={12} style={{ right: -4 }}>
@@ -333,9 +331,9 @@ export default function EditProfileScreen() {
         <Center>
           <AvatarPress onPress={openAvatarSheet}>
             <Avatar uri={displayAvatarUrl} />
-            <CameraBadge>
-              <CameraBadgeImg source={CAMERA_IMG} />
-            </CameraBadge>
+              <CameraBadge>
+                <Icon type="cameraColored" size={20} color={theme.colors.primary.black} />
+              </CameraBadge>
           </AvatarPress>
           <NameText numberOfLines={1} ellipsizeMode="tail">
             {name || (isLoading ? 'Loading...' : '—')}
@@ -360,7 +358,7 @@ export default function EditProfileScreen() {
           <LabelText>Gender</LabelText>
           <GenderDropdownButton selected={!!gender} onPress={() => setShowGender(true)}>
             <GenderDropdownText selected={!!gender}>{gender || 'Select your gender'}</GenderDropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <Rot90><Icon type="next" size={24} color={theme.colors.primary.white} /></Rot90>
           </GenderDropdownButton>
         </Field>
 
@@ -368,7 +366,7 @@ export default function EditProfileScreen() {
           <LabelText>Country</LabelText>
           <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
             <CountryDropdownText selected={!!country}>{country || 'Select your country'}</CountryDropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <Rot90><Icon type="next" size={24} color={theme.colors.primary.white} /></Rot90>
           </CountryDropdownButton>
         </Field>
 
@@ -389,7 +387,7 @@ export default function EditProfileScreen() {
           <LabelText>Purpose</LabelText>
           <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
             <PurposeDropdownText selected={!!purpose}>{purpose || 'Select purpose'}</PurposeDropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <Rot90><Icon type="next" size={24} color={theme.colors.primary.white} /></Rot90>
           </PurposeDropdownButton>
         </Field>
 
@@ -404,7 +402,7 @@ export default function EditProfileScreen() {
           </LabelRow>
           <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
             <LanguageDropdownText selected={langs.length > 0}>{languagesDisplay}</LanguageDropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
+            <Rot90><Icon type="next" size={24} color={theme.colors.primary.white} /></Rot90>
           </LanguageDropdownButton>
         </Field>
 
@@ -424,7 +422,7 @@ export default function EditProfileScreen() {
 
           <EditRow>
             <EditOutlineBtn onPress={() => setShowTagPicker(true)}>
-              <AntDesign name="plus" size={12} color="#30F59B" />
+              <Icon type="plus" size={16} color={theme.colors.primary.mint} />
               <EditOutlineText>Edit</EditOutlineText>
             </EditOutlineBtn>
           </EditRow>
@@ -502,7 +500,7 @@ export default function EditProfileScreen() {
                         <AvatarImg source={src} />
                         {selected && (
                           <CheckBadge>
-                            <AntDesign name="check" size={12} color="#0f1011" />
+                            <Icon type="check" size={24} color={theme.colors.primary.white} />
                           </CheckBadge>
                         )}
                       </AvatarCircle>
@@ -522,12 +520,12 @@ export default function EditProfileScreen() {
                       <>
                         <AvatarImg source={{ uri: customPhotoUri }} />
                         <CheckBadge>
-                          <AntDesign name="check" size={12} color="#0f1011" />
+                          <Icon type="check" size={16} color={theme.colors.primary.black} />
                         </CheckBadge>
                       </>
                     ) : (
                       <CameraCircleInner>
-                        <Ionicons name="camera" size={22} color="#e8eaed" />
+                        <Icon type="cameraDefault" size={32} color={theme.colors.primary.white} />
                       </CameraCircleInner>
                     )}
                   </AvatarCircle>
@@ -849,8 +847,6 @@ const CameraBadge = styled.View`
   elevation: 3;
 `;
 
-const CameraBadgeImg = styled.Image`
-  width: 18px;
-  height: 18px;
-  resize-mode: contain;
+const Rot90 = styled.View`
+  transform: rotate(90deg);
 `;

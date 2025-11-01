@@ -1,16 +1,17 @@
+import Icon from '@/components/common/Icon';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Image as RNImage,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  ScrollView,
+  Image as RNImage,
   TextInput as RNTextInput,
+  ScrollView,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -22,6 +23,7 @@ import { useUpdatePost } from '@/hooks/mutations/useUpdatePost';
 import { useBoardWriteOptions } from '@/hooks/queries/useBoardWriteOptions';
 import useCreatePost from '@/hooks/queries/useCreatePost';
 import { CATEGORY_TO_BOARD_ID } from '@/lib/community/constants';
+import { theme } from '@/src/styles/theme';
 import { uploadImageToPresignedUrl } from '@/utils/uploadImageToPresignedUrl';
 import { router, useLocalSearchParams } from 'expo-router';
 
@@ -224,7 +226,7 @@ export default function WriteScreen() {
     <Safe>
       <Header>
         <IconBtn onPress={() => router.back()}>
-          <AntDesign name="left" size={20} color="#fff" />
+          <Icon type="previous" size={24} color={theme.colors.primary.white} />
         </IconBtn>
         <HeaderTitle>{isEdit ? 'Edit Post' : 'Write'}</HeaderTitle>
         <SaveBtn onPress={onSave} disabled={!canSave || saving || updateMutation.isPending || createMutation.isPending}>
@@ -251,7 +253,9 @@ export default function WriteScreen() {
               <CatLabel>Category</CatLabel>
               <CatChip style={isEdit ? { opacity: 0.5 } : undefined}>
                 <CatText>{category}</CatText>
-                <AntDesign name="down" size={10} color="#9aa0a6" />
+                <RotatedIcon>
+                  <Icon type="next" size={16} color={theme.colors.gray.gray_1} />
+                </RotatedIcon>
               </CatChip>
             </CatRow>
 
@@ -277,7 +281,7 @@ export default function WriteScreen() {
                     <Thumb key={uri}>
                       <ThumbImage source={{ uri }} />
                       <RemoveBtn onPress={() => removeImage(uri)}>
-                        <AntDesign name="close" size={12} color="#fff" />
+                        <Icon type="close" size={16} color={theme.colors.primary.white} />
                       </RemoveBtn>
                     </Thumb>
                   ))}
@@ -288,7 +292,7 @@ export default function WriteScreen() {
             <BottomBar>
               <BarLeft>
                 <BarIcon onPress={() => setPickerOpen(true)}>
-                  <AntDesign name="picture" size={18} color="#cfd4da" />
+                  <Icon type="photo" size={20} color={theme.colors.gray.lightGray_1} />
                 </BarIcon>
               </BarLeft>
 
@@ -360,7 +364,7 @@ export default function WriteScreen() {
                 }}
               >
                 <CatItemText $active={active}>{c}</CatItemText>
-                {active ? <AntDesign name="check" size={16} color="#9aa0a6" /> : <View style={{ width: 16 }} />}
+                {active ? <Icon type="check" size={24} color={theme.colors.primary.mint} /> : <View style={{ width: 16 }} />}
               </CatItem>
             );
           })}
@@ -550,4 +554,7 @@ const CatItem = styled.Pressable`
 const CatItemText = styled.Text<{ $active?: boolean }>`
   color: ${(p) => (p.$active ? '#e6e9ec' : '#cfd4da')};
   font-size: 15px;
+`;
+const RotatedIcon = styled.View`
+  transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
 `;
