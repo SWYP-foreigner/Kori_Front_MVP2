@@ -110,7 +110,7 @@ export default function CountryStepScreen({ navigation }) {
                 showsVerticalScrollIndicator={false}
                 style={{ maxHeight: 400 }}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
-            />
+              />
             ) : (
               <NoResultText>No countries found</NoResultText>
             )}
@@ -124,7 +124,7 @@ export default function CountryStepScreen({ navigation }) {
 // ------------------------
 // Styled Components
 // ------------------------
-const SafeArea = styled(SafeAreaView)<{ bgColor?: string }>`
+const SafeArea = styled(SafeAreaView) <{ bgColor?: string }>`
   flex: 1;
   background-color: ${(props) => props.bgColor || '#000'};
 `;
@@ -232,6 +232,11 @@ const SearchInput = styled.TextInput`
   font-family: 'PlusJakartaSans-SemiBold';
 `;
 
+// ✅ 여기 ClearButton 정의 추가
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px;
+`;
+
 const CountryItem = styled.TouchableOpacity<{ selected: boolean }>`
   flex-direction: row;
   align-items: center;
@@ -277,4 +282,13 @@ const BottomSpacer = styled.View`
 
 const RotatedIcon = styled.View`
   transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
+`;
+
+// ✅ 여기 NoResultText 정의 추가
+const NoResultText = styled.Text`
+  color: #949899;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
+  text-align: center;
+  padding: 20px;
 `;
