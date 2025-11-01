@@ -1,8 +1,8 @@
 import api from '@/api/axiosInstance';
-import ProfileImage from '@/components/common/ProfileImage';
 import { formatShortDate } from '@/src/utils/dateUtils';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
+import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Alert } from 'react-native';
@@ -104,6 +104,8 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore, o
   const [selectedUser, setSelectedUser] = useState(null);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const handlePressProfile = async () => {
     if (anon || !userId) {
@@ -124,6 +126,119 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore, o
       Alert.alert('Error', 'try again');
     } finally {
       setIsLoadingProfile(false);
+    }
+  };
+
+  // 🔹 채팅 핸들러
+  const handleStartChat = async () => {
+    if (isChatLoading || !selectedUser) return;
+
+    const otherUserId = (selectedUser as any)?.id ?? (selectedUser as any)?.userId;
+
+    if (!otherUserId) {
+      Alert.alert('Error', 'Could not find user ID to start chat.');
+      return;
+    }
+
+    setIsChatLoading(true);
+
+    try {
+      const response = await api.post('/api/v1/chat/rooms/oneTone', {
+        otherUserId: Number(otherUserId),
+      });
+
+      const newRoom = response.data.data;
+      const roomId = newRoom?.id;
+
+      if (!roomId) {
+        throw new Error('Chat room ID not found in API response.');
+      }
+
+      setIsProfileVisible(false);
+
+      router.push({
+        pathname: '/chat/ChattingRoomScreen',
+        params: { roomId: roomId },
+      });
+    } catch (err: any) {
+      console.error('[Chat] Failed to create chat room:', err);
+      const status = err.response?.status;
+
+      if (status === 428) {
+        Alert.alert('Profile Setup Required', 'Please complete your profile setup before starting a chat.', [
+          {
+            text: 'Go to Setup',
+            onPress: () => {
+              setIsProfileVisible(false);
+              router.push('/(tabs)/mypage/edit' as any);
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+        return;
+      }
+
+      const msg =
+        status === 400 ? 'Invalid request.' : status === 401 ? 'Please log in to chat.' : 'Failed to start chat.';
+      Alert.alert('Chat Error', msg);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  // 🔹 팔로우 핸들러
+  const handleFollow = async () => {
+    if (isFollowLoading || !selectedUser) return;
+
+    const targetUserId = (selectedUser as any)?.userId;
+    const currentStatus = (selectedUser as any)?.followStatus;
+
+    if (!targetUserId || currentStatus !== 'NOT_FOLLOWING') return;
+
+    setIsFollowLoading(true);
+
+    try {
+      await api.post(`/api/v1/home/follow/${targetUserId}`);
+      setSelectedUser((prevUser) => ({
+        ...(prevUser as any),
+        followStatus: 'PENDING',
+      }));
+      Alert.alert('Follow', 'Follow request sent!');
+    } catch (err: any) {
+      console.error('[Follow] Failed to send follow request:', err);
+      const status = err.response?.status;
+
+      // 428 에러 처리
+      if (status === 428) {
+        Alert.alert('Profile Setup Required', 'Please complete your profile before following.', [
+          {
+            text: 'Go to Setup',
+            onPress: () => {
+              setIsProfileVisible(false);
+              router.push('/(tabs)/mypage/edit' as any);
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+        return;
+      }
+
+      const errorCode = err.response?.data?.code;
+      let msg = 'Failed to send follow request.';
+      if (errorCode === 'PROFILE_SET_NOT_COMPLETED') {
+        msg = 'You must complete your own profile before you can follow others.';
+      } else if (errorCode === 'FOLLOW_ALREADY_EXISTS') {
+        msg = 'You have already sent a request or are already following this user.';
+        setSelectedUser((prevUser) => ({
+          ...(prevUser as any),
+          followStatus: 'PENDING',
+        }));
+      } else if (errorCode === 'CANNOT_FOLLOW_YOURSELF') {
+        msg = 'You cannot follow yourself.';
+      }
+      Alert.alert('Follow Error', msg);
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -176,7 +291,15 @@ export default function CommentItem({ data, onPressLike, isFirst, onPressMore, o
         </Act>
       </Footer>
 
-      <ProfileModal visible={isProfileVisible} onClose={() => setIsProfileVisible(false)} userData={selectedUser} />
+      <ProfileModal
+        visible={isProfileVisible}
+        onClose={() => setIsProfileVisible(false)}
+        userData={selectedUser}
+        onChat={handleStartChat}
+        onFollow={handleFollow}
+        isLoadingChat={isChatLoading}
+        isLoadingFollow={isFollowLoading}
+      />
     </Wrap>
   );
 }
@@ -204,7 +327,7 @@ const ReplyIcon = styled.View`
   margin-right: 6px;
 `;
 
-const Avatar = styled(ProfileImage)`
+const Avatar = styled.Image`
   width: 28px;
   height: 28px;
   border-radius: 14px;

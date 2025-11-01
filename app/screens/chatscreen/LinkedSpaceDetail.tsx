@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView, FlatList, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import api from '@/api/axiosInstance';
-import { useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, ScrollView } from 'react-native';
+import Toast from 'react-native-toast-message';
+import styled from 'styled-components/native';
 
 type RoomDetail = {
   chatRoomId: number;
@@ -38,14 +37,23 @@ const LinkedSpaceDetail = () => {
       router.push({
         pathname: '/(tabs)/chat/ChattingRoomScreen',
         params: {
-          roomId: roomId, // props에서 바로 가져옴
-          roomName: roomDetail?.roomName, // props에서 바로 가져옴
+          roomId: roomId,
+          roomName: roomDetail?.roomName,
         },
       });
     } catch (error: any) {
+      if (error.response?.status === 428) {
+        Toast.show({
+          type: 'error',
+          text1: '프로필을 완성해야 채팅에 참여할 수 있습니다.',
+        });
+        router.push('/(tabs)/mypage/edit');
+        return;
+      }
+
+      // 기존 에러 처리
       if (error.response) {
         const message = error.response.data?.message;
-
         if (message === '이미 현재의 그룹채팅방에 참여하고 있습니다.') {
           Toast.show({
             type: 'error',

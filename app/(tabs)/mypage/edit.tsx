@@ -1,23 +1,22 @@
-import axios from 'axios';
-import { Buffer } from 'buffer';
-
 import Avatar from '@/components/Avatar';
 import BottomSheetTagPicker, { TagSection } from '@/components/BottomSheetTagPicker';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { Buffer } from 'buffer';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 
 import CountryPicker, { CountryDropdownButton, CountryDropdownText } from '@/components/CountryPicker';
+import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import LanguagePicker, {
   LanguageDropdownButton,
   LanguageDropdownText,
   MAX_LANGUAGES,
 } from '@/components/LanguagePicker';
 import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
-import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { Config } from '@/src/lib/config';
@@ -25,7 +24,7 @@ import { Config } from '@/src/lib/config';
 import api from '@/api/axiosInstance';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Image as RNImage, Modal } from 'react-native';
+import { Alert, Modal, Image as RNImage } from 'react-native';
 
 const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
@@ -201,6 +200,20 @@ export default function EditProfileScreen() {
     return { firstname: parts[0], lastname: parts.slice(1).join(' ') };
   };
 
+  // ✅ 필수 필드 유효성 검사
+  const isFormValid = useMemo(() => {
+    const hasName = name.trim().length > 0;
+    const hasGender = gender.trim().length > 0;
+    const hasCountry = country.trim().length > 0;
+    const hasBirth = birth.trim().length > 0;
+    const hasPurpose = purpose.trim().length > 0;
+    const hasLanguage = langs.length > 0;
+    const hasInterests = selectedInterests.length > 0;
+    const hasAboutMe = aboutMe.trim().length > 0;
+
+    return hasName && hasGender && hasCountry && hasBirth && hasPurpose && hasLanguage && hasInterests && hasAboutMe;
+  }, [name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
+
   const formatBirth = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
     if (digits.length <= 2) return digits;
@@ -209,6 +222,12 @@ export default function EditProfileScreen() {
   };
 
   const onSave = async () => {
+    // ✅ 저장 전 유효성 검사
+    if (!isFormValid) {
+      Alert.alert('필수 정보 입력', '모든 필드를 입력해주세요.');
+      return;
+    }
+
     const { firstname, lastname } = splitName(name);
     const language = langs.map((l) => {
       const m = l.match(/\(([^)]+)\)/);
@@ -325,8 +344,8 @@ export default function EditProfileScreen() {
           <Ionicons name="chevron-back" size={22} color="#cfd4da" />
         </Side>
         <Title>My Profile</Title>
-        <Side onPress={onSave} hitSlop={12} style={{ right: -4 }}>
-          <SaveText>Save</SaveText>
+        <Side onPress={isFormValid ? onSave : undefined} hitSlop={12} style={{ right: -4 }}>
+          <SaveText disabled={!isFormValid}>{isFormValid ? 'Save' : 'Complete all'}</SaveText>
         </Side>
       </Header>
       <Scroll showsVerticalScrollIndicator={false}>
@@ -579,9 +598,10 @@ const Side = styled.Pressable`
   justify-content: center;
   padding: 0 12px;
 `;
-const SaveText = styled.Text`
-  color: #30f59b;
+const SaveText = styled.Text<{ disabled?: boolean }>`
+  color: ${({ disabled }) => (disabled ? '#7e848a' : '#30f59b')};
   font-family: 'PlusJakartaSans_600SemiBold';
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 `;
 const Center = styled.View`
   align-items: center;

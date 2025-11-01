@@ -2,7 +2,6 @@ import api from '@/api/axiosInstance';
 import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import { blockComment } from '@/api/community/comments';
 import CommentItem, { Comment } from '@/components/CommentItem';
-import ProfileImage from '@/components/common/ProfileImage';
 import ProfileModal from '@/components/ProfileModal';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -702,13 +701,11 @@ export default function PostDetailScreen() {
     ]);
   };
   const handleStartChat = async () => {
-    // 2. 이미 로딩 중이거나 선택된 유저가 없으면 중단
     if (isChatLoading || !selectedUser) {
       console.log('Chat creation in progress or no user selected.');
       return;
     }
 
-    // 3. selectedUser에서 상대방 ID 추출 (키 이름은 실제 데이터에 맞게 조정 필요)
     const otherUserId = (selectedUser as any)?.id ?? (selectedUser as any)?.userId;
 
     if (!otherUserId) {
@@ -720,13 +717,10 @@ export default function PostDetailScreen() {
     setIsChatLoading(true);
 
     try {
-      // 4. API 호출
       const response = await api.post('/api/v1/chat/rooms/oneTone', {
         otherUserId: Number(otherUserId),
       });
 
-      // 5. 응답 데이터에서 채팅방 ID 추출
-      // API 응답 본문이 { "id": ..., "participants": ... } 형태이므로 response.data가 바로 채팅방 객체입니다.
       console.log('[Chat] API Response Data:', JSON.stringify(response.data, null, 2));
       const newRoom = response.data.data;
       const roomId = newRoom?.id;
@@ -737,34 +731,41 @@ export default function PostDetailScreen() {
 
       console.log(`[Chat] Successfully created room. ID: ${roomId}`);
 
-      // 6. 성공 시 프로필 모달 닫기
       setIsProfileVisible(false);
 
-      // 7. expo-router를 사용해 채팅방으로 이동
-      //    (경로는 실제 채팅방 스크린 경로에 맞게 수정하세요. 예: '/chat/[id]')
       router.push({
-        pathname: '/chat/ChattingRoomScreen', // <-- ChatLayout에 등록된 파일 이름
-        params: { roomId: roomId }, // <-- 전달할 데이터 (채팅방 ID)
+        pathname: '/chat/ChattingRoomScreen',
+        params: { roomId: roomId },
       });
     } catch (err: any) {
-      // 8. 에러 처리
       console.error('[Chat] Failed to create chat room:', err);
       const status = err.response?.status;
+
+      if (status === 428) {
+        Alert.alert('Profile Setup Required', 'Please complete your profile setup before starting a chat.', [
+          {
+            text: 'Go to Setup',
+            onPress: () => {
+              setIsProfileVisible(false);
+              router.push('/(tabs)/mypage/edit');
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+        return;
+      }
+
       const msg =
         status === 400 ? 'Invalid request.' : status === 401 ? 'Please log in to chat.' : 'Failed to start chat.';
       Alert.alert('Chat Error', msg);
     } finally {
-      // 9. 로딩 상태 해제
       setIsChatLoading(false);
     }
   };
 
-  // 🔽 [추가] 팔로우 요청 함수
   const handleFollow = async () => {
-    // 로딩 중이거나, 유저 정보가 없으면 중단
     if (isFollowLoading || !selectedUser) return;
 
-    // selectedUser에서 ID와 현재 팔로우 상태를 가져옵니다.
     const targetUserId = (selectedUser as any)?.userId;
     const currentStatus = (selectedUser as any)?.followStatus;
 
@@ -773,7 +774,6 @@ export default function PostDetailScreen() {
       return;
     }
 
-    // "NOT_FOLLOWING" 상태일 때만 팔로우 요청을 보냅니다.
     if (currentStatus !== 'NOT_FOLLOWING') {
       console.log(`[Follow] Action ignored. Current status: ${currentStatus}`);
       return;
@@ -783,11 +783,8 @@ export default function PostDetailScreen() {
     setIsFollowLoading(true);
 
     try {
-      // 1. API 호출: POST /api/v1/home/follow/{userId}
       await api.post(`/api/v1/home/follow/${targetUserId}`);
 
-      // 2. API 성공 시, 로컬 state를 "PENDING"으로 즉시 변경 (Optimistic UI)
-      //    (모달이 이 state를 보고 버튼 모양을 "Pending"으로 바꿀 겁니다)
       setSelectedUser((prevUser) => ({
         ...(prevUser as any),
         followStatus: 'PENDING',
@@ -795,20 +792,35 @@ export default function PostDetailScreen() {
 
       Alert.alert('Follow', 'Follow request sent!');
     } catch (err: any) {
-      // 3. 에러 처리 (백엔드 로직에 맞게)
       console.error('[Follow] Failed to send follow request:', err);
+
+      const status = err.response?.status;
+      if (status === 428) {
+        Alert.alert('Profile Setup Required', 'Please complete your profile before following.', [
+          {
+            text: 'Go to Setup',
+            onPress: () => {
+              setIsProfileVisible(false);
+              router.push('/(tabs)/mypage/edit' as any);
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+        return;
+      }
+
+      // 기존 에러 처리
       const errorData = err.response?.data;
-      const errorCode = errorData?.code; // 백엔드에서 보낸 에러 코드
+      const errorCode = errorData?.code;
 
       let msg = 'Failed to send follow request.';
       if (errorCode === 'PROFILE_SET_NOT_COMPLETED') {
         msg = 'You must complete your own profile before you can follow others.';
       } else if (errorCode === 'FOLLOW_ALREADY_EXISTS') {
         msg = 'You have already sent a request or are already following this user.';
-        // 혹시 모르니 state를 PENDING으로 강제 동기화
         setSelectedUser((prevUser) => ({
           ...(prevUser as any),
-          followStatus: 'PENDING', // 또는 'ACCEPTED'일 수 있으나 PENDING이 더 가능성 높음
+          followStatus: 'PENDING',
         }));
       } else if (errorCode === 'CANNOT_FOLLOW_YOURSELF') {
         msg = 'You cannot follow yourself.';
@@ -819,7 +831,6 @@ export default function PostDetailScreen() {
       setIsFollowLoading(false);
     }
   };
-
   const handleUnfollow = async () => {
     // 로딩 중이거나, 유저 정보가 없으면 중단
     if (isFollowLoading || !selectedUser) return;
@@ -1309,7 +1320,7 @@ const Row = styled.View`
   flex-direction: row;
   align-items: center;
 `;
-const Avatar = styled(ProfileImage)`
+const Avatar = styled.Image`
   width: 34px;
   height: 34px;
   border-radius: 17px;

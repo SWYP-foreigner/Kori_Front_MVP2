@@ -157,7 +157,7 @@ const mapItem = (row: PostsListItem, respTimestamp?: string): PostEx => {
 export default function CommunityScreen() {
   const [cat, setCat] = useState<Category>('All');
   const [sort, setSort] = useState<'new' | 'hot'>('new');
-
+  const [checkingProfile, setCheckingProfile] = useState(false);
   const [items, setItems] = useState<PostEx[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasNext, setHasNext] = useState(true);
