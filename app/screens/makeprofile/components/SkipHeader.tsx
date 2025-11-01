@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
-import Feather from '@expo/vector-icons/Feather';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface SkipHeaderProps {
   onSkip?: () => void;
@@ -25,7 +26,7 @@ export default function SkipHeader({ onSkip }: SkipHeaderProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handleBack} style={styles.left}>
-        <Feather name="arrow-left" size={24} color="#CCCFD0" />
+        <Icon type="previous" size={24} color={theme.colors.primary.white} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleSkip} style={styles.right}>

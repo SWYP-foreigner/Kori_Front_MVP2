@@ -2,7 +2,7 @@ import api from '@/api/axiosInstance';
 import Icon from '@/components/common/Icon';
 import GroupChatRoomBox from '@/components/GroupChatRoomBox';
 import MyChatRoomBox from '@/components/MyChatRoomBox';
-import Feather from '@expo/vector-icons/Feather';
+import { theme } from '@/src/styles/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { Client } from '@stomp/stompjs';
 import { useRouter } from 'expo-router';
@@ -140,7 +140,7 @@ export default function ChatScreen() {
             <IconImage source={require('../../../assets/images/IsolationMode.png')} />
           </TitleWrapper>
           <SearchButton onPress={goSearch}>
-            <Feather name="search" size={25} color="#CCCFD0" />
+            <Icon type="search" size={24} color={theme.colors.gray.lightGray_1} />
           </SearchButton>
         </Header>
 

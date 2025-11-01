@@ -1,7 +1,6 @@
 import Icon from '@/components/common/Icon';
 import { Config } from '@/src/lib/config';
 import { theme } from '@/src/styles/theme';
-import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -59,7 +58,7 @@ const ResetPasswordScreen = () => {
         <HeaderContainer>
           <HeaderBox>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={23} color="#CCCFD0" />
+              <Icon type="previous" size={24} color={theme.colors.primary.white} />
             </TouchableOpacity>
             <HeaderTitleText>Reset Password</HeaderTitleText>
           </HeaderBox>

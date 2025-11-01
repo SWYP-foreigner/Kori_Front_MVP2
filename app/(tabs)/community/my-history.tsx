@@ -4,7 +4,6 @@ import { useMyComments } from '@/hooks/queries/useMyComments';
 import { useDeletePost, useMyPosts } from '@/hooks/queries/useMyPosts';
 import { theme } from '@/src/styles/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, ListRenderItem, Modal, Platform, Pressable, RefreshControl } from 'react-native';
@@ -315,13 +314,13 @@ export default function MyHistoryScreen() {
         <Sheet>
           <SheetBtn onPress={onEdit} disabled={isDeleting}>
             <SheetIcon>
-              <MaterialIcons name="edit" size={18} color="#cfd4da" />
+              <Icon type="edit" size={20} color={theme.colors.primary.white} />
             </SheetIcon>
             <SheetText>Edit</SheetText>
           </SheetBtn>
           <SheetBtn onPress={onDelete} disabled={isDeleting}>
             <SheetIcon>
-              <MaterialIcons name="delete-outline" size={18} color="#ff6b6b" />
+              <Icon type="trashCan" size={20} color={theme.colors.secondary.red} />
             </SheetIcon>
             <SheetText style={{ color: '#ff6b6b' }}>{isDeleting ? 'Deleting...' : 'Delete'}</SheetText>
           </SheetBtn>

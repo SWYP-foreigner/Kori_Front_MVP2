@@ -1,7 +1,7 @@
+import Icon from '@/components/common/Icon';
 import ProfileImage from '@/components/common/ProfileImage';
+import { theme } from '@/src/styles/theme';
 import { keysToUrls, keyToUrl } from '@/utils/image';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useMemo, useRef, useState } from 'react';
 import { FlatList, Image, LayoutChangeEvent, ViewabilityConfig, ViewToken } from 'react-native';
 import styled from 'styled-components/native';
@@ -123,14 +123,14 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
               <CatText>{String(data.category)}</CatText>
             </CatBadge>
             <Dot>•</Dot>
-            <AntDesign name="eyeo" size={12} color="#9aa0a6" />
+            <Icon type="eye" size={16} color={theme.colors.gray.gray_1} />
             <SmallCount>{viewCount}</SmallCount>
           </SubRow>
         </Meta>
 
         <BookBtn onPress={onToggleBookmark} hitSlop={8}>
-          <MaterialIcons
-            name={data.bookmarked ? 'bookmark' : 'bookmark-border'}
+          <Icon
+            type={data.bookmarked ? 'bookmarkSelected' : 'bookmarkNonSelected'}
             size={20}
             color={data.bookmarked ? '#30F59B' : '#8a8a8a'}
           />
@@ -182,12 +182,12 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
 
       <FooterRow>
         <IconBtn onPress={onToggleLike} hitSlop={8}>
-          <AntDesign name="like2" size={16} color={liked ? '#02F59B' : '#CCCFD0'} />
+          <Icon type="thumbsUpNonSelected" size={20} color={liked ? theme.colors.primary.mint : theme.colors.gray.lightGray_1} />
           <Count>{data.likes}</Count>
         </IconBtn>
 
         <IconBtn hitSlop={8}>
-          <AntDesign name="message1" size={16} color="#cfd4da" />
+          <Icon type="comment" size={20} color={theme.colors.gray.lightGray_1} />
           <Count>{data.comments}</Count>
         </IconBtn>
 

@@ -5,7 +5,6 @@ import { ACCESS_KEY, REFRESH_KEY } from '@/src/lib/auth/session';
 import { Config } from '@/src/lib/config';
 import { theme } from '@/src/styles/theme';
 import Entypo from '@expo/vector-icons/Entypo';
-import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -182,7 +181,7 @@ const CreateAccountScreen = () => {
         <HeaderContainer>
           <HeaderBox>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={23} color="#CCCFD0" />
+              <Icon type="search" size={24} color={theme.colors.primary.white} />
             </TouchableOpacity>
             <HeaderTitleText>Create your account</HeaderTitleText>
           </HeaderBox>
@@ -211,14 +210,14 @@ const CreateAccountScreen = () => {
                 />
                 <CloseErrorBox>
                   {!EmailChecks.isEmail && !EmailChecks.isnull && (
-                    <Ionicons name="close-sharp" size={27} color="#FF4F4F" />
+                    <Icon type="close" size={24} color={theme.colors.secondary.red} />
                   )}
                 </CloseErrorBox>
               </EmailContainer>
 
               {isExistEmail === isDuplicatedEmail.NotExist ? (
                 <ShowVerifiedBox>
-                  <Entypo name="check" size={24} color="#949899" />
+                  <Icon type="check" size={24} color={theme.colors.gray.lightGray_1} />
                 </ShowVerifiedBox>
               ) : (
                 <VerifyButton onPress={VerifyEmail} disabled={!EmailChecks.isEmail} canVerify={EmailChecks.isEmail}>
@@ -229,14 +228,14 @@ const CreateAccountScreen = () => {
             <ErrorBox>
               {!EmailChecks.isEmail && !EmailChecks.isnull && (
                 <>
-                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
+                  <Icon type="info" size={16} color={theme.colors.secondary.red} />
                   <ErrorText>Not the correct email format.</ErrorText>
                 </>
               )}
 
               {EmailChecks.isEmail && isExistEmail === isDuplicatedEmail.Exist && (
                 <>
-                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
+                  <Icon type="info" size={16} color={theme.colors.secondary.red} />
                   <ErrorText>This email is already in use.</ErrorText>
                 </>
               )}
@@ -274,7 +273,7 @@ const CreateAccountScreen = () => {
             {isCorrect === isCorrectCode.Fail && (
               <>
                 <ErrorBox>
-                  <Ionicons name="information-circle-outline" size={18} color="#FF4F4F" />
+                  <Icon type="info" size={16} color={theme.colors.secondary.red} />
                   <ErrorText>Fail Code Verification</ErrorText>
                 </ErrorBox>
               </>
@@ -415,7 +414,7 @@ const CreateAccountScreen = () => {
 
             {!isSamePassword.isnull && !isSamePassword.isSame && (
               <ErrorBox>
-                <Ionicons name="close-sharp" size={18} color="#FF4F4F" />
+                <Icon type="close" size={16} color={theme.colors.secondary.red} />
                 <ErrorText>Your password do not match.</ErrorText>
               </ErrorBox>
             )}

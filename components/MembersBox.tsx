@@ -1,8 +1,9 @@
-import React from 'react';
-import styled from 'styled-components/native';
-import { TouchableOpacity } from 'react-native';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import React from 'react';
+import { TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 const MembersBox = ({ name, onPressMore, onPressProfile, isHost, imageUrl }) => {
   const router = useRouter();
@@ -26,7 +27,7 @@ const MembersBox = ({ name, onPressMore, onPressProfile, isHost, imageUrl }) => 
         </MemberisHostBox>
 
         <TouchableOpacity onPress={onPressMore}>
-          <AntDesign name="ellipsis1" size={24} color="#848687" />
+          <Icon type="eclipsisGaro" size={20} color={theme.colors.gray.gray_1} />
         </TouchableOpacity>
       </Memberbox>
     </MemberContainer>

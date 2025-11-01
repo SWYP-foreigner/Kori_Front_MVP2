@@ -1,8 +1,9 @@
 import api from '@/api/axiosInstance';
 import AllSpaceRoomBox from '@/components/AllSpaceRoomBox';
+import Icon from '@/components/common/Icon';
 import MyChatRoomBox from '@/components/MyChatRoomBox';
+import { theme } from '@/src/styles/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import Feather from '@expo/vector-icons/Feather';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, StatusBar, TouchableOpacity } from 'react-native';
@@ -73,10 +74,10 @@ const SearchChatRoom = () => {
       <Container>
         <Header>
           <TouchableOpacity onPress={() => router.back()}>
-            <Feather name="arrow-left" size={24} color="#CCCFD0" />
+            <Icon type="previous" size={24} color={theme.colors.primary.white} />
           </TouchableOpacity>
           <SearchContainer>
-            <Feather name="search" size={23} color="#CCCFD0" style={{ marginLeft: 8 }} />
+            <Icon type="search" size={24} color={theme.colors.primary.white} />
             <SearchInputText
               value={searchText}
               onChangeText={setSearchText}

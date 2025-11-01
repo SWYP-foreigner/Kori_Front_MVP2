@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '@/app/contexts/ProfileContext';
-import axios from 'axios';
-import { Platform } from 'react-native';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
 
 const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
@@ -27,7 +26,7 @@ const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
             <HobbyTag key={tag} onPress={() => selectTag(tag)} selected={isSelected}>
               {emoji !== '' && <Imogi>{emoji}</Imogi>}
               <HobbyTagText selected={isSelected}>{tag}</HobbyTagText>
-              {isSelected && <AntDesign name="close" size={14} color="#02F59B" />}
+              {isSelected && <Icon type="close" size={16} color={theme.colors.primary.mint} />}
             </HobbyTag>
           );
         })}

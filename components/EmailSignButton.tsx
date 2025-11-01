@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components/native';
-import { Pressable, PressableProps } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import React from 'react';
+import { Pressable, PressableProps } from 'react-native';
+import styled from 'styled-components/native';
 
 type Props = PressableProps & {
   loading?: boolean;

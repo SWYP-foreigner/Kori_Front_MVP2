@@ -4,7 +4,6 @@ import { useProfile } from '@/app/contexts/ProfileContext';
 import Icon from '@/components/common/Icon';
 import { theme } from '@/src/styles/theme';
 import { COUNTRIES } from '@/src/utils/countries';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
 import { FlatList, Modal, SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
@@ -88,7 +87,7 @@ export default function CountryStepScreen({ navigation }) {
             <BottomSheetHeader>
               <BottomSheetHandle />
               <SearchContainer>
-                <AntDesign name="search1" size={16} color="#949899" />
+                <Icon type="search" size={24} color={theme.colors.gray.lightGray_1} />
                 <SearchInput
                   placeholder="Search your country"
                   placeholderTextColor="#616262"
@@ -97,7 +96,7 @@ export default function CountryStepScreen({ navigation }) {
                 />
                 {search.length > 0 && (
                   <ClearButton onPress={() => setSearch('')}>
-                    <AntDesign name="close" size={16} color="#949899" />
+                    <Icon type="close" size={24} color={theme.colors.gray.lightGray_1}/>
                   </ClearButton>
                 )}
               </SearchContainer>
@@ -232,6 +231,10 @@ const SearchInput = styled.TextInput`
   font-family: 'PlusJakartaSans-SemiBold';
 `;
 
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px;
+`;
+
 const CountryItem = styled.TouchableOpacity<{ selected: boolean }>`
   flex-direction: row;
   align-items: center;
@@ -277,4 +280,12 @@ const BottomSpacer = styled.View`
 
 const RotatedIcon = styled.View`
   transform: rotate(90deg); /* next(→)를 아래(↓)로 회전 */
+`;
+
+const NoResultText = styled.Text`
+  color: #949899;
+  font-size: 15px;
+  font-family: 'PlusJakartaSans-Regular';
+  text-align: center;
+  padding: 20px;
 `;

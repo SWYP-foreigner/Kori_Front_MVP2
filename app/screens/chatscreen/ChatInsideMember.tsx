@@ -4,13 +4,11 @@ import MembersBox from '@/components/MembersBox';
 import ProfileModal from '@/components/ProfileModal';
 import { Config } from '@/src/lib/config';
 import { theme } from '@/src/styles/theme';
-import Feather from '@expo/vector-icons/Feather';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -253,7 +251,7 @@ const ChatInsideMember = () => {
         <HeaderContainer>
           <Left>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={27} color="#CCCFD0" />
+              <Icon type="previous" size={24} color={theme.colors.gray.lightGray_1} />
             </TouchableOpacity>
           </Left>
           <Center>
@@ -308,9 +306,11 @@ const ChatInsideMember = () => {
                 <BottomSheetHandle />
               </BottomSheetHeader>
               <ReasonBox onPress={openReportMenu}>
+                <Icon type="person" size={24} color={theme.colors.secondary.red} />
                 <MenuText>Report this user</MenuText>
               </ReasonBox>
               <ReasonBox onPress={openBlockMenu}>
+                <Icon type="person" size={24} color={theme.colors.secondary.red} />
                 <MenuText>Block this user</MenuText>
               </ReasonBox>
               <CancelBox onPress={closeModal}>
@@ -358,7 +358,9 @@ const ChatInsideMember = () => {
             <ReportOveraly>
               <ReportSheetContent>
                 <ReportHeader>
-                  <Image source={require('@/assets/images/alert.png')} style={{ width: 25, height: 25 }} />
+                  <TouchableOpacity onPress={closeReportModal}>
+                    <Icon type="person" size={24} color={theme.colors.secondary.red} />
+                  </TouchableOpacity>
                   <ReportHeaderText>Report this user</ReportHeaderText>
                   <TouchableOpacity onPress={closeReportModal}>
                     <Icon type="close" size={24} color={theme.colors.gray.gray_1} />

@@ -1,9 +1,9 @@
-import React from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
-import Octicons from '@expo/vector-icons/Octicons';
+import React from 'react';
+import { ScrollView, StatusBar, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 const GroupChatInsideMember = () => {
   const router = useRouter();
@@ -15,7 +15,7 @@ const GroupChatInsideMember = () => {
         <HeaderContainer>
           <Left>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={27} color="#CCCFD0" />
+              <Icon type="previous" size={24} color={theme.colors.gray.lightGray_1} />
             </TouchableOpacity>
           </Left>
           <Center>
@@ -24,10 +24,10 @@ const GroupChatInsideMember = () => {
           </Center>
           <Right>
             <TouchableOpacity onPress={() => console.log('공유기능')}>
-              <Octicons name="share-android" size={22} color="#CCCFD0" />
+              <Icon type="share" size={24} color={theme.colors.gray.lightGray_1} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => console.log('신고기능')}>
-              <ShingoImage source={require('@/assets/images/Shingo.png')} />
+              <Icon type="alert" size={24} color={theme.colors.gray.lightGray_1} />
             </TouchableOpacity>
           </Right>
         </HeaderContainer>

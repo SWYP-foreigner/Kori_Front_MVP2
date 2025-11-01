@@ -1,7 +1,6 @@
 import Icon from '@/components/common/Icon';
 import CustomButton from '@/components/CustomButton';
 import { theme } from '@/src/styles/theme';
-import { Ionicons } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -242,12 +241,12 @@ const CreateSpaceScreen = () => {
                       <AvatarImg source={{ uri: customPhotoUri }} />
                     ) : (
                       <CameraCircleInner>
-                        <Ionicons name="camera" size={22} color="#cfd4da" />
+                        <Icon type="cameraColored" size={32} color={theme.colors.gray.lightGray_1} />
                       </CameraCircleInner>
                     )}
                     {!!customPhotoUri && (
                       <CheckBadge>
-                        <Ionicons name="checkmark" size={14} color="#0f1011" />
+                        <Icon type="check" size={16} color={theme.colors.primary.black} />
                       </CheckBadge>
                     )}
                   </AvatarCircle>

@@ -1,3 +1,5 @@
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import React from 'react';
 import { Alert, Modal, ScrollView } from 'react-native';
@@ -64,7 +66,7 @@ export default function BottomSheetTagPicker({
                 </PillBtn>
               )}
               <IconBtn onPress={onClose}>
-                <AntDesign name="close" size={18} color="#cfd4da" />
+                <Icon type="close" size={16} color={theme.colors.gray.lightGray_1} />
               </IconBtn>
             </RightRow>
           </HeaderRow>
@@ -81,7 +83,7 @@ export default function BottomSheetTagPicker({
                       <Tag key={tag} selected={selected} onPress={() => toggle(tag)}>
                         {!!emoji && <Emoji>{emoji}</Emoji>}
                         <TagText selected={selected}>{tag}</TagText>
-                        {selected && <AntDesign name="check" size={14} color="#02F59B" />}
+                        {selected && <Icon type="check" size={16} color={theme.colors.primary.mint} />}
                       </Tag>
                     );
                   })}

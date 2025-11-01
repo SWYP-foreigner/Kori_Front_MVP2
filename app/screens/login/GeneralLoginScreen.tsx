@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { StatusBar, TouchableOpacity } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
-import { useRouter } from 'expo-router';
+import Icon from '@/components/common/Icon';
+import { Config } from '@/src/lib/config';
+import { theme } from '@/src/styles/theme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import axios from 'axios';
-import { Config } from '@/src/lib/config';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import React, { useState } from 'react';
+import { StatusBar, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 type AppLoginResponse = {
   accessToken: string;
@@ -61,7 +62,7 @@ const GeneralLoginScreen = () => {
         <HeaderContainer>
           <HeaderBox>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={23} color="#CCCFD0" />
+              <Icon type="search" size={24} color={theme.colors.primary.white} />
             </TouchableOpacity>
             <HeaderTitleText>Continue with email</HeaderTitleText>
           </HeaderBox>
@@ -102,7 +103,7 @@ const GeneralLoginScreen = () => {
         {error && (
           <ErrorContainer>
             <ErrorBox>
-              <Ionicons name="information-circle-outline" size={24} color="#FF4F4F" />
+              <Icon type="info" size={24} color={theme.colors.secondary.red} />
               <ErrorText>Your ID or password is incorrect.{'\n'}Please check again.</ErrorText>
             </ErrorBox>
           </ErrorContainer>

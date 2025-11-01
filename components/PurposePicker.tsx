@@ -1,4 +1,5 @@
-import AntDesign from '@expo/vector-icons/AntDesign';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import React from 'react';
 import { FlatList, Modal } from 'react-native';
 import styled from 'styled-components/native';
@@ -18,7 +19,7 @@ export default function PurposePicker({ visible, value, onClose, onSelect }: Pro
     return (
       <Row onPress={() => onSelect(item)} selected={selected}>
         <RowText>{item}</RowText>
-        {selected && <AntDesign name="check" size={20} color="#02F59B" />}
+        {selected && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
       </Row>
     );
   };

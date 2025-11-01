@@ -5,7 +5,6 @@ import Tag from '@/components/Tag';
 import { Config } from '@/src/lib/config';
 import { getEmojiFor } from '@/src/lib/interests';
 import { theme } from '@/src/styles/theme';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Platform } from 'react-native';
 import styled from 'styled-components/native';
@@ -68,8 +67,8 @@ const BTN_GAP = 14;
 const CARD_OUTER_GAP = 16;
 
 const genderIconType: Record<NonNullable<Props['gender']>, import('@/components/common/Icon').IconType> = {
-  male: 'male',
-  female: 'female',
+  male: 'maleColored',
+  female: 'femaleColored',
   unspecified: 'nogender',
 };
 const toUrl = (u?: string) => {
@@ -175,7 +174,7 @@ export default function FriendCard(props: Props) {
           <Divider />
           {collapsible && (
             <ChevronButton onPress={() => setExpanded(!expanded)}>
-              <MaterialIcons name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} size={20} color="#8a8a8a" />
+              <Icon type={expanded ? 'arrowUp' : 'arrowDown'} size={24}  />
             </ChevronButton>
           )}
         </DividerWrap>
@@ -477,10 +476,6 @@ const InterestHeader = styled.View`
   margin-top: 14px;
   margin-bottom: 8px;
 `;
-const HeartIcon = styled(MaterialCommunityIcons)`
-  margin-right: 4px;
-`;
-
 const AvatarImg = styled(ProfileImage)`
   width: 88px;
   height: 88px;

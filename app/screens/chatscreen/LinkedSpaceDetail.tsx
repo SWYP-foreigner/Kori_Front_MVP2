@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ScrollView, FlatList, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import api from '@/api/axiosInstance';
-import { useRouter } from 'expo-router';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, ScrollView } from 'react-native';
 import Toast from 'react-native-toast-message';
-import Feather from '@expo/vector-icons/Feather';
+import styled from 'styled-components/native';
 
 type RoomDetail = {
   chatRoomId: number;
@@ -77,7 +76,7 @@ const LinkedSpaceDetail = () => {
         <BackgroundContainer>
           <Background source={require('@/assets/images/background1.png')} resizeMode="cover">
             <BackButton onPress={() => router.back()}>
-              <Feather name="arrow-left" size={27} color="#CCCFD0" />
+              <Icon type="previous" size={27} color={theme.colors.gray.lightGray_1} />
             </BackButton>
             <ProfileBox>
               <ProfileImage
@@ -116,7 +115,7 @@ const LinkedSpaceDetail = () => {
             </HostContainer>
             <MembersContainer>
               <InMemberContainer>
-                <MaterialIcons name="person-outline" size={15} color="#949899" />
+                <Icon type="person" size={16} color={theme.colors.gray.gray_2} />
                 <InMemberText>{roomDetail?.participantCount} members in</InMemberText>
                 <Divider />
               </InMemberContainer>

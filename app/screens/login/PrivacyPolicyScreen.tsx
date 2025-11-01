@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components/native';
-import { StatusBar, TouchableOpacity, ScrollView } from 'react-native';
-import Feather from '@expo/vector-icons/Feather';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, StatusBar, TouchableOpacity } from 'react-native';
+import styled from 'styled-components/native';
 
 const PrivacyPolicyScreen = () => {
   const router = useRouter();
@@ -14,7 +15,7 @@ const PrivacyPolicyScreen = () => {
         <HeaderContainer>
           <HeaderBox>
             <TouchableOpacity onPress={() => router.back()}>
-              <Feather name="arrow-left" size={23} color="#CCCFD0" />
+              <Icon type="previous" size={24} color={theme.colors.primary.white} />
             </TouchableOpacity>
             <HeaderTitleText>Privacy Policy</HeaderTitleText>
           </HeaderBox>

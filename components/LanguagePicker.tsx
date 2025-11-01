@@ -1,10 +1,12 @@
+import cancelIconImg from '@/assets/images/cancel.png';
+import searchIconImg from '@/assets/images/search.png';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { LANGUAGES } from '@/src/utils/languages';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import React, { useMemo, useState } from 'react';
 import { FlatList, Modal, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
-import searchIconImg from '@/assets/images/search.png';
-import cancelIconImg from '@/assets/images/cancel.png';
-import { LANGUAGES } from '@/src/utils/languages';
 
 export const MAX_LANGUAGES = 5;
 
@@ -40,7 +42,7 @@ export default function LanguagePicker({ visible, value, onClose, onChange, lang
     return (
       <LanguageItem selected={selected} onPress={() => toggle(item)}>
         <LanguageText>{item}</LanguageText>
-        {selected && <AntDesign name="check" size={20} color="#02F59B" />}
+        {selected && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
       </LanguageItem>
     );
   };

@@ -1,10 +1,11 @@
-import AntDesign from '@expo/vector-icons/AntDesign';
+import cancelIconImg from '@/assets/images/cancel.png';
+import searchIconImg from '@/assets/images/search.png';
+import Icon from '@/components/common/Icon';
+import { theme } from '@/src/styles/theme';
+import { COUNTRIES } from '@/src/utils/countries';
 import React, { useMemo, useState } from 'react';
 import { FlatList, Modal, TouchableOpacity } from 'react-native';
 import styled from 'styled-components/native';
-import searchIconImg from '@/assets/images/search.png';
-import cancelIconImg from '@/assets/images/cancel.png';
-import { COUNTRIES } from '@/src/utils/countries';
 
 type Props = {
   visible: boolean;
@@ -28,7 +29,7 @@ export default function CountryPicker({ visible, value, onClose, onSelect, count
     return (
       <CountryItem selected={selected} onPress={() => onSelect(item)}>
         <CountryText>{item}</CountryText>
-        {selected && <AntDesign name="check" size={20} color="#02F59B" />}
+        {selected && <Icon type="check" size={20} color={theme.colors.primary.mint} />}
       </CountryItem>
     );
   };

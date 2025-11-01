@@ -1,6 +1,8 @@
 import AlarmOff from '@/assets/icons/alarm-off.svg';
 import AlarmOn from '@/assets/icons/alarm-on.svg';
 import Alert from '@/assets/icons/alert.svg';
+import ArrowDown from '@/assets/icons/arrow-down.svg';
+import ArrowUp from '@/assets/icons/arrow-up.svg';
 import Bookmark from '@/assets/icons/bookmark-non-selected.svg';
 import SelectedBookmark from '@/assets/icons/bookmark-selected.svg';
 import Box from '@/assets/icons/box.svg';
@@ -19,6 +21,7 @@ import Edit from '@/assets/icons/edit.svg';
 import Eclipsis from '@/assets/icons/ellipsis.svg';
 import EclipsisGaro from '@/assets/icons/ellipsis_garo.svg';
 import Eye from '@/assets/icons/eye.svg';
+import FemaleColored from '@/assets/icons/female-color.svg';
 import Female from '@/assets/icons/female.svg';
 import Global from '@/assets/icons/global.svg';
 import Hamburger from '@/assets/icons/hamburger.svg';
@@ -27,6 +30,7 @@ import HeartSelected from '@/assets/icons/heart-selected.svg';
 import Info from '@/assets/icons/info.svg';
 import Link from '@/assets/icons/link.svg';
 import Mail from '@/assets/icons/mail.svg';
+import MaleColored from '@/assets/icons/male-color.svg';
 import Male from '@/assets/icons/male.svg';
 import Next from '@/assets/icons/next.svg';
 import Nogender from '@/assets/icons/nogender.svg';
@@ -55,8 +59,10 @@ const iconMap = {
   alarmOff: AlarmOff,
   alarmOn: AlarmOn,
   alert: Alert,
+  arrowUp: ArrowUp,
+  arrowDown: ArrowDown,
   business: Business,
-  bookmarkNonSelcted: Bookmark,
+  bookmarkNonSelected: Bookmark,
   bookmarkSelected: SelectedBookmark,
   cameraColored: CameraColored,
   cameraDefault: CameraDefault,
@@ -70,6 +76,7 @@ const iconMap = {
   eclipsisGaro: EclipsisGaro,
   eye: Eye,
   female: Female,
+  femaleColored: FemaleColored,
   global: Global,
   hamburger: Hamburger,
   heartNonSelected: HeartNonSelected,
@@ -77,6 +84,7 @@ const iconMap = {
   info: Info,
   link: Link,
   mail: Mail,
+  maleColored: MaleColored,
   male: Male,
   next: Next,
   nogender: Nogender,
@@ -128,10 +136,26 @@ interface IconProps {
  * - color: 아이콘 색상
  */
 
+// components/common/Icon.tsx
 const Icon = ({ size, type, color = theme.colors.primary.white }: IconProps) => {
   const SelectedIcon = iconMap[type];
 
+  if (!SelectedIcon) {
+    // ✅ 어떤 type이 문제인지 + 호출 스택까지 로그
+    const err = new Error(`[Icon] Unknown type: "${type}"`);
+    // RN 콘솔에 깔끔히 찍히도록
+    // eslint-disable-next-line no-console
+    console.warn(err.message, { size, color });
+    // eslint-disable-next-line no-console
+    console.warn(err.stack);
+    // 호출 경로를 한눈에
+    // eslint-disable-next-line no-console
+    console.trace('[Icon] call trace');
+    return null;
+  }
+
   return <SelectedIcon width={size} height={size} color={color} />;
 };
+
 
 export default Icon;
