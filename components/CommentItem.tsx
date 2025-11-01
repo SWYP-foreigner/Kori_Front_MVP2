@@ -1,12 +1,13 @@
+import api from '@/api/axiosInstance';
+import ProfileImage from '@/components/common/ProfileImage';
+import { formatShortDate } from '@/src/utils/dateUtils';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import React, { useMemo, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
+import { Alert } from 'react-native';
 import styled from 'styled-components/native';
 import ProfileModal from './ProfileModal';
-import api from '@/api/axiosInstance';
-import { Alert } from 'react-native';
-import { formatShortDate } from '@/src/utils/dateUtils';
 
 const DEFAULT_AV = require('@/assets/images/character1.png');
 
@@ -203,7 +204,7 @@ const ReplyIcon = styled.View`
   margin-right: 6px;
 `;
 
-const Avatar = styled.Image`
+const Avatar = styled(ProfileImage)`
   width: 28px;
   height: 28px;
   border-radius: 14px;

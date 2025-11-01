@@ -1,24 +1,21 @@
-import Avatar from '@/components/Avatar';
-import CustomButton from '@/components/CustomButton';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Image as RNImage, ImageSourcePropType, Text } from 'react-native';
-import styled from 'styled-components/native';
-
 import api from '@/api/axiosInstance';
+import Avatar from '@/components/Avatar';
+import Icon from '@/components/common/Icon';
+import CustomButton from '@/components/CustomButton';
 import { useDeleteAccount } from '@/hooks/mutations/useDeleteAccount';
 import { useUpdateProfile } from '@/hooks/mutations/useUpdateProfile';
 import useMyProfile from '@/hooks/queries/useMyProfile';
 import { uploadLocalImageAndGetKey } from '@/lib/mypage/uploadImage';
 import { Config } from '@/src/lib/config';
+import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect } from 'expo-router';
-import { DeviceEventEmitter } from 'react-native';
-import Icon from '@/components/common/Icon';
+import * as ImagePicker from 'expo-image-picker';
+import { router, useFocusEffect } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, DeviceEventEmitter, Image, ImageSourcePropType, Image as RNImage, Text } from 'react-native';
 import { useTheme } from 'styled-components';
+import styled from 'styled-components/native';
 
 const AVATARS: ImageSourcePropType[] = [
   require('@/assets/images/character1.png'),

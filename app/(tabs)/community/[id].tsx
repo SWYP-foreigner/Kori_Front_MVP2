@@ -2,6 +2,7 @@ import api from '@/api/axiosInstance';
 import { addBookmark, removeBookmark } from '@/api/community/bookmarks';
 import { blockComment } from '@/api/community/comments';
 import CommentItem, { Comment } from '@/components/CommentItem';
+import ProfileImage from '@/components/common/ProfileImage';
 import ProfileModal from '@/components/ProfileModal';
 import SortTabs, { SortKey } from '@/components/SortTabs';
 import { useCreateComment } from '@/hooks/mutations/useCreateComment';
@@ -1308,7 +1309,7 @@ const Row = styled.View`
   flex-direction: row;
   align-items: center;
 `;
-const Avatar = styled.Image`
+const Avatar = styled(ProfileImage)`
   width: 34px;
   height: 34px;
   border-radius: 17px;

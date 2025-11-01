@@ -1,3 +1,4 @@
+import ProfileImage from '@/components/common/ProfileImage';
 import { keysToUrls, keyToUrl } from '@/utils/image';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -105,6 +106,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
     }
   }).current;
 
+  const PostImage = styled(ProfileImage)``;
   const liked = Boolean((data as any).likedByMe ?? (data as any).isLiked ?? (data as any).liked ?? false);
 
   return (
@@ -146,7 +148,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
                 const h = imgHeights[item] ?? Math.round((boxW * 9) / 16);
                 return (
                   <Slide style={{ width: boxW }}>
-                    <Image
+                    <PostImage
                       source={{ uri: item }}
                       style={{ width: '100%', height: h, borderRadius: 12 }}
                       resizeMode="contain"
@@ -165,7 +167,7 @@ export default function PostCard({ data, onPress, onToggleLike, onToggleBookmark
             />
           ) : (
             <Slide>
-              <Image
+              <PostImage
                 source={{ uri: imageUrls[0] }}
                 style={{ width: '100%', height: 180, borderRadius: 12 }}
                 resizeMode="contain"
@@ -205,7 +207,7 @@ const HeaderRow = styled.View`
   flex-direction: row;
   align-items: center;
 `;
-const Avatar = styled.Image`
+const Avatar = styled(ProfileImage)`
   width: 34px;
   height: 34px;
   border-radius: 17px;

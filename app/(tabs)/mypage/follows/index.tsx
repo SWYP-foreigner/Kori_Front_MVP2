@@ -263,7 +263,6 @@ export default function FollowListScreen() {
                     onAccept={handleAccept}
                     onCancel={handleDecline}
                     onChat={() => {}}
-                    isFollowed={false}
                   />
                 </Inner>
               </Page>
@@ -341,7 +340,6 @@ export default function FollowListScreen() {
                         console.error('[chat]', e?.message ?? '채팅방 생성 실패');
                       }
                     }}
-                    isFollowed={false}
                   />
                 </Inner>
               </Page>

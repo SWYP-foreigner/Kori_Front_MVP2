@@ -1,9 +1,9 @@
 import api from '@/api/axiosInstance';
+import ProfileImage from '@/components/common/ProfileImage';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import axios from 'axios';
 import { Buffer } from 'buffer';
-import { Asset } from 'expo-asset';
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,6 +11,9 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
+import Character01 from '../../../assets/images/character_01.svg';
+import Character02 from '../../../assets/images/character_02.svg';
+import Character03 from '../../../assets/images/character_03.svg';
 import { useProfile } from '../../contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 
@@ -26,35 +29,27 @@ export default function AddPhotoStepScreen({}) {
   const router = useRouter();
 
   const avatarData = [
-    {
-      image: require('../../../assets/images/character1.png'), // 초록색 캐릭터
-      bgColor: '#2d5a3d',
-    },
-    {
-      image: require('../../../assets/images/character2.png'), // 보라색 캐릭터
-      bgColor: '#4a4aff',
-    },
-    {
-      image: require('../../../assets/images/character3.png'), // 파란색 캐릭터
-      bgColor: '#2266aa',
-    },
+    { Comp: Character01, bgColor: '#2d5a3d' },
+    { Comp: Character02, bgColor: '#4a4aff' },
+    { Comp: Character03, bgColor: '#2266aa' },
   ];
 
-  const handleAvatarSelect = async (index) => {
+
+
+  const handleAvatarSelect = async (index: number) => {
     setSelectedAvatar(index);
     setSelectedPhoto(null);
 
-    // 로컬 이미지 URI 가져오기
-    const asset = Asset.fromModule(avatarData[index].image);
-    await asset.downloadAsync(); // 캐시된 로컬 파일 확보
-    const uri = asset.localUri || asset.uri;
+    // const asset = Asset.fromModule(avatarData[index].image);
+    // await asset.downloadAsync(); // 로컬 파일 확보
+    // const uri = asset.localUri || asset.uri;
 
-    updateProfile('photo', {
-      type: 'avatar',
-      uri,
-      name: `avatar${index + 1}.png`,
-      typeMime: 'image/png',
-    });
+    // updateProfile('photo', {
+    //   type: 'avatar',
+    //   uri,
+    //   name: `avatar${index + 1}.png`,
+    //   typeMime: 'image/png',
+    // });
   };
 
   // 권한 요청 함수
@@ -71,6 +66,10 @@ export default function AddPhotoStepScreen({}) {
     }
     return true;
   };
+
+  const MediaTypeCompat =
+  (ImagePicker as any).MediaType
+  || (ImagePicker as any).MediaTypeOptions;
 
   // 카메라 버튼 클릭 시
   const PickProfilePhoto = async () => {
@@ -91,7 +90,7 @@ export default function AddPhotoStepScreen({}) {
   // 카메라에서 사진 촬영
   const openCamera = async () => {
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'Images',
+      mediaTypes: MediaTypeCompat.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -115,11 +114,12 @@ export default function AddPhotoStepScreen({}) {
   // 갤러리에서 사진 선택
   const openGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'Images',
+      mediaTypes: MediaTypeCompat.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
+  
 
     if (!result.canceled) {
       const uri = result.assets[0].uri;
@@ -251,7 +251,10 @@ export default function AddPhotoStepScreen({}) {
           {avatarData.map((avatar, index) => (
             <AvatarContainer key={index} onPress={() => handleAvatarSelect(index)}>
               <ImageContainer selected={selectedAvatar === index && !selectedPhoto}>
-                <CharacterImage source={avatar.image} />
+                {(() => {
+                  const Svg = avatarData[index].Comp;
+                  return <Svg width="100%" height="100%" preserveAspectRatio="xMinYMin slice" />;
+                })()}
               </ImageContainer>
               {selectedAvatar === index && !selectedPhoto && (
                 <CheckmarkContainer>
@@ -358,7 +361,7 @@ const Avatar = styled.View`
   border: ${(props) => (props.selected ? '3px solid #02F59B' : '3px solid transparent')};
 `;
 
-const ImageContainer = styled.View`
+const ImageContainer = styled.View<{ selected?: boolean }>`
   width: 100%;
   height: 100%;
   border-radius: 1000px;
@@ -366,12 +369,6 @@ const ImageContainer = styled.View`
   justify-content: center;
   align-items: center;
   overflow: hidden;
-`;
-
-const CharacterImage = styled.Image`
-  width: 100%;
-  height: 100%;
-  resize-mode: contain;
 `;
 
 const CameraAvatar = styled.View`
@@ -389,7 +386,7 @@ const CameraIcon = styled.Text`
   font-size: 30px;
 `;
 
-const PhotoContainer = styled.View`
+const PhotoContainer = styled.View<{ selected?: boolean }>`
   width: 100%;
   height: 100%;
   border-radius: 1000px;
@@ -399,11 +396,10 @@ const PhotoContainer = styled.View`
   overflow: hidden;
 `;
 
-const PhotoAvatar = styled.Image`
-  width: 100%;
-  height: 100%;
-  resize-mode: cover;
-`;
+const PhotoAvatar = styled(ProfileImage)`
+   width: 100%;
+   height: 100%;
+ `;
 
 const CheckmarkContainer = styled.View`
   position: absolute;

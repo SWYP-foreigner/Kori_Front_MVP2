@@ -1,10 +1,24 @@
-import React, { useRef } from 'react';
-import styled from 'styled-components/native';
-import { useRouter } from 'expo-router';
-import { Config } from '@/src/lib/config';
 import api from '@/api/axiosInstance';
+import RawProfileImage from '@/components/common/ProfileImage';
+import { Config } from '@/src/lib/config';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import styled from 'styled-components/native';
+
 
 const SWIPE_THRESHOLD = 80; // 드래그해야 열림/닫힘이 되는 기준
+
+const toUrl = (u?: string) => {
+  if (!u) return undefined;
+  if (/^https?:\/\//i.test(u)) return u;
+  const base =
+    (Config as any).EXPO_PUBLIC_NCP_PUBLIC_BASE_URL ||
+    (Config as any).NCP_PUBLIC_BASE_URL ||
+    (Config as any).EXPO_PUBLIC_IMAGE_BASE_URL ||
+    (Config as any).IMAGE_BASE_URL ||
+    '';
+  return base ? `${String(base).replace(/\/+$/, '')}/${String(u).replace(/^\/+/, '')}` : undefined;
+};
 
 const MyChatRoomBox = ({ data }) => {
   const router = useRouter();
@@ -106,7 +120,7 @@ const RoomImageContainer = styled.View`
   justify-content: center;
 `;
 
-const RoomImage = styled.Image`
+const RoomImage = styled(RawProfileImage)`
   width: 80%;
   height: 80%;
   border-radius: 30px;
@@ -160,7 +174,7 @@ const ChatTime = styled.Text`
   color: #ffffff;
 `;
 
-const ChatContent = styled.Text`
+const ChatContent = styled.Text<{ textColor?: boolean }>`
   font-size: 13px;
   margin-left: 1px;
   color: ${(props) => (props.textColor ? '#ffffff' : '#848687')};

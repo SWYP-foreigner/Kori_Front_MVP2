@@ -1,7 +1,8 @@
-import React from 'react';
-import styled from 'styled-components/native';
+import ProfileImage from '@/components/common/ProfileImage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import styled from 'styled-components/native';
 
 const BuzzingRoomBox = ({ data }) => {
   const router = useRouter();
@@ -66,7 +67,7 @@ const BuzzingImageContainer = styled.View`
   justify-content: center;
   overflow: hidden;
 `;
-const BuzzingImage = styled.Image`
+const BuzzingImage = styled(ProfileImage)`
   width: 100%;
   height: 100%;
   resize-mode: contain;

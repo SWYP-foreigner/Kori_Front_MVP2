@@ -1,10 +1,11 @@
+import React, { useMemo, useState } from 'react'; // ✅ 'react'에서
+// 절대 'react-native'에서 훅을 import 하지 마세요.
 import { useProfile } from '@/app/contexts/ProfileContext';
 import Icon from '@/components/common/Icon';
 import { theme } from '@/src/styles/theme';
 import { COUNTRIES } from '@/src/utils/countries';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
 import { FlatList, Modal, SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
