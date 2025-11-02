@@ -2,9 +2,9 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import React from 'react';
 import styled from 'styled-components/native';
 
-export default function WriteFab({ onPress }: { onPress: () => void }) {
+export default function WriteFab({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
   return (
-    <Fab onPress={onPress}>
+    <Fab onPress={onPress} disabled={disabled} opacity={disabled ? 0.6 : 1}>
       <AntDesign name="edit" size={22} color="#0f1011" />
     </Fab>
   );

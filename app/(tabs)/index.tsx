@@ -148,8 +148,7 @@ export default function HomeScreen() {
                   mode={isSent ? 'sent' : 'friend'}
                   // --- 👇 [수정] onFollow ---
                   onFollow={async () => {
-                    // (id) 파라미터 제거
-                    const id = uid; // uid를 직접 사용
+                    const id = uid;
                     if ((myId && id === myId) || inFlight.has(id)) return;
 
                     const already = requested.has(id);
@@ -158,16 +157,28 @@ export default function HomeScreen() {
                     try {
                       lock(id);
                       await followMutation.mutateAsync(id);
-                      // UI 즉시 반영 + 다른 화면 동기화
                       markRequested(id);
                       DeviceEventEmitter.emit('FOLLOW_REQUEST_SENT', { userId: id });
                     } catch (e: any) {
+                      const status = e?.response?.status;
+
+                      if (status === 428) {
+                        unmarkRequested(id);
+                        Alert.alert('Profile Setup Required', 'Please complete your profile before following.', [
+                          {
+                            text: 'Go to Setup',
+                            onPress: () => router.push('/(tabs)/mypage/edit' as any)
+                          },
+                          { text: 'Cancel', style: 'cancel' },
+                        ]);
+                        return;
+                      }
+
                       Alert.alert('Failed', e?.response?.data?.message ?? 'Failed to send request.');
                     } finally {
                       unlock(id);
                     }
                   }}
-                  // --- 👇 [수정] onCancel ---
                   onCancel={async () => {
                     // (id) 파라미터 제거
                     const id = uid; // uid를 직접 사용
@@ -191,11 +202,32 @@ export default function HomeScreen() {
                     }
                   }}
                   onChat={async () => {
-                    const roomId = await createRoom({ otherUserId: uid });
-                    router.push({
-                      pathname: '/(tabs)/chat/ChattingRoomScreen',
-                      params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId },
-                    });
+                    try {
+                      const roomId = await createRoom({ otherUserId: uid });
+                      router.push({
+                        pathname: '/(tabs)/chat/ChattingRoomScreen',
+                        params: { userId: String(uid), roomName: encodeURIComponent(item.name || 'Unknown'), roomId },
+                      });
+                    } catch (err: any) {
+                      const status = err.response?.status;
+
+                      if (status === 428) {
+                        Alert.alert(
+                          'Profile Setup Required',
+                          'Please complete your profile setup before starting a chat.',
+                          [
+                            {
+                              text: 'Go to Setup',
+                              onPress: () =>router.push('/(tabs)/mypage/edit' as any)
+                            },
+                            { text: 'Cancel', style: 'cancel' },
+                          ],
+                        );
+                        return;
+                      }
+
+                      Alert.alert('Chat Error', err?.response?.data?.message ?? 'Failed to create chat room.');
+                    }
                   }}
                 />
               </CardWrap>

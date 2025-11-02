@@ -208,7 +208,7 @@ export default function AddPhotoStepScreen({}) {
   };
 
   // 프로필 완전 등록
-  const CompleteProfile = async (imageKey: string) => {
+  const CompleteProfile = async (imageKey: string | null) => {
     try {
       // photo 제외하고 나머지 데이터만 추출
       const { photo, ...profileWithoutPhoto } = profileData;
@@ -229,10 +229,18 @@ export default function AddPhotoStepScreen({}) {
     }
   };
 
-  const handleSkip = () => {
-    router.replace('./ProfileSetUpDoneScreen');
-  };
-
+const handleSkip = async () => { 
+  setLoading(true);
+  const defaultAvatarUrl = 'https://kr.object.ncloudstorage.com/foreigner-bucket/default/character_01.svg';
+  
+  try {
+    await CompleteProfile(defaultAvatarUrl); 
+  } catch (err) {
+    console.error('스킵 후 프로필 업데이트 실패', err);
+    setLoading(false); 
+    Alert.alert("오류", "프로필 저장에 실패했습니다. 다시 시도해 주세요.");
+  }
+};
   return (
     <SafeArea bgColor="#0F0F10">
       <StatusBar barStyle="light-content" />
