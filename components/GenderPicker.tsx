@@ -9,7 +9,8 @@ type Props = {
   onClose: () => void;
   onSelect: (purpose: string) => void;
 };
-
+const INPUT_BORDER = '#FFFFFF';
+const ERROR_COLOR = '#FF6B6B';
 const GENDER_OPTIONS = ['Female', 'Male', 'Prefer not to say'];
 
 export default function GenderPicker({ visible, value, onClose, onSelect }: Props) {
@@ -43,17 +44,19 @@ export default function GenderPicker({ visible, value, onClose, onSelect }: Prop
   );
 }
 
-export const GenderDropdownButton = styled.TouchableOpacity<{ selected?: boolean }>`
-  width: 100%;
-  height: 50px;
-  border-radius: 8px;
-  background-color: #353637;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  border-width: 1px;
-  border-color: #949899;
+
+
+export const GenderDropdownButton = styled.TouchableOpacity<{ selected?: boolean; error?: boolean }>`
+width: 100%;
+height: 50px;
+border-radius: 8px;
+background-color: #353637;
+flex-direction: row;
+align-items: center;
+justify-content: space-between;
+padding: 0 16px;
+border-width: 1px;
+border-color: ${({ error }: { error?: boolean }) => (error ? ERROR_COLOR : INPUT_BORDER)}; 
 `;
 
 export const GenderDropdownText = styled.Text<{ selected?: boolean }>`

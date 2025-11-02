@@ -9,7 +9,8 @@ type Props = {
   onClose: () => void;
   onSelect: (purpose: string) => void;
 };
-
+const INPUT_BORDER = '#FFFFFF';
+const ERROR_COLOR = '#FF6B6B';
 const PURPOSE_OPTIONS = ['Study', 'Work', 'Marriage', 'Travel', 'Business', 'Family'];
 
 export default function PurposePicker({ visible, value, onClose, onSelect }: Props) {
@@ -43,7 +44,7 @@ export default function PurposePicker({ visible, value, onClose, onSelect }: Pro
   );
 }
 
-export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolean }>`
+export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolean; error?: boolean }>`
   width: 100%;
   height: 50px;
   border-radius: 8px;
@@ -53,7 +54,7 @@ export const PurposeDropdownButton = styled.TouchableOpacity<{ selected?: boolea
   justify-content: space-between;
   padding: 0 16px;
   border-width: 1px;
-  border-color: #949899;
+  border-color: ${({ error }: { error?: boolean }) => (error ? ERROR_COLOR : INPUT_BORDER)};
 `;
 
 export const PurposeDropdownText = styled.Text<{ selected?: boolean }>`

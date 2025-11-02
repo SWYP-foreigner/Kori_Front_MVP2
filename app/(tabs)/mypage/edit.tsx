@@ -13,8 +13,7 @@ import CountryPicker, { CountryDropdownButton, CountryDropdownText } from '@/com
 import GenderPicker, { GenderDropdownButton, GenderDropdownText } from '@/components/GenderPicker';
 import LanguagePicker, {
   LanguageDropdownButton,
-  LanguageDropdownText,
-  MAX_LANGUAGES,
+  LanguageDropdownText
 } from '@/components/LanguagePicker';
 import PurposePicker, { PurposeDropdownButton, PurposeDropdownText } from '@/components/PurposePicker';
 import useProfileEdit from '@/hooks/mutations/useProfileEdit';
@@ -30,6 +29,7 @@ const INPUT_HEIGHT = 50;
 const INPUT_RADIUS = 8;
 const INPUT_BG = '#353637';
 const INPUT_BORDER = '#FFFFFF';
+const ERROR_COLOR = '#FF6B6B';
 
 const toUrl = (u?: string) => {
   if (!u) return undefined;
@@ -165,7 +165,13 @@ export default function EditProfileScreen() {
   const [sheetSaving, setSheetSaving] = useState(false);
 
   const [pendingImageKey, setPendingImageKey] = useState<string | undefined>(undefined);
-
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const ErrorText = styled.Text`
+  color: ${ERROR_COLOR};
+  font-size: 12px;
+  margin-top: 4px;
+  padding-left: 16px;
+`;
   useEffect(() => {
     if (!me) return;
     const full = [me.firstname, me.lastname].filter(Boolean).join(' ');
@@ -182,7 +188,9 @@ export default function EditProfileScreen() {
     setAvatarKeyOrUrl(initial);
     setPendingImageKey(undefined);
   }, [me]);
-
+  const handleBlur = (fieldName: string) => () => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  };
   const languagesDisplay = useMemo(() => {
     if (!langs.length) return 'Select your language';
     const codes = langs.map((l) => {
@@ -213,6 +221,33 @@ export default function EditProfileScreen() {
 
     return hasName && hasGender && hasCountry && hasBirth && hasPurpose && hasLanguage && hasInterests && hasAboutMe;
   }, [name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
+
+const errors = useMemo(() => {
+    if (isFormValid) return {};
+
+    // 🚨 이름 공백 검사 로직 추가
+    const trimmedName = name.trim().replace(/\s+/g, ' ');
+    const hasSpace = /\s/.test(trimmedName);
+    const isNameValid = trimmedName.length > 0 && hasSpace;
+    
+const nameError = 
+  trimmedName.length === 0 
+    ? 'Please enter your full name'
+    : !hasSpace 
+      ? 'Please separate your first and last name with a space. (e.g., John Smith)'
+      : undefined;
+
+  return {
+      name: nameError, 
+      gender: gender.trim().length === 0 ? '성별을 선택해주세요.' : undefined,
+      country: country.trim().length === 0 ? '국가를 선택해주세요.' : undefined,
+      birth: birth.trim().length === 0 ? '생년월일을 입력해주세요.' : undefined,
+      purpose: purpose.trim().length === 0 ? '목적을 선택해주세요.' : undefined,
+      language: langs.length === 0 ? '언어를 선택해주세요.' : undefined,
+      interests: selectedInterests.length === 0 ? '관심사를 하나 이상 선택해주세요.' : undefined,
+      aboutMe: aboutMe.trim().length === 0 ? '자기소개를 입력해주세요.' : undefined,
+    };
+  }, [isFormValid, name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
 
   const formatBirth = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -363,36 +398,56 @@ export default function EditProfileScreen() {
         </Center>
 
         <Field>
-          <LabelRow>
-            <LabelText>Name</LabelText>
-            <Count>{name.length}/20</Count>
-          </LabelRow>
-          <NameInput
-            value={name}
-            onChangeText={(t: string) => t.length <= 20 && setName(t)}
-            placeholder="Your name"
-            placeholderTextColor="#EDEDED99"
-          />
+            {/* LabelText의 error prop은 에러 메시지가 있을 때만 true를 전달 */}
+            <LabelText error={!!errors.name}>Full Name</LabelText>
+            
+            <NameInput
+                value={name}
+                onChangeText={setName}
+                onBlur={handleBlur('name')} // ✅ handleBlur 추가
+                // 에러가 있고, 필드를 건드렸을 때만 error prop 전달
+                error={!!(errors.name && touched.name)}
+                // 🚨 여기에 영문 Placeholder를 추가합니다.
+                placeholder="e.g. John Smith" 
+                placeholderTextColor="#EDEDED99" // 필요한 경우 추가
+            />
+            
+            {/* 에러가 있고, 필드를 건드렸을 때만 에러 메시지 표시 */}
+            {errors.name && touched.name && <ErrorText>{errors.name}</ErrorText>}
         </Field>
 
         <Field>
-          <LabelText>Gender</LabelText>
-          <GenderDropdownButton selected={!!gender} onPress={() => setShowGender(true)}>
+          <LabelText error={!!errors.gender}>Gender</LabelText>
+          <GenderDropdownButton 
+            selected={!!gender} 
+            onPress={() => { setShowGender(true); handleBlur('gender'); }} 
+            error={!!(errors.gender && touched.gender)} 
+          >
+            {/* ✅ GenderDropdownText와 AntDesign 아이콘을 추가합니다. */}
             <GenderDropdownText selected={!!gender}>{gender || 'Select your gender'}</GenderDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </GenderDropdownButton>
+          
+          {/* 에러 메시지 표시 로직은 그대로 유지합니다. */}
+          {errors.gender && touched.gender && <ErrorText>{errors.gender}</ErrorText>}
         </Field>
-
         <Field>
-          <LabelText>Country</LabelText>
-          <CountryDropdownButton selected={!!country} onPress={() => setShowCountry(true)}>
+          <LabelText error={!!errors.country}>Country</LabelText> 
+          <CountryDropdownButton 
+            selected={!!country} 
+            onPress={() => { setShowCountry(true); handleBlur('country'); }} 
+            error={!!(errors.country && touched.country)} 
+          >
             <CountryDropdownText selected={!!country}>{country || 'Select your country'}</CountryDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </CountryDropdownButton>
+          
+          {/* 에러 메시지 표시 로직 추가 */}
+          {errors.country && touched.country && <ErrorText>{errors.country}</ErrorText>}
         </Field>
 
         <Field>
-          <LabelText>Birth</LabelText>
+          <LabelText error={!!errors.birth}>Birth</LabelText>
           <BirthInput
             value={birth}
             onChangeText={(t: string) => setBirth(formatBirth(t))}
@@ -401,32 +456,50 @@ export default function EditProfileScreen() {
             keyboardType="number-pad"
             maxLength={10}
             returnKeyType="done"
+            onBlur={handleBlur('birth')} // ✅ handleBlur 추가
+            // 🚨 error prop에 !!errors.birth와 touched.birth 적용
+            error={!!(errors.birth && touched.birth)} 
           />
+          
+          {/* 에러 메시지 표시 로직 추가 */}
+          {errors.birth && touched.birth && <ErrorText>{errors.birth}</ErrorText>}
         </Field>
 
         <Field>
-          <LabelText>Purpose</LabelText>
-          <PurposeDropdownButton selected={!!purpose} onPress={() => setShowPurpose(true)}>
+          <LabelText error={!!errors.purpose}>Purpose</LabelText>
+          
+          <PurposeDropdownButton 
+            selected={!!purpose} 
+            onPress={() => { setShowPurpose(true); handleBlur('purpose'); }} // ✅ handleBlur 추가
+            // 🚨 error prop에 !!errors.purpose와 touched.purpose 적용
+            error={!!(errors.purpose && touched.purpose)}
+          >
             <PurposeDropdownText selected={!!purpose}>{purpose || 'Select purpose'}</PurposeDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </PurposeDropdownButton>
+          
+          {/* 에러 메시지 표시 로직 추가 */}
+          {errors.purpose && touched.purpose && <ErrorText>{errors.purpose}</ErrorText>}
         </Field>
-
         <Field>
-          <LabelRow>
-            <LabelText>Language</LabelText>
-            {!!langs.length && (
-              <SmallMuted>
-                {langs.length}/{MAX_LANGUAGES} selected
-              </SmallMuted>
-            )}
-          </LabelRow>
-          <LanguageDropdownButton selected={langs.length > 0} onPress={() => setShowLang(true)}>
-            <LanguageDropdownText selected={langs.length > 0}>{languagesDisplay}</LanguageDropdownText>
-            <AntDesign name="down" size={16} color="#949899" />
-          </LanguageDropdownButton>
+            <LabelRow>
+                <LabelText error={!!errors.language}>Language</LabelText>
+                {/* ... (선택된 언어 개수 표시) */}
+            </LabelRow>
+            
+            <LanguageDropdownButton 
+                selected={langs.length > 0} 
+                onPress={() => setShowLang(true)}
+                // ✅ error prop에 touched 상태 적용
+                error={!!(errors.language && touched.language)} 
+            >
+                <LanguageDropdownText selected={langs.length > 0}>{languagesDisplay}</LanguageDropdownText>
+                <AntDesign name="down" size={16} color="#949899" />
+            </LanguageDropdownButton>
+            
+            {/* ✅ 에러 메시지 표시 로직 추가 */}
+            {errors.language && touched.language && <ErrorText>{errors.language}</ErrorText>}
         </Field>
-
         <Field>
           <TopRow>
             <LabelText>Personality</LabelText>
@@ -632,8 +705,8 @@ const LabelRow = styled.View`
   justify-content: space-between;
   align-items: flex-end;
 `;
-const LabelText = styled.Text`
-  color: #e9ecef;
+const LabelText = styled.Text<{ error?: boolean }>` 
+  color: ${({ error }) => (error ? ERROR_COLOR : '#e9ecef')};
   font-size: 13px;
   margin-bottom: 6px;
   font-family: 'PlusJakartaSans_600SemiBold';
@@ -643,24 +716,24 @@ const Count = styled.Text`
   font-size: 12px;
   font-family: 'PlusJakartaSans_400Regular';
 `;
-const NameInput = styled.TextInput`
+const NameInput = styled.TextInput<{ error?: boolean }>`
   height: ${INPUT_HEIGHT}px;
   border-radius: ${INPUT_RADIUS}px;
   background: ${INPUT_BG};
   padding: 0 16px;
   color: #fff;
   border-width: 0.48px;
-  border-color: ${INPUT_BORDER};
+  border-color: ${({ error }) => (error ? ERROR_COLOR : INPUT_BORDER)};
   font-family: 'PlusJakartaSans_400Regular';
 `;
-const BirthInput = styled.TextInput`
+const BirthInput = styled.TextInput<{ error?: boolean }>`
   height: ${INPUT_HEIGHT}px;
   border-radius: ${INPUT_RADIUS}px;
   background: ${INPUT_BG};
   padding: 0 16px;
   color: #fff;
   border-width: 0.48px;
-  border-color: ${INPUT_BORDER};
+  border-color: ${({ error }) => (error ? ERROR_COLOR : INPUT_BORDER)};
   font-family: 'PlusJakartaSans_400Regular';
 `;
 const TopRow = styled.View`
@@ -691,13 +764,13 @@ const PreviewTagText = styled.Text`
   font-size: 12px;
   font-family: 'PlusJakartaSans_600SemiBold';
 `;
-const TextArea = styled.TextInput`
+const TextArea = styled.TextInput<{ error?: boolean }>`
   background: ${INPUT_BG};
   border-radius: ${INPUT_RADIUS}px;
   padding: 12px 14px;
   color: #fff;
   border-width: 1px;
-  border-color: ${INPUT_BORDER};
+  border-color: ${({ error }) => (error ? ERROR_COLOR : INPUT_BORDER)};
   font-family: 'PlusJakartaSans_400Regular';
   min-height: 110px;
   text-align-vertical: top;
