@@ -223,31 +223,28 @@ export default function EditProfileScreen() {
   }, [name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
 
 const errors = useMemo(() => {
-    if (isFormValid) return {};
+  if (isFormValid) return {};
 
-    // 🚨 이름 공백 검사 로직 추가
-    const trimmedName = name.trim().replace(/\s+/g, ' ');
-    const hasSpace = /\s/.test(trimmedName);
-    const isNameValid = trimmedName.length > 0 && hasSpace;
-    
-const nameError = 
-  trimmedName.length === 0 
-    ? 'Please enter your full name'
-    : !hasSpace 
-      ? 'Please separate your first and last name with a space. (e.g., John Smith)'
-      : undefined;
+  const trimmedName = name.trim().replace(/\s+/g, ' ');
+  const hasSpace = /\s/.test(trimmedName);
+  const nameError = 
+    trimmedName.length === 0 
+      ? 'Please enter your full name.' // 이름을 입력해주세요.
+      : !hasSpace 
+        ? 'Please separate your first and last name with a space. (e.g., John Smith)' // 이름과 성을 공백으로 구분해주세요.
+        : undefined;
 
   return {
-      name: nameError, 
-      gender: gender.trim().length === 0 ? '성별을 선택해주세요.' : undefined,
-      country: country.trim().length === 0 ? '국가를 선택해주세요.' : undefined,
-      birth: birth.trim().length === 0 ? '생년월일을 입력해주세요.' : undefined,
-      purpose: purpose.trim().length === 0 ? '목적을 선택해주세요.' : undefined,
-      language: langs.length === 0 ? '언어를 선택해주세요.' : undefined,
-      interests: selectedInterests.length === 0 ? '관심사를 하나 이상 선택해주세요.' : undefined,
-      aboutMe: aboutMe.trim().length === 0 ? '자기소개를 입력해주세요.' : undefined,
-    };
-  }, [isFormValid, name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
+    name: nameError, 
+    gender: gender.trim().length === 0 ? 'Please select your gender.' : undefined, // 성별을 선택해주세요.
+    country: country.trim().length === 0 ? 'Please select your country.' : undefined, // 국가를 선택해주세요.
+    birth: birth.trim().length === 0 ? 'Please enter your date of birth.' : undefined, // 생년월일을 입력해주세요.
+    purpose: purpose.trim().length === 0 ? 'Please select your purpose.' : undefined, // 목적을 선택해주세요.
+    language: langs.length === 0 ? 'Please select at least one language.' : undefined, // 언어를 선택해주세요.
+    interests: selectedInterests.length === 0 ? 'Please select at least one interest.' : undefined, // 관심사를 하나 이상 선택해주세요.
+    aboutMe: aboutMe.trim().length === 0 ? 'Please introduce yourself (About Me).' : undefined, // 자기소개를 입력해주세요.
+  };
+}, [isFormValid, name, gender, country, birth, purpose, langs, selectedInterests, aboutMe]);
 
   const formatBirth = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -398,21 +395,16 @@ const nameError =
         </Center>
 
         <Field>
-            {/* LabelText의 error prop은 에러 메시지가 있을 때만 true를 전달 */}
             <LabelText error={!!errors.name}>Full Name</LabelText>
             
             <NameInput
                 value={name}
                 onChangeText={setName}
-                onBlur={handleBlur('name')} // ✅ handleBlur 추가
-                // 에러가 있고, 필드를 건드렸을 때만 error prop 전달
+                onBlur={handleBlur('name')} 
                 error={!!(errors.name && touched.name)}
-                // 🚨 여기에 영문 Placeholder를 추가합니다.
                 placeholder="e.g. John Smith" 
-                placeholderTextColor="#EDEDED99" // 필요한 경우 추가
+                placeholderTextColor="#EDEDED99"
             />
-            
-            {/* 에러가 있고, 필드를 건드렸을 때만 에러 메시지 표시 */}
             {errors.name && touched.name && <ErrorText>{errors.name}</ErrorText>}
         </Field>
 
@@ -423,12 +415,10 @@ const nameError =
             onPress={() => { setShowGender(true); handleBlur('gender'); }} 
             error={!!(errors.gender && touched.gender)} 
           >
-            {/* ✅ GenderDropdownText와 AntDesign 아이콘을 추가합니다. */}
             <GenderDropdownText selected={!!gender}>{gender || 'Select your gender'}</GenderDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </GenderDropdownButton>
           
-          {/* 에러 메시지 표시 로직은 그대로 유지합니다. */}
           {errors.gender && touched.gender && <ErrorText>{errors.gender}</ErrorText>}
         </Field>
         <Field>
@@ -441,8 +431,6 @@ const nameError =
             <CountryDropdownText selected={!!country}>{country || 'Select your country'}</CountryDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </CountryDropdownButton>
-          
-          {/* 에러 메시지 표시 로직 추가 */}
           {errors.country && touched.country && <ErrorText>{errors.country}</ErrorText>}
         </Field>
 
@@ -456,12 +444,10 @@ const nameError =
             keyboardType="number-pad"
             maxLength={10}
             returnKeyType="done"
-            onBlur={handleBlur('birth')} // ✅ handleBlur 추가
-            // 🚨 error prop에 !!errors.birth와 touched.birth 적용
+            onBlur={handleBlur('birth')}
             error={!!(errors.birth && touched.birth)} 
           />
           
-          {/* 에러 메시지 표시 로직 추가 */}
           {errors.birth && touched.birth && <ErrorText>{errors.birth}</ErrorText>}
         </Field>
 
@@ -470,68 +456,70 @@ const nameError =
           
           <PurposeDropdownButton 
             selected={!!purpose} 
-            onPress={() => { setShowPurpose(true); handleBlur('purpose'); }} // ✅ handleBlur 추가
-            // 🚨 error prop에 !!errors.purpose와 touched.purpose 적용
+            onPress={() => { setShowPurpose(true); handleBlur('purpose'); }}
             error={!!(errors.purpose && touched.purpose)}
           >
             <PurposeDropdownText selected={!!purpose}>{purpose || 'Select purpose'}</PurposeDropdownText>
             <AntDesign name="down" size={16} color="#949899" />
           </PurposeDropdownButton>
-          
-          {/* 에러 메시지 표시 로직 추가 */}
+   
           {errors.purpose && touched.purpose && <ErrorText>{errors.purpose}</ErrorText>}
         </Field>
         <Field>
             <LabelRow>
                 <LabelText error={!!errors.language}>Language</LabelText>
-                {/* ... (선택된 언어 개수 표시) */}
             </LabelRow>
             
             <LanguageDropdownButton 
                 selected={langs.length > 0} 
                 onPress={() => setShowLang(true)}
-                // ✅ error prop에 touched 상태 적용
                 error={!!(errors.language && touched.language)} 
             >
                 <LanguageDropdownText selected={langs.length > 0}>{languagesDisplay}</LanguageDropdownText>
                 <AntDesign name="down" size={16} color="#949899" />
             </LanguageDropdownButton>
             
-            {/* ✅ 에러 메시지 표시 로직 추가 */}
             {errors.language && touched.language && <ErrorText>{errors.language}</ErrorText>}
         </Field>
-        <Field>
-          <TopRow>
-            <LabelText>Personality</LabelText>
-            <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
-          </TopRow>
+          <Field>
+        <TopRow>
+          <LabelText error={!!errors.interests}>Personality</LabelText> 
+          <SmallMuted>{selectedInterests.length}/5 selected</SmallMuted>
+        </TopRow>
 
-          <TagsWrap>
-            {selectedInterests.map((t) => (
-              <PreviewTag key={t}>
-                <PreviewTagText>{t}</PreviewTagText>
-              </PreviewTag>
-            ))}
-          </TagsWrap>
+        <TagsWrap>
+          {selectedInterests.map((t) => (
+            <PreviewTag key={t}>
+              <PreviewTagText>{t}</PreviewTagText>
+            </PreviewTag>
+          ))}
+        </TagsWrap>
 
-          <EditRow>
-            <EditOutlineBtn onPress={() => setShowTagPicker(true)}>
-              <AntDesign name="plus" size={12} color="#30F59B" />
-              <EditOutlineText>Edit</EditOutlineText>
-            </EditOutlineBtn>
-          </EditRow>
-        </Field>
+        <EditRow>
+          <EditOutlineBtn 
+            onPress={() => { setShowTagPicker(true); handleBlur('interests'); }} 
+          >
+            <AntDesign name="plus" size={12} color="#30F59B" />
+            <EditOutlineText>Edit</EditOutlineText>
+          </EditOutlineBtn>
+        </EditRow>
+        {errors.interests && touched.interests && <ErrorText>{errors.interests}</ErrorText>}
+      </Field>
 
-        <Field>
-          <LabelText>About Me</LabelText>
-          <TextArea
-            value={aboutMe}
-            onChangeText={setAboutMe}
-            placeholder="Introduce yourself"
-            placeholderTextColor="#EDEDED99"
-            multiline
-          />
-        </Field>
+      <Field>
+        <LabelText error={!!errors.aboutMe}>About Me</LabelText>
+        
+        <TextArea
+          value={aboutMe}
+          onChangeText={setAboutMe}
+          onBlur={handleBlur('aboutMe')} // ✅ handleBlur 추가
+          placeholder="Introduce yourself"
+          placeholderTextColor="#EDEDED99"
+          multiline
+          error={!!(errors.aboutMe && touched.aboutMe)} 
+        />
+        {errors.aboutMe && touched.aboutMe && <ErrorText>{errors.aboutMe}</ErrorText>}
+      </Field>
         <BottomPad />
       </Scroll>
       <CountryPicker
