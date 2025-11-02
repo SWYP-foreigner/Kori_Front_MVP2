@@ -73,6 +73,7 @@ export default function PurposeStepScreen({ navigation }) {
   };
 
   const handleSkip = () => {
+    updateProfile('purpose', '');
     router.push('./TagStepScreen');
   };
 

@@ -19,7 +19,8 @@ export default function GenderStepScreen({ navigation }) {
   const router = useRouter();
 
   const handleSkip = () => {
-    router.push('./CountryStepScreen');
+    updateProfile('gender', '');
+    router.push('./CountryStepScreen');
   };
 
   const handleGenderClick = (gender) => {

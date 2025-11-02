@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import styled from 'styled-components/native';
-import { SafeAreaView, StatusBar, Alert, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfile } from '@/app/contexts/ProfileContext';
-import axios from 'axios';
-import { Platform } from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, SafeAreaView, StatusBar } from 'react-native';
+import styled from 'styled-components/native';
 import SkipHeader from './components/SkipHeader';
 
 const HobbyBox = ({ imogi = [], title, tags, selectedTags, selectTag }) => {
@@ -58,6 +56,7 @@ export default function TagStepScreen() {
   };
 
   const handleSkip = () => {
+    updateProfile('hobby', []);
     router.push('./AddPhotoStepScreen');
   };
 

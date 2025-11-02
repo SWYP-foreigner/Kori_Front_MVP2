@@ -40,6 +40,7 @@ export default function LanguageStepScreen({ navigation }) {
   };
 
   const handleSkip = () => {
+    updateProfile('language', []);
     router.push({
       pathname: './AboutMeStepScreen',
     });

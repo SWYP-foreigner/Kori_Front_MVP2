@@ -33,7 +33,8 @@ export default function CountryStepScreen({ navigation }) {
   };
 
   const handleSkip = () => {
-    router.push('./LangStepScreen');
+    updateProfile('country', '');
+    router.push('./LangStepScreen');
   };
 
   const handleNext = () => {

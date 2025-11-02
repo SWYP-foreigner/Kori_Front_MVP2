@@ -1,8 +1,8 @@
+import { useProfile } from '@/app/contexts/ProfileContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
 import styled from 'styled-components/native';
-import { useProfile } from '@/app/contexts/ProfileContext';
 import SkipHeader from './components/SkipHeader';
 // ------------------------
 // NameStepScreen
@@ -18,6 +18,7 @@ export default function NameStepScreen() {
   const canProceed = AboutMe.trim().length >= minLength && !isOverLimit;
 
   const handleSkip = () => {
+    updateProfile('introduction', ''); 
     router.push('./BirthStepScreen');
   };
 
